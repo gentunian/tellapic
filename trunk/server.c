@@ -34,19 +34,17 @@
 
 #include "server.h"
 
-int img_fd;
-int sv_fd;
-
-client_t *clients = NULL;
-client_t *from    = NULL;
-
-pthread_mutex_t stream_mutex  = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t stream_cond    = PTHREAD_COND_INITIALIZER;
-pthread_t tids[MAX_CLIENTS+1];
+int                img_fd;
+int                sv_fd;
 struct sockaddr_in serveraddr;
-char      stream[BUFFER_SIZE];
-SSL_CTX *ctx;
-int CONTINUE = 1;
+MUTEX_TYPE         stream_mutex  = PTHREAD_MUTEX_INITIALIZER;
+MUTEX_TYPE         *mutex_buf;
+pthread_cond_t     stream_cond   = PTHREAD_COND_INITIALIZER;
+char               stream[BUFFER_SIZE];
+SSL_CTX            *ctx;
+int                CONTINUE = 1;
+
+
 
 void *attend_client(void *arg);
 void *send_to_clients(void *arg);
@@ -54,7 +52,10 @@ void r_free();
 void thread_abort();
 void free_client(client_t *client);
 int THREAD_get_error(int value, int severity, int tid);
+int THREAD_setup();
 void client_list_init();
+void cleanup(void *arg);
+
 
 int main(int argc, char *argv[]) 
 {
@@ -62,9 +63,10 @@ int main(int argc, char *argv[])
   int i     = 0;
   int rv    = 0;
 
+  pthread_attr_t joinattr;
   struct sockaddr_in clientaddr;
-  struct sigaction sig_action;
-  tdata_t thread_data[MAX_CLIENTS];
+  struct sigaction   sig_action;
+  tdata_t            thread_data[MAX_CLIENTS + 1];
 
   sig_action.sa_handler = signal_handler;
   sigemptyset(&sig_action.sa_mask);
@@ -86,25 +88,39 @@ int main(int argc, char *argv[])
 
   /* Initialize data buffer */
   memset(&stream, 0, BUFFER_SIZE);
-  
-  /* Initialize clients list */
-  client_list_init();
 
-  /* Initialize thread id array */
-  for (i = 0; i < MAX_CLIENTS +1; i++)
-    tids[i] = AVAIL_THREAD;
+  /**/
+  THREAD_setup();
+
+  /* Initialize thread/clients list */
+
+  for( i = 0; i < MAX_CLIENTS + 1; i++)
+    {
+      thread_data[i].tid   = 0;
+      thread_data[i].tnum  = i;
+      thread_data[i].state = THREAD_STATE_FREE;
+      THREAD_get_error(pthread_mutex_init(&thread_data[i].mutex, NULL), FATAL, i);
+    }
+
+  pthread_attr_init(&joinattr);
+  pthread_attr_setdetachstate(&joinattr, PTHREAD_CREATE_JOINABLE); /* THIS NEED TO BE FREED ON EXIT */
 
   /* launch sender thread */
-  rv = pthread_create(&tids[SV_THREAD], NULL, send_to_clients, (void *) 0);
+  rv = pthread_create(&thread_data[SV_THREAD].tid, &joinattr, send_to_clients, (void *) &thread_data);
 
-  THREAD_get_error(rv, FATAL, tids[SV_THREAD]);
+  THREAD_get_error(rv, FATAL, thread_data[SV_THREAD].tnum);
 
+  printf("Server socket: %d\n", sv_fd);
   /* server started normally */
   while( CONTINUE  ) 
     {
+      int notdone = 1;
       int addrlen = sizeof(clientaddr);
       printf(LINE);    
       printf(NFO_WAIT);
+
+      /* TODO: Set server fd to non-blocking. Manage the program exit with CONTINUE and */
+      /* release all used memory */
       if ( (cl_fd = accept(sv_fd, (struct sockaddr *)&clientaddr, &addrlen)) == -1)
 	{
 	  printf("[NFO]:\tConnection refused.\n");
@@ -113,30 +129,44 @@ int main(int argc, char *argv[])
       else
 	{
 	  printf("[NFO]:\tConnection attempt from %s.\n", inet_ntoa(clientaddr.sin_addr));
+
 	  /* is there any place to run a thread? */
-	  for( i = 1; i < MAX_CLIENTS +1 && tids[i] != AVAIL_THREAD; i++);
-	  
-	  if ( tids[i] == AVAIL_THREAD )
+	  for( i = 0; i < MAX_CLIENTS && notdone; i++)
+	    {
+	      pthread_mutex_lock(&thread_data[i].mutex);
+	      if ( thread_data[i].state == THREAD_STATE_FREE )
+		notdone = 0;   /* try not exit a loop with break */
+	      else
+		pthread_mutex_unlock(&thread_data[i].mutex);
+	    }
+	  if ( i < MAX_CLIENTS )
 	    {
 	      thread_data[i].client = (client_t *) malloc(sizeof(client_t));
 	      if ( thread_data[i].client == NULL)
-		printf("[WRN]:\tClient node allocation falied!\n");
+		{
+		  pthread_mutex_unlock(&thread_data[i].mutex);
+		  printf("[WRN]:\tClient node allocation falied!\n");
+		}
 	      else
 		{
 		  thread_data[i].client->fd      = cl_fd;
 		  thread_data[i].client->address = clientaddr;
-		  thread_data[i].client->ssl     = NULL;
+		  thread_data[i].client->ssl     = SSL_new(ctx);
+		  /* TODO: CHECK FOR RETURN VALUE */
+		  pthread_mutex_init(&thread_data[i].client->mutex, NULL);
+
 		  thread_data[i].client->cl_info = NULL;
-		  thread_data[i].id = i;
-		  /* NOTE: this newcl mallocked memory is freed on each thread as a tmp pointer */
+		  thread_data[i].state = THREAD_STATE_INIT;
+		  thread_data[i].tnum  = i;
+
 		  printf("[NFO]:\tClient node allocation succeded for socket %d\n", cl_fd);
-		  rv = pthread_create(&tids[i], NULL, attend_client, (void *) &thread_data[i]);
+		  pthread_mutex_unlock(&thread_data[i].mutex);
+		  rv = pthread_create(&thread_data[i].tid, &joinattr, attend_client, (void *) &thread_data[i]);
 		  
-		  if ( THREAD_get_error(rv, WARN, thread_data[i].id) )
+		  if ( THREAD_get_error(rv, WARN, thread_data[i].tnum) )
 		    {
 		      printf("[WRN]:\tSpawning thread ocess failed! Client discarted.\n");
-		      close(cl_fd);
-		      free(thread_data[i].client);
+		      free_client(thread_data[i].client);
 		    }
 		  else
 		    { 
@@ -152,6 +182,20 @@ int main(int argc, char *argv[])
 	    }
 	}
     }
+  for( i = 0; i < MAX_CLIENTS + 1; i++)
+    /* Send cancellation signal to ALL threads without checking errors */
+    pthread_cancel(thread_data[i].tid);
+
+  for( i = 0; i < MAX_CLIENTS + 1; i++)
+    /* Wait for all threads to finish */
+    pthread_join(thread_data[i].tid, NULL);
+
+  /* Check if theres more data to free */
+  r_free(thread_data);
+  pthread_attr_destroy(&joinattr);
+
+  /* TODO: When program is signaled to exit, wait untill all threads finish. then exit */
+  printf("----END----\n");
 }
   
 
@@ -175,28 +219,24 @@ void thread_abort()
  * ------
  * Resources are freed.
  ********************************************************/
-void r_free()
+void r_free(tdata_t threads[])
 {
-  client_t *cl = clients;
   int i = 0;
   int j = 0;
-  for ( i = 0; i < MAX_CLIENTS; i++, cl++)
+  for ( i = 0; i < MAX_CLIENTS + 1; i++)
     {
-      if ( cl->state != CL_STATE_FREE )
+      if ( threads[i].state != THREAD_STATE_FREE )
 	{
-	  printf("Freeing ssl and closing %d socket\n", cl->fd);
-	  SSL_free(cl->ssl);
-	  close(cl->fd);
+	  printf("--- Freeing ssl and closing %d socket ---\n", threads[i].client->fd);
+	  free_client(threads[i].client);
 	}
-      for(j = 0; j < MUTEX_NUM; j++)
-	pthread_mutex_destroy(&cl->mutex[j]);
-      for(j = 0; j > COND_NUM; j++)
-	pthread_cond_destroy(&cl->cond[j]);
+      pthread_mutex_destroy(&threads[i].client->mutex);
+      pthread_mutex_destroy(&threads[i].mutex);
     }
-  free(clients);
   SSL_CTX_free(ctx);
   ERR_free_strings();
   EVP_cleanup();
+  THREAD_cleanup();
   pthread_cond_destroy(&stream_cond);
   pthread_mutex_destroy(&stream_mutex);
   close(img_fd);
@@ -211,14 +251,13 @@ void r_free()
  *********************************************************/
 void signal_handler(int sig) 
 {
+  /* TODO: use this function to control program workflow and exit properly */
   int i;
   /* this function should detach and free any thread, memory, etc */
   printf("[HANDLER]: Signal %d caught.\n", sig);
   printf("--- Shutting down ---\n");
-  r_free();
   CONTINUE = 0;
   pthread_cond_signal(&stream_cond);
-  exit(1);
 }
 
 
@@ -268,7 +307,7 @@ void *send_to_clients(void *arg)
 {
   client_t *to = NULL;
   int i        = 0;
-  int tid      = 0;
+  int tid      = SV_THREAD;
 
   printf("<thread %d>[NFO]:\tSending thread started.\n", tid);
   while( CONTINUE )
@@ -288,29 +327,9 @@ void *send_to_clients(void *arg)
 	  break;
 	}
       printf("<thread %d>[NFO]:\tGot data. Sending...\n", tid);
-
-      /* send 'stream' to active clients not being who send it */
-      for( i = 0, to = clients; i < MAX_CLIENTS; i++, to++)
-	{
-	  pthread_mutex_lock(&to->mutex[SSL_MUTEX]);
-	  if ( to != from &&  to->state == CL_STATE_READY )
-	    {
-	      printf("<thread %d>[NFO]:\tSending from %d to %d '%s' (%d bytes)\n", tid, from->fd, to->fd,stream, from->nbytes);
-	      pthread_mutex_lock(&from->mutex[SSL_MUTEX]);
-	      SSL_write(to->ssl, stream, from->nbytes);
-	      pthread_mutex_unlock(&from->mutex[SSL_MUTEX]);
-	    }
-	  pthread_mutex_unlock(&to->mutex[SSL_MUTEX]);
-	}
-
-      /* set stream to zero for future use */
-      memset(&stream, 0, BUFFER_SIZE);
-
-      /* unlock shared data */
-      pthread_mutex_unlock(&stream_mutex);
     }
   printf("<thread %d>[NFO]:\tSending thread closing.\n", tid);
-  tids[tid] = AVAIL_THREAD;
+
   pthread_exit(NULL);
 }
 
@@ -322,145 +341,17 @@ void *send_to_clients(void *arg)
  *******************************************************************/
 void *attend_client(void *arg) 
 {
-  client_t *tmpdata= ((tdata_t *) arg)->client; /* until now the only malloced' structure */
-  int tid          = ((tdata_t *) arg)->id;
-  client_t *client = NULL;
+  client_t *client      = ((tdata_t *) arg)->client;
+  pthread_mutex_t mutex = ((tdata_t *) arg)->mutex;
+  thread_state_t state  = ((tdata_t *) arg)->state;
+  int tnum              = ((tdata_t *) arg)->tnum;
+  /* TODO: CLEAN UP THIS DECLARATIONS */
   int ssl_err_code = 0;
   int bytesread    = 0;
   int byteswrote   = 0;
   long ssl_mode    = 0;
   int fd_flag      = 0;
   int i            = 0;
-
-  printf("<thread %d>[NFO]:\tInitializing server attendance client thread on socket %d\n", tid, tmpdata->fd);
-  
-  for( i = 0, client = clients; i < MAX_CLIENTS; i++, client++)
-    {
-      if (DEBUG)
-	printf("<thread %d>[NFO]:\tSearching for space to hold new client from socket %d\n", tid, tmpdata->fd);
-      /* is this memory available? */
-      pthread_mutex_lock(&client->mutex[STATE_MUTEX]);
-      if ( client->state == CL_STATE_FREE )
-	{
-	  if (DEBUG)
-	    printf("<thread %d>[NFO]:\tIndex %d free to hold new client from socket %d\n", tid, i, tmpdata->fd);
-	  client->state = CL_STATE_BUSY;
-	  pthread_mutex_unlock(&client->mutex[STATE_MUTEX]);
-	  break;
-	}
-      pthread_mutex_unlock(&client->mutex[STATE_MUTEX]);
-    }
-  
-  if ( i == MAX_CLIENTS )
-    {
-      printf("<thread %d>[NFO]:\tMAX connections reached. No space for client from socket %d\n", tid, tmpdata->fd);
-      /* no connection will be made, release this and exit thread */
-      close(tmpdata->fd);
-      SSL_free(tmpdata->ssl);
-      free(tmpdata);
-      tids[tid] = AVAIL_THREAD;
-      pthread_exit(NULL);
-    }
-  /* now we have a pointer to a free client.   */
-  /* This pointer is exclusive for each thread */
-  /* and we don't need to mutex the access to  */
-  /* the client except when reading from the   */
-  /* ssl structure or when freeing the client. */
-  /* This is because another thread may send   */
-  /* data to _this_ client using his ssl field */
-  /* for that purpose.                         */
-  if (DEBUG)
-    printf("<thread %d>[NFO]:\tClient %d state set to %d.\n", tid, i, client->state);
-
-  /* copy new client sockaddr_in structure */
-  client->address = tmpdata->address;
-  if (DEBUG)
-    printf("<thread %d>[NFO]:\tTemporal address %s:%d copied to client\n", tid, inet_ntoa(client->address.sin_addr), client->address.sin_port);
-
-  /* copy new client file descriptor */
-  client->fd   = tmpdata->fd;
-  if (DEBUG)
-    printf("<thread %d>[NFO]:\tTemporal socket %d copied to client\n", tid, client->fd);
-
-  client->ssl  = SSL_new(ctx);
-  if (DEBUG)
-    printf("<thread %d>[NFO]:\tSSL structure created for socket %d\n", tid, client->fd);
-
-  /* free the now absolete client data */
-  free(tmpdata);
-
-  /* get current fd flag */
-  fd_flag  = fcntl(client->fd, F_GETFL);
-
-  /* get current ssl mode */
-  ssl_mode = SSL_get_mode(client->ssl);
-
-  /* associate fd with ssl structure */
-  ssl_err_code = SSL_set_fd(client->ssl, client->fd);
-
-  if ( !ssl_err_code)
-    {
-      printf("<thread %d>[ERR]:\tCannot associate fd with ssl structure\n", tid);
-
-      /* gain exclusive accesss to client */
-      pthread_mutex_lock(&client->mutex[SSL_MUTEX]);
-      pthread_mutex_lock(&client->mutex[STATE_MUTEX]);
-      
-      /* frees the client */
-      free_client(client);
-      
-      /* release exclusive access to client */
-      pthread_mutex_unlock(&client->mutex[STATE_MUTEX]);
-      pthread_mutex_unlock(&client->mutex[SSL_MUTEX]);
-
-      tids[tid] = AVAIL_THREAD;
-
-      /* this thread has no more reason to live */
-      pthread_exit(NULL);
-    }
-  printf("<thread %d>[NFO]:\tSSL associated to socket %d\n", tid, client->fd);
-  /* at this point the only allocked memory is client->ssl   */
-  /* and should be freed only when a connection is dropped   */
-
-  /* set fd to non blocking */
-  fcntl(client->fd, F_SETFL, fd_flag | O_NONBLOCK);
-
-  /* wait for a handshake. Note: TIMEOUT is not actually time */
-  /* though it's a multiple of it.                            */
-  if( wait_for_client(client->ssl, TIMEOUT) >= TIMEOUT )  
-    {
-      printf("<thread %d>[ERR]:\tcould not hanshake with client.\n", tid);
-     
-      /* gain exclusive accesss to client */
-      pthread_mutex_lock(&client->mutex[SSL_MUTEX]);
-      pthread_mutex_lock(&client->mutex[STATE_MUTEX]);
-      
-      /* frees the client */
-      free_client(client);
-      
-      /* release exclusive access to client */
-      pthread_mutex_unlock(&client->mutex[SSL_MUTEX]);
-      pthread_mutex_unlock(&client->mutex[STATE_MUTEX]);
-  
-      tids[tid] = AVAIL_THREAD;
-      /* this thread has no more reason to live */
-      pthread_exit(NULL);
-    }
-
-  /* gain exclusive access for setting the client state.    */
-  /* Note that the mutex is SSL_MUTEX and not STATE_MUTEX   */
-  /* The reason is that _this_ client memory portion is     */
-  /* already set as used (CL_STATE_BUSY). Then, if a thread */
-  /* is another _this_ thread, he can ask safely for the    */
-  /* client state as _this_ client wont' be CL_STATE_FREE.  */
-  /* But if a thread is a 'sender' thread, we need to block */
-  /* the SSL_MUTEX 'cause that thread ask for CL_STATE_BUSY */
-  /* for send data to _this_ client.                        */
-  pthread_mutex_lock(&client->mutex[SSL_MUTEX]);
-  client->state = CL_STATE_READY;
-  pthread_mutex_unlock(&client->mutex[SSL_MUTEX]);
-
-  /* declarations should be on top. make a read_from_client() function?*/
   const int chunk_size = 1024;
   char buffer[chunk_size];      /*unused till now */
   char *outstream;              /*unused till now */
@@ -468,96 +359,146 @@ void *attend_client(void *arg)
   int alive  = 1;               /*state of _this_ thread */
   int err;
   fd_set master, copy;
+  unsigned long errsv = 0;
   FD_ZERO(&master);
   FD_ZERO(&copy);
   FD_SET(client->fd, &master);
-  /* restore fd to blocking (testing purposes)*/
-  //fcntl(client->fd, F_SETFL, fd_flag);
-  
-  printf(NFO_ACCEPT, tid, inet_ntoa(client->address.sin_addr), client->fd);
-  printf(NFO_CIPHER, tid, SSL_get_version(client->ssl), SSL_get_cipher(client->ssl));
-  //   SSL_set_mode(client->ssl, SSL_MODE_AUTO_RETRY);
-  
+  printf("<thread %d>[NFO]:\tInitializing server attendance client thread on socket %d\n", tnum, client->fd);
+
+  /* get current fd flag */
+  fd_flag  = fcntl(client->fd, F_GETFL);
+
+  /* associate fd with ssl structure */
+  ssl_err_code = SSL_set_fd(client->ssl, client->fd);
+
+  printf("<thread %d>[NFO]:\tTrying to associate ssl structure with fd %d\n", tnum, client->fd);
+
+  /* register cleanup function for this thread */
+  pthread_cleanup_push(cleanup, (void *) arg);
+
+  if ( !ssl_err_code)
+    {
+      printf("<thread %d>[ERR]:\tCannot associate fd with ssl structure\n", tnum);
+      alive = 0;           
+    }
+  else
+    {
+      printf("<thread %d>[NFO]:\tSSL associated to socket %d\n", tnum, client->fd);
+      /* set fd to non blocking */
+      fcntl(client->fd, F_SETFL, fd_flag | O_NONBLOCK);
+    }
+
+  /* wait for a handshake. */
+  if( alive && wait_for_client(client) <= 0 )  
+    {
+      printf("<thread %d>[ERR]:\tcould not hanshake with client.\n", tnum);
+      alive = 0;
+    }
+  else 
+    {
+      printf(NFO_ACCEPT, tnum, inet_ntoa(client->address.sin_addr), client->fd);
+      printf(NFO_CIPHER, tnum, SSL_get_version(client->ssl), SSL_get_cipher(client->ssl));
+      printf("<thread %d>[NFO]:\tMain attendance loop start\n", tnum);  
+    }
+
+  /* The main client attendance */
   while( alive && CONTINUE )
     {
-      /* The main client attendance */
-
       copy = master;
-      if ( select(client->fd+1, &copy, NULL,NULL,NULL) == -1)
-	printf("<thread %d>:[ERR]:\tSelect fail\n",tid);
+
+      /* try read from the secure connection gaining exclusive access */
+      /* to the client ssl structure. The 'sender thread' could       */
+      /* access this structure coliding with the 'err' value and      */
+      /* starting a catastrophe.                                      */
+      pthread_mutex_lock(&client->mutex);
+      nbytes = SSL_read(client->ssl, client->buffer, chunk_size);
+      err = SSL_get_error(client->ssl, nbytes);
+      errsv = ERR_get_error();
+      pthread_mutex_unlock(&client->mutex);
+      printf("<thread %d>[NFO]:\tSSL_read() = (%d) bytes (err=%d, str= %s)\n", tnum, nbytes, err, ERR_error_string(errsv, NULL));
+
+      /* Thanks to David Schwartz from openssl mailing list for the tips */
+      
+      /* 'nbytes' is the bytes read from the client. If <=0 then action */
+      /* must be taken to check the current state of the connection.    */
+      if ( nbytes <= 0 )
+	{
+	  /* see if we need to call SSL_read() again */
+	  if ( err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
+	    {
+	      printf("<thread %d>[NFO]:\tWANT_READ on socket %d (ERR_get_error()=%ld)\n", tnum, client->fd, errsv);
+	      if ( select(client->fd+1, &copy, NULL, NULL, NULL) == -1)
+		printf("<thread %d>:[ERR]:\tSelect fail\n",tnum);
+	    }
+	  if ( err == SSL_ERROR_SYSCALL )
+	    {
+
+	      printf("<thread %d>[NFO]:\tERR_SYSCALL on socket %d (ERR_get_error()=%ld\n", tnum, client->fd, errsv);
+	      alive = 0;
+	    }
+	  if ( err == SSL_ERROR_ZERO_RETURN )
+	    {
+	      printf("<thread %d>:[NFO]:\tSocket %d hung up ( ERR_get_error()=%ld\n", tnum, errsv);
+	      alive = 0;
+	    }
+	}
       else
 	{
-	  if ( FD_ISSET(client->fd, &copy) )
-	    {
-	      /* read from the secure connection gaining exclusive access */
-	      /* to the client ssl structure. The 'sender thread' could   */
-	      /* access this structure coliding with the 'err' value and  */
-	      /* starting a catastrophe.                                  */
-	      pthread_mutex_lock(&client->mutex[SSL_MUTEX]);
-	      nbytes = SSL_read(client->ssl, client->buffer, chunk_size);
-	      err = SSL_get_error(client->ssl, nbytes);
-	      pthread_mutex_unlock(&client->mutex[SSL_MUTEX]);
-	      
-	      if ( err != SSL_ERROR_WANT_READ && err != SSL_ERROR_WANT_WRITE)
-		{		  
-		  /* we got a disconnection or an error on the connection.     */
-		  /* Change _this_ thread to dead and free the client on exit. */
-		  ERR_print_errors_fp(stdout);
-		  if (nbytes <= 0 )
-		    {
-		      /* client hung up or connection reset by peer */
-		      printf("<thread %d>[NFO]:\tSocket %d hung up.\n", tid, client->fd);
-		      
-		      /* safe form of leaving a loop and kill the thread after that */
-		      alive = 0;
-		    }
-		  else
-		    {
-		      /* it will be 1 'sender thread' and 1 'reader thread' for each  */
-		      /* client. Make sure to avoid data collitions.                  */
-		      /* 'nbytes' avoid this. Instead of using client->nbytes to      */
-		      /* temporally store data we use 'nbytes' as after the unlock    */
-		      /* above, client->nbytes is used on the 'sender thread' that is */
-		      /* blocked by the below mutex.                                  */
-		      
-		      client->buffer[nbytes] = '\0';
-		      /* it should be NICE to have a QUEUE! if we are locked */
-		      
-		      /* copy the buffer to 'stream', so sending thread will send it to clients */
-		      pthread_mutex_lock(&stream_mutex);
-		      
-		      /* send 'stream' to active clients not being who send it */	     
-		      client->nbytes = nbytes;
-		      
-		      /* strncpy is safe to use here as 'nbytes'>=1, 'buffer' != NULL and 'stream' != NULL */
-		      strncpy(stream, client->buffer, client->nbytes);
-		      
-		      /* we are sending this */
-		      from = client;
+	  /* it will be 1 'sender thread' and 1 'reader thread' for each  */
+	  /* client. Make sure to avoid data collitions.                  */
+	  /* 'nbytes' avoid this. Instead of using client->nbytes to      */
+	  /* temporally store data we use 'nbytes' as after the unlock    */
+	  /* above, client->nbytes is used on the 'sender thread' that is */
+	  /* blocked by the below mutex.                                  */
 
-		      /* signal sending thread */
-		      pthread_cond_signal(&stream_cond);
-		      
-		      /* release mutex on stream buffer */
-		      pthread_mutex_unlock(&stream_mutex);
-		    }
-		}
-	    }
-	  else
-	    printf("<thread %d>[NFO]:\tSelect was in another fd\n", tid);
+	  client->buffer[nbytes] = '\0';
+	  printf("<thread %d>[NFO]:\tData read on socket %d. '%s' (%d bytes)\n", tnum, client->fd, client->buffer, nbytes);
+	  /* it should be NICE to have a QUEUE! if we are locked */
+	  
+	  /* copy the buffer to 'stream', so sending thread will send it to clients */
+	  pthread_mutex_lock(&stream_mutex);
+			  
+	  client->nbytes = nbytes;
+	  
+	  /* strncpy is safe to use here as 'nbytes'>=1, 'buffer' != NULL and 'stream' != NULL */
+	  strncpy(stream, client->buffer, client->nbytes);
+	  
+	  /* signal sending thread */
+	  pthread_cond_signal(&stream_cond);
+	  
+	  /* release mutex on stream buffer */
+	  pthread_mutex_unlock(&stream_mutex);
 	}
     }
-  printf("<thread %d>[NFO]:\tAttendace thread closing on %d socket.\n", tid, client->fd);
-  pthread_mutex_lock(&client->mutex[SSL_MUTEX]);
-  pthread_mutex_lock(&client->mutex[STATE_MUTEX]);
-  free_client(client);
-  pthread_mutex_unlock(&client->mutex[STATE_MUTEX]);
-  pthread_mutex_unlock(&client->mutex[SSL_MUTEX]);
-  tids[tid] = AVAIL_THREAD;
+  printf("<thread %d>[NFO]:\tAttendace thread closing on %d socket.\n", tnum, client->fd);
+
+  pthread_cleanup_pop(1);
   /* this thread has no more reason to live */
   pthread_exit(NULL);
 }
 
+
+
+
+/************************************
+ *
+ ************************************/
+void cleanup(void *arg)
+{
+  client_t *client = ((tdata_t *) arg)->client;
+  thread_state_t s = ((tdata_t *) arg)->state;
+  MUTEX_TYPE mutex = ((tdata_t *) arg)->mutex;
+  int         tnum = ((tdata_t *) arg)->tnum;
+
+  printf("<thread %d>[NFO]:\tEntering clean up function\n", tnum);
+
+  free_client(client);
+  ERR_remove_state(pthread_self());
+  
+  pthread_mutex_lock(&mutex);
+  s = THREAD_STATE_FREE;
+  pthread_mutex_unlock(&mutex);
+}
 
 
 
@@ -569,7 +510,7 @@ void *attend_client(void *arg)
 void free_client(client_t *client)
 {
   /* this memory portion is available for future use */
-  client->state = CL_STATE_FREE;
+  //client->state = CL_STATE_FREE;
   
   /* release ssl structure */
   SSL_free(client->ssl);
@@ -577,36 +518,56 @@ void free_client(client_t *client)
   /* close client file descriptor */
   close(client->fd);
   
-  /* sanity assignmnet */
+  /* sanity assignment */
   client->ssl = NULL;
+
+  pthread_mutex_destroy(&client->mutex);
+
+  /* release client structure */
+  free(client);
+
+  /* sanity assignment */
+  client = NULL;
 }
 
 
 
 /**************************************
- * wait_for_client(SSL *sll, int tries):
+ * wait_for_client(client_t *client):
  * ---------------
- * Wait for a client the elapsed time of: 'tries'*1000usec. Upon this limit,
- * the client is disconnected assuming no handshaking by the client.
- * Returns the number of tries ('try' no 'tries') made by the server.
  **************************************/
-int wait_for_client(SSL *ssl, int tries)
+int wait_for_client(client_t *client)
 {
-  int ssl_err_code;
-  int err;
-  int try = 0;
-  do
-    {
-      try++;
-      ssl_err_code = SSL_accept(ssl);
-      err = SSL_get_error(ssl, ssl_err_code);
-      usleep(1000);
-    }
-  while( (err == SSL_ERROR_WANT_READ ||
-	  err == SSL_ERROR_WANT_WRITE) &&
-	 try < tries );
+  struct timeval tv;
+  fd_set master;
+  fd_set copy;
+  int    ssl_err_code;
+  int    err;  
 
-  return try;
+  FD_ZERO(&master);
+  FD_ZERO(&copy);
+  FD_SET(client->fd, &master);
+  tv.tv_sec  = 5;
+  tv.tv_usec = 0;
+    
+  ssl_err_code = SSL_accept(client->ssl);
+  err = SSL_get_error(client->ssl, ssl_err_code);
+
+  while( (err == SSL_ERROR_WANT_READ  ||  err == SSL_ERROR_WANT_WRITE) )
+    {
+      copy = master;
+      if ( (select(client->fd+1, &copy, NULL, NULL, &tv)) == 0 )
+	{
+	  printf("[WRN]:\tselect() timeout reached\n");
+	  break;
+	}
+      if ( FD_ISSET(client->fd, &copy) )
+	{
+	  ssl_err_code = SSL_accept(client->ssl);
+	  err = SSL_get_error(client->ssl, ssl_err_code);
+	}
+    }
+  return ssl_err_code;
 }
 
 
@@ -614,35 +575,10 @@ int wait_for_client(SSL *ssl, int tries)
 /****************************************************
 
 /****************************************************/
-void client_list_init()
+void client_list_init(tdata_t threads[])
 {
   int i  = 0;
-  int j  = 0;
-  
-  clients = (client_t *) malloc(sizeof(client_t) * MAX_CLIENTS);
-  if ( clients == NULL)
-    {
-      printf("[ERR]: Cannot start server.\n");
-      exit(-1);
-    }
-  for(i = 0; i < MAX_CLIENTS; i++)
-    {
-      clients[i].state   = CL_STATE_FREE;
-      clients[i].ssl     = NULL;
-      clients[i].cl_info = NULL;
-      clients[i].nbytes  = 0;
-      
-      /* Initialize mutex client list */
-      for(j = 0; j < MUTEX_NUM; j++)
-	THREAD_get_error(pthread_mutex_init(&(clients[i].mutex[j]), NULL), FATAL, NO_THREAD);
-
-      /* Initialize condition client list */
-      for(j = 0; j < COND_NUM; j++)
-	THREAD_get_error(pthread_cond_init(&(clients[i].cond[j]), NULL), FATAL, NO_THREAD);
-
-      memset(&clients[i].buffer, 0, sizeof(clients[i].buffer));
-      memset(&clients[i].address.sin_zero, 0, sizeof(clients[i].address.sin_zero));
-    }
+  /* TODO? */
 }
 
 
@@ -750,8 +686,9 @@ SSL_CTX* init_server_ctx(void)
   SSL_load_error_strings();		/* load all error messages */
   OpenSSL_add_all_algorithms();	/* load & register all cryptos, etc. */
   SSL_library_init();
-  method = SSLv23_method();		/* for java clients compatibility */
-  
+  method = SSLv23_server_method();		/* for java clients compatibility */
+
+  ERR_load_crypto_strings();
   ctx = SSL_CTX_new(method);		/* create new context from method */
   if ( ctx == NULL )  {
     ERR_print_errors_fp(stderr);
@@ -760,4 +697,67 @@ SSL_CTX* init_server_ctx(void)
   options = SSL_CTX_get_options( ctx );
   SSL_CTX_set_options( ctx,  options | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
   return ctx;
+}
+
+
+
+/*******************************************************************
+ *
+ *******************************************************************/
+static void locking_function(int mode, int n, const char * file, int line)
+{
+  if (mode & CRYPTO_LOCK)
+    MUTEX_LOCK(mutex_buf[n]);
+  else
+    MUTEX_UNLOCK(mutex_buf[n]);
+}
+
+
+
+/*******************************************************************
+ *
+ *******************************************************************/
+static unsigned long id_function(void)
+{
+  return ((unsigned long)THREAD_ID);
+}
+
+
+
+/*******************************************************************
+ *
+ *******************************************************************/
+int THREAD_setup(void)
+{
+  int i;
+  mutex_buf = (MUTEX_TYPE *)malloc(CRYPTO_num_locks() * sizeof(MUTEX_TYPE));
+  if (!mutex_buf)
+    return 0;
+  for (i = 0; i < CRYPTO_num_locks(); i++)
+    {
+      if ( !MUTEX_SETUP(mutex_buf[i]) )
+	return 0;
+    }
+  CRYPTO_set_id_callback(id_function);
+  CRYPTO_set_locking_callback(locking_function);
+  return 1;
+}
+
+
+
+/*******************************************************************
+ *
+ *******************************************************************/
+int THREAD_cleanup(void)
+{
+  int i;
+  if (!mutex_buf)
+    return 0;
+  CRYPTO_set_id_callback(NULL);
+  CRYPTO_set_locking_callback(NULL);
+  for (i = 0; i < CRYPTO_num_locks(); i++)
+    MUTEX_CLEANUP(mutex_buf[i]);
+  free(mutex_buf);
+  mutex_buf = NULL;
+  return 1;
 }

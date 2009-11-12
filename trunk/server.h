@@ -39,6 +39,14 @@ const char *NFO_BDCAST= "[NFO]:\tStarting the broadcast...[listener=%d, me=%d]\n
 const char *NFO_FDWR  = "[NFO]:\tfd %d associated to ssl when writing\n";
 const char *NFO_FWD   = "[NFO]:\tTrying to forward ('%s') from socket %d to socket %d: ";
 
+#define MUTEX_TYPE           pthread_mutex_t
+#define MUTEX_SETUP(mutex)   pthread_mutex_init(&(mutex), NULL)
+#define MUTEX_CLEANUP(mutex) pthread_mutex_destroy(&(mutex))
+#define MUTEX_LOCK(mutex)    pthread_mutex_lock(&(mutex))
+#define MUTEX_UNLOCK(mutex)  pthread_mutex_unlock(&(mutex))
+#define THREAD_ID            pthread_self()
+
+
 #define MAX_CLIENTS 32
 #define BUFFER_SIZE 1024
 
@@ -49,7 +57,7 @@ const char *NFO_FWD   = "[NFO]:\tTrying to forward ('%s') from socket %d to sock
 #define FATAL -1
 #define WARN  -2
 #define NO_THREAD -1
-#define SV_THREAD     0
+#define SV_THREAD     MAX_CLIENTS
 #define AVAIL_THREAD -1
 #define MUTEX_NUM     2
 #define COND_NUM      2
@@ -63,23 +71,21 @@ const char *NFO_FWD   = "[NFO]:\tTrying to forward ('%s') from socket %d to sock
 #define THREAD_ERR_EAGAIN 14
 
 typedef enum {
-  CL_STATE_FREE,
-  CL_STATE_READY,
-  CL_STATE_BUSY
+  THREAD_STATE_FREE,
+  THREAD_STATE_INIT,
+  THREAD_STATE_ACTIVE
 
-} cl_state_t;
+} thread_state_t;
 
 
 /* Client hold structure */
 typedef struct cl {
   int                fd;
-  cl_state_t         state;
   SSL                *ssl;
   char               *cl_info;
   char               buffer[1024];
   int                nbytes;
-  pthread_mutex_t    mutex[MUTEX_NUM];
-  pthread_cond_t     cond[COND_NUM];
+  pthread_mutex_t    mutex;
   struct sockaddr_in address;
 
 } client_t;
@@ -87,9 +93,11 @@ typedef struct cl {
 
 /* Thread data structure */
 typedef struct tdata {
-  client_t *client;
-  int       id;
-
+  pthread_t       tid;
+  client_t        *client;
+  thread_state_t  state;
+  pthread_mutex_t mutex;
+  int             tnum;
  } tdata_t;
 
 
@@ -98,6 +106,6 @@ int show_certs(SSL *ssl);
 int open_listener(int port, struct sockaddr_in *addr);
 SSL_CTX *init_server_ctx(void);
 
-int wait_for_client(SSL *ssl, int tries);
+int wait_for_client(client_t *client);
 
 void signal_handler(int sig);
