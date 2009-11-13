@@ -133,8 +133,17 @@ int main(int argc, char *argv[])
 	    {
 	      printf("searching place on %d and locking\n",i);
 	      pthread_mutex_lock(&thread_data[i].mutex);
-	      if ( thread_data[i].state == THREAD_STATE_NEW || thread_data[i].state == THREAD_STATE_FREE )
+	      if ( thread_data[i].state == THREAD_STATE_NEW )
 		{
+		  printf("thread %d was never used\n",i);
+		  thread_data[i].state = THREAD_STATE_INIT;
+		  notfound = 0;
+		}
+	      if ( thread_data[i].state == THREAD_STATE_FREE )
+		{
+		  printf("thread %d was used, cancelling and waiting\n", i);
+		  pthread_cancel(thread_data[i].tid);
+		  pthread_join(thread_data[i].tid, NULL);
 		  thread_data[i].state = THREAD_STATE_INIT;
 		  notfound = 0;
 		}
@@ -183,10 +192,9 @@ int main(int argc, char *argv[])
 	}
     }
   /* Check if theres more data to free */
-  r_free(thread_data);
+  r_free();
   pthread_attr_destroy(&joinattr);
 
-  /* TODO: When program is signaled to exit, wait untill all threads finish. then exit */
   printf("\n--- END ---\n");
   pthread_exit(NULL);
 }
@@ -212,7 +220,7 @@ void thread_abort()
  * ------
  * Resources are freed.
  ********************************************************/
-void r_free(tdata_t threads[])
+void r_free()
 { 
   CONF_modules_unload(1);
   EVP_cleanup();
@@ -423,7 +431,7 @@ void *attend_client(void *arg)
       err = SSL_get_error(client->ssl, nbytes);
       errsv = ERR_get_error();
       pthread_mutex_unlock(&client->mutex);
-      printf("<thread %d>[NFO]:\tSSL_read() = (%d) bytes (err=%d, str= %s)\n", tnum, nbytes, err, ERR_error_string(errsv, NULL));
+      //printf("<thread %d>[NFO]:\tSSL_read() = (%d) bytes (err=%d, str= %s)\n", tnum, nbytes, err, ERR_error_string(errsv, NULL));
 
       /* Thanks to David Schwartz from openssl mailing list for the tips */
       
