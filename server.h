@@ -78,6 +78,12 @@ typedef enum {
 
 } thread_state_t;
 
+typedef enum {
+  CLIENT_STATE_INIT,
+  CLIENT_STATE_READY
+
+} client_state_t;
+
 
 /* Client hold structure */
 typedef struct cl {
@@ -85,9 +91,9 @@ typedef struct cl {
   SSL                *ssl;
   char               *cl_info;
   char               buffer[1024];
-  int                nbytes;
   pthread_mutex_t    mutex;
   struct sockaddr_in address;
+  client_state_t     state;
 
 } client_t;
 
@@ -100,6 +106,13 @@ typedef struct tdata {
   pthread_mutex_t mutex;
   int             tnum;
  } tdata_t;
+
+
+typedef struct queue_item {
+  char buffer[1024];  //define a value here
+  int  nbytes;
+  int  from;
+}queue_item_t;
 
 
 void load_certificates(SSL_CTX * ctx, char * CertFile, char *KeyFile);
