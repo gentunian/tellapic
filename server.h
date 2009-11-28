@@ -15,8 +15,11 @@
  *         Virginia Boscaro
  *
  */ 
-#include <openssl/ssl.h>
+#ifndef _SERVER_H_
+#define _SERVER_H_
 
+#include <openssl/ssl.h>
+#include "list.h"
 
 /* CHANGE THIS!!! */
 /* TODO: More work on this header */
@@ -49,7 +52,7 @@ const char *NFO_FWD   = "[NFO]:\tTrying to forward ('%s') from socket %d to sock
 
 #define MAX_CLIENTS 32
 #define BUFFER_SIZE 1024
-
+#define MAX_PWD_TRIES 5
 #define TIMEOUT 1000
 #define S_GETLIST 0
 #define S_NOLIST  1
@@ -87,9 +90,10 @@ typedef enum {
 
 /* Client hold structure */
 typedef struct cl {
+  int                clidx;
   int                fd;
   SSL                *ssl;
-  char               *cl_info;
+  char               *clinfo;
   char               buffer[1024];
   pthread_mutex_t    mutex;
   struct sockaddr_in address;
@@ -105,21 +109,31 @@ typedef struct tdata {
   thread_state_t  state;
   pthread_mutex_t mutex;
   int             tnum;
+
  } tdata_t;
 
 
 typedef struct queue_item {
-  char buffer[1024];  //define a value here
+  char buffer[BUFFER_SIZE];  //define a value here
   int  nbytes;
   int  from;
-}queue_item_t;
+} queue_item_t;
 
 
-void load_certificates(SSL_CTX * ctx, char * CertFile, char *KeyFile);
-int show_certs(SSL *ssl);
-int open_listener(int port, struct sockaddr_in *addr);
-SSL_CTX *init_server_ctx(void);
+typedef struct args {
+  int         port;
+  int         svfd;
+  list_t      *imglist;
+  list_node_t *current;
+  char        *pwd;
 
-int wait_for_client(client_t *client);
+} args_t;
 
-void signal_handler(int sig);
+
+int             open_listener(int port, struct sockaddr_in *addr);
+SSL_CTX         *init_server_ctx(void);
+void            *iterate_id(void **arg);
+int             wait_for_client(client_t *client);
+void            signal_handler(int sig);
+
+#endif
