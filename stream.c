@@ -5,7 +5,7 @@
 #include "stream.h"
 
 
-byte_t *build_stream(byte_t ctlbyte, ...)
+byte_t *stream_build(byte_t ctlbyte, ...)
 {
   byte_t  *outstream = NULL;
   va_list argp;
@@ -30,12 +30,10 @@ byte_t *build_stream(byte_t ctlbyte, ...)
 	  *size        = idlist->count + 2;
 	  outstream    = (byte_t *) malloc(sizeof(byte_t) * (*size));
 	  outstream[i] = CTL_SV_IDLIST;
-	  printf("outstream[%d]: %d\n", i, outstream[i]);
 	  while( !list_is_empty(idlist) )
 	    {
 	      list_node_t *tmp = list_get_tail(idlist);
 	      outstream[++i]   = *(byte_t *)list_get_item(tmp);
-	      printf("outstream[%d]: %d\n", i, outstream[i]);
 	      list_remove(idlist, tmp);
 	      free(tmp);
 	    }
@@ -48,10 +46,12 @@ byte_t *build_stream(byte_t ctlbyte, ...)
 	    ctlbyte == CTL_SV_ASKPWD )
     {
       int id       = va_arg(argp, int);
+      int *nbytes  = va_arg(argp, int *);
       outstream    = (byte_t *) malloc(sizeof(byte_t) * 3);
       outstream[0] = ctlbyte;
       outstream[1] = (byte_t) id;
       outstream[2] = 0;
+      *nbytes      = 3;
     }
   else
     {
@@ -62,14 +62,26 @@ byte_t *build_stream(byte_t ctlbyte, ...)
 }
 
 
-byte_t get_ctlbyte(const byte_t *stream)
+byte_t stream_get_ctlbyte(const byte_t *stream)
 {
   return stream[0]; 
 }
 
-const byte_t *get_pwd(const byte_t *stream)
+byte_t stream_get_id(const byte_t *stream)
 {
-  return stream+1;
+  return stream[1];
+}
+
+byte_t *stream_get_pwd(byte_t *stream, int size, int id)
+{
+  /* check for correct data packet */
+  if ( *stream != CTL_CL_PWD || size != PWDLEN + 3 || *(stream + 1) != id)
+    {
+      *stream = '\0';
+      return stream;
+    }
+  else
+    return (stream + 2);    
 }
 /*******************************************************************************
  * Example:
