@@ -3,6 +3,8 @@
 
 #include <stdarg.h>
 
+#define PWDLEN 32
+
 typedef unsigned char byte_t;
 
 /**********************************************************
@@ -25,7 +27,6 @@ static const byte_t CTL_CL_FILE   = 5;
 static const byte_t CTL_CL_PWD    = 9;
 static const byte_t CTL_SV_ASKPWD = 10;
 
-byte_t           *build_stream(byte_t ctlbyte, ...);
-byte_t           get_ctlbyte(const byte_t *stream);
-const byte_t     *get_pwd(const byte_t *stream);
+byte_t           *stream_build(byte_t ctlbyte, ...);
+byte_t           *stream_get_pwd(byte_t *stream, int size, int id);
 #endif
