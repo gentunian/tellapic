@@ -334,14 +334,14 @@ void args_check(int argc, char *argv[])
       for(i = 0; argv[3][i] != '\0'; i++);
       if ( i != PWDLEN )
 	{
-	  printf("Password (%d bits) must be 32-bits long.\n", i);
+	  printf("Password (%d-bits) must be encripted %d-bits long.\n", i, PWDLEN);
 	  exit(1);
 	}
     }
   /* at this point args are ok */
   args.port = atoi(argv[1]);
   
-  /* copies the 32-bit string and adds the null termination byte at the end for safety */
+  /* copies the PWDLEN-bit string and adds the null termination byte at the end for safety */
   args.pwd  = (char *) malloc(sizeof(char) * (PWDLEN + 1) );
   for(i = 0; i < PWDLEN; i++)
     args.pwd[i] = argv[3][i];
@@ -400,18 +400,18 @@ void *send_to_clients(void *arg)
 	  pthread_mutex_lock(&thread_data[i].mutex);
 	  if ( thread_data[i].state == THREAD_STATE_ACTIVE && i != stream.from )
 	    {
+	      pthread_mutex_lock(&thread_data[i].client->mutex);
 	      do
 		{
-		  pthread_mutex_lock(&thread_data[i].client->mutex);
 		  if ( thread_data[i].client->state == CLIENT_STATE_READY )
 		    {
 		      printf("Sending %d bytes and string '%s' to client/thread %d with state: %d\n", stream.nbytes, stream.buffer, i, clients[i].state);
 		      rv = SSL_write(thread_data[i].client->ssl, stream.buffer, stream.nbytes);
 		      ec = SSL_get_error(thread_data[i].client->ssl, rv);
 		    }
-		  pthread_mutex_unlock(&thread_data[i].client->mutex);
 		}
 		while( ec == SSL_ERROR_WANT_WRITE || ec == SSL_ERROR_WANT_READ );
+	      pthread_mutex_unlock(&thread_data[i].client->mutex);
 	    }
 	  pthread_mutex_unlock(&thread_data[i].mutex);
 	}
@@ -435,7 +435,8 @@ void *attend_client(void *arg)
   int       *tnum      = (int *) arg;
   int       nbytes     = 0;
   int       err        = 0;
-  char      *idstream  = NULL;
+  int       osbytes    = 0;
+  char      *ostream   = NULL;
   client_t  *tmpclient = clients;
   fd_set    master;
   fd_set    copy;
@@ -446,11 +447,13 @@ void *attend_client(void *arg)
   /* register cleanup function for this thread */
   pthread_cleanup_push(cleanup_read_thread, (void *) tnum);
   /* wait for a handshake. */
+
   if( wait_for_client(thread_data[*tnum].client) != 1 )  
     {
-      printf("<thread %d>[ERR]:\tcould not hanshake with client.\n", *tnum);
+      printf("<thread %d>[ERR]:\tcould not handshake with client.\n", *tnum);
       pthread_exit(NULL); //this will call cleanup function.p
     }
+
   printf(NFO_ACCEPT, *tnum, inet_ntoa(thread_data[*tnum].client->address.sin_addr), thread_data[*tnum].client->fd);
   printf(NFO_CIPHER, *tnum, SSL_get_version(thread_data[*tnum].client->ssl), SSL_get_cipher(thread_data[*tnum].client->ssl));
   pthread_mutex_lock(&clcmutex);
@@ -458,15 +461,15 @@ void *attend_client(void *arg)
   cm++;
   pthread_mutex_unlock(&clcmutex);
   printf("<thread %d>[NFO]:\tSending id list to connected clients\n", *tnum);
-  idstream = stream_build(CTL_SV_IDLIST, tmpclient, iterate_id, &nbytes); 
-  /* is there's connected clients send it */
-  if ( idstream != NULL )
-    strcptobuf(idstream, nbytes, *tnum);
+  ostream = stream_build(CTL_SV_IDLIST, tmpclient, iterate_id, &nbytes); 
+  /* if there is connected clients send it */
+  if ( ostream != NULL )
+    strcptobuf(ostream, nbytes, *tnum);
   pthread_mutex_unlock(&thread_data[*tnum].client->mutex);
   thread_data[*tnum].client->state = CLIENT_STATE_READY;
   pthread_mutex_unlock(&thread_data[*tnum].client->mutex);
   printf("<thread %d>[NFO]:\tMain attendance loop start\n", *tnum);
-  free(idstream);
+  free(ostream);
   pthread_mutex_lock(&thread_data[*tnum].mutex);
   thread_data[*tnum].state = THREAD_STATE_ACTIVE;
   while( thread_data[*tnum].state == THREAD_STATE_ACTIVE )
@@ -515,13 +518,17 @@ void *attend_client(void *arg)
 void strcptobuf(const byte_t *src, int size, int from)
 {
   int i = 0;
-  pthread_mutex_lock(&stream_mutex);			 
-  stream.from   = from;
-  stream.nbytes = size;
-  for(i = 0; i < stream.nbytes; i++)
-    stream.buffer[i] = src[i];
-  pthread_cond_signal(&stream_cond);	 
-  pthread_mutex_unlock(&stream_mutex);
+  /* Don't forward anything. Check if src is a client stream */
+  if ( stream_is_stream(src, size) )
+    {
+      pthread_mutex_lock(&stream_mutex);			 
+      stream.from   = from;
+      stream.nbytes = size;
+      for(i = 0; i < stream.nbytes; i++)
+	stream.buffer[i] = src[i];
+      pthread_cond_signal(&stream_cond);	 
+      pthread_mutex_unlock(&stream_mutex);
+    }
 }
 
 
@@ -575,48 +582,108 @@ void free_client(int clnum)
 }
 
 
+/************************************
+************************************/
+int check_pwd(void *arg)
+{
+  static int pwdf = 0;
+  if ( memcmp(args.pwd, arg, PWDLEN) )
+    {
+      pwdf++;
+      if ( pwdf == MAX_PWD_TRIES )
+	return SEQ_CANT_CONTINUE;
+      else
+	return SEQ_NEEDS_RETRY;
+    }
+  else
+    return SEQ_OK;
+}
+
+
+/************************************
+************************************/
+int check_dummy(void *arg)
+{
+  return SEQ_OK;
+}
+
+
+/************************************
+************************************/
+int check_last(void *arg)
+{
+  return SEQ_LAST;
+}
+
+
 /**************************************
  * wait_for_client(client_t *client):
  * ---------------
  **************************************/
 int wait_for_client(client_t *client)
 {
-  int            pwdf     = 1;          /* number of password fails     */
-  int            sslrc    = 0;          /* ssl function return code     */
-  int            ec       = 0;          /* error code                   */
-  int            isbytes  = 0;          /* number of bytes read         */
-  int            osbytes  = 0;          /* number of bytes of ostream   */
-  byte_t         *ostream = NULL;       /* stream to be sent            */
-  byte_t         istream[BUFFER_SIZE];  /* buffer to hold read data     */
+  int            i        = 0;
+  int            seq      = 0;                                               /* next sequence on pseq        */
+  int            ec       = 0;                                               /* error code                   */
+  int            isbytes  = 0;                                               /* number of bytes read         */
+  int            osbytes  = 0;                                               /* number of bytes of ostream   */
+  byte_t         *ostream = NULL;                                            /* stream to be sent            */
+  byte_t         istream[BUFFER_SIZE];                                       /* buffer to hold read data     */
   struct timeval tv;
+  psequence_t    *PSEQ = NULL;
+  int (*checkers [])(void *arg) = {
+    check_pwd,
+    check_dummy,
+    check_dummy,
+    check_last
+  };
+
+  PSEQ = packet_sequence_build(PSEQ_CONN, checkers);
+  /* TODO: another approach? */
+  for (i = 0; i < PSEQ_CONN_SIZE; i++)
+    {
+      PSEQ[i].pbargs   = list_make_empty(PSEQ[i].pbargs);
+      PSEQ[i].pcargs   = list_make_empty(PSEQ[i].pcargs);
+
+    }
+  /* TODO: another approach? */
+  list_add_last_item(PSEQ[0].pbargs, (void *) &client->fd);
+  list_add_last_item(PSEQ[1].pbargs, (void *) &client->fd);
+  list_add_last_item(PSEQ[2].pbargs, (void *) &client->fd);
+  list_add_last_item(PSEQ[2].pbargs, (void *) args.current);
+  list_add_last_item(PSEQ[3].pbargs, (void *) &client->fd);
+  list_add_last_item(PSEQ[3].pbargs, (void *) args.current);
 
   tv.tv_sec  = 5;
   tv.tv_usec = 0;
   ec         = ssl_accept_b(client, tv);
-  if ( ec == SSL_ERROR_NONE )
+  if ( ec == SSL_ERROR_NONE ) 
     {
       ostream = stream_build(CTL_SV_ASKPWD, client->fd, &osbytes);
       do
 	{
-	  if ( ssl_write_b(client, &ec, ostream, osbytes) <= 0 )
+	  if ( ssl_write_b(client, &ec, ostream, osbytes) <= 0)
 	    return 0;
 	  if ( (isbytes = ssl_read_b(client, &ec, istream, BUFFER_SIZE, &tv)) <= 0 )
-	    pwdf = isbytes;
+	    return 0;
 	  else
-	    /* This statement assigns pwdf MAX_PWD_TRIES + 1 if password is correct and */
-	    /* the while loop ends.                                                     */
-	    /* When password is wrong, pwdf is incremented by 1. If all tries are       */
-	    /* wrong, eventually pwdf will be equal to MAX_PWD_TRIES and the loop ends. */
-	    pwdf += !memcmp(args.pwd, stream_get_pwd(istream, isbytes, client->fd), PWDLEN) * MAX_PWD_TRIES + 1;
+	    {
+	      byte_t clpacket = stream_get_ctlbyte(istream, isbytes);
+	      byte_t svpacket = stream_get_ctlbyte(ostream, osbytes);
+	      if ( seq == 0)
+		list_add_last_item(PSEQ[seq].pcargs, stream_get_pwd(istream, isbytes, client->fd)); //finish stream_get_pwd()
+	      seq = next_sequence(seq, clpacket, svpacket, PSEQ, ostream, &osbytes);
+	    }
 	}
-      while  (pwdf < MAX_PWD_TRIES && pwdf > 0 );
-      /* Then, if pwdf is equals to MAX_PWD_TRIES all password */
-      /* tries where wrong and we return 0. Else, the password */
-      /* was right and we return 1.                            */
-      return (pwdf > MAX_PWD_TRIES);
+      while( seq >= 0 && seq < PSEQ_CONN_SIZE );
+      //TODO: CLEAN UP LEAKS FROM LIST AND SO ON...PSEQ[0].pcargs PSEQ[i].pbargs
+      free(ostream);
+      packet_sequence_cleanup(PSEQ_CONN, PSEQ);
+      free(PSEQ);
+      return seq;
     }
   else
-    return ec; //propagate the error 
+    return 0;
 }
 
 
@@ -680,15 +747,18 @@ int ssl_read_b(client_t *cl, int *err, byte_t *buf, size_t size, struct timeval 
  *********************************************************************************/
 int ssl_write_b(client_t *cl, int *err, const byte_t *buf, size_t size)
 {
-  int nbytes = 0;
-  do
+  int        bwrote   = 0;
+  *err = SSL_ERROR_NONE;
+  while( bwrote < size && *err == SSL_ERROR_NONE)
     {
-      nbytes = SSL_write(cl->ssl, buf, size);
-      *err   = SSL_get_error(cl->ssl, nbytes);
-    }
-  while( ( *err == SSL_ERROR_WANT_READ || *err == SSL_ERROR_WANT_WRITE ) );
-  
-  return nbytes;
+      do
+	{
+	  bwrote +=  SSL_write(cl->ssl, buf, size);
+	  *err    = SSL_get_error(cl->ssl, bwrote);
+	}
+      while( ( *err == SSL_ERROR_WANT_READ || *err == SSL_ERROR_WANT_WRITE ) );
+    }  
+  return bwrote;
 }
 
 
