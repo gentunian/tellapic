@@ -73,6 +73,7 @@ const char *NFO_FWD   = "[NFO]:\tTrying to forward ('%s') from socket %d to sock
 #define THREAD_ERR_EPERM  13
 #define THREAD_ERR_EAGAIN 14
 
+
 typedef enum {
   THREAD_STATE_NEW,
   THREAD_STATE_FREE,
