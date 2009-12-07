@@ -72,6 +72,8 @@ int                new_thread_data(int i, int clfd, struct sockaddr_in clientadd
 int                THREAD_cleanup(void);
 int                ssl_read_b(client_t *cl, int *err, byte_t *buf, size_t size, struct timeval *tv);
 int                ssl_write_b(client_t *cl, int *err, const byte_t *buf, size_t size);
+unsigned char      *hexastr2binary(unsigned char *sha1hexadigest);
+int                htoi(unsigned char hexdigit);
 
 tdata_t            thread_data[MAX_CLIENTS + 1]; //this is the main shared data
 client_t           clients[MAX_CLIENTS];         //this too.
@@ -316,7 +318,7 @@ void args_check(int argc, char *argv[])
   /* Check if the program was called correctly */
   if ( argc != 4) 
     {
-      printf("Usage:\n ./server <port> <path-to-file> <32bits-password>\n");
+      printf("Usage:\n ./server <port> <path-to-file> <sha1sum-password>\n");
       exit(1);
     }
   else 
@@ -332,21 +334,15 @@ void args_check(int argc, char *argv[])
 	  exit(1);
 	}
       for(i = 0; argv[3][i] != '\0'; i++);
-      if ( i != PWDLEN )
+      if ( i != SHA_DIGEST_LENGTH * 2)
 	{
-	  printf("Password (%d-bits) must be encripted %d-bits long.\n", i, PWDLEN);
+	  printf("Password must be encripted 160-bits long (sha1sum).\n");
 	  exit(1);
 	}
     }
   /* at this point args are ok */
-  args.port = atoi(argv[1]);
-  
-  /* copies the PWDLEN-bit string and adds the null termination byte at the end for safety */
-  args.pwd  = (char *) malloc(sizeof(char) * (PWDLEN + 1) );
-  for(i = 0; i < PWDLEN; i++)
-    args.pwd[i] = argv[3][i];
-  args.pwd[i] = '\0';
-
+  args.port = atoi(argv[1]);  
+  args.pwd = hexastr2binary(argv[3]);
   list_add_first_item(args.imglist, file);
   args.current = list_get_head(args.imglist);
 }
@@ -448,7 +444,7 @@ void *attend_client(void *arg)
   pthread_cleanup_push(cleanup_read_thread, (void *) tnum);
   /* wait for a handshake. */
 
-  if( wait_for_client(thread_data[*tnum].client) != 1 )  
+  if( wait_for_client(thread_data[*tnum].client) <= 0 )  
     {
       printf("<thread %d>[ERR]:\tcould not handshake with client.\n", *tnum);
       pthread_exit(NULL); //this will call cleanup function.p
@@ -461,7 +457,7 @@ void *attend_client(void *arg)
   cm++;
   pthread_mutex_unlock(&clcmutex);
   printf("<thread %d>[NFO]:\tSending id list to connected clients\n", *tnum);
-  ostream = stream_build(CTL_SV_IDLIST, tmpclient, iterate_id, &nbytes); 
+  ostream = STREAM_build(CTL_SV_IDLIST, tmpclient, iterate_id, &nbytes); 
   /* if there is connected clients send it */
   if ( ostream != NULL )
     strcptobuf(ostream, nbytes, *tnum);
@@ -519,7 +515,7 @@ void strcptobuf(const byte_t *src, int size, int from)
 {
   int i = 0;
   /* Don't forward anything. Check if src is a client stream */
-  if ( stream_is_stream(src, size) )
+  if ( STREAM_is_stream(src, size) )
     {
       pthread_mutex_lock(&stream_mutex);			 
       stream.from   = from;
@@ -587,7 +583,8 @@ void free_client(int clnum)
 int check_pwd(void *arg)
 {
   static int pwdf = 0;
-  if ( memcmp(args.pwd, arg, PWDLEN) )
+  byte_t *pwd = (byte_t *) list_get_first_item((list_t *) arg);
+  if ( memcmp(args.pwd, pwd, PWDLEN) )
     {
       pwdf++;
       if ( pwdf == MAX_PWD_TRIES )
@@ -596,7 +593,7 @@ int check_pwd(void *arg)
 	return SEQ_NEEDS_RETRY;
     }
   else
-    return SEQ_OK;
+    return SEQ_CL_OK;
 }
 
 
@@ -604,7 +601,7 @@ int check_pwd(void *arg)
 ************************************/
 int check_dummy(void *arg)
 {
-  return SEQ_OK;
+  return SEQ_CL_OK;
 }
 
 
@@ -630,7 +627,7 @@ int wait_for_client(client_t *client)
   byte_t         *ostream = NULL;                                            /* stream to be sent            */
   byte_t         istream[BUFFER_SIZE];                                       /* buffer to hold read data     */
   struct timeval tv;
-  psequence_t    *PSEQ = NULL;
+  psequence_t    *pseq = NULL;
   int (*checkers [])(void *arg) = {
     check_pwd,
     check_dummy,
@@ -638,28 +635,20 @@ int wait_for_client(client_t *client)
     check_last
   };
 
-  PSEQ = packet_sequence_build(PSEQ_CONN, checkers);
-  /* TODO: another approach? */
-  for (i = 0; i < PSEQ_CONN_SIZE; i++)
-    {
-      PSEQ[i].pbargs   = list_make_empty(PSEQ[i].pbargs);
-      PSEQ[i].pcargs   = list_make_empty(PSEQ[i].pcargs);
-
-    }
-  /* TODO: another approach? */
-  list_add_last_item(PSEQ[0].pbargs, (void *) &client->fd);
-  list_add_last_item(PSEQ[1].pbargs, (void *) &client->fd);
-  list_add_last_item(PSEQ[2].pbargs, (void *) &client->fd);
-  list_add_last_item(PSEQ[2].pbargs, (void *) args.current);
-  list_add_last_item(PSEQ[3].pbargs, (void *) &client->fd);
-  list_add_last_item(PSEQ[3].pbargs, (void *) args.current);
+  pseq = PSEQ_build(PSEQ_CONN, checkers);
+  PSEQ_add_pbargs(pseq, PSEQ_CONN_0, (void *) &client->fd);
+  PSEQ_add_pbargs(pseq, PSEQ_CONN_1, (void *) &client->fd);
+  PSEQ_add_pbargs(pseq, PSEQ_CONN_2, (void *) &client->fd);
+  PSEQ_add_pbargs(pseq, PSEQ_CONN_2, (void *) list_get_item(args.current));
+  PSEQ_add_pbargs(pseq, PSEQ_CONN_3, (void *) &client->fd);
+  PSEQ_add_pbargs(pseq, PSEQ_CONN_3, (void *) list_get_item(args.current));
 
   tv.tv_sec  = 5;
   tv.tv_usec = 0;
   ec         = ssl_accept_b(client, tv);
   if ( ec == SSL_ERROR_NONE ) 
     {
-      ostream = stream_build(CTL_SV_ASKPWD, client->fd, &osbytes);
+      ostream = STREAM_build(CTL_SV_ASKPWD, client->fd, &osbytes);
       do
 	{
 	  if ( ssl_write_b(client, &ec, ostream, osbytes) <= 0)
@@ -668,18 +657,18 @@ int wait_for_client(client_t *client)
 	    return 0;
 	  else
 	    {
-	      byte_t clpacket = stream_get_ctlbyte(istream, isbytes);
-	      byte_t svpacket = stream_get_ctlbyte(ostream, osbytes);
+	      byte_t clpacket = STREAM_get_ctlbyte(istream, isbytes);
+	      byte_t svpacket = STREAM_get_ctlbyte(ostream, osbytes);
 	      if ( seq == 0)
-		list_add_last_item(PSEQ[seq].pcargs, stream_get_pwd(istream, isbytes, client->fd)); //finish stream_get_pwd()
-	      seq = next_sequence(seq, clpacket, svpacket, PSEQ, ostream, &osbytes);
+		PSEQ_add_pcargs(pseq, PSEQ_CONN_0, (void *) STREAM_get_pwd(istream, isbytes, client->fd));
+	      seq = PSEQ_next_sequence(seq, clpacket, svpacket, pseq, &ostream, &osbytes);
 	    }
 	}
       while( seq >= 0 && seq < PSEQ_CONN_SIZE );
       //TODO: CLEAN UP LEAKS FROM LIST AND SO ON...PSEQ[0].pcargs PSEQ[i].pbargs
       free(ostream);
-      packet_sequence_cleanup(PSEQ_CONN, PSEQ);
-      free(PSEQ);
+      PSEQ_cleanup(PSEQ_CONN, pseq);
+      free(pseq);
       return seq;
     }
   else
@@ -1007,4 +996,37 @@ int THREAD_cleanup(void)
   free(mutex_buf);
   mutex_buf = NULL;
   return 1;
+}
+
+
+/**********************************************************
+ *********************************************************/
+unsigned char *hexastr2binary(unsigned char *sha1hexadigest)
+{  
+  unsigned char *output = (unsigned char *) malloc(sizeof(unsigned char) * SHA_DIGEST_LENGTH + 1);
+  int i = 0;
+
+  output[SHA_DIGEST_LENGTH] = '\0';
+  for(i = SHA_DIGEST_LENGTH - 1; i >= 0; i--)
+    {
+      output[i]  = htoi(sha1hexadigest[i * 2 + 1]);
+      output[i] |= htoi(sha1hexadigest[i * 2])<<4;
+    }  
+  return output;
+}
+
+
+/**********************************************************
+ *********************************************************/
+int htoi(unsigned char hexdigit)
+{
+  char hex[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+  int i = 0;
+  
+  for(i = 0; i < 16 && hex[i] != hexdigit; i++);
+  
+  if( i == 16 )
+    return -1;
+  else
+    return i;
 }

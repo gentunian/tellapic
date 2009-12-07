@@ -20,6 +20,12 @@ void list_clear(list_t  *listPtr)
 
 void list_free(list_t *listPtr)
 {
+
+}
+
+list_node_t *list_freed_to_array(list_t *listPtr)
+{
+  list_node_t *array = (list_node_t *) malloc(sizeof(list_node_t) * listPtr->count);
   list_node_t *nodePtr;
   for( nodePtr  = list_get_head(listPtr); 
        nodePtr != NULL;
@@ -29,6 +35,7 @@ void list_free(list_t *listPtr)
 	  free(list_get_prev(nodePtr));
     }
   free(listPtr);
+  return array;
 }
 
 bool list_is_member(list_t *listPtr, list_node_t *nodePtr) 
