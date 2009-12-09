@@ -287,7 +287,7 @@ void signal_handler(int sig)
 {
   printf("[HANDLER]: Signal %d caught.\n", sig);
   /* TODO: use this function to control program workflow and exit properly */
-  int flag = 0;
+  int flag = 0; 
   switch(sig)
     {
     case SIGINT:
@@ -457,7 +457,11 @@ void *attend_client(void *arg)
   cm++;
   pthread_mutex_unlock(&clcmutex);
   printf("<thread %d>[NFO]:\tSending id list to connected clients\n", *tnum);
-  ostream = STREAM_build(CTL_SV_IDLIST, tmpclient, iterate_id, &nbytes); 
+
+
+  ostream = STREAM_build(CTL_SV_IDLIST, tmpclient, iterate_id, &nbytes);  //FINISH THIS!
+
+
   /* if there is connected clients send it */
   if ( ostream != NULL )
     strcptobuf(ostream, nbytes, *tnum);
