@@ -72,7 +72,9 @@ const char *NFO_FWD   = "[NFO]:\tTrying to forward ('%s') from socket %d to sock
 #define THREAD_ERR_ENOMEM 12
 #define THREAD_ERR_EPERM  13
 #define THREAD_ERR_EAGAIN 14
+#define THREAD_NEEDS_WRITE 99
 
+typedef list_node_t queue_node_t;
 
 typedef enum {
   THREAD_STATE_NEW,
@@ -91,6 +93,7 @@ typedef enum {
 
 /* Client hold structure */
 typedef struct cl {
+
   int                clidx;
   int                fd;
   SSL                *ssl;
@@ -99,25 +102,30 @@ typedef struct cl {
   pthread_mutex_t    mutex;
   struct sockaddr_in address;
   client_state_t     state;
+  queue_node_t       *last;
 
 } client_t;
 
 
 /* Thread data structure */
 typedef struct tdata {
-  pthread_t       tid;
-  client_t        *client;
-  thread_state_t  state;
-  pthread_mutex_t mutex;
-  int             tnum;
+  int                pending;
+  pthread_t          tid;
+  client_t           *client;
+  thread_state_t     state;
+  pthread_mutex_t    pendmutex;
+  pthread_mutex_t    mutex;
+  int                tnum;
+  int                pipefd[2];
 
  } tdata_t;
 
 
 typedef struct queue_item {
-  char buffer[BUFFER_SIZE];  //define a value here
+  char data[BUFFER_SIZE];  //define a value here
   int  nbytes;
   int  from;
+
 } queue_item_t;
 
 

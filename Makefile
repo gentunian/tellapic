@@ -6,16 +6,16 @@ CFLAGS   = -ggdb -I$(INCDIR)
 
 
 server: list.o libstream.so
-	$(CC) -lssl -lpthread -lstream -L$(BUILDDIR) $(SRCDIR)/server.c $(BUILDDIR)/list.o -o $(BUILDDIR)/$@
+	$(CC)  $(CFLAGS) -lssl -lpthread -lstream -L$(BUILDDIR) $(SRCDIR)/server.c $(BUILDDIR)/list.o -o $(BUILDDIR)/$@
 
 libstream.so: stream.o
-	$(CC) -shared -Wl,-soname,$@ -o $(BUILDDIR)/$@ -lc $(BUILDDIR)/stream.o
+	$(CC)  $(CFLAGS) -shared -Wl,-soname,$@ -o $(BUILDDIR)/$@ -lc $(BUILDDIR)/stream.o
 
 stream.o: 
-	$(CC) -Wall -fPIC -c $(SRCDIR)/stream.c -o $(BUILDDIR)/$@
+	$(CC)  $(CFLAGS) -Wall -fPIC -c $(SRCDIR)/stream.c -o $(BUILDDIR)/$@
 
 list.o:
-	$(CC) $(SRCDIR)/list.c -c -o $(BUILDDIR)/$@
+	$(CC) $(CFLAGS) $(SRCDIR)/list.c -c -o $(BUILDDIR)/$@
 
 clean:
-	rm $(BUILDDIR)/*
+	rm $(BUILDDIR)/*.o $(BUILDDIR)/server $(BUILDDIR)/lib*
