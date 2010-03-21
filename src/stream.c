@@ -203,7 +203,7 @@ int STREAM_is_header(const byte_t *header)
   return 1;
 }
 
-int STREAM_get_streamlen_h(const byte_t *header)
+int STREAM_get_streamlen_h(const byte_t *header) //change type
 {
   int len = 0;
   if ( STREAM_is_header(header) )
@@ -216,7 +216,7 @@ int STREAM_get_streamlen_h(const byte_t *header)
 }
 
 
-int STREAM_get_streamlen(const byte_t *stream, int size)
+int STREAM_get_streamlen(const byte_t *stream, int size) //change type
 {
   int len = 0;
   if ( STREAM_is_stream(stream, size) )
@@ -243,7 +243,7 @@ byte_t STREAM_get_ctlbyte(const byte_t *stream, int size)
 /************************************************************************
  * STREAM_get_id(const byte_t *stream, int size):
  ************************************************************************/
-byte_t STREAM_get_id(const byte_t *stream, int size)
+byte_t STREAM_get_id(const byte_t *stream, int size) //change type to ID type
 {
   if ( STREAM_IS_STREAM(stream, size) )
     return *(stream + STREAM_IDX_ID);
@@ -283,7 +283,7 @@ byte_t *STREAM_get_pwd(byte_t *stream, int size, int id)
 
 /************************************
 ************************************/
-int STREAM_wants_fwd(byte_t *stream, int size)
+int STREAM_wants_fwd(byte_t *stream, int size) //WHAT FOR???
 {
   if ( STREAM_is_stream(stream, size))
     return (*stream == CTL_CL_FWD);
@@ -417,10 +417,38 @@ void PSEQ_cleanup(int seqtype, psequence_t *pseq)
     }
 }
 
-/*******************************************************************************
- * Example:
- *
- * idliststream = build_stream(CTL_SV_IDLIST, clients, next_id);
- *
- * discstream   = build_stream(CTL_SV_RMCL, client->fd);
- */
+
+int STREAM_is_press_event(byte_t drawctlbyte)
+{
+  return drawctlbyte & (EVENT_PRESS << 2);
+}
+
+
+int STREAM_is_drag_event(byte_t drawctlbyte)
+{
+  return drawctlbyte & (EVENT_DRAG << 2);
+}
+
+
+int STREAM_is_release_event(byte_t drawctlbyte)
+{
+  return drawctlbyte & (EVENT_RELEASE << 2);
+}
+
+
+int STREAM_get_event(byte_t drawctlbyte)
+{
+  if (STREAM_is_press_event(drawtclbyte))
+    return drawctlbyte & EVENT_MASK;
+  if (STREAM_is_drag_event(drawctlbyte))
+    return drawctlbyte & EVENT_MASK;
+  if (STREAM_is_release_event(drawctlbyte))
+    return drawctlbyte & EVENT_MASK;
+  return EVENT_NOEVENT;
+}
+
+
+int STREAM_is_drawing(byte_t ctlbyte)
+{
+  
+}
