@@ -19,12 +19,10 @@
 #define _SERVER_H_
 
 #include <openssl/ssl.h>
-#include "list.h"
+#include "common.h"
 
 /* CHANGE THIS!!! */
 /* TODO: More work on this header */
-const char *LINE = "\n-----------------------------------------------------------------\n";
-const char *NFO_WAIT  = "[NFO]:\tWaiting for incoming connections\n";
 const char *NFO_HANDLE= "[NFO]:\tTrying to handle new connection on socket: %d\n";
 const char *ERR_ASSOC = "[ERR:]\tCannot associate fd to ssl. (errCode: %d, ret: %d)\n";
 const char *NFO_NEWFD = "<thread %d>[NFO]:\tNew file descriptor %d associated to SSL on connection attempt from: %s\n";
@@ -49,38 +47,33 @@ const char *NFO_FWD   = "[NFO]:\tTrying to forward ('%s') from socket %d to sock
 #define MUTEX_UNLOCK(mutex)  pthread_mutex_unlock(&(mutex))
 #define THREAD_ID            pthread_self()
 
-
-#define MAX_CLIENTS 32
-#define BUFFER_SIZE 1024
-#define MAX_PWD_TRIES 5
-#define TIMEOUT 1000
-#define S_GETLIST 0
-#define S_NOLIST  1
-
-#define FATAL -1
-#define WARN  -2
-#define NO_THREAD -1
-#define SV_THREAD     MAX_CLIENTS
-#define AVAIL_THREAD -1
-#define MUTEX_NUM     2
-#define COND_NUM      2
-#define SSL_MUTEX     0
-#define STATE_MUTEX   1
-
-#define THREAD_ERR_EBUSY  10
-#define THREAD_ERR_EINVAL 11
-#define THREAD_ERR_ENOMEM 12
-#define THREAD_ERR_EPERM  13
-#define THREAD_ERR_EAGAIN 14
-#define THREAD_NEEDS_WRITE 99
-
-typedef list_node_t queue_node_t;
+#define MAX_CLIENTS        32
+#define BUFFER_SIZE      1024
+#define MAX_PWD_TRIES       5
+#define FATAL              -1
+#define WARN               -2
+#define SV_THREAD           MAX_CLIENTS
+#define THREAD_ERR_EBUSY   10
+#define THREAD_ERR_EINVAL  11
+#define THREAD_ERR_ENOMEM  12
+#define THREAD_ERR_EPERM   13
+#define THREAD_ERR_EAGAIN  14
 
 typedef enum {
   THREAD_STATE_NEW,
   THREAD_STATE_FREE,
   THREAD_STATE_INIT,
-  THREAD_STATE_ACTIVE
+  THREAD_STATE_ACT,
+  THREAD_STATE_RH,
+  THREAD_STATE_RHOK,
+  THREAD_STATE_RD,
+  THREAD_STATE_RDOK,
+  THREAD_STATE_WR,
+  THREAD_STATE_WANTR,
+  THREAD_STATE_WANTWR,
+  THREAD_STATE_WAIT,
+  THREAD_STATE_END,
+
 
 } thread_state_t;
 
@@ -93,48 +86,48 @@ typedef enum {
 
 /* Client hold structure */
 typedef struct cl {
-
   int                clidx;
   int                fd;
   SSL                *ssl;
-  char               *clinfo;
-  char               buffer[1024];
-  pthread_mutex_t    mutex;
+  char               *clinfo;//what for?
+  char               buffer[1024]; //what for?
   struct sockaddr_in address;
   client_state_t     state;
+  pthread_mutex_t    stmutex;
   queue_node_t       *last;
+  int32_t            fwdbitlist; //this must be 32bit in any platform. This soft is not intended to run on 16-bit systems.
 
 } client_t;
 
 
 /* Thread data structure */
 typedef struct tdata {
-  int                pending;
   pthread_t          tid;
+  int                tnum;
+  char               shouldwrite;
   client_t           *client;
   thread_state_t     state;
-  pthread_mutex_t    pendmutex;
-  pthread_mutex_t    mutex;
-  int                tnum;
+  pthread_mutex_t    stmutex;
   int                pipefd[2];
 
  } tdata_t;
 
 
-typedef struct queue_item {
-  char data[BUFFER_SIZE];  //define a value here
-  int  nbytes;
-  int  from;
+typedef struct stream_item {
+  byte_t             *data;
+  int                nbytes;
+  unsigned short     from;
+  unsigned short     pending;
 
-} queue_item_t;
+} stream_item_t;
 
 
 typedef struct args {
-  int         port;
-  int         svfd;
-  list_t      *imglist;
-  list_node_t *current;
-  char        *pwd;
+  int                port;
+  int                svfd;
+  list_t             *imglist;
+  list_node_t        *current;
+  char               *pwd;
 
 } args_t;
 

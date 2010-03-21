@@ -7,6 +7,8 @@ typedef struct list_node
 {
   struct list_node *prev, *next;
   void *item;
+  unsigned long number;
+
 } list_node_t;
 
 typedef struct g_list 
@@ -20,14 +22,15 @@ void        list_clear(list_t  *listPtr);
 void        list_free(list_t *listPtr);
 bool        list_is_member(list_t *listPtr, list_node_t *nodePtr);
 void        *list_get_first_item(list_t *listPtr);
+void        *list_get_last_item(list_t *listPtr);
+void        *list_get_next_item(list_t *listPtr);
+void        *list_get_item(list_node_t *nodePtr);
 list_node_t *list_get_tail(list_t *listPtr); 
 list_node_t *list_get_head(list_t *listPtr);
 list_node_t *list_get_next(list_node_t *nodePtr);
 list_node_t *list_get_prev(list_node_t *nodePtr);
-void        *list_get_last_item(list_t *listPtr);
-void        *list_get_item(list_node_t *nodePtr);
-void        list_set_next(list_node_t *nodePtr, list_node_t *value);
-void        list_set_prev(list_node_t *nodePtr, list_node_t *value);
+void        list_set_next(list_node_t *nodePtr, list_node_t *nextnode);
+void        list_set_prev(list_node_t *nodePtr, list_node_t *nextnode);
 void        list_add_first(list_t *listPtr, list_node_t *nodePtr);
 void        list_add_last(list_t *listPtr, list_node_t *nodePtr);
 void        list_add_last_item(list_t *listPtr, void *item);

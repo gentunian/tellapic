@@ -17,31 +17,38 @@
  */
 
 #include <stdlib.h>
-
 #include "list.h"
+
 
 list_t *list_make_empty(list_t *listPtr)
 {
   listPtr = (list_t *) malloc(sizeof(list_t));
-
-  listPtr->count = 0;
-  listPtr->head = NULL;
-  listPtr->tail = NULL;
+  
+  listPtr->number = 0;
+  listPtr->count  = 0;
+  listPtr->head   = NULL;
+  listPtr->tail   = NULL;
   
   return listPtr;
 }
 
+
 /* Not recommended for use as does not free the memory used */
 void list_clear(list_t  *listPtr) 
 {
-  listPtr->head = listPtr->tail = 0;
+  listPtr->head  = listPtr->tail = 0;
+  listPtr->count = listPtr->number = 0;
+
 }
+
 
 void list_free(list_t *listPtr)
 {
 
 }
 
+
+/*not done*/
 list_node_t *list_freed_to_array(list_t *listPtr)
 {
   list_node_t *array = (list_node_t *) malloc(sizeof(list_node_t) * listPtr->count);
@@ -57,6 +64,7 @@ list_node_t *list_freed_to_array(list_t *listPtr)
   return array;
 }
 
+
 bool list_is_member(list_t *listPtr, list_node_t *nodePtr) 
 {
   list_node_t *cur = listPtr->head;
@@ -69,50 +77,60 @@ bool list_is_member(list_t *listPtr, list_node_t *nodePtr)
   return false;
 }
 
+
 list_node_t *list_get_head(list_t *listPtr) 
 {
   return listPtr->head;
 }
+
 
 void *list_get_first_item(list_t *listPtr)
 {
   return (listPtr->head)->item;
 }
 
+
 list_node_t *list_get_tail(list_t *listPtr) 
 {
   return listPtr->tail;
 }
+
 
 void *list_get_last_item(list_t *listPtr)
 {
   return (listPtr->tail)->item;
 }
 
+
 void *list_get_item(list_node_t *nodePtr)
 {
   return nodePtr->item;
 }
+
 
 list_node_t *list_get_next(list_node_t *nodePtr) 
 {
   return nodePtr->next;
 }
 
-void list_set_next(list_node_t *nodePtr, list_node_t *value) 
+
+void list_set_next(list_node_t *nodePtr, list_node_t *nextnode) 
 {
-  nodePtr->next = value;
+  nodePtr->next = nextnode;
 }
+
 
 list_node_t *list_get_prev(list_node_t *nodePtr) 
 {
   return nodePtr->prev;
 }
 
-void list_set_prev(list_node_t *nodePtr, list_node_t *value)
+
+void list_set_prev(list_node_t *nodePtr, list_node_t *nextnode)
 {
-  nodePtr->prev = value;
+  nodePtr->prev = nextnode;
 }
+
 
 void list_add_first(list_t *listPtr, list_node_t *nodePtr)
 {
@@ -129,7 +147,9 @@ void list_add_first(list_t *listPtr, list_node_t *nodePtr)
       listPtr->head = nodePtr;			
   }
   listPtr->count++;
+  listPtr->number = listPtr->count;
 }						
+
 
 void list_add_first_item(list_t *listPtr, void *item)
 {
@@ -148,7 +168,9 @@ void list_add_first_item(list_t *listPtr, void *item)
   }
   nodePtr->item = item;
   listPtr->count++;
+  listPtr->number = listPtr->count;
 }						
+
 
 void list_add_last_item(list_t *listPtr, void *item)
 {
@@ -167,7 +189,9 @@ void list_add_last_item(list_t *listPtr, void *item)
     }
   nodePtr->item = item;
   listPtr->count++;
+  listPtr->number = listPtr->count;
 }	 
+
 
 void list_add_last(list_t *listPtr, list_node_t *nodePtr)
 {
@@ -184,7 +208,9 @@ void list_add_last(list_t *listPtr, list_node_t *nodePtr)
       listPtr->tail = nodePtr;		
     }
   listPtr->count++;
+  listPtr->number = listPtr->count;
 }	 
+
 
 void list_append(list_t *listToModify, list_t *listToAppend)
 {
@@ -202,10 +228,12 @@ void list_append(list_t *listToModify, list_t *listToAppend)
 	  listToModify->tail = listToAppend->tail;
 	}
       listToModify->count += listToAppend->count;
+      listPtr->number = listPtr->count;
     }
   listToAppend->head = listToAppend->tail = 0;	
 }
-								
+				
+				
 list_node_t *list_remove_first(list_t *listPtr) 
 {		
   list_node_t *nodePtr;
@@ -218,6 +246,7 @@ list_node_t *list_remove_first(list_t *listPtr)
   listPtr->count--;
   return nodePtr;
 }		
+
 										
 void list_remove(list_t *listPtr, list_node_t *nodePtr) 
 {	
@@ -231,6 +260,7 @@ void list_remove(list_t *listPtr, list_node_t *nodePtr)
     listPtr->tail = nodePtr->prev;
   listPtr->count--;
 }
+
 
 bool list_is_empty(list_t *listPtr) 
 {

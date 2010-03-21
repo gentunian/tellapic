@@ -33,6 +33,7 @@ typedef unsigned char byte_t;
 #define STREAM_ERR_SEQ         -1
 #define STREAM_ERR             255
 #define STREAM_ERR_BADHEADER   -99
+
 #define CTL_SV_IDLIST        1
 #define CTL_SV_FILE          2
 #define CTL_SV_RMCL          3
@@ -40,20 +41,22 @@ typedef unsigned char byte_t;
 #define CTL_SV_ASKPWD        5
 #define CTL_SV_PWDOK         6
 #define CTL_SV_PWDFAIL       10
-#define CTL_SV_FILEINFO      11
+#define CTL_SV_FILEINFO      11 //se usa?
 #define CTL_CL_FWD           38
-#define CTL_CL_FILEINFOK     39
+#define CTL_CL_FILEINFOK     39  //se usa?
 #define CTL_CL_DISC          40  
 #define CTL_CL_ASKFILE       41 
 #define CTL_CL_FILEOK        42
 #define CTL_CL_PWD           43
 #define LAST_CTL_BYTE        43
+
 #define SEQ_LAST             4
 #define SEQ_NEEDS_RETRY      3
 #define SEQ_CANT_CONTINUE    2
 #define SEQ_SV_OK            5
 #define SEQ_CL_OK            6  
 #define SEQ_ERR             -1
+
 #define PSEQ_CONN            0
 #define PSEQ_NULL            NULL
 #define PSEQ_CONN_SIZE       3
@@ -63,6 +66,24 @@ typedef unsigned char byte_t;
 #define PSEQ_CONN_3          3
 #define PSEQ_CL              0
 #define PSEQ_SV              1
+
+#define CLICK_LEFT          1
+#define CLICK_RIGHT         2
+#define CLICK_MIDDLE        3
+#define EVENT_PRESS         1
+#define EVENT_DRAG          2
+#define EVENT_RELEASE       3
+#define EVENT_PRESS_L       (EVENT_PRESS   << 2) + CLICK_LEFT
+#define EVENT_PRESS_R       (EVENT_PRESS   << 2) + CLICK_RIGHT
+#define EVENT_PRESS_M       (EVENT_PRESS   << 2) + CLICK_MIDDLE
+#define EVENT_DRAG_L        (EVENT_DRAG    << 2) + CLICK_LEFT
+#define EVENT_DRAG_R        (EVENT_DRAG    << 2) + CLICK_RIGHT
+#define EVENT_DRAG_M        (EVENT_DRAG    << 2) + CLICK_MIDDLE
+#define EVENT_RELEASE_L     (EVENT_RELEASE << 2) + CLICK_LEFT
+#define EVENT_RELEASE_R     (EVENT_RELEASE << 2) + CLICK_RIGHT
+#define EVENT_RELEASE_M     (EVENT_RELEASE << 2) + CLICK_MIDDLE
+#define EVENT_MASK          EVENT_RELEASE_M
+#define EVENT_NOEVENT       -1
 
 typedef struct psequence {
   byte_t packet[2];
