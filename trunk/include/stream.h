@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include "list.h"
 
+/* TODO: ????? */
 #define PWDLEN 20
 
 typedef unsigned char byte_t;
@@ -73,15 +74,15 @@ typedef unsigned char byte_t;
 #define EVENT_PRESS         1
 #define EVENT_DRAG          2
 #define EVENT_RELEASE       3
-#define EVENT_PRESS_L       (EVENT_PRESS   << 2) + CLICK_LEFT
-#define EVENT_PRESS_R       (EVENT_PRESS   << 2) + CLICK_RIGHT
-#define EVENT_PRESS_M       (EVENT_PRESS   << 2) + CLICK_MIDDLE
-#define EVENT_DRAG_L        (EVENT_DRAG    << 2) + CLICK_LEFT
-#define EVENT_DRAG_R        (EVENT_DRAG    << 2) + CLICK_RIGHT
-#define EVENT_DRAG_M        (EVENT_DRAG    << 2) + CLICK_MIDDLE
-#define EVENT_RELEASE_L     (EVENT_RELEASE << 2) + CLICK_LEFT
-#define EVENT_RELEASE_R     (EVENT_RELEASE << 2) + CLICK_RIGHT
-#define EVENT_RELEASE_M     (EVENT_RELEASE << 2) + CLICK_MIDDLE
+#define EVENT_PRESS_L       ((EVENT_PRESS   << 2) + CLICK_LEFT)
+#define EVENT_PRESS_R       ((EVENT_PRESS   << 2) + CLICK_RIGHT)
+#define EVENT_PRESS_M       ((EVENT_PRESS   << 2) + CLICK_MIDDLE)
+#define EVENT_DRAG_L        ((EVENT_DRAG    << 2) + CLICK_LEFT)
+#define EVENT_DRAG_R        ((EVENT_DRAG    << 2) + CLICK_RIGHT)
+#define EVENT_DRAG_M        ((EVENT_DRAG    << 2) + CLICK_MIDDLE)
+#define EVENT_RELEASE_L     ((EVENT_RELEASE << 2) + CLICK_LEFT)
+#define EVENT_RELEASE_R     ((EVENT_RELEASE << 2) + CLICK_RIGHT)
+#define EVENT_RELEASE_M     ((EVENT_RELEASE << 2) + CLICK_MIDDLE)
 #define EVENT_MASK          EVENT_RELEASE_M
 #define EVENT_NOEVENT       -1
 
@@ -96,13 +97,13 @@ typedef struct psequence {
 
 
 #define STREAM_IS_STREAM(stream, size)			 \
-  (*stream > 0 && *stream <= LAST_CTL_BYTE && size >= STREAM_MIN_PACKET_SIZE && *(stream+size-1) == '\0')
+  (((*stream > 0) && (*stream <= LAST_CTL_BYTE) && (size >= STREAM_MIN_PACKET_SIZE) && *(stream+size-1)) == '\0')
 
 #define STREAM_LENGTH(stream, size)			\
   ((stream[STREAM_IDX_LEN  ] & 0xff) << 24 |		\
-   (stream[STREAM_IDX_LEN+1] & 0xff) << 16 |		\
-   (stream[STREAM_IDX_LEN+2] & 0xff) <<  8 |		\
-   (stream[STREAM_IDX_LEN+3] & 0xff)			\
+   (stream[(STREAM_IDX_LEN+1)] & 0xff) << 16 |		\
+   (stream[(STREAM_IDX_LEN+2)] & 0xff) <<  8 |		\
+   (stream[(STREAM_IDX_LEN+3)] & 0xff)			\
    )
 
 #define STREAM_END_IDX(stream, size)			 \

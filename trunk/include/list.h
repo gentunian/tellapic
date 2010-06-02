@@ -7,7 +7,6 @@ typedef struct list_node
 {
   struct list_node *prev, *next;
   void *item;
-  unsigned long number;
 
 } list_node_t;
 
@@ -16,6 +15,7 @@ typedef struct g_list
   list_node_t *head, *tail;
   int count;
 } list_t;
+
 
 list_t      *list_make_empty(list_t *listPtr);
 void        list_clear(list_t  *listPtr);

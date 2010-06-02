@@ -20,11 +20,16 @@
 #include "list.h"
 
 
+int list_get_length(list_t *listPtr)
+{
+  return listPtr->count;
+}
+
+
 list_t *list_make_empty(list_t *listPtr)
 {
   listPtr = (list_t *) malloc(sizeof(list_t));
   
-  listPtr->number = 0;
   listPtr->count  = 0;
   listPtr->head   = NULL;
   listPtr->tail   = NULL;
@@ -37,14 +42,21 @@ list_t *list_make_empty(list_t *listPtr)
 void list_clear(list_t  *listPtr) 
 {
   listPtr->head  = listPtr->tail = 0;
-  listPtr->count = listPtr->number = 0;
 
 }
 
-
+/* use with caution. 'tmpnode' is generic, you should first free */
+/* the 'tmpnode' contents, and then free the list                */
 void list_free(list_t *listPtr)
 {
-
+  int         i = 0;
+  list_node_t *tmpnode = NULL;
+  
+  for(i = listPtr->count; i > 0; i = listPtr->count) {
+    tmpnode = list_remove_first(listPtr);
+    free(tmpnode);
+  }
+  //free(listPtr);
 }
 
 
@@ -147,7 +159,6 @@ void list_add_first(list_t *listPtr, list_node_t *nodePtr)
       listPtr->head = nodePtr;			
   }
   listPtr->count++;
-  listPtr->number = listPtr->count;
 }						
 
 
@@ -168,7 +179,6 @@ void list_add_first_item(list_t *listPtr, void *item)
   }
   nodePtr->item = item;
   listPtr->count++;
-  listPtr->number = listPtr->count;
 }						
 
 
@@ -189,7 +199,6 @@ void list_add_last_item(list_t *listPtr, void *item)
     }
   nodePtr->item = item;
   listPtr->count++;
-  listPtr->number = listPtr->count;
 }	 
 
 
@@ -208,7 +217,6 @@ void list_add_last(list_t *listPtr, list_node_t *nodePtr)
       listPtr->tail = nodePtr;		
     }
   listPtr->count++;
-  listPtr->number = listPtr->count;
 }	 
 
 
@@ -228,7 +236,6 @@ void list_append(list_t *listToModify, list_t *listToAppend)
 	  listToModify->tail = listToAppend->tail;
 	}
       listToModify->count += listToAppend->count;
-      listPtr->number = listPtr->count;
     }
   listToAppend->head = listToAppend->tail = 0;	
 }
@@ -236,18 +243,23 @@ void list_append(list_t *listToModify, list_t *listToAppend)
 				
 list_node_t *list_remove_first(list_t *listPtr) 
 {		
-  list_node_t *nodePtr;
-  nodePtr = listPtr->head;
+  list_node_t *nodePtr = listPtr->head;
+
   listPtr->head = listPtr->head->next;
   if (listPtr->head == 0)
     listPtr->tail = 0;								
   else
     listPtr->head->prev = 0;
   listPtr->count--;
+  
+  nodePtr->prev = NULL;
+  nodePtr->next = NULL;
+
   return nodePtr;
 }		
 
-										
+
+/* use with caution. It doesn't free the node */										
 void list_remove(list_t *listPtr, list_node_t *nodePtr) 
 {	
   if (nodePtr->prev != 0)
@@ -259,6 +271,9 @@ void list_remove(list_t *listPtr, list_node_t *nodePtr)
   else
     listPtr->tail = nodePtr->prev;
   listPtr->count--;
+
+  nodePtr->prev = NULL;
+  nodePtr->next = NULL;
 }
 
 

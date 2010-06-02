@@ -438,12 +438,12 @@ int STREAM_is_release_event(byte_t drawctlbyte)
 
 int STREAM_get_event(byte_t drawctlbyte)
 {
-  if (STREAM_is_press_event(drawtclbyte))
-    return drawctlbyte & EVENT_MASK;
+  if (STREAM_is_press_event(drawctlbyte))
+    return (drawctlbyte & EVENT_MASK);
   if (STREAM_is_drag_event(drawctlbyte))
-    return drawctlbyte & EVENT_MASK;
+    return (drawctlbyte & EVENT_MASK);
   if (STREAM_is_release_event(drawctlbyte))
-    return drawctlbyte & EVENT_MASK;
+    return (drawctlbyte & EVENT_MASK);
   return EVENT_NOEVENT;
 }
 
