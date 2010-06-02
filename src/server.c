@@ -32,17 +32,15 @@
 #include <fcntl.h>
 #include <pthread.h>
 #include <signal.h>
+#include <stdarg.h>
 
 #include "server.h"
-#include "stream.h"
+//#include "stream.h"
 
 #define MMAX(a, b) a > b? a:b;
 
 MUTEX_TYPE         *mutex_buf; //this is initialized by THREAD__setup();
-MUTEX_TYPE         clcmutex     = PTHREAD_MUTEX_INITIALIZER;
-MUTEX_TYPE         streammutex  = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t     streamcond   = PTHREAD_COND_INITIALIZER;
-list_t             *streamqueue;
+MUTEX_TYPE         clcmutex = PTHREAD_MUTEX_INITIALIZER;
 int                clccount = 0; //shared
 SSL_CTX            *ctx;
 int                CONTINUE = 1; //this NEEDS to be global as the handler interrupt manages program execution
@@ -56,19 +54,22 @@ unsigned long      cm = 0;
 unsigned long      ca = 0;
 /**********************************************/
 
+void               push_item(tdata_t *thread, void *item);
+void               *pop_item(tdata_t *thread);
 void               *attend_client(void *arg);
-void               *send_to_clients(void *arg);
+void               *signal_client(void *arg);
+void               signal_client_cleanup(void *arg);
+void               attend_client_cleanup(void *arg);
+void               *wait_for_data(tdata_t *thread);
+void               free_client(client_t *client);
 void               r_free();
 void               thread_abort();
-void               free_client(int client_num);
+void               send_write_signal(tdata_t *thread);
 void               client_list_init();
-void               cleanup_read_thread(void *arg);
-void               cleanup_write_thread(void *arg);
 void               args_check(int argc, char *argv[]);
 void               data_init();
-void               data_init_thread(int i);
-void               data_init_client(int i);
-void               data_init_pipes(int i);
+void               data_init_thread(tdata_t *thread, int i);
+void               data_init_pipes(tdata_t *thread);
 void               strcptobuf(const byte_t *src, int size, int from);
 int                THREAD_get_error(int value, int severity, int tid);
 int                THREAD_setup();
@@ -77,79 +78,134 @@ int                THREAD_cleanup(void);
 int                ssl_read_b(client_t *cl, int *err, byte_t *buf, size_t size, struct timeval *tv);
 int                ssl_write_b(client_t *cl, int *err, const byte_t *buf, size_t size);
 int                send_stream(client_t *cl, byte_t *stream, int isbytes, int nw);
-
+list_t             *get_connected_clients(tdata_t *thread);
 byte_t             *ssl_read_stream(client_t *cl, int *streamsize, int *err);
 int                check_pwd(void *arg);
 int                check_last(void *arg);
 int                check_dummy(void *arg);
 int                add_stream_to_queue(byte_t *stream, size_t bytes, int from);
-
-
-tdata_t            thread_data[MAX_CLIENTS + 1]; //this is the main shared data
-client_t           clients[MAX_CLIENTS];         //this too.
+void               free_thread_queue(tdata_t *thread);
+void               set_tstate(tdata_t *thread, thread_state_t state);
+stream_item_t      *build_stream_item(byte_t *stream, size_t bytes, int from);
+byte_t             *try_read(tdata_t *thread, int size);
+int                try_write(tdata_t *thread);
+void               free_clist_node_memory(list_t *list);
 
 int main(int argc, char *argv[]) 
 {
-  int                clfd = 0;
-  int                i    = 0;
-  int                rv   = 0;
+  int                clfd = 0;        /* client file descriptor */
+  int                i    = 0;        /* iterator variable */
+  int                rv   = 0;        /* returned value for some function */
 
-  struct sockaddr_in clientaddr;
-  struct sockaddr_in serveraddr;
-  struct sigaction   sig_action;
-  pthread_attr_t     joinattr;
+  struct sockaddr_in clientaddr;      /* client address structure */
+  struct sockaddr_in serveraddr;      /* server address structure */
+  struct sigaction   sig_action;      /* signal handler for external signal management */
 
+  pthread_attr_t     joinattr;        /* thread joinable attribute for joinable threads */
+
+  tdata_t            thread_data[MAX_CLIENTS + 1]; /* this is the main shared data */
+
+
+  /*****************************/
+  /* initialize signal handler */
+  /*****************************/
   sig_action.sa_handler = signal_handler;
   sigemptyset(&sig_action.sa_mask);
   sig_action.sa_flags = SA_RESTART;
+
+
+  /******************************************************/
+  /* TODO (24/05/10): more work on these error checking */
+  /******************************************************/
   if ( sigaction(SIGINT, &sig_action, NULL) == -1)
     printf("[ERR]: Could not install signal handler!\n");
   if ( sigaction(SIGPIPE, &sig_action, NULL) == -1)
     printf("[ERR]: Could not install signal handler!\n");
 
-  /* initialize image list */
+
+  /***********************************************/
+  /* initialize image list. TODO (24/05/10): ?!? */
+  /***********************************************/
   args.imglist = list_make_empty(args.imglist);
 
+
+  /*************************************************************/
   /* check program arguments and fill args_t structure in args */
+  /*************************************************************/
   args_check(argc, argv);
   
-  /* initialize SSL */
+
+  /****************************/
+  /* initialize SSL on server */
+  /****************************/
   ctx = init_server_ctx();   
   SSL_CTX_use_certificate_file(ctx, "cacert.pem", SSL_FILETYPE_PEM); 
   SSL_CTX_use_PrivateKey_file(ctx, "privkey.pem", SSL_FILETYPE_PEM);
   
+
+  /*********************************/
   /* Prepare the server for listen */
+  /*********************************/
   args.svfd = open_listener(atoi(argv[1]), &serveraddr);
 
-  /**/
+  
+  /**************************/
+  /* TODO: (24/05/10): wtf? */
+  /**************************/
   if ( THREAD_setup() == 0 )
     printf("THREAD_setup error\n");
 
-  /* Initialize main data structures and global variables */
-  data_init();
 
-  /* initialize thread joinable attribute */
+  /********************************************************/
+  /* Initialize main data structures and global variables */
+  /********************************************************/
+  data_init(thread_data);
+
+
+  /*****************************************************/
+  /* initialize and create a thread joinable attribute */
+  /*****************************************************/
   pthread_attr_init(&joinattr);
   pthread_attr_setdetachstate(&joinattr, PTHREAD_CREATE_JOINABLE); 
 
-  /* launch sender thread */
-  rv = pthread_create(&thread_data[SV_THREAD].tid, &joinattr, send_to_clients, (void *) SV_THREAD);
 
-  /* set server thread state as active */
-  thread_data[SV_THREAD].state = THREAD_STATE_ACTIVE;
+  /****************************************/
+  /* try to launch 'signal_client' thread */
+  /****************************************/
+  rv = pthread_create(&thread_data[SV_THREAD].tid, &joinattr, signal_client, thread_data);
 
+
+  /**************************************************/
+  /* TODO: Review this function and its use. Please */
+  /**************************************************/
   THREAD_get_error(rv, FATAL, thread_data[SV_THREAD].tnum);
 
+
+  /*************************************/
+  /* set server thread state as active */
+  /*************************************/
+  thread_data[SV_THREAD].tstate = THREAD_STATE_ACT; /* is it necessary? */
+
+
+  /***************************/
   /* server started normally */
+  /***************************/
   while( CONTINUE  ) 
     {
       int notfound = 1;
       int addrlen  = sizeof(clientaddr);
+      
+      /****************************************/
+      /* TODO: add some kind of verbose level */
+      /****************************************/
       printf("\n-----------------------------------------------------------------\n");
       printf("[NFO]:\tWaiting for incoming connections\n");
 
-      /* When a SIGINT is caught, this socket is set to non-blocking. Then, the program   */
-      /* main loop reads the new CONTINUE value (0) and ends up with the shutdown process */
+      
+      /*******************************************************************************************/
+      /* When a SIGINT is caught, this socket (clfd) is set to non-blocking. Then, the program   */
+      /* main loop reads the new CONTINUE value (0) and ends up with the shutdown process        */
+      /*******************************************************************************************/
       if ( (clfd = accept(args.svfd, (struct sockaddr *)&clientaddr, &addrlen)) == -1)
 	{
 	  printf("[NFO]:\tConnection refused.\n");
@@ -158,68 +214,132 @@ int main(int argc, char *argv[])
 	{
 	  ca++;  //JUST FOR TESTING PURPOSES
 	  printf("[NFO]:\tConnection attempt from %s.\n", inet_ntoa(clientaddr.sin_addr));
-	  /* is there any place to run a thread? */
 	  for( i = 0; i < MAX_CLIENTS && notfound; i++)
 	    {
 	      printf("searching place on %d and locking\n",i);
-	      pthread_mutex_lock(&thread_data[i].mutex);
-	      if ( thread_data[i].state == THREAD_STATE_NEW )
+	      pthread_mutex_lock(&thread_data[i].stmutex);
+
+	      /**************************************************************************/
+	      /* TODO (24/05/10): Set it to if-else or a switch. Asking 2 times in vain */
+	      /**************************************************************************/
+	      if ( thread_data[i].tstate == THREAD_STATE_NEW )
 		{
 		  printf("thread %d was never used\n",i);
-		  thread_data[i].state = THREAD_STATE_INIT;
+		  thread_data[i].tstate = THREAD_STATE_INIT;
 		  notfound = 0;
 		}
-	      if ( thread_data[i].state == THREAD_STATE_FREE )
-		{
-		  printf("thread %d was used, cancelling and waiting\n", i);
-		  /*26/12/2009: REVIEW THIS PART*/
-		  //pthread_cancel(thread_data[i].tid);
+	      if ( thread_data[i].tstate == THREAD_STATE_FREE )
+		{		  
+		  printf("thread %d was used.\n", i);
+		  /*************************************************************************** 
+		   * MAN PAGE:
+		   * --------
+		   * After a canceled thread has terminated, a join with that  thread  using
+		   * pthread_join()  obtains  PTHREAD_CANCELED as the threads exit status.
+		   * (Joining with a thread is the only way to know  that  cancellation  has
+		   * completed.)
+		   * RETURN VALUE
+		   *   On  success, pthread_cancel() returns 0; on error, it returns a nonzero
+		   *   error number.
+		   *
+		   * ERRORS
+		   *   ESRCH  No thread with the ID thread could be found.
+		   ***************************************************************************/
 		  pthread_join(thread_data[i].tid, NULL);
-		  thread_data[i].state = THREAD_STATE_INIT;
+		  thread_data[i].tstate = THREAD_STATE_INIT;
 		  notfound = 0;
 		}
-	      pthread_mutex_unlock(&thread_data[i].mutex);
+	      pthread_mutex_unlock(&thread_data[i].stmutex);
 	    }
+
+
+	  /***************************************************************************/
+	  /* If a FREE or NEW thread was found, allocate memory for it and launch it */
+	  /***************************************************************************/
 	  if ( notfound == 0 )
 	    {
+
+	      /*********************************************************/
+	      /* the for exits after the 'i++' instruction is executed */
+	      /* and the condition is tested. So, we decrement i once. */
+	      /*********************************************************/
 	      i--;
-	      if ( new_thread_data(i, clfd, clientaddr) )
+
+
+	      /************************************************/
+	      /* we try to allocate memory for the new client */
+	      /************************************************/
+	      if ( new_client(&thread_data[i], clfd, clientaddr) )
 		{
-		  rv = pthread_create(&thread_data[i].tid, &joinattr, attend_client, (void *) &thread_data[i].tnum);
+
+		  /******************************************************************************/
+		  /* if memory allocation succeeds, we try to launch the client managing thread */
+		  /******************************************************************************/
+		  rv = pthread_create(&thread_data[i].tid, &joinattr, attend_client, &thread_data[i]);
+
+
+		  /****************************************************************************/
+		  /* having an error here is not fatal, so we call THREAD_get_error with WARN */
+		  /****************************************************************************/
 		  if ( THREAD_get_error(rv, WARN, thread_data[i].tnum) )
 		    {
-		      printf("[WRN]:\tSpawning thread ocess failed! Client discarted.\n");
-		      free_client(i);
-		      pthread_mutex_lock(&thread_data[i].mutex);
-		      thread_data[i].client = NULL; //is really necessary this assigment inside de lock??
-		      thread_data[i].state  = THREAD_STATE_FREE;
-		      pthread_mutex_unlock(&thread_data[i].mutex);
+		      printf("[WRN]:\tSpawning thread process failed! Client discarted.\n");
+		      
+		      /********************************/
+		      /* release the client structure */
+		      /********************************/
+		      free_client(thread_data[i].client);
+
+
+		      /*******************************/
+		      /* set the i-th thread to FREE */
+		      /*******************************/
+		      set_tstate(&thread_data[i], THREAD_STATE_FREE);
 		    }
 		}
 	      else
                 {
-                  pthread_mutex_lock(&thread_data[i].mutex);
-		  thread_data[i].client = NULL; //is really necessary this assigment inside de lock??
-                  thread_data[i].state = THREAD_STATE_FREE;
-                  pthread_mutex_unlock(&thread_data[i].mutex);
+		  /****************************************************/
+		  /* if 'new_client()' fails allocating ssl structure */
+		  /* and 'client' was allocated we must free it.      */
+		  /****************************************************/
+		  if ( thread_data[i].client != NULL )
+		    free(thread_data[i].client);
+
+		  
+		  /*********************************************/
+		  /* set the thread state to THREAD_STATE_FREE */
+		  /*********************************************/
+                  set_tstate(&thread_data[i], THREAD_STATE_FREE);
+		  
+
+		  /*****************************/
+		  /* close the file descriptor */
+		  /*****************************/
+		  close(clfd);
+
                   printf("[WRN]:\tClient node allocation falied!\n");
-                  close(clfd);
                 }
 	    }
 	  else
 	    {
 	      printf("[NFO]:\tServer reached full capacity.\n");
+
+	      /*****************************/
+	      /* close the file descriptor */
+	      /*****************************/
 	      close(clfd);
 	    }
 	}
     }
   /* Start freeing resources */
   printf("<main thread>[NFO]:\tStart freeing resources\n");
+  /*
   for( i = 0; i < MAX_CLIENTS + 1; i++)
-    {
+v    {
       if ( thread_data[i].client != NULL)
 	printf("<main thread>[NFO]:\tposition %d with state %d and fd %d. TID: %ld\n", i, thread_data[i].state, thread_data[i].client->fd, thread_data[i].tid);
-      if ( thread_data[i].state != THREAD_STATE_NEW)/* Send cancellation signal to ALL threads without checking errors */
+      if ( thread_data[i].state != THREAD_STATE_NEW)
 	{
 	  printf("<main thread>[NFO]:\tSending cancel signal to thread with pid %ld and number %d\n", thread_data[i].tid, thread_data[i].tnum);
 	  pthread_cancel(thread_data[i].tid);
@@ -227,14 +347,20 @@ int main(int argc, char *argv[])
 	  pthread_mutex_destroy(&thread_data[i].mutex);
 	}
     }
+  */
   printf("<main thread>[NFO]:\tWaiting for threads done!\n");
-  /* Check if theres more data to free */
+  /*
   r_free();
+  */
   printf("<main thread>[NFO]:\tAllocated API structures released!\n");
+  /*
   pthread_attr_destroy(&joinattr);
-
+  */
   printf("\n--- END ---\n");
+
+  /****************************************************/
   /********** TESTING PURPOSES ************************/
+  /****************************************************/
   printf("\nserver exits correctly with a total of:\n");
   printf("\n\tConnection attemps: %ld\n",ca);
   printf("\tConnections made: %ld\n", cm);
@@ -242,27 +368,38 @@ int main(int argc, char *argv[])
 }
 
 
-int should_send(unsigned short i, stream_item_t *item)
+
+/***************************************************/
+/***************************************************/
+int should_send(tdata_t *thread, stream_item_t *item)
 {
+  /********************************/
   /*TODO: Think about private chat*/
-  byte_t            *drawingbyte = NULL;
-  if ( i != item->from )
+  /********************************/
+  byte_t *drawingbyte = NULL;
+
+  if ( thread->tnum != item->from )
     {
       if (STREAM_is_drawing(item->data))
 	{
-	  drawingbyte = STREAM_get_drawingbyte(item->data);
-	  if ( thread_data[i].fwdbitlist & (1 << item->from))
+	  /* TODO: create function profile drawingbyte = STREAM_get_drawingbyte(item->data);*/
+	  if ( thread->client->fwdbitlist & (1 << item->from))
 	    {
+
+	      /****************************************************/
 	      /* We can send whatever to the i-th client, but if  */
 	      /* a release event if found, restore the fwd bit.   */
+	      /****************************************************/
 	      if ( STREAM_is_release_event(drawingbyte))
-		thread_data[i].fwdbitlist &= ~(1 << item->from);
+		thread->client->fwdbitlist &= ~(1 << item->from);
 	      return 1;
 	    }
 	  else
+	    /***********************************************************/
 	    /* We need to check more things as the fwd bit is not set. */
+	    /***********************************************************/
 	    if (STREAM_is_press_event(drawingbyte))
-	      return thread_data[i].fwdbitlist |= (1 << item->from);
+	      return thread->client->fwdbitlist |= (1 << item->from);
 	    else
 	      return 0;
 	}
@@ -274,40 +411,86 @@ int should_send(unsigned short i, stream_item_t *item)
 }
 
 
-void signal_client(void *arg)
+
+/**************************************************************************
+ * void signal_client(void *arg):
+ * -----------------------------
+ *
+ * This is a threaded function called without parameters. The main reason
+ * for this thread to live is forwarding its queue items to the others 
+ * threads queue. This thread has the MAIN queue where all the others
+ * threads queue in it when they read data from a client. The data read
+ * from a thread is then queued on this thread queue. This thread, queue
+ * the item on all the others thread except the one that has read the data,
+ * and signal the threads with a write signal to perform the appropiate
+ * action. Then, the thread receives this 'write signal' and it goes
+ * fetch data from its queue to be sent.
+ * 
+ *************************************************************************/
+void *signal_client(void *arg)
 {
-  stream_item_t *item = NULL;
-  unsigned short i    = 0;
-  int            rv   = 0;
-  pthread_cleanup_push(cleanup_write_thread, NULL);
+  tdata_t *thread_data = (tdata_t *) arg;  /* thread data pointer. Points to first item. */
+
+  stream_item_t *item = NULL;              /* item from some queue */
+
+  unsigned short i = 0;                    /* iterator variable */
+
+  pthread_cleanup_push(signal_client_cleanup, &thread_data[SV_THREAD]);
   printf("<thread %d>[NFO]:\tSending thread started.\n", SV_THREAD);
   while(1)
     {
-      pthread_mutex_lock(&streammutex);
-      if ( queue_is_empty(streamqueue))
-	pthread_cond_wait(&streamcond, &streammutex);
-      item = (stream_item_t *) queue_get_noremove_last(streamqueue); //get the last item queued
-      pthread_mutex_unlock(&streammutex);
+      /* blocking function that pops out an item from SV_THREAD-th queue. */
+      /* The block occurs when the queue is empty                         */
+      item = (stream_item_t *) wait_for_data(&thread_data[SV_THREAD]);
+      
+      /************************************************************************************/
+      /* We don't want to lose the 'item' reference and be cancelled when forwarding data */
+      /************************************************************************************/
+      pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
       for (i = 0; i < MAX_CLIENTS; i++)
 	{
-	  if (should_send(i, item))
+	  if (should_send(&thread_data[i], item))
 	    {
-	      pthread_mutex_lock(&clients[i]->stmutex);
-	      if ( clients[i]->state == CLIENT_STATE_READY )
+	      pthread_mutex_lock(&thread_data[i].stmutex);
+	      if ( thread_data[i].tstate != THREAD_STATE_END  &&
+		   thread_data[i].tstate != THREAD_STATE_FREE &&
+		   thread_data[i].tstate != THREAD_STATE_NEW 
+		   )
 		{
-		  rv = write(thread_data[i], item->number, sizeof(item->number)); //signals thread to write the 'num' element from the queue
-		  if ( rv == -1)
-		    {
-		      if ( errno == EWOULDBLOCK || errno == EAGAIN)
-			{
-			}
-		      else
-			perror("write() to pipe failed");
-		    }
+
+		  /********************************************************/
+		  /* queue an item using mutexes on the i-th thread queue */
+		  /********************************************************/
+		  push_item(&thread_data[i], item);
+
+		  printf("Item added to %d client\n", i);
+
+
+		  /******************************************/
+		  /* send a write signal to the i-th thread */
+		  /******************************************/
+		  send_write_signal(&thread_data[i]);
 		}
-	      pthread_mutex_unlock(&clients[i]->stmutex);
+	      pthread_mutex_unlock(&thread_data[i].stmutex);
 	    }
 	}
+
+      /***************************************************************/
+      /* we release the memory used by the item poped from the queue */
+      /***************************************************************/
+      free(item);
+      
+
+      /***************************************************************************************/
+      /* Now we can be cancelled. Enable cancelling and test wheter or not we were cancelled */
+      /***************************************************************************************/
+      pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+      
+
+      /*************************************************************/
+      /* Creates a cancellation point to test if we were cancelled */
+      /*************************************************************/
+      pthread_testcancel();
     }
   printf("<thread %d>[NFO]:\tSending thread closing.\n", SV_THREAD);
   pthread_cleanup_pop(1);
@@ -315,94 +498,363 @@ void signal_client(void *arg)
 }
 
 
+/*******************************************************************
+ ******************************************************************/
+void signal_client_cleanup(void *arg)
+{
+  tdata_t *thread = (tdata_t *) arg;
+
+  printf("<thread %d>[NFO]:\tEntering write thread clean up function\n", SV_THREAD);
+
+  /**********************************/
+  /* release al items in the queue. */
+  /* Let the queue pointer be freed */
+  /* by the main thread             */
+  /**********************************/
+  free_thread_queue(thread);
+
+
+  /*******************/
+  /* close the pipes */
+  /*******************/
+  close(thread->event_reader);
+  close(thread->event_writer);
+
+
+  /*****************************/
+  /* free thread's queue error */
+  /*****************************/
+  ERR_remove_state(pthread_self());
+
+
+  /***************************************/
+  /* set this state to free. (pointless) */
+  /***************************************/
+  set_tstate(thread, THREAD_STATE_FREE);
+
+  /* destroy the mutexes and condition variables on main thread */
+}
+
+
+/**************************************/
+/**************************************/
+void send_write_signal(tdata_t *thread) 
+{
+  int rv = 0;
+  char *dumb = NULL;
+  
+  *dumb = 'a';
+  /******************************************/
+  /* NOTE: 'write()' is a Cancellable Point */
+  /******************************************/
+  rv = write(thread->event_writer, (void *)dumb, sizeof(char *));
+  if ( rv == -1)
+    {
+      if ( errno == EWOULDBLOCK || errno == EAGAIN)
+	{
+	}
+      else
+	perror("write() to pipe failed");
+    }
+}
+
+
+/*******************************************************************
+ * helper function
+ ******************************************************************/
+void push_item(tdata_t *thread, void *item) {
+  pthread_mutex_lock(&thread->queuemutex);
+  list_add_last_item(thread->queue, item);
+  pthread_cond_signal(&thread->queuecond);
+  pthread_mutex_unlock(&thread->queuemutex);
+}
+
+
+/*******************************************************************
+ * helper function
+ ******************************************************************/
+void *pop_item(tdata_t *thread) {
+  void *item = NULL;
+  
+  pthread_mutex_lock(&thread->queuemutex);
+  item = (list_remove_first(thread->queue))->item;
+  pthread_mutex_unlock(&thread->queuemutex);
+
+  return item;
+}
+
+
+/*******************************************************************
+ * helper function: blocking function. It waits on the i-th thread queue
+ * for data. If it have some data, it pops out from queue and return it.
+ * The main difference with pop is that if there's no data on the queue
+ * we wait until some data is pushed.
+ ******************************************************************/
+void *wait_for_data(tdata_t *thread) {
+
+  void *item;
+
+  /********************************/
+  /* aquire a lock to the i queue */
+  /********************************/
+  pthread_mutex_lock(&thread->queuemutex);
+
+
+  /****************************************************/
+  /* if the queue is empty, wait until we get signaled*/
+  /****************************************************/
+  if ( queue_is_empty(thread->queue)) {
+    printf("Stream Queue is empty. Waiting...");
+
+  
+    /**********************************************************************************************/
+    /* the mutes is released, when a signal is sent, the mutex is aquired again by this function. */
+    /* NOTE: 'pthread_cond_wait()' is a Cancellable Point */
+    /******************************************************/
+    pthread_cond_wait(&thread->queuecond, &thread->queuemutex);
+
+    printf("We got signaled.");
+  }
+
+  /**********************************************/
+  /* At this point we have some data to process */
+  /**********************************************/
+  printf("Stream Queue is not empty");
+  
+
+  /*********************************************/
+  /* get the first element on the list (queue) */
+  /*********************************************/
+  item = list_get_first_item(thread->queue);
+
+  
+  /****************************************************************/
+  /* disconnect the first element (pop). Remember later to free it*/
+  /****************************************************************/
+  list_remove_first(thread->queue);
+
+
+  /*****************************************/
+  /* release the mutex and return the data */
+  /*****************************************/
+  pthread_mutex_unlock(&thread->queuemutex);
+
+  return item;
+}
+
+
+/*******************************************************************
+*******************************************************************/
 unsigned short getconn_clnum()
 {
   pthread_mutex_lock(&clcmutex);
   unsigned short value = clccount;
   pthread_mutex_unlock(&clcmutex);
+
   return value;
 }
 
 
-/*******************************************************************
+/***********************************************************************************
  * attend_client(void *arg):
- * ------------
- * Thread for receive new connections
- *******************************************************************/
+ * -------------------------
+ *
+ * Thread for receive and manage new connections. Thread has a set of
+ * possible states it can be on. This states are documented. Possible
+ * states are: 
+ * 
+ * - B (Reached through: THREAD_STATE_WANTR, THREAD_STATE_WANTWR, THREAD_STATE_WAIT)
+ *   This state is a blocking state. Thread is waiting for events. Events can be sent
+ *   by the 'signal_client' thread, by the main thread, or by external read operations over
+ *   the socket that corresponds to the thread client. Events sent by the 'signal_client' thread
+ *   are write events. The 'signal_client' thread adds an item on the thread queue to be sent
+ *   and after that it signals the thread with a write event (it tells the thread to go F).
+ *   Events sent by the main thread are mostly managing thread events. A cancel thread 
+ *   signal, a wait thread signal, etc. The remaining events are when the thread client 
+ *   socket receives data from its client.
+ *
+ * - C (Reached through: THREAD_STATE_RH)
+ *   This is the state where the thread try to reads a header from the connected client.
+ *   If there were no header to read for, we go B, as we cannot do further operations
+ *   and we need to wait for events to respond for. If there were some header, we proceed
+ *   to D for trying to read the data corresponding that header.
+ *
+ * - D (Reached through: THREAD_STATE_RHOK)
+ *   This state tries to read a data segment from the incoming stream. If we succeed, we
+ *   continue to D. If we don't, we fall back to B state waiting for events.
+ *
+ * - E (Reached through: THREAD_STATE_RDOK)
+ *   This state is reached when we successfully have read a complete stream from the client.
+ *   The task here is to sent the stream to the 'signal_client' thread queue. Here, we go B
+ *   if we don't have anything on our queue. Else, we go F state to process at least an item
+ *   from our queue.
+ *
+ * - F (Reached through: THREAD_STATE_WR)
+ *   This state sends a stream to the connected client. 
+ *
+ * - G (Reached through: THREAD_STATE_END or an external cancel signal)
+ *   This state is reached whenever something went wrong. Every state could reach this
+ *   one at any moment. After reaching this state, the thread will die by its owns means.
+ ***********************************************************************************/
 void *attend_client(void *arg) 
 {  
-  int       *tnum      = (int *) arg;
-  int       fdmax      = MMAX(thread_data[*tnum].pipefd[0], thread_data[*tnum].clients->fd);
-  int       isbytes    = 0;
-  int       osbytes    = 0;
-  int       err        = 0;
-  int       rv         = 0;
-  byte_t    *ostream   = NULL;
-  byte_t    *istream   = NULL;
-  byte_t    header[STREAM_HEADER_SIZE];
-  client_t  *tmpclient = clients;
+  tdata_t   *thread = (tdata_t *) arg;  /* a thread data structure */
+
+  int       fdmax   = MMAX(thread->event_reader, thread->client->fd);
+  int       rv      = 0;                /* return value for some functions */
+  int       nbytes  = 0;                /* nbytes = stream length          */
+
+  byte_t    *stream = NULL;             /* stream = header + data     */
+  byte_t    *data   = NULL;             /* data portion of 'stream'   */
+  byte_t    header[STREAM_HEADER_SIZE]; /* header portion of 'stream' */
+
+  fd_set    readfs;                     /* this will hold client->fd and event_reader */
+  fd_set    copyfs;                     /* this is a required copy of 'readfs' */
+
+  stream_item_t     *item = NULL;       /* queue item */
+
+  /**********************************************/
+  /* TODO: complete this constants or remove it */
+  /**********************************************/
+  const int NORMAL_EXIT = 0;
+  const int CL_DISCONN  = 1;
+  const int HNDSHK_FAIL = 2;
+
+
+  /*********************************************/
   /* register cleanup function for this thread */
-  pthread_cleanup_push(cleanup_read_thread, (void *) tnum);
+  /*********************************************/
+  pthread_cleanup_push(attend_client_cleanup, thread);
+
+
+  /*************************/
   /* wait for a handshake. */
-  if( wait_for_client(thread_data[*tnum].client) <= 0 )  
+  /*************************/
+  if( wait_for_client(thread->client) <= 0 )  
     {
-      printf("<thread %d>[ERR]:\tcould not handshake with client.\n", *tnum);
-      pthread_exit(NULL); //this will call cleanup function.p
+      printf("<thread %d>[ERR]:\tcould not handshake with client.\n", thread->tnum);
+      pthread_exit((void *)&HNDSHK_FAIL); //this will call cleanup function.
     }
-  printf(NFO_ACCEPT, *tnum, inet_ntoa(thread_data[*tnum].client->address.sin_addr), thread_data[*tnum].client->fd);
-  printf(NFO_CIPHER, *tnum, SSL_get_version(thread_data[*tnum].client->ssl), SSL_get_cipher(thread_data[*tnum].client->ssl));
-  clccountinc();
-  ostream = STREAM_build(CTL_SV_IDLIST, tmpclient, iterate_id, &osbytes);
-  /* if there is connected clients send it */
-  if ( ostream != NULL )
-    {  
-      printf("<thread %d>[NFO]:\tSending id list to connected clients\n", *tnum);
-      send_stream(thread_data[*tnum].client, ostream, osbytes, 0);
-      free(ostream);
-      osbytes = 0;
-    }
-  pthread_mutex_lock(&thread_data[*tnum].client->mutex);
-  thread_data[*tnum].client->state = CLIENT_STATE_READY;
-  pthread_mutex_unlock(&thread_data[*tnum].client->mutex);
-  pthread_mutex_lock(&thread_data[*tnum].mutex);
-  thread_data[*tnum].state = THREAD_STATE_ACTIVE;
-  printf("<thread %d>[NFO]:\tMain attendance loop start\n", *tnum);
-  while( thread_data[*tnum].state == THREAD_STATE_ACTIVE )
+  printf(NFO_ACCEPT, thread->tnum, inet_ntoa(thread->client->address.sin_addr), thread->client->fd);
+  printf(NFO_CIPHER, thread->tnum, SSL_get_version(thread->client->ssl), SSL_get_cipher(thread->client->ssl));
+
+
+  /*****************************************************************/
+  /* adds 'event_reader' and 'fd' file descriptors to 'readfs' set */
+  /*****************************************************************/
+  FD_SET(thread->event_reader, &readfs);
+  FD_SET(thread->client->fd, &readfs);
+
+  /* increment the client count */
+  //TODO:  clccountinc();
+
+
+  /********************************/
+  /* set the thread state to INIT */
+  /********************************/
+  set_tstate(thread, THREAD_STATE_INIT);
+
+  printf("<thread %d>[NFO]:\tMain attendance loop start\n", thread->tnum);
+
+  pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+
+  while( thread->tstate != THREAD_STATE_END )
     {
-      pthread_mutex_unlock(&thread_data[*tnum].mutex);
+      copyfs = readfs;
+
+      /********************************************************/
+      /* First thing to do: Send our id to connected clients  */
+      /* including this thread clietn.                        */
+      /********************************************************/
+      if ( thread->tstate == THREAD_STATE_INIT ) {
+
+	/* get a list of connected clients */
+	list_t *clist = get_connected_clients(thread);
+
+	/* build the stream with CTL_SV_IDLIST control byte and 'clist' */
+	stream = STREAM_build(CTL_SV_IDLIST, clist, &nbytes);
+
+	if ( stream != NULL )
+	  {  
+	    printf("<thread %d>[NFO]:\tSending id list to connected clients\n", thread->tnum);
+
+	    /* build an item from a stream */
+	    item = build_stream_item(stream, nbytes, MSG_FROM_SERVER);
+
+	    /* queue 'item' on thread SV_THREAD queue */
+	    push_item(thread + SV_THREAD, item);
+
+	    /* free the allocated memory */
+	    free(stream);
+	    nbytes = 0;
+	      
+	    set_tstate(thread, THREAD_STATE_RH);
+	  }
+	else {
+	  /* if we cannot acomplish building the stream. Kill this thread */
+	  set_tstate(thread, THREAD_STATE_END);
+	  thread->error = THREAD_SOME_ERROR;
+	}
+
+	/* release unused memory from the connected client list */
+	free_clist_node_memory(clist);
+	free(clist);
+      }
 
 
       /********************************************************/
-      /* We enter C state at the beginning or if we need to   */
+      /* We enter C state if we need to read headers.         */
       /********************************************************/
-      if ( chktstate(THREAD_STATE_INIT, thread_data[*tnum]) || chktstate(THREAD_STATE_RH, thread_data[*tnum]))
-	header = try_read_header(thread_data[*tnum]);
+      if ( thread->tstate == THREAD_STATE_RH )
+	{
+	  *header = try_read(thread, STREAM_HEADER_SIZE);
+	  if (header != NULL)
+	    set_tstate(thread, THREAD_STATE_RHOK);
+	}
 
 
       /********************************************************/
       /* We go to D state after checks on control byte        */
       /********************************************************/
-      if ( chktstate(THREAD_STATE_RHOK, thread_data[*tnum]))
+      if ( thread->tstate == THREAD_STATE_RHOK )
 	{
-      	  slen = STREAM_get_streamlen(header);
-      	  if ( slen <= 0 )
-      	    settstate(THREAD_STATE_END, thread_data[*tnum]);
+      	  nbytes = STREAM_get_streamlen(header);
+      	  if ( nbytes <= 0 ) 
+	    set_tstate(thread, THREAD_STATE_END);
       	  else
-      	    data = try_read_data(thread_data[*tnum], slen - STREAM_HEADER_SIZE);
+	    {
+	      data = try_read(thread, nbytes - STREAM_HEADER_SIZE);
+	      if ( data != NULL )
+		set_tstate(thread, THREAD_STATE_RDOK);
+	    }
 	}
 
-
+      /* data is not allocated by me. Should I free it? */
+      
       /********************************************************/
       /* If data read went ok, we go to E state and process   */
       /* the request to forward the data to other clients     */
       /********************************************************/
-      if ( chktstate(THREAD_STATE_RDOK, thread_data[*tnum]))
+      if ( thread->tstate == THREAD_STATE_RDOK )
 	{
-      	  ostream = (byte_t *) malloc(slen * sizeof(byte_t));
-      	  memcpy(header, ostream, STREAM_HEADER_SIZE);
-      	  memcpy(data, ostream + STREAM_HEADER_SIZE, slen - STREAM_HEADER_SIZE);
-      	  /* blabla */
-      	  setiftstate(THREAD_STATE_WR, thread_data[*tnum], thread_data[*tnum].shouldwrite);
+	  /* build the whole stream : header + data */
+      	  stream = (byte_t *) malloc(nbytes * sizeof(byte_t));
+      	  memcpy(header, stream, STREAM_HEADER_SIZE);
+      	  memcpy(data, stream + STREAM_HEADER_SIZE, nbytes - STREAM_HEADER_SIZE);
+
+	  /* build a item from a stream */
+	  item = build_stream_item(stream, nbytes, thread->tnum);
+	  
+	  /* queue 'item' on the signal_client thread queue and continue working */
+	  push_item(&thread[SV_THREAD], item);
+
+      	  /* 'stream' and 'data' should be freed now */
+	  free(stream);
+	  free(data);
+
+	  /* set if this thread should send data to its client */
+	  if ( thread->shouldwrite )
+	    set_tstate(thread, THREAD_STATE_WR);
 	}
 
 
@@ -411,17 +863,36 @@ void *attend_client(void *arg)
       /* to any points. B controls where we need to send to or*/
       /* read from a client.                                  */
       /********************************************************/
-      if ( chktstate(THREAD_STATE_WANTR,    thread_data[*ntum]) ||
-	   chktstate(THREAD_STATE_WANTWR,   thread_data[*ntum]) ||
-	   chktstate(THREAD_STATE_WAIT, thread_data[*ntum])  )
+      if ( thread->tstate == THREAD_STATE_WANTR  ||
+	   thread->tstate == THREAD_STATE_WANTWR ||
+	   thread->tstate == THREAD_STATE_WAIT  )
 	{
-      	  rv = select(fdmax + 1, &copy, NULL, NULL, NULL);
-      	  settstate(THREAD_STATE_WR, thread_data[*tnum]);
-      	  setiftstate(THREAD_STATE_END, (rv < 0), thread_data[*tnum]);
-	  setiftstate(THREAD_STATE_RH, FD_ISSET(thread_data[*tnum].client->fd, &copy), thread_data[*tnum]);
-      	  if ( FD_ISSET(thread_data[*tnum].pipefd[0], &copy) )
-      	    thread_data[*tnum].shouldwrite = 1; /*this works as a memory thing for when read finish (see E state).*/
-      	  copy = readfs;
+	  pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+
+	  /* this select will be signaled if needed to awake the thread */
+	  /* to write or if a read from the net is detected*/
+      	  rv = select(fdmax + 1, &copyfs, NULL, NULL, NULL);
+
+	  pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+	  if ( rv < 0 ) {
+	    /* Something on select() went wrong */
+	    set_tstate(thread, THREAD_STATE_END);
+	  }
+	  else if ( FD_ISSET(thread->client->fd, &copyfs) ) {
+	    /* if select() leaves with rv >= 0 and the client fd is set */
+	    /* on 'copy', then we need to start a reading procedure and */
+	    /* go to C state. */
+	    set_tstate(thread, THREAD_STATE_RH);
+	  }
+	  else {
+	    /* If none of the above condition are met, select() informs */
+	    /* that event_reader was written. We received a 'write signal' */
+	    /* so we need to write to the client. */
+	    set_tstate(thread, THREAD_STATE_WR);
+	  }
+
+	  /*this works as a memory thing for when read finish (see E state).*/
+	  thread->shouldwrite = FD_ISSET(thread->event_reader, &copyfs);
 	}
 
 
@@ -431,97 +902,194 @@ void *attend_client(void *arg)
       /* data 'shouldwrite' flag is true and the client isn't */
       /* sending us something.                                */
       /********************************************************/
-      if ( chktstate(THREAD_STATE_WR, thread_data[*tnum]))
-	try_write(thread_data[*tnum]);
+      if ( thread->tstate == THREAD_STATE_WR )
+	try_write(thread);
       
 
-      pthread_mutex_lock(&thread_data[*tnum].mutex);
     }
-  pthread_mutex_unlock(&thread_data[*tnum].mutex);	   
-  printf("<thread %d>[NFO]:\tAttendace thread closing on %d socket.\n", *tnum, thread_data[*tnum].client->fd);
+  printf("<thread %d>[NFO]:\tAttendace thread closing on %d socket.\n", thread->tnum, thread->client->fd);
+  
+  /****************************/
+  /* pop the cleanup function */
+  /****************************/
   pthread_cleanup_pop(1);
+
+
+  /******************************************/
   /* this thread has no more reason to live */
-  pthread_exit(NULL);
+  /******************************************/
+  pthread_exit((void *)&NORMAL_EXIT);
 }
 
 
-int chktstate(thread_state_t state, tdata_t thread)
+/***************************/
+/***************************/
+void free_clist_node_memory(list_t *list)
 {
-  pthread_mutex_lock(&thread.mutex);
-  int value = (thread.state == state);
-  pthread_mutex_unlock(&thread.mutex);
-  return value;
-}
-
-
-void settstate(thread_state_t state, tdata_t thread)
-{
-  pthread_mutex_lock(&thread.mutex);
-  thread.state = state;
-  pthread_mutex_unlock(&thread.mutex);
-}
-
-
-void setiftstate(thread_state_t state, int cond, tdata_t thread)
-{
-  if ( cond )
-    settstate(state, thread);
-}
-
-
-int send_stream(client_t *cl, byte_t *istream, int isbytes)
-{
-  int rv = 0;
-  //rv = add_stream_to_queue(istream, isbytes, cl->clidx);
-  if ( enqueue_stream(istream, isbytes, cl->clidx) )
+  int         i = 0;
+  list_node_t *tmpnode = NULL;
+  
+  for(i = list->count; i > 0; i = list->count) 
     {
-      rv = write(thread_data[SV_THREAD].pipefd[1], (char) cl->clidx, 1);
-      switch(errno)
-	{
-	case EAGAIN:
-	case EWOULDBLOCK:
-	  printf("<thread %d>", cl->clidx);
-	  perror();
-	  /* pthread_mutex_lock(&thread_data[SV_THREAD].pendmutex); */
-	  /* thread_data[SV_THREAD].pending++; */
-	  /* pthread_mutex_unlock(&thread_data[SV_THREAD].pendmutex); */
-	  break;
-	case ECONNRESET:
-	case EPIPE:
-	case ENOBUFS:
-	case ENXIO:
-	  perror();
-	  break;
-	default:
-	  perror();
-	  break;
-	}
-      printf("<thread %d> write return value: %d\n", cl->clidx, rv);
+      tmpnode = list_remove_first(list);
+      free(((stream_item_t *)tmpnode->item)->data);
+      free(tmpnode->item);
+      free(tmpnode);
     }
 }
 
 
-int enqueue_stream(byte_t *stream, size_t bytes, int from)
-{  
-  //if ( STREAM_is_stream(stream, bytes) ) /* NOT TO BE DONE HERE. DO IT IN ATTEND_CLIENT INSTEAD */
+/************************************
+ ************************************/
+void attend_client_cleanup(void *arg)
+{
+  tdata_t *thread = (tdata_t *) arg;
+
+  printf("<thread %d>[NFO]:\tEntering thread clean up function\n", thread->tnum );  
+
+  /********************************/
+  /* release the client structure */
+  /********************************/
+  free_client(thread->client);
+
+
+  /**********************************/
+  /* release al items in the queue. */
+  /* Let the queue pointer be freed */
+  /* by the main thread             */
+  /**********************************/
+  free_thread_queue(thread);
+
+
+  /**************************/
+  /* close file descriptors */
+  /**************************/
+  close(thread->event_reader);
+  close(thread->event_writer);
+  
+
+  /*****************************/
+  /* free thread's queue error */
+  /*****************************/
+  ERR_remove_state(pthread_self());
+
+  
+  /**************************/
+  /* set this state to free */
+  /**************************/
+  set_tstate(thread, THREAD_STATE_FREE);
+
+}
+
+
+/*************************************/
+/*************************************/
+void free_thread_queue(tdata_t *thread)
+{
+  pthread_mutex_lock(&thread->queuemutex);
+  list_free(thread->queue);
+  pthread_mutex_unlock(&thread->queuemutex);
+}
+
+
+/*******************************************************
+ * returns a list of connected clients with the 'thread'
+ * client at the beginning
+ ******************************************************/
+list_t *get_connected_clients(tdata_t *thread) 
+{
+  int       i      = 0;                       /* iterator variable */
+  int       number[MAX_CLIENTS];              /* we are adding integers to the list, so we need a new object for every node */
+
+  tdata_t   *tmp_thread = NULL;               /* iterator variable */
+
+  list_t    *clist = list_make_empty(clist);  /* the list that will be returned */
+
+
+  /**********************************************************************************/
+  /* Sets 'tmp_thread' to point to the first thread and goes forward until 'thread' */
+  /* position, putting on 'clist' the ids of the connected clients.                 */
+  /**********************************************************************************/
+  for(tmp_thread = thread - thread->tnum; tmp_thread != thread; thread++)
     {
-      stream_item_t       *item = (stream_item_t *) malloc(sizeof(stream_item_t));
-      if ( item == NULL )
+      pthread_mutex_lock(&tmp_thread->stmutex);
+      if ( tmp_thread->tstate != THREAD_STATE_NEW  && tmp_thread->tstate != THREAD_STATE_FREE && tmp_thread->tstate != THREAD_STATE_END) 
 	{
-	  perror("item==null");
-	  return 0;
+	  number[tmp_thread->tnum] = tmp_thread->tnum;
+	  list_add_last_item(clist, &number[tmp_thread->tnum]);
 	}
+      pthread_mutex_unlock(&tmp_thread->stmutex);
+    }
+
+  /***************************************************/
+  /* Now, 'tmp_thread' is equals 'thread' so we put  */
+  /*'thread' client id at the beguinning of 'clist'. */
+  /***************************************************/
+  number[tmp_thread->tnum] = tmp_thread->tnum;
+  list_add_first_item(clist, &number[tmp_thread->tnum]);
+
+
+  /*****************************************************************/
+  /* If 'thread' was not the last thread, we need to move one and  */
+  /* continue adding the client ids until we reach the last thread */
+  /*****************************************************************/
+  if ( tmp_thread->tnum != MAX_CLIENTS - 1 )
+    {
+      /* move one as 'tmp_thread' have been treated above */
+      tmp_thread++;
+
+      for(i = tmp_thread->tnum; i < MAX_CLIENTS; i++)
+	{
+	  pthread_mutex_lock(&tmp_thread[i].stmutex);
+	  if ( tmp_thread[i].tstate != THREAD_STATE_NEW  && tmp_thread[i].tstate != THREAD_STATE_FREE && tmp_thread[i].tstate != THREAD_STATE_END) 
+	    {
+	      number[i] = i;
+	      list_add_last_item(clist, &number[i]);
+	    }
+	  pthread_mutex_unlock(&tmp_thread[i].stmutex);
+	}
+    }
+  
+  /* if 'tmp_thread' was the last thread, then we are done. Return the list. */
+  return clist;
+}
+
+
+/*******************************************************
+ * helper function to set the thread state using mutexes
+ ******************************************************/
+void set_tstate(tdata_t *thread, thread_state_t state)
+{
+  pthread_mutex_lock(&thread->stmutex);
+  thread->tstate = state;
+  pthread_mutex_unlock(&thread->stmutex);
+}
+
+
+/*************************************************************************
+TODO: 'from' could be avoided??. 'stream' should have the client id of the
+owner of the packet.
+*************************************************************************/
+stream_item_t *build_stream_item(byte_t *stream, size_t bytes, int from) 
+{
+  stream_item_t *item = (stream_item_t *) malloc(sizeof(stream_item_t));
+
+  if ( item == NULL )
+    {
+      perror("item==null");
+    }
+  else 
+    {
+      /*****************************************************************/
+      /* stream then can be freed easily. 'item' will be held on queue */
+      /* until it gets freed */
+      /***********************/
       memcpy(item->data, stream, bytes);
       item->nbytes = bytes;
       item->from   = from;
-      //list_add_last_item(streamqueue, (void *)item);
-      pthread_mutex_lock(&stream_mutex);
-      queue_add(streamqueue, (void *)item);
-      pthread_mutex_unlock(&stream_mutex);
-      return 1; //STREAM_OK
     }
-    //  else
-    //    return 0; //STREAM_NOT_STREAM
+
+  return item;
 }
 
 
@@ -532,12 +1100,12 @@ int enqueue_stream(byte_t *stream, size_t bytes, int from)
 int wait_for_client(client_t *client)
 {
   int            i        = 0;
-  int            seq      = 0;                                               /* next sequence on pseq        */
-  int            ec       = 0;                                               /* error code                   */
-  int            isbytes  = 0;                                               /* number of bytes read         */
-  int            osbytes  = 0;                                               /* number of bytes of ostream   */
-  byte_t         *ostream = NULL;                                            /* stream to be sent            */
-  byte_t         istream[BUFFER_SIZE];                                       /* buffer to hold read data     */
+  int            seq      = 0;               /* next sequence on pseq        */
+  int            ec       = 0;               /* error code                   */
+  int            isbytes  = 0;               /* number of bytes read         */
+  int            osbytes  = 0;               /* number of bytes of ostream   */
+  byte_t         *ostream = NULL;            /* stream to be sent            */
+  byte_t         istream[BUFFER_SIZE];       /* buffer to hold read data     */
   struct timeval tv;
   psequence_t    *pseq = NULL;
   int (*checkers [])(void *arg) = {
@@ -600,10 +1168,8 @@ int ssl_read_b(client_t *cl, int *err, byte_t *buf, size_t size, struct timeval 
   do
     {
       copy   = master;
-      pthread_mutex_lock(&cl->mutex);
       nbytes = SSL_read(cl->ssl, buf, size);
       *err   = SSL_get_error(cl->ssl, nbytes);
-      pthread_mutex_unlock(&cl->mutex);
     }
   while( ( *err == SSL_ERROR_WANT_READ || *err == SSL_ERROR_WANT_WRITE ) &&
          ( rc = select(cl->fd+1, &copy, NULL, NULL, tv) > 0 )
@@ -640,150 +1206,142 @@ int ssl_accept_b(client_t *client, struct timeval tv)
 
 
 /****************************************************
+TODO: think about making a function that tries to read 'size' bytes. If any error happens, will return null.
+TODO2: think about inform the client that read was unsuccessful.
  ***************************************************/
-byte_t *try_read_data(client_t *client, int size)
+byte_t *try_read(tdata_t *thread, int size)
 {
-  int            action;
-  int            rv = 0;
-  fd_set         readfs;
-  fd_set         copy;
+  int    totalbytes = size;
+  int    readbytes  = 0;
+  int    rc    = 0;
+
+  /* we allocate the required memory for this data segment */
+  byte_t *data  = (byte_t *) malloc(sizeof(byte_t)*size);
+
+  fd_set master;
+  fd_set copy;
+
   struct timeval tv;
-  byte_t         data[size];
-  tv.tv_sec = 4;
-  FD_ZERO(&readfs);
-  FD_SET(client->fd, &readfs);
-  copy = readfs;
-  data = try_read(client, size, &action); 
-  while ( action == READ_WANT_READ || action == READ_WANT_WRITE )
+  tv.tv_sec = 30;
+  
+  /* Initialize 'master' and 'copy' to zero values */
+  FD_ZERO(&master);
+  FD_ZERO(&copy);
+
+  /* add 'cl->fd' and 'thread_data[cl->clidx].event_reader' to 'master' set*/
+  FD_SET(thread->client->fd, &master);
+  FD_SET(thread->event_reader, &master);
+
+  do
     {
-      rv = select(client->fd + 1, &copy, NULL, NULL, &tv);
-      if ( rv < 0)
+      /* we try to read 'size' bytes into 'data' memory */
+      readbytes = SSL_read(thread->client->ssl, data, totalbytes);
+      rc        = SSL_get_error(thread->client->ssl, readbytes);
+
+      if ( rc == SSL_ERROR_NONE )
 	{
-	  perror("select() <= 0"); //select() call fail.
-	  action = DISC_CL;
+	  totalbytes -= readbytes;
+	  data += readbytes;
 	}
-      else if ( rv == 0)
-	action = CANT_READ;
       else
 	{
-	  copy = readfs;
-	  data = try_read(client, size, &action);
+	  /* if one of these condition are met, return null */
+	  if ( rc == SSL_ERROR_SYSCALL || rc == SSL_ERROR_ZERO_RETURN || rc == SSL_ERROR_SSL ) 
+	    {
+	      /* this thread is going to end */
+	      set_tstate(thread, THREAD_STATE_END);
+	      free(data);
+	      return NULL;
+	    }
+	  else
+	    {
+	      rc = select(thread->client->fd + 1, &copy, NULL, NULL, &tv);
+	      if ( rc <= 0 )
+		{
+		  /* do we inform the client here? */
+		  set_tstate(thread, THREAD_STATE_WAIT);
+		  return NULL;
+		}
+	      copy = master;
+	    }
 	}
     }
-  setiftstate(THREAD_STATE_RDOK, (action == READ_OK), thread);
-  setiftstate(THREAD_STATE_END,  (action == DISC_CL), thread);
-  setiftstate(THREAD_STATE_WAIT, (action == CANT_READ), thread);
+  while(totalbytes > 0);
+
   return data;
 }
 
 
-/****************************************************
- ***************************************************/
-byte_t *try_read_header(tdata_t thread)
-{
-  int    action;
-  byte_t header[STREAM_HEADER_SIZE];
-  header = try_read(thread.client, STREAM_HEADER_SIZE, &action);
-  setiftstate(THREAD_STATE_RHOK,   (action == READ_OK), thread);
-  setiftstate(THREAD_STATE_WANTR,  (action == READ_WANT_READ), thread);
-  setiftstate(THREAD_STATE_WANTWR, (action == READ_WANT_WRITE), thread);
-  setiftstate(THREAD_STATE_END,    (action == DISC_CL), thread);
-  return header;
-}
-
-
-/****************************************************
- ***************************************************/
-byte_t *try_read(client_t *client, int size, int *action)
-{
-  byte_t        buf[size];
-  int           rv = 0;
-  int           ec = 0;
-
-  pthread_mutex_lock(&client->mutex);
-  rv = SSL_read(client->ssl, buf, size);
-  ec = SSL_get_error(client->ssl, rv);
-  pthread_mutex_unlock(&client->mutex);
-
-  switch(ec)
-    {
-    case SSL_ERROR_NONE:
-      rv == size? *action = READ_OK : *action = DISC_CL;
-      break;
-    case SSL_ERROR_WANT_READ:
-      *action = READ_WANT_READ;
-      break;
-    case SSL_ERROR_WANT_WRITE:
-      *action = READ_WANT_WRITE;
-      break;
-    case SSL_ERROR_SYSCALL:
-    case SSL_ERROR_ZERO_RETURN:
-    case SSL_ERROR_SSL:
-    default:
-      *action = DISC_CL;
-      break;
-    } 
-  return buf;
-}
-
-
 /*************************************************
+ * try_write(tdata_t *thread):
+ * --------------------------
+ *
+ * Attempts to send the first item on the 'thread'
+ * thread queue.
  *************************************************/
-int try_write(tdata_t thread)
+int try_write(tdata_t *thread)
 {
-  int            rv     = 0;
-  int            ec     = 0;
-  int            bwrote = 0;
-  int            number = 0;
-  stream_item_t  *node  = NULL;
-  fd_set         writefs;
-  fd_set         copy;
-  struct timeval tv;
-  tv.tv_sec = 3;
+  int            rc     = 0;        /* return code for select()       */
+  int            ec     = 0;        /* error code for SSL_get_error() */
+  int            bwrote = 0;        /* bytes wrote by SSL_write() if successful */
+
+  stream_item_t  *item = NULL;      /* an item queue */
+
+  fd_set         writefs;           /* write file descriptor set */
+  fd_set         copy;              /* a copy of writefs. Required when select() modifies the set */
+
+  struct timeval tv;                /* timeval structure for select() */
+
+  /* sets a timeout of 5 seconds */
+  tv.tv_sec = 5;
+
+  /* initialize the fd_set variables */
   FD_ZERO(&writefs);
-  FD_SET(cl->fd, &writefs);
-  rv = read(thread.pipefd[0], &number, sizeof(unsigned short));
-  if ( rv < 0 ) /* more checks needed */
-    return -1;
-  if (thread.cl->last != NULL)
-    {
-      pthread_mutex_lock(&streammutex);
-      node = queue_peek_next_node(streamqueue, last);
-      /* check if null */
-      pthread_mutex_unlock(&streammutex);
-    }
-  else
-    {
-      pthread_mutex_lock(&stream_mutex);
-      node = queue_peek_first_node(streamqueue);
-      while( node->number < number)
-	node = queue_peek_next_node(streamqueue, node);
-      pthread_mutex_unlock(&stream_mutex);
-    }
-  thread.cl->last = node;
+  FD_ZERO(&copy);
+
+  /* inserts 'thread->client->fd' on 'writefs' set */
+  FD_SET(thread->client->fd, &writefs);
+
+  /* we got the item poped out from the queue */
+  item = (stream_item_t *) pop_item(thread);
+
   do
     {
-      copy = writefs;
-      rv   = SSL_write(thread.cl->ssl, node->data + bwrote, node->nbytes - bwrote);
-      ec   = SSL_get_error(thread.cl->ssl, rv);
-      switch(ec)
+      bwrote = SSL_write(thread->client->ssl, item->data, item->nbytes);
+      ec = SSL_get_error(thread->client->ssl, bwrote);
+
+      if ( ec == SSL_ERROR_NONE)
 	{
-	case SSL_ERROR_NONE:
-	  bwrote += rv;
-	  break;
-	case SSL_ERROR_WANT_READ:
-	case SSL_ERROR_WANT_WRITE:
-	  if ( select(thread.cl->fd + 1, NULL, &copy, NULL, &tv) <= 0 )
-	    bwrote = node->nbytes;
-	  break;
-	default:
-	  bwrote = node->nbytes;
-	  break;
+	  /* if write was successful, 'bwrote' bytes were sent. */
+	  /* We update the bytes quantity we need to send and   */
+	  /* move the pointer forward to match that data.       */
+	  item->nbytes -= bwrote;
+	  item->data   += bwrote;
+	}
+      else
+	{
+	  if ( ec == SSL_ERROR_ZERO_RETURN || ec == SSL_ERROR_SYSCALL || ec == SSL_ERROR_SSL )
+	    {
+	      /* Fatal errors ends with the thread */
+	      set_tstate(thread, THREAD_STATE_END);
+	      return 0;
+	    }
+	  else
+	    {
+	      /* if we got a renegotiation we'll continue writting. */
+	      /* if we got a timeout, return 0.                     */
+	      rc = select(thread->client->fd + 1, &copy, NULL, NULL, &tv);
+	      if ( rc <= 0 )
+		{
+		  /* TODO: do we inform the client here that write was unsuccessful? */
+		  set_tstate(thread, THREAD_STATE_WAIT);
+		  return 0;
+		}
+	      copy = writefs;
+	    }
 	}
     }
-  while( bwrote < node->nbytes);
-
-  return ec;
+  while(item->nbytes > 0);
 }
 
 
@@ -823,7 +1381,7 @@ int ssl_write_b(client_t *cl, int *err, const byte_t *buf, size_t size)
 
 /*********************************************************************************
  *
- *********************************************************************************/
+
 void *iterate_id(void **arg)
 {
   client_t **client = (client_t *)arg;
@@ -850,53 +1408,21 @@ void *iterate_id(void **arg)
 
   return (void *) id;
 }
-
+*/
 
 /****************************************************
  *
 /****************************************************/
-void data_init()
+void data_init(tdata_t *thread_data)
 {
   int i = 0;
-  /* Initialize thread/clients list */
+
+  /* Initialize thread structure */
   for( i = 0; i < MAX_CLIENTS + 1; i++)
     {
-      data_init_thread(i);
-      data_init_client(i);
-      data_init_pipes(i);
-    }
-  streamqueue = queue_make_empty(streamqueue);
-}
-
-
-/****************************************************
- *
-/****************************************************/
-void data_init_thread(int i)
-{
-  thread_data[i].client = NULL;
-  thread_data[i].tid    = (pthread_t) 0;
-  thread_data[i].tnum   = i;
-  thread_data[i].state  = THREAD_STATE_NEW;
-  THREAD_get_error(pthread_mutex_init(&thread_data[i].pendmutex, NULL), FATAL, i);
-  if ( i == SV_THREAD )
-    thread_data[i].pendqueue = queue_make_empty(thread_data[i].pendqueue);
-}
-
-
-/****************************************************
- *
-/****************************************************/
-void data_init_client(int i)
-{
-  if ( i != SV_THREAD)
-    {
-      clients[i].ssl    = NULL;
-      clients[i].clinfo = NULL;
-      clients[i].last   = NULL;
-      clients[i].clidx  = i;
-      clients[i].state  = CLIENT_STATE_INIT;
-      THREAD_get_error(pthread_mutex_init(&clients[i].mutex, NULL), FATAL, i);
+      data_init_thread(&thread_data[i], i);
+      //data_init_client(&thread_data[i]);
+      data_init_pipes(&thread_data[i]);
     }
 }
 
@@ -904,16 +1430,53 @@ void data_init_client(int i)
 /****************************************************
  *
 /****************************************************/
-void data_init_pipes(int i)
+void data_init_thread(tdata_t *thread, int i)
+{
+  thread->client = NULL; //(client_t *) malloc(sizeof(client_t));
+  thread->tid    = (pthread_t) 0;
+  thread->tnum   = i;
+  thread->tstate = THREAD_STATE_NEW;
+
+  /* This is memory allocated by me. Should be freed later */
+  thread->queue  = list_make_empty(thread->queue);
+
+  /* review this function */
+  THREAD_get_error(pthread_mutex_init(&thread->queuemutex, NULL), FATAL, i);
+  THREAD_get_error(pthread_mutex_init(&thread->stmutex, NULL), FATAL, i);
+  THREAD_get_error(pthread_cond_init(&thread->queuecond, NULL), FATAL, i);
+}
+
+
+/****************************************************
+ *
+/****************************************************
+void data_init_client(tdata_t *thread)
+{
+  thread->client->fd     = -1;
+  thread->client->ssl    = NULL;
+  thread->client->clinfo = NULL;
+  thread->client->clidx  = thread->tnum;
+  thread->client->fwdbitlist = 0;
+}
+*/
+
+
+/****************************************************
+ *
+/****************************************************/
+void data_init_pipes(tdata_t *thread)
 {
   int j = 0;
-  pipe(thread_data[i].pipefd);
+
+  pipe(thread->pipefd);
   for( j = 0; j < 2; j++)
-    if ( setnonblock(thread_data[i].pipefd[j]) == -1)
+    if ( setnonblock(thread->pipefd[j]) == -1)
       {
 	perror("setnonblock()");
 	exit(1);
       }
+  thread->event_reader = thread->pipefd[0];
+  thread->event_writer = thread->pipefd[1];
 }
 
 
@@ -1124,53 +1687,29 @@ void clccountdec()
 
 
 /************************************
- *
- ************************************/
-void cleanup_read_thread(void *arg)
-{
-  int *tnum = (int *) arg;
-  free_client(*tnum);
-  clccountdec();
-  pthread_mutex_lock(&thread_data[*tnum].mutex);  
-  printf("<thread %d>[NFO]:\tEntering read thread clean up function\n", *tnum );  
-  ERR_remove_state(pthread_self());
-  thread_data[*tnum].client = NULL;
-  thread_data[*tnum].state  = THREAD_STATE_FREE;
-  printf("<thread %d>[NFO]:\tLeaving read thread clean up function\n", *tnum);
-  pthread_mutex_unlock(&thread_data[*tnum].mutex);  
-}
-
-
-/************************************
- *
- ************************************/
-void cleanup_write_thread(void *arg)
-{
-  printf("<thread %d>[NFO]:\tEntering write thread clean up function\n", SV_THREAD);
-  ERR_remove_state(pthread_self());
-  pthread_mutex_lock(&thread_data[SV_THREAD].mutex);
-  thread_data[SV_THREAD].state = THREAD_STATE_FREE;
-  pthread_mutex_unlock(&thread_data[SV_THREAD].mutex);
-}
-
-
-/************************************
  * free_client():
  * -----------
- * free used resources by client
+ * free used resources by a client
  ***********************************/
-void free_client(int clnum)
+void free_client(client_t *client)
 {
-  /* reset client state */
-  pthread_mutex_lock(&clients[clnum].mutex);
-  clients[clnum].state = CLIENT_STATE_INIT;
-  pthread_mutex_unlock(&clients[clnum].mutex);
   /* release ssl structure */
-  SSL_free(clients[clnum].ssl);
+  SSL_free(client->ssl);
+
   /* close file descriptor */
-  close(clients[clnum].fd);
-  /* NULL assignments */ 
-  clients[clnum].ssl = NULL;
+  close(client->fd);
+
+  /* NULL assignment */ 
+  client->ssl = NULL;
+
+  /* reset */
+  client->fwdbitlist = 0;
+
+  /* free it */
+  free(client);
+
+  /* NULL assignment */
+  client = NULL;
 }
 
 
@@ -1239,9 +1778,8 @@ void r_free()
   ERR_free_strings();
   SSL_CTX_free(ctx);
   THREAD_cleanup();
-  pthread_cond_destroy(&stream_cond);
-  pthread_mutex_destroy(&stream_mutex);
 
+  
   while( list_is_empty(args.imglist) == false)
     {
       list_node_t *tmp = list_get_head(args.imglist);
@@ -1327,22 +1865,25 @@ void args_check(int argc, char *argv[])
 
 
 
-/************************************************************
- *
- ***********************************************************/
-int new_thread_data(int i, int clfd, struct sockaddr_in clientaddr)
+
+/**********************************************************************/
+/**********************************************************************/
+int new_client(tdata_t *thread, int clfd, struct sockaddr_in clientaddr)
 {
-  clients[i].fd         = clfd;
-  clients[i].address    = clientaddr;
-  clients[i].ssl        = SSL_new(ctx);
-  thread_data[i].client = &clients[i];
+  thread->client = (client_t *) malloc(sizeof(client_t));
+
+  if ( thread->client == NULL ) return 0;
+
+  thread->client->clidx   = thread->tnum;
+  thread->client->fd      = clfd;
+  thread->client->address = clientaddr;
+  thread->client->ssl     = SSL_new(ctx);
   
   /* set to NON_BLOCKING */
   fcntl(clfd, F_SETFL, fcntl(clfd, F_GETFL) | O_NONBLOCK);
 
-  if ( clients[i].ssl == NULL || !SSL_set_fd(clients[i].ssl, clients[i].fd) )
-    return 0;
-  else
-    return 1;
+  /* The calling function should be aware to release 'thread->client' */
+  /* if the condition below is not met                                */
+  return (thread->client->ssl != NULL && SSL_set_fd(thread->client->ssl, thread->client->fd));
 }
 
