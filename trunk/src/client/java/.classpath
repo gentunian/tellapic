@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="/home/seba/utils/dock_1.0.7/dockingFramesCore.jar"/>
+	<classpathentry kind="lib" path="/home/seba/utils/dock_1.0.7/dockingFramesCommon.jar"/>
+	<classpathentry kind="lib" path="/home/seba/utils/guava-r07/guava-r07.jar" sourcepath="/home/seba/utils/guava-r07/guava-src-r07.zip">
+		<attributes>
+			<attribute name="javadoc_location" value="file:/home/seba/utils/guava-r07/javadoc/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/home/seba/utils/swingx/swingx-1.6.2-bundle/swingx-1.6.2/swingx-core-1.6.2.jar" sourcepath="/home/seba/utils/swingx/swingx-1.6.2-sources.zip">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:file:/home/seba/utils/swingx/swingx-1.6.2-javadoc.zip!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/home/seba/utils/myswing/myswing.jar" sourcepath="/home/seba/utils/myswing/myswing-src.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
