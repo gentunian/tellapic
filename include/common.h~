@@ -1,0 +1,10 @@
+#ifndef _COMMON_H_
+#define _COMMON_H_
+
+int setnonblock(int fd);
+unsigned char *hexastr2binary(unsigned char *sha1hexadigest);
+int htoi(unsigned char hexdigit);
+
+#define MMAX(a, b) a > b? a:b;
+
+#endif
