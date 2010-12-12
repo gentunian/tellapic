@@ -38,26 +38,42 @@
 
 
 /* Indexes for FIG (drawn figure) data section */
-#define DDATA_IDFROM_INDEX          DATA_IDFROM_INDEX
-#define DDATA_DCBYTE_INDEX          1
-#define DDATA_DNUMBER_INDEX         2
-#define DDATA_WIDTH_INDEX           6
-#define DDATA_OPACITY_INDEX        10
-#define DDATA_COLOR_INDEX          14
-#define DDATA_COORDX1_INDEX        17
-#define DDATA_COORDY1_INDEX        19
-#define DDATA_COORDX2_INDEX        21
-#define DDATA_COORDY2_INDEX        23
-#define DDATA_JOINS_INDEX          25
-#define DDATA_CAPS_INDEX           26
-#define DDATA_MITER_INDEX          27
-#define DDATA_DASHPHASE_INDEX      31
-#define DDATA_DASHARRAY_INDEX      35
-#define DDATA_FONTSTYLE_INDEX      21
-#define DDATA_FONTLEN_INDEX        22
-#define DDATA_FONTFACE_INDEX       23
-#define DDATA_TEXT_INDEX(fontnamelen) \
-  DDATA_FONTFACE_INDEX + fontnamelen
+#define DATA_FIG_IDFROM_INDEX     DATA_IDFROM_INDEX
+#define DATA_FIG_DBYTE_INDEX      1
+#define DATA_FIG_COORDX1_INDEX    2
+#define DATA_FIG_COORDY1_INDEX    4
+#define DATA_FIG_COORDX2_INDEX    6
+#define DATA_FIG_COORDY2_INDEX    8
+#define DATA_FIG_DNUMBER_INDEX   10
+#define DATA_FIG_WIDTH_INDEX     14
+#define DATA_FIG_OPACITY_INDEX   18
+#define DATA_FIG_COLOR_INDEX     22
+#define DATA_FIG_JOINS_INDEX     25
+#define DATA_FIG_CAPS_INDEX      26
+#define DATA_FIG_MITER_INDEX     27
+#define DATA_FIG_DASHPHASE_INDEX 31
+#define DATA_FIG_DASHARRAY_INDEX 34
+#define DATA_FIG_FONTSTYLE_INDEX 21
+#define DATA_FIG_FONTLEN_INDEX   22
+#define DATA_FIG_FONTFACE_INDEX  23
+#define DATA_FIG_TEXT_INDEX(fontnamelen) \
+  DATA_FIG_FONTFACE_INDEX + fontnamelen
+
+
+/* Indexes for DRW (drawing a figure upon event) data section */
+#define DATA_DRW_IDFROM_INDEX     DATA_IDFROM_INDEX
+#define DATA_DRW_DBYTE_INDEX      1
+#define DATA_DRW_COORDX1_INDEX    2
+#define DATA_DRW_COORDY1_INDEX    4
+#define DATA_DRW_DNUMBER_INDEX    6
+#define DATA_DRW_WIDTH_INDEX     10
+#define DATA_DRW_OPACITY_INDEX   14
+#define DATA_DRW_COLOR_INDEX     18
+#define DATA_DRW_JOINS_INDEX     21
+#define DATA_DRW_CAPS_INDEX      22
+#define DATA_DRW_MITER_INDEX     23
+#define DATA_DRW_DASHPHASE_INDEX 27
+#define DATA_DRW_DASHARRAY_INDEX 31
 
 
 /* Indexes for CLADD (client connected) data section */
@@ -94,21 +110,16 @@
 #define CTL_CL_PWD      0x61
 #define CTL_CL_FILEASK  0x71
 #define CTL_CL_FILEOK   0x81
-#define CTL_CL_DISC     0x91
-#define CTL_CL_NAME     0xb1
 #define CTL_FAIL        0x00
 
-
 /* from server */
-#define CTL_SV_CLADD     0x10
-#define CTL_SV_CLRM      0x20
-#define CTL_SV_CLIST     0x30
-#define CTL_SV_PWDASK    0x40
-#define CTL_SV_PWDOK     0x50
-#define CTL_SV_PWDFAIL   0x60
-#define CTL_SV_FILE      0x70
-#define CTL_SV_ID        0x80
-#define CTL_SV_NAMEINUSE 0x90
+#define CTL_SV_CLADD    0x10
+#define CTL_SV_CLRM     0x20
+#define CTL_SV_CLIST    0x30
+#define CTL_SV_PWDASK   0x40
+#define CTL_SV_PWDOK    0x50
+#define CTL_SV_PWDFAIL  0x60
+#define CTL_SV_FILE     0x70
 
 
 /* Paint properties */
