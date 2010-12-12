@@ -5,14 +5,14 @@ ec = {tellapic.END_CAPS_BUTT:"Butt caps", tellapic.END_CAPS_ROUND:"Round caps", 
 tools = {tellapic.TOOL_MARKER:"Marker", tellapic.TOOL_PATH:"Path", tellapic.TOOL_ELLIPSE:"Ellipse", tellapic.TOOL_RECT:"Rectangle", tellapic.TOOL_TEXT:"Text", tellapic.TOOL_ERASER:"Eraser", tellapic.TOOL_PENCIL:"Pencil", tellapic.TOOL_LINE:"Line"}
 fstyle = {tellapic.FONT_STYLE_NORMAL:"Normal", tellapic.FONT_STYLE_BOLD:"Bold", tellapic.FONT_STYLE_ITALIC:"Italic", tellapic.FONT_STYLE_BOLD_ITALIC:"Bold+Italic"}
 events = {tellapic.EVENT_PRESS:"Press event", tellapic.EVENT_DRAG:"Drag event", tellapic.EVENT_RELEASE:"Release event", tellapic.EVENT_NULL:"Null event"}
-fd = tellapic.connect_to("localhost", 50002)
+fd = tellapic.tellapic_connect_to("localhost", 4455)
 if fd != -1:
     while True:
         print("\n\nConnected...waiting for header")
-        header = tellapic.read_header_b(fd)
+        header = tellapic.tellapic_read_header_b(fd)
         if header.cbyte != tellapic.CTL_FAIL:
             print("Header read:", header.cbyte, "Reading stream of", header.ssize,"bytes")
-            stream = tellapic.read_data_b(fd, header)
+            stream = tellapic.tellapic_read_data_b(fd, header)
             if stream.header.cbyte == tellapic.CTL_CL_FIG:
                 print("Data received:")
                 print("\theader:", stream.header.cbyte)
