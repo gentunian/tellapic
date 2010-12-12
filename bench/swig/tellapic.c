@@ -1,5 +1,3 @@
-#include "/home/seba/UNIVERSIDAD/TrabajoFinal/tellapic/include/types.h"
-#include "/home/seba/UNIVERSIDAD/TrabajoFinal/tellapic/include/constants.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -8,14 +6,18 @@
 #include <resolv.h>
 #include <netdb.h>
 #include <fcntl.h>
+#include <unistd.h>
 
+#include "types.h"
+#include "constants.h"
+#include "tellapic.h"
 
 //TODO: implement free_stream() which frees memory allocated in a stream_t structure
 
 /**
  * Functions Declarations
  **/
-byte_t     *read_b(int fd, size_t nbytes);
+int        read_b(int fd, size_t nbytes, byte_t *buf);
 int        g_shift(byte_t *buf, int n);
 byte_t     extract_byte(int byte, int data);
 
@@ -26,9 +28,9 @@ byte_t     extract_byte(int byte, int data);
 int g_shift(byte_t *buf, int n) {
   byte_t *data  = (buf + n - 1);
   int    result = 0;
-  int i = 0;
+  int i;
 
-  for(i; i < n; i++)
+  for(i = 0; i < n; i++)
     result |= *(data--) << 8*i;
 
   return result;
@@ -44,39 +46,10 @@ byte_t extract_byte(int byte, int data) {
 
 
 /**
- *
+ * A wrapper from read() C function always in blocking mode
  */
-int connect_to(const char *hostname, int port)
-{   
-  int sd;
-  struct hostent *host;
-  struct sockaddr_in addr;
-  
-  if ( (host = gethostbyname(hostname)) == NULL )
-      return -1;
-
-  sd = socket(AF_INET, SOCK_STREAM, 0);
-
-  bzero(&addr, sizeof(addr));
-
-  addr.sin_family      = AF_INET;
-  addr.sin_port        = htons(port);
-  addr.sin_addr.s_addr = *(long*)(host->h_addr);
-
-  if ( connect(sd, (struct sockaddr*)&addr, sizeof(addr)) != 0 ) {
-      close(sd);
-      return -1;
-  }
-
-  return sd;
-}
-
-
-/**
- * A wrapper from read() C function
- */
-byte_t *read_b(int fd, size_t nbytes) {
-  byte_t  *data = malloc(nbytes * sizeof(byte_t));
+int read_b(int fd, size_t nbytes, byte_t *buf) {
+  //byte_t  *data = malloc(nbytes * sizeof(byte_t));
   int bytesleft = nbytes;
   int bytesread = 0;
 
@@ -91,20 +64,17 @@ byte_t *read_b(int fd, size_t nbytes) {
 
   // Now we have a fd in blocking mode
   while(bytesleft > 0) {
-    bytesread = recv(fd, data + bytesread, nbytes, 0);
+    bytesread = recv(fd, buf + bytesread, nbytes, 0);
     if (bytesread > 0)
       bytesleft -= bytesread;
-    else {
+    else
       bytesleft = 0;
-      free(data);
-    }
   }
+  // restore the flags
+  fcntl(fd, F_SETFL, flags);
 
   // return the data read, or null depending if we succeded or not.
-  if (bytesread == nbytes)
-    return data;
-  else
-    return NULL;
+  return bytesread;
 }
 
 
@@ -123,9 +93,14 @@ void headercpy(byte_t *rawstream, header_t header) {
 
 /**
  * Copies drawing data to the raw stream.
+ *
+ * ddata has specific platform dependent variable types sizes. For instance,
+ * ddata.type.figure.point1.x is an integer variable that possibly has 4 bytes.
+ * Instead, a protocol coordinate has 2 bytes for each coordinate, that is 4 bytes long.
+ * Thus, an integer needs to be truncated or wrapped to the protocol coordinate _type_.
+ * 
  */
 void ddatacpy(byte_t *rawstream, ddata_t ddata, int ssize) {
-  int dcbyte = ddata.dcbyte;
   int etype  = ddata.dcbyte & EVENT_MASK;
   int tool   = ddata.dcbyte & TOOL_MASK;
 
@@ -163,94 +138,6 @@ void ddatacpy(byte_t *rawstream, ddata_t ddata, int ssize) {
       memcpy(rawstream+DDATA_TEXT_INDEX(ddata.type.text.namesize), ddata.type.text.info, textsize);
     }
   }
-}
-
-
-/**
- *
- */
-int send_data(int socket, stream_t *stream) {
-  byte_t *rawstream = malloc(stream->header.ssize);
-
-  // Copy the header to the raw stream data
-  headercpy(rawstream, stream->header);
-  int cbyte = stream->header.cbyte;
-  switch(cbyte) {
-  case  CTL_CL_PMSG:
-    rawstream[DATA_PMSG_IDFROM_INDEX+HEADER_SIZE] = stream->data.type.chat.idfrom;
-    rawstream[DATA_PMSG_IDTO_INDEX+HEADER_SIZE]   = stream->data.type.chat.type.private.idto;
-    memcpy(rawstream+DATA_PMSG_TEXT_INDEX+HEADER_SIZE, stream->data.type.chat.type.private.text, stream->header.ssize - HEADER_SIZE - 2);
-    break;
-
-  case CTL_CL_BMSG:
-    rawstream[DATA_BMSG_IDFROM_INDEX+HEADER_SIZE] = stream->data.type.chat.idfrom;
-    memcpy(rawstream+DATA_BMSG_TEXT_INDEX+HEADER_SIZE, stream->data.type.chat.type.text, stream->header.ssize - HEADER_SIZE - 1);
-    break;
-
-  case CTL_CL_FIG:
-  case CTL_CL_DRW:
-    ddatacpy(rawstream+HEADER_SIZE, stream->data.type.drawing, stream->header.ssize);
-    break;
-
-
-  case CTL_SV_CLIST:
-    // Implementing this will complicate things. Instead, send CTL_SV_CLADD for each client the list has when an user ask for a client list.
-    // The client will add the user if it wasn't already added.
-    break;
-
-  case CTL_SV_FILE:
-  case CTL_CL_PWD:
-  case CTL_SV_CLADD:
-    memcpy(rawstream+(DATA_CLADD_NAME_INDEX+HEADER_SIZE), stream->data.type.control.info, stream->header.ssize - HEADER_SIZE - 1);
-  case CTL_CL_FILEASK:
-  case CTL_CL_FILEOK:
-  case CTL_SV_PWDFAIL:
-  case CTL_SV_PWDOK:
-  case CTL_SV_PWDASK:
-  case CTL_CL_CLIST:
-  case CTL_SV_CLRM:
-    rawstream[DATA_IDFROM_INDEX+HEADER_SIZE] = stream->data.type.control.idfrom;
-    break;
-
-  default:
-    // wrong header
-    return 0;
-  }
-
-  int r = send(socket, rawstream, stream->header.ssize, 0);
-
-  free(rawstream);
-  return r;
-}
-
-
-/**
- *
- */
-header_t read_header_b(int fd) {
-  header_t header;
-  byte_t *data = read_b(fd, HEADER_SIZE);
-  
-  if (data != NULL) {
-    header.endian = data[ENDIAN_INDEX];
-    header.cbyte  = data[CBYTE_INDEX];
-    //header.ssize  = data[SBYTE_INDEX]<<24 | data[SBYTE_INDEX + 1]<<16 | data[SBYTE_INDEX + 2]<<8 | data[SBYTE_INDEX + 3];
-    header.ssize  = g_shift(data+SBYTE_INDEX, 4);
-  } else
-    header.cbyte = CTL_FAIL;
-
-  // Free the data stream as we already filled up the stream structure for clients.
-  free(data);
-
-  return header;
-}
-
-
-/**
- *
- */
-void close_fd(int fd) {
-  close(fd);
 }
 
 
@@ -336,9 +223,9 @@ data_t wrap_ddata(byte_t *ddatastream, int ssize) {
     } else {
       data.type.drawing.type.text.style    = ddatastream[DDATA_FONTSTYLE_INDEX];
       data.type.drawing.type.text.namesize = ddatastream[DDATA_FONTLEN_INDEX];
-      data.type.drawing.type.text.face     = malloc(data.type.drawing.type.text.namesize+1);
+      data.type.drawing.type.text.face     = malloc(data.type.drawing.type.text.namesize+1); //REMEMBER TO FREE THIS
       int textsize = ssize - (HEADER_SIZE + DDATA_TEXT_INDEX(data.type.drawing.type.text.namesize));
-      data.type.drawing.type.text.info = malloc(textsize+1);
+      data.type.drawing.type.text.info = malloc(textsize+1);                                 //REMEMBER TO FREE THIS
       memcpy(data.type.drawing.type.text.face, ddatastream+DDATA_FONTFACE_INDEX, data.type.drawing.type.text.namesize);
       memcpy(data.type.drawing.type.text.info, ddatastream+DDATA_TEXT_INDEX(data.type.drawing.type.text.namesize), textsize);
       data.type.drawing.type.text.face[data.type.drawing.type.text.namesize] = '\0';
@@ -352,12 +239,27 @@ data_t wrap_ddata(byte_t *ddatastream, int ssize) {
 /**
  *
  */
-stream_t read_data_b(int fd, header_t header) {
+stream_t tellapic_read_stream_b(int fd) {
   stream_t stream;
-  byte_t *data = read_b(fd, header.ssize - HEADER_SIZE);
+  header_t header;
+  header = tellapic_read_header_b(fd);
+  stream.header = header;
+  if (header.cbyte != CTL_FAIL || header.cbyte != CTL_CL_DISC)
+    stream = tellapic_read_data_b(fd, header);
+  return stream;
+}
+
+
+/**
+ *
+ */
+stream_t tellapic_read_data_b(int fd, header_t header) {
+  stream_t stream;
+  byte_t *data = malloc(header.ssize - HEADER_SIZE);
+  int nbytes = read_b(fd, header.ssize - HEADER_SIZE, data);
 
   
-  if (data != NULL) {
+  if (nbytes == header.ssize - HEADER_SIZE) {
     // Copy the header to the stream structure
     stream.header = header;
 
@@ -403,9 +305,151 @@ stream_t read_data_b(int fd, header_t header) {
       stream.header.cbyte = CTL_FAIL;
       break;
     }
+  } else if (nbytes == 0) {
+    stream.header.cbyte = CTL_CL_DISC;
   } else
     stream.header.cbyte = CTL_FAIL;
 
   free(data);
   return stream;
+}
+
+
+/**
+ *
+ */
+header_t tellapic_read_header_b(int fd) {
+  header_t header;
+  byte_t *data = malloc(HEADER_SIZE);
+  int nbytes = read_b(fd, HEADER_SIZE, data);
+  
+  if (nbytes == HEADER_SIZE) {
+    header.endian = data[ENDIAN_INDEX];
+    header.cbyte  = data[CBYTE_INDEX];
+    //header.ssize  = data[SBYTE_INDEX]<<24 | data[SBYTE_INDEX + 1]<<16 | data[SBYTE_INDEX + 2]<<8 | data[SBYTE_INDEX + 3];
+    header.ssize  = g_shift(data+SBYTE_INDEX, 4);
+  } else if (nbytes == 0) {
+    header.cbyte = CTL_CL_DISC;
+  } else 
+    header.cbyte = CTL_FAIL;
+
+  // Free the data stream as we already filled up the stream structure for clients.
+  free(data);
+
+  return header;
+}
+
+
+/**
+ *
+ */
+void tellapic_close_fd(int fd) {
+  close(fd);
+}
+
+
+/**
+ *
+ */
+int tellapic_send_data(int socket, stream_t *stream) {
+  byte_t *rawstream = malloc(stream->header.ssize);
+
+  // Copy the header to the raw stream data
+  headercpy(rawstream, stream->header);
+  int cbyte = stream->header.cbyte;
+  switch(cbyte) {
+  case  CTL_CL_PMSG:
+    rawstream[DATA_PMSG_IDFROM_INDEX+HEADER_SIZE] = stream->data.type.chat.idfrom;
+    rawstream[DATA_PMSG_IDTO_INDEX+HEADER_SIZE]   = stream->data.type.chat.type.private.idto;
+    memcpy(rawstream+DATA_PMSG_TEXT_INDEX+HEADER_SIZE, stream->data.type.chat.type.private.text, stream->header.ssize - HEADER_SIZE - 2);
+    break;
+
+  case CTL_CL_BMSG:
+    rawstream[DATA_BMSG_IDFROM_INDEX+HEADER_SIZE] = stream->data.type.chat.idfrom;
+    memcpy(rawstream+DATA_BMSG_TEXT_INDEX+HEADER_SIZE, stream->data.type.chat.type.text, stream->header.ssize - HEADER_SIZE - 1);
+    break;
+
+  case CTL_CL_FIG:
+  case CTL_CL_DRW:
+    ddatacpy(rawstream+HEADER_SIZE, stream->data.type.drawing, stream->header.ssize);
+    break;
+
+
+  case CTL_SV_CLIST:
+    // Implementing this will complicate things. Instead, send CTL_SV_CLADD for each client the list has when an user ask for a client list.
+    // The client will add the user if it wasn't already added.
+    break;
+
+  case CTL_SV_FILE:
+  case CTL_CL_PWD:
+  case CTL_SV_CLADD:
+    memcpy(rawstream+(DATA_CLADD_NAME_INDEX+HEADER_SIZE), stream->data.type.control.info, stream->header.ssize - HEADER_SIZE - 1);
+  case CTL_CL_FILEASK:
+  case CTL_CL_FILEOK:
+  case CTL_SV_PWDFAIL:
+  case CTL_SV_PWDOK:
+  case CTL_SV_PWDASK:
+  case CTL_CL_CLIST:
+  case CTL_SV_CLRM:
+    rawstream[DATA_IDFROM_INDEX+HEADER_SIZE] = stream->data.type.control.idfrom;
+    break;
+
+  default:
+    // wrong header
+    return 0;
+  }
+
+  int r = send(socket, rawstream, stream->header.ssize, 0);
+
+  free(rawstream);
+  return r;
+}
+
+
+/**
+ *
+ */
+int tellapic_connect_to(const char *hostname, int port) {   
+  int sd;
+  struct hostent *host;
+  struct sockaddr_in addr;
+  
+  if ( (host = gethostbyname(hostname)) == NULL )
+      return -1;
+
+  sd = socket(AF_INET, SOCK_STREAM, 0);
+
+  bzero(&addr, sizeof(addr));
+
+  addr.sin_family      = AF_INET;
+  addr.sin_port        = htons(port);
+  addr.sin_addr.s_addr = *(long*)(host->h_addr);
+
+  if ( connect(sd, (struct sockaddr*)&addr, sizeof(addr)) != 0 ) {
+      close(sd);
+      return -1;
+  }
+
+  return sd;
+}
+
+
+/**
+ *
+ */
+void tellapic_free(stream_t stream) {
+  if (stream.header.cbyte == CTL_CL_FIG) {
+    if ((stream.data.type.drawing.dcbyte & TOOL_MASK) == TOOL_TEXT) {
+      free(stream.data.type.drawing.type.text.face);
+      free(stream.data.type.drawing.type.text.info);
+    } else {
+      
+    }
+  } else if (stream.header.cbyte == CTL_CL_PMSG) {
+    free(stream.data.type.chat.type.private.text);
+  } else if (stream.header.cbyte == CTL_CL_BMSG) {
+    free(stream.data.type.chat.type.text);
+  } else if (stream.header.cbyte == CTL_SV_FILE && stream.header.cbyte == CTL_CL_PWD && stream.header.cbyte == CTL_SV_CLADD) {
+    free(stream.data.type.control.info);
+  }
 }

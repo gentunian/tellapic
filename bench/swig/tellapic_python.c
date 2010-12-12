@@ -2714,12 +2714,7 @@ static swig_module_info swig_module = {swig_types, 19, 0, 0, 0, 0};
   
 #include "/home/seba/UNIVERSIDAD/TrabajoFinal/tellapic/include/types.h"
 #include "/home/seba/UNIVERSIDAD/TrabajoFinal/tellapic/include/constants.h"
-  
-  extern int       connect_to(const char *hostname, int port);
-  extern header_t  read_header_b(int fd);
-  extern stream_t  read_data_b(int fd, header_t header);
-  extern void      close_fd(int fd);
-  extern int       send_data(int socket, stream_t *stream);
+#include   "/home/seba/UNIVERSIDAD/TrabajoFinal/tellapic/include/tellapic.h"
   
 
 #include <limits.h>
@@ -5793,7 +5788,97 @@ SWIGINTERN PyObject *stream_t_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObj
   return SWIG_Py_Void();
 }
 
-SWIGINTERN PyObject *_wrap_connect_to(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_tellapic_read_data_b(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  int arg1 ;
+  header_t arg2 ;
+  int val1 ;
+  int ecode1 = 0 ;
+  void *argp2 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  stream_t result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:tellapic_read_data_b",&obj0,&obj1)) SWIG_fail;
+  ecode1 = SWIG_AsVal_int(obj0, &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "tellapic_read_data_b" "', argument " "1"" of type '" "int""'");
+  } 
+  arg1 = (int)(val1);
+  {
+    res2 = SWIG_ConvertPtr(obj1, &argp2, SWIGTYPE_p_header_t,  0 );
+    if (!SWIG_IsOK(res2)) {
+      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "tellapic_read_data_b" "', argument " "2"" of type '" "header_t""'"); 
+    }  
+    if (!argp2) {
+      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "tellapic_read_data_b" "', argument " "2"" of type '" "header_t""'");
+    } else {
+      arg2 = *((header_t *)(argp2));
+    }
+  }
+  result = tellapic_read_data_b(arg1,arg2);
+  resultobj = SWIG_NewPointerObj((stream_t *)memcpy((stream_t *)malloc(sizeof(stream_t)),&result,sizeof(stream_t)), SWIGTYPE_p_stream_t, SWIG_POINTER_OWN |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_tellapic_read_header_b(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  int arg1 ;
+  int val1 ;
+  int ecode1 = 0 ;
+  PyObject * obj0 = 0 ;
+  header_t result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:tellapic_read_header_b",&obj0)) SWIG_fail;
+  ecode1 = SWIG_AsVal_int(obj0, &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "tellapic_read_header_b" "', argument " "1"" of type '" "int""'");
+  } 
+  arg1 = (int)(val1);
+  result = tellapic_read_header_b(arg1);
+  resultobj = SWIG_NewPointerObj((header_t *)memcpy((header_t *)malloc(sizeof(header_t)),&result,sizeof(header_t)), SWIGTYPE_p_header_t, SWIG_POINTER_OWN |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_tellapic_send_data(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  int arg1 ;
+  stream_t *arg2 = (stream_t *) 0 ;
+  int val1 ;
+  int ecode1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  int result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:tellapic_send_data",&obj0,&obj1)) SWIG_fail;
+  ecode1 = SWIG_AsVal_int(obj0, &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "tellapic_send_data" "', argument " "1"" of type '" "int""'");
+  } 
+  arg1 = (int)(val1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_stream_t, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "tellapic_send_data" "', argument " "2"" of type '" "stream_t *""'"); 
+  }
+  arg2 = (stream_t *)(argp2);
+  result = (int)tellapic_send_data(arg1,arg2);
+  resultobj = SWIG_From_int((int)(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_tellapic_connect_to(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   char *arg1 = (char *) 0 ;
   int arg2 ;
@@ -5806,18 +5891,18 @@ SWIGINTERN PyObject *_wrap_connect_to(PyObject *SWIGUNUSEDPARM(self), PyObject *
   PyObject * obj1 = 0 ;
   int result;
   
-  if (!PyArg_ParseTuple(args,(char *)"OO:connect_to",&obj0,&obj1)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"OO:tellapic_connect_to",&obj0,&obj1)) SWIG_fail;
   res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "connect_to" "', argument " "1"" of type '" "char const *""'");
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "tellapic_connect_to" "', argument " "1"" of type '" "char const *""'");
   }
   arg1 = (char *)(buf1);
   ecode2 = SWIG_AsVal_int(obj1, &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "connect_to" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "tellapic_connect_to" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = (int)(val2);
-  result = (int)connect_to((char const *)arg1,arg2);
+  result = (int)tellapic_connect_to((char const *)arg1,arg2);
   resultobj = SWIG_From_int((int)(result));
   if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
   return resultobj;
@@ -5827,79 +5912,20 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_read_header_b(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  int arg1 ;
-  int val1 ;
-  int ecode1 = 0 ;
-  PyObject * obj0 = 0 ;
-  header_t result;
-  
-  if (!PyArg_ParseTuple(args,(char *)"O:read_header_b",&obj0)) SWIG_fail;
-  ecode1 = SWIG_AsVal_int(obj0, &val1);
-  if (!SWIG_IsOK(ecode1)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "read_header_b" "', argument " "1"" of type '" "int""'");
-  } 
-  arg1 = (int)(val1);
-  result = read_header_b(arg1);
-  resultobj = SWIG_NewPointerObj((header_t *)memcpy((header_t *)malloc(sizeof(header_t)),&result,sizeof(header_t)), SWIGTYPE_p_header_t, SWIG_POINTER_OWN |  0 );
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_read_data_b(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  int arg1 ;
-  header_t arg2 ;
-  int val1 ;
-  int ecode1 = 0 ;
-  void *argp2 ;
-  int res2 = 0 ;
-  PyObject * obj0 = 0 ;
-  PyObject * obj1 = 0 ;
-  stream_t result;
-  
-  if (!PyArg_ParseTuple(args,(char *)"OO:read_data_b",&obj0,&obj1)) SWIG_fail;
-  ecode1 = SWIG_AsVal_int(obj0, &val1);
-  if (!SWIG_IsOK(ecode1)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "read_data_b" "', argument " "1"" of type '" "int""'");
-  } 
-  arg1 = (int)(val1);
-  {
-    res2 = SWIG_ConvertPtr(obj1, &argp2, SWIGTYPE_p_header_t,  0 );
-    if (!SWIG_IsOK(res2)) {
-      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "read_data_b" "', argument " "2"" of type '" "header_t""'"); 
-    }  
-    if (!argp2) {
-      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "read_data_b" "', argument " "2"" of type '" "header_t""'");
-    } else {
-      arg2 = *((header_t *)(argp2));
-    }
-  }
-  result = read_data_b(arg1,arg2);
-  resultobj = SWIG_NewPointerObj((stream_t *)memcpy((stream_t *)malloc(sizeof(stream_t)),&result,sizeof(stream_t)), SWIGTYPE_p_stream_t, SWIG_POINTER_OWN |  0 );
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_close_fd(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_tellapic_close_fd(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   int arg1 ;
   int val1 ;
   int ecode1 = 0 ;
   PyObject * obj0 = 0 ;
   
-  if (!PyArg_ParseTuple(args,(char *)"O:close_fd",&obj0)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"O:tellapic_close_fd",&obj0)) SWIG_fail;
   ecode1 = SWIG_AsVal_int(obj0, &val1);
   if (!SWIG_IsOK(ecode1)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "close_fd" "', argument " "1"" of type '" "int""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "tellapic_close_fd" "', argument " "1"" of type '" "int""'");
   } 
   arg1 = (int)(val1);
-  close_fd(arg1);
+  tellapic_close_fd(arg1);
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -5907,31 +5933,22 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_send_data(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_tellapic_read_stream_b(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   int arg1 ;
-  stream_t *arg2 = (stream_t *) 0 ;
   int val1 ;
   int ecode1 = 0 ;
-  void *argp2 = 0 ;
-  int res2 = 0 ;
   PyObject * obj0 = 0 ;
-  PyObject * obj1 = 0 ;
-  int result;
+  stream_t result;
   
-  if (!PyArg_ParseTuple(args,(char *)"OO:send_data",&obj0,&obj1)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"O:tellapic_read_stream_b",&obj0)) SWIG_fail;
   ecode1 = SWIG_AsVal_int(obj0, &val1);
   if (!SWIG_IsOK(ecode1)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "send_data" "', argument " "1"" of type '" "int""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "tellapic_read_stream_b" "', argument " "1"" of type '" "int""'");
   } 
   arg1 = (int)(val1);
-  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_stream_t, 0 |  0 );
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "send_data" "', argument " "2"" of type '" "stream_t *""'"); 
-  }
-  arg2 = (stream_t *)(argp2);
-  result = (int)send_data(arg1,arg2);
-  resultobj = SWIG_From_int((int)(result));
+  result = tellapic_read_stream_b(arg1);
+  resultobj = SWIG_NewPointerObj((stream_t *)memcpy((stream_t *)malloc(sizeof(stream_t)),&result,sizeof(stream_t)), SWIGTYPE_p_stream_t, SWIG_POINTER_OWN |  0 );
   return resultobj;
 fail:
   return NULL;
@@ -6062,11 +6079,12 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"new_stream_t", _wrap_new_stream_t, METH_VARARGS, NULL},
 	 { (char *)"delete_stream_t", _wrap_delete_stream_t, METH_VARARGS, NULL},
 	 { (char *)"stream_t_swigregister", stream_t_swigregister, METH_VARARGS, NULL},
-	 { (char *)"connect_to", _wrap_connect_to, METH_VARARGS, NULL},
-	 { (char *)"read_header_b", _wrap_read_header_b, METH_VARARGS, NULL},
-	 { (char *)"read_data_b", _wrap_read_data_b, METH_VARARGS, NULL},
-	 { (char *)"close_fd", _wrap_close_fd, METH_VARARGS, NULL},
-	 { (char *)"send_data", _wrap_send_data, METH_VARARGS, NULL},
+	 { (char *)"tellapic_read_data_b", _wrap_tellapic_read_data_b, METH_VARARGS, NULL},
+	 { (char *)"tellapic_read_header_b", _wrap_tellapic_read_header_b, METH_VARARGS, NULL},
+	 { (char *)"tellapic_send_data", _wrap_tellapic_send_data, METH_VARARGS, NULL},
+	 { (char *)"tellapic_connect_to", _wrap_tellapic_connect_to, METH_VARARGS, NULL},
+	 { (char *)"tellapic_close_fd", _wrap_tellapic_close_fd, METH_VARARGS, NULL},
+	 { (char *)"tellapic_read_stream_b", _wrap_tellapic_read_stream_b, METH_VARARGS, NULL},
 	 { NULL, NULL, 0, NULL }
 };
 
@@ -6798,6 +6816,7 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "CTL_CL_PWD",SWIG_From_int((int)(0x61)));
   SWIG_Python_SetConstant(d, "CTL_CL_FILEASK",SWIG_From_int((int)(0x71)));
   SWIG_Python_SetConstant(d, "CTL_CL_FILEOK",SWIG_From_int((int)(0x81)));
+  SWIG_Python_SetConstant(d, "CTL_CL_DISC",SWIG_From_int((int)(0x91)));
   SWIG_Python_SetConstant(d, "CTL_FAIL",SWIG_From_int((int)(0x00)));
   SWIG_Python_SetConstant(d, "CTL_SV_CLADD",SWIG_From_int((int)(0x10)));
   SWIG_Python_SetConstant(d, "CTL_SV_CLRM",SWIG_From_int((int)(0x20)));

@@ -1,5 +1,5 @@
 /*
- *   Copyright (c) 2009 Sebastián Treu and Virginia Boscaro.
+ *   Copyright (c) 2010 Sebastián Treu
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -9,10 +9,6 @@
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *   GNU General Public License for more details.
- *
- *   Authors: 
- *         Sebastian Treu 
- *         Virginia Boscaro
  *
  */  
 #include <stdio.h>

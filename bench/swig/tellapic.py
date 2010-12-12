@@ -448,6 +448,7 @@ CTL_CL_CLIST = _tellapic.CTL_CL_CLIST
 CTL_CL_PWD = _tellapic.CTL_CL_PWD
 CTL_CL_FILEASK = _tellapic.CTL_CL_FILEASK
 CTL_CL_FILEOK = _tellapic.CTL_CL_FILEOK
+CTL_CL_DISC = _tellapic.CTL_CL_DISC
 CTL_FAIL = _tellapic.CTL_FAIL
 CTL_SV_CLADD = _tellapic.CTL_SV_CLADD
 CTL_SV_CLRM = _tellapic.CTL_SV_CLRM
@@ -488,24 +489,28 @@ EVENT_RLEFT = _tellapic.EVENT_RLEFT
 EVENT_RRIGHT = _tellapic.EVENT_RRIGHT
 EVENT_RMIDDLE = _tellapic.EVENT_RMIDDLE
 
-def connect_to(*args):
-  return _tellapic.connect_to(*args)
-connect_to = _tellapic.connect_to
+def tellapic_read_data_b(*args):
+  return _tellapic.tellapic_read_data_b(*args)
+tellapic_read_data_b = _tellapic.tellapic_read_data_b
 
-def read_header_b(*args):
-  return _tellapic.read_header_b(*args)
-read_header_b = _tellapic.read_header_b
+def tellapic_read_header_b(*args):
+  return _tellapic.tellapic_read_header_b(*args)
+tellapic_read_header_b = _tellapic.tellapic_read_header_b
 
-def read_data_b(*args):
-  return _tellapic.read_data_b(*args)
-read_data_b = _tellapic.read_data_b
+def tellapic_send_data(*args):
+  return _tellapic.tellapic_send_data(*args)
+tellapic_send_data = _tellapic.tellapic_send_data
 
-def close_fd(*args):
-  return _tellapic.close_fd(*args)
-close_fd = _tellapic.close_fd
+def tellapic_connect_to(*args):
+  return _tellapic.tellapic_connect_to(*args)
+tellapic_connect_to = _tellapic.tellapic_connect_to
 
-def send_data(*args):
-  return _tellapic.send_data(*args)
-send_data = _tellapic.send_data
+def tellapic_close_fd(*args):
+  return _tellapic.tellapic_close_fd(*args)
+tellapic_close_fd = _tellapic.tellapic_close_fd
+
+def tellapic_read_stream_b(*args):
+  return _tellapic.tellapic_read_stream_b(*args)
+tellapic_read_stream_b = _tellapic.tellapic_read_stream_b
 
 
