@@ -543,6 +543,9 @@ authclient(client_t *client)
       //if (stream.header.cbyte == CTL_CL_PWD && stream.data.control.idfrom == client->fd) {
 
       pwd = tellapic_read_pwd(client->fd, pwd, &newpwdlen);
+      char b[256];
+      sprintf(b, "reading pwd: %s len: %d", pwd, newpwdlen);
+      print_output(b);
       if (pwd != NULL)
 	{
 	  // Compare password sent here
@@ -551,6 +554,8 @@ authclient(client_t *client)
 	  if (pwdok) 
 	    {
 	  
+	      sprintf(b, "password was ok..............................................");
+	      print_output(b);
 	      //send_pwdok(client);                                    
 	      tellapic_send_ctl(client->fd, client->fd, CTL_SV_PWDOK);                                	 /* Send CTL_SV_PWDOK to client */
 	      stream_t stream = tellapic_read_stream_b(client->fd); 	                                 /* Read client response        */
