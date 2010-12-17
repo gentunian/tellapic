@@ -1,5 +1,4 @@
 from PyQt4 import QtCore, QtGui
-from waiting import Ui_Waiting
 from main import Ui_Main
 import tellapic
 import threading
@@ -74,20 +73,20 @@ class MainTest(QtGui.QDialog):
                 break
 
         if value in self.ctl:
-            stream = tellapic.tellapic_build_control(value, int(self.ui.svcontrolIdFrom.text()), None)
+            stream = tellapic.tellapic_build_ctl(value, int(self.ui.svcontrolIdFrom.text()))
 
         elif value in self.ctli:
-            stream = tellapic.tellapic_build_control(value, int(self.ui.svcontrolIdFrom.text()), str(self.ui.svcontrolInfo.toPlainText()))
+            stream = tellapic.tellapic_build_ctle(value, int(self.ui.svcontrolIdFrom.text()), self.ui.svcontrolInfo.toPlainText().length(), str(self.ui.svcontrolInfo.toPlainText()))
 
         elif value in self.ctlchat:
-            stream = tellapic.tellapic_build_chat(value, int(self.ui.chatIdFrom.text()), int(self.ui.chatIdTo.text()), str(self.ui.chatText.text()))
+            stream = tellapic.tellapic_build_chat(value, int(self.ui.chatIdFrom.text()), int(self.ui.chatIdTo.text()),self.ui.chatText.text().lenght(), str(self.ui.chatText.text()))
 
         elif value in self.ctldrawing:
             if value == tellapic.CTL_CL_FIG:
                 stream = tellapic.stream_t()
                 stream.header.endian = 0
                 stream.header.cbyte = value
-                stream.header.ssize = 41
+                stream.header.ssize = tellapic.FIG_STREAM_SIZE
                 stream.data.drawing.idfrom = self.id
                 stream.data.drawing.dcbyte = int(self.ui.drawingDCByte.text())
                 stream.data.drawing.dnumber = int(self.ui.drawingNumber.text())
@@ -108,7 +107,7 @@ class MainTest(QtGui.QDialog):
         else:
             pass
 
-        tellapic.tellapic_send_data(self.fd, stream)
+        tellapic.tellapic_send(self.fd, stream)
 
 
     @QtCore.pyqtSlot()
@@ -124,7 +123,7 @@ class MainTest(QtGui.QDialog):
 
         if self.fd <= 0:
             return 0
-        
+
         stream = tellapic.tellapic_read_stream_b(self.fd);
         self.updateUi(stream)
 

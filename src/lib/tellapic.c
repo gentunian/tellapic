@@ -672,7 +672,7 @@ tellapic_read_pwd(int fd, char *pwd, int *len)
 	  if (nbytes == stream.header.ssize - HEADER_SIZE)
 	    {
 	      __ctledatacpy(&stream, data, nbytes);
-	      *len = nbytes - HEADER_SIZE - 1;
+	      *len = nbytes - 1;
 	      pwd = malloc(*len);
 	      strncpy(pwd, (char *)stream.data.control.info, *len);
 	    }
@@ -1122,12 +1122,12 @@ tellapic_build_ctle(int ctl, int idfrom, int infosize, char *info)
     {
       memcpy(stream.data.control.info, info, infosize);
       memset(&stream.data.control.info[infosize], '\0', MAX_INFO_SIZE - infosize);
-      stream.header.ssize = HEADER_SIZE + MAX_INFO_SIZE + 2;
+      stream.header.ssize = HEADER_SIZE + infosize + 2;
     }
   else
     {
       memcpy(stream.data.control.info, info, MAX_INFO_SIZE);
-      stream.header.ssize = HEADER_SIZE + infosize + 2;
+      stream.header.ssize = HEADER_SIZE + MAX_INFO_SIZE + 2;
     }
 
   return stream;
