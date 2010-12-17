@@ -1,4 +1,5 @@
 from PyQt4 import QtCore, QtGui
+#from waiting import Ui_Waiting
 from main import Ui_Main
 import tellapic
 import threading
