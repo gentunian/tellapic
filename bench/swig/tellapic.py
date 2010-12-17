@@ -224,8 +224,9 @@ class figure_t(_object):
     __swig_setmethods__["dash_phase"] = _tellapic.figure_t_dash_phase_set
     __swig_getmethods__["dash_phase"] = _tellapic.figure_t_dash_phase_get
     if _newclass:dash_phase = _swig_property(_tellapic.figure_t_dash_phase_get, _tellapic.figure_t_dash_phase_set)
+    __swig_setmethods__["dash_array"] = _tellapic.figure_t_dash_array_set
     __swig_getmethods__["dash_array"] = _tellapic.figure_t_dash_array_get
-    if _newclass:dash_array = _swig_property(_tellapic.figure_t_dash_array_get)
+    if _newclass:dash_array = _swig_property(_tellapic.figure_t_dash_array_get, _tellapic.figure_t_dash_array_set)
     def __init__(self): 
         this = _tellapic.new_figure_t()
         try: self.this.append(this)
@@ -244,9 +245,9 @@ class text_t(_object):
     __swig_setmethods__["style"] = _tellapic.text_t_style_set
     __swig_getmethods__["style"] = _tellapic.text_t_style_get
     if _newclass:style = _swig_property(_tellapic.text_t_style_get, _tellapic.text_t_style_set)
-    __swig_setmethods__["namesize"] = _tellapic.text_t_namesize_set
-    __swig_getmethods__["namesize"] = _tellapic.text_t_namesize_get
-    if _newclass:namesize = _swig_property(_tellapic.text_t_namesize_get, _tellapic.text_t_namesize_set)
+    __swig_setmethods__["facelen"] = _tellapic.text_t_facelen_set
+    __swig_getmethods__["facelen"] = _tellapic.text_t_facelen_get
+    if _newclass:facelen = _swig_property(_tellapic.text_t_facelen_get, _tellapic.text_t_facelen_set)
     __swig_setmethods__["face"] = _tellapic.text_t_face_set
     __swig_getmethods__["face"] = _tellapic.text_t_face_get
     if _newclass:face = _swig_property(_tellapic.text_t_face_get, _tellapic.text_t_face_set)
@@ -342,47 +343,6 @@ class svcontrol_t(_object):
 svcontrol_t_swigregister = _tellapic.svcontrol_t_swigregister
 svcontrol_t_swigregister(svcontrol_t)
 
-class data_t(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, data_t, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, data_t, name)
-    __repr__ = _swig_repr
-    __swig_getmethods__["type"] = _tellapic.data_t_type_get
-    if _newclass:type = _swig_property(_tellapic.data_t_type_get)
-    def __init__(self): 
-        this = _tellapic.new_data_t()
-        try: self.this.append(this)
-        except: self.this = this
-    __swig_destroy__ = _tellapic.delete_data_t
-    __del__ = lambda self : None;
-data_t_swigregister = _tellapic.data_t_swigregister
-data_t_swigregister(data_t)
-
-class data_t_type(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, data_t_type, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, data_t_type, name)
-    __repr__ = _swig_repr
-    __swig_setmethods__["drawing"] = _tellapic.data_t_type_drawing_set
-    __swig_getmethods__["drawing"] = _tellapic.data_t_type_drawing_get
-    if _newclass:drawing = _swig_property(_tellapic.data_t_type_drawing_get, _tellapic.data_t_type_drawing_set)
-    __swig_setmethods__["chat"] = _tellapic.data_t_type_chat_set
-    __swig_getmethods__["chat"] = _tellapic.data_t_type_chat_get
-    if _newclass:chat = _swig_property(_tellapic.data_t_type_chat_get, _tellapic.data_t_type_chat_set)
-    __swig_setmethods__["control"] = _tellapic.data_t_type_control_set
-    __swig_getmethods__["control"] = _tellapic.data_t_type_control_get
-    if _newclass:control = _swig_property(_tellapic.data_t_type_control_get, _tellapic.data_t_type_control_set)
-    def __init__(self): 
-        this = _tellapic.new_data_t_type()
-        try: self.this.append(this)
-        except: self.this = this
-    __swig_destroy__ = _tellapic.delete_data_t_type
-    __del__ = lambda self : None;
-data_t_type_swigregister = _tellapic.data_t_type_swigregister
-data_t_type_swigregister(data_t_type)
-
 class stream_t(_object):
     __swig_setmethods__ = {}
     __setattr__ = lambda self, name, value: _swig_setattr(self, stream_t, name, value)
@@ -392,9 +352,8 @@ class stream_t(_object):
     __swig_setmethods__["header"] = _tellapic.stream_t_header_set
     __swig_getmethods__["header"] = _tellapic.stream_t_header_get
     if _newclass:header = _swig_property(_tellapic.stream_t_header_get, _tellapic.stream_t_header_set)
-    __swig_setmethods__["data"] = _tellapic.stream_t_data_set
     __swig_getmethods__["data"] = _tellapic.stream_t_data_get
-    if _newclass:data = _swig_property(_tellapic.stream_t_data_get, _tellapic.stream_t_data_set)
+    if _newclass:data = _swig_property(_tellapic.stream_t_data_get)
     def __init__(self): 
         this = _tellapic.new_stream_t()
         try: self.this.append(this)
@@ -404,10 +363,49 @@ class stream_t(_object):
 stream_t_swigregister = _tellapic.stream_t_swigregister
 stream_t_swigregister(stream_t)
 
+class stream_t_data(_object):
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, stream_t_data, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, stream_t_data, name)
+    __repr__ = _swig_repr
+    __swig_setmethods__["drawing"] = _tellapic.stream_t_data_drawing_set
+    __swig_getmethods__["drawing"] = _tellapic.stream_t_data_drawing_get
+    if _newclass:drawing = _swig_property(_tellapic.stream_t_data_drawing_get, _tellapic.stream_t_data_drawing_set)
+    __swig_setmethods__["chat"] = _tellapic.stream_t_data_chat_set
+    __swig_getmethods__["chat"] = _tellapic.stream_t_data_chat_get
+    if _newclass:chat = _swig_property(_tellapic.stream_t_data_chat_get, _tellapic.stream_t_data_chat_set)
+    __swig_setmethods__["control"] = _tellapic.stream_t_data_control_set
+    __swig_getmethods__["control"] = _tellapic.stream_t_data_control_get
+    if _newclass:control = _swig_property(_tellapic.stream_t_data_control_get, _tellapic.stream_t_data_control_set)
+    def __init__(self): 
+        this = _tellapic.new_stream_t_data()
+        try: self.this.append(this)
+        except: self.this = this
+    __swig_destroy__ = _tellapic.delete_stream_t_data
+    __del__ = lambda self : None;
+stream_t_data_swigregister = _tellapic.stream_t_data_swigregister
+stream_t_data_swigregister(stream_t_data)
+
+MAX_TEXT_SIZE = _tellapic.MAX_TEXT_SIZE
+MAX_INFO_SIZE = _tellapic.MAX_INFO_SIZE
+MAX_FONTFACE_LEN = _tellapic.MAX_FONTFACE_LEN
 ENDIAN_INDEX = _tellapic.ENDIAN_INDEX
 CBYTE_INDEX = _tellapic.CBYTE_INDEX
 SBYTE_INDEX = _tellapic.SBYTE_INDEX
 HEADER_SIZE = _tellapic.HEADER_SIZE
+FIG_STREAM_SIZE = _tellapic.FIG_STREAM_SIZE
+CTL_STREAM_SIZE = _tellapic.CTL_STREAM_SIZE
+DRWU_STREAM_SIZE = _tellapic.DRWU_STREAM_SIZE
+DRWI_STREAM_SIZE = _tellapic.DRWI_STREAM_SIZE
+MIN_PMSG_STREAM_SIZE = _tellapic.MIN_PMSG_STREAM_SIZE
+MIN_BMSG_STREAM_SIZE = _tellapic.MIN_BMSG_STREAM_SIZE
+MIN_CTLEXT_STREAM_SIZE = _tellapic.MIN_CTLEXT_STREAM_SIZE
+MAX_PMSG_STREAM_SIZE = _tellapic.MAX_PMSG_STREAM_SIZE
+MAX_BMSG_STREAM_SIZE = _tellapic.MAX_BMSG_STREAM_SIZE
+MAX_CTLEXT_STREAM_SIZE = _tellapic.MAX_CTLEXT_STREAM_SIZE
+PMSG_TEXT_OFFSET = _tellapic.PMSG_TEXT_OFFSET
+BMSG_TEXT_OFFSET = _tellapic.BMSG_TEXT_OFFSET
 DATA_IDFROM_INDEX = _tellapic.DATA_IDFROM_INDEX
 DATA_PMSG_IDFROM_INDEX = _tellapic.DATA_PMSG_IDFROM_INDEX
 DATA_PMSG_IDTO_INDEX = _tellapic.DATA_PMSG_IDTO_INDEX
@@ -449,6 +447,7 @@ CTL_CL_PWD = _tellapic.CTL_CL_PWD
 CTL_CL_FILEASK = _tellapic.CTL_CL_FILEASK
 CTL_CL_FILEOK = _tellapic.CTL_CL_FILEOK
 CTL_CL_DISC = _tellapic.CTL_CL_DISC
+CTL_CL_NAME = _tellapic.CTL_CL_NAME
 CTL_FAIL = _tellapic.CTL_FAIL
 CTL_SV_CLADD = _tellapic.CTL_SV_CLADD
 CTL_SV_CLRM = _tellapic.CTL_SV_CLRM
@@ -457,6 +456,8 @@ CTL_SV_PWDASK = _tellapic.CTL_SV_PWDASK
 CTL_SV_PWDOK = _tellapic.CTL_SV_PWDOK
 CTL_SV_PWDFAIL = _tellapic.CTL_SV_PWDFAIL
 CTL_SV_FILE = _tellapic.CTL_SV_FILE
+CTL_SV_ID = _tellapic.CTL_SV_ID
+CTL_SV_NAMEINUSE = _tellapic.CTL_SV_NAMEINUSE
 FONT_STYLE_NORMAL = _tellapic.FONT_STYLE_NORMAL
 FONT_STYLE_BOLD = _tellapic.FONT_STYLE_BOLD
 FONT_STYLE_ITALIC = _tellapic.FONT_STYLE_ITALIC
@@ -489,6 +490,10 @@ EVENT_RLEFT = _tellapic.EVENT_RLEFT
 EVENT_RRIGHT = _tellapic.EVENT_RRIGHT
 EVENT_RMIDDLE = _tellapic.EVENT_RMIDDLE
 
+def tellapic_read_pwd(*args):
+  return _tellapic.tellapic_read_pwd(*args)
+tellapic_read_pwd = _tellapic.tellapic_read_pwd
+
 def tellapic_read_data_b(*args):
   return _tellapic.tellapic_read_data_b(*args)
 tellapic_read_data_b = _tellapic.tellapic_read_data_b
@@ -497,9 +502,9 @@ def tellapic_read_header_b(*args):
   return _tellapic.tellapic_read_header_b(*args)
 tellapic_read_header_b = _tellapic.tellapic_read_header_b
 
-def tellapic_send_data(*args):
-  return _tellapic.tellapic_send_data(*args)
-tellapic_send_data = _tellapic.tellapic_send_data
+def tellapic_send(*args):
+  return _tellapic.tellapic_send(*args)
+tellapic_send = _tellapic.tellapic_send
 
 def tellapic_connect_to(*args):
   return _tellapic.tellapic_connect_to(*args)
@@ -512,5 +517,41 @@ tellapic_close_fd = _tellapic.tellapic_close_fd
 def tellapic_read_stream_b(*args):
   return _tellapic.tellapic_read_stream_b(*args)
 tellapic_read_stream_b = _tellapic.tellapic_read_stream_b
+
+def tellapic_send_text(*args):
+  return _tellapic.tellapic_send_text(*args)
+tellapic_send_text = _tellapic.tellapic_send_text
+
+def tellapic_send_fig(*args):
+  return _tellapic.tellapic_send_fig(*args)
+tellapic_send_fig = _tellapic.tellapic_send_fig
+
+def tellapic_send_chatp(*args):
+  return _tellapic.tellapic_send_chatp(*args)
+tellapic_send_chatp = _tellapic.tellapic_send_chatp
+
+def tellapic_send_chatb(*args):
+  return _tellapic.tellapic_send_chatb(*args)
+tellapic_send_chatb = _tellapic.tellapic_send_chatb
+
+def tellapic_send_ctlext(*args):
+  return _tellapic.tellapic_send_ctlext(*args)
+tellapic_send_ctlext = _tellapic.tellapic_send_ctlext
+
+def tellapic_send_ctl(*args):
+  return _tellapic.tellapic_send_ctl(*args)
+tellapic_send_ctl = _tellapic.tellapic_send_ctl
+
+def tellapic_build_ctle(*args):
+  return _tellapic.tellapic_build_ctle(*args)
+tellapic_build_ctle = _tellapic.tellapic_build_ctle
+
+def tellapic_build_ctl(*args):
+  return _tellapic.tellapic_build_ctl(*args)
+tellapic_build_ctl = _tellapic.tellapic_build_ctl
+
+def tellapic_build_chat(*args):
+  return _tellapic.tellapic_build_chat(*args)
+tellapic_build_chat = _tellapic.tellapic_build_chat
 
 

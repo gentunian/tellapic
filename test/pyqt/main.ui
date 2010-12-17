@@ -1,0 +1,1792 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <author>Sebastian Treu</author>
+ <class>Main</class>
+ <widget class="QDialog" name="Main">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>805</width>
+    <height>724</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Tellapic Test</string>
+  </property>
+  <widget class="QGroupBox" name="receiveBox">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>0</y>
+     <width>381</width>
+     <height>671</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>9</pointsize>
+     <weight>50</weight>
+     <bold>false</bold>
+    </font>
+   </property>
+   <property name="title">
+    <string>RECEIVED</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
+   </property>
+   <widget class="QTabWidget" name="receiveTabWidget">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>140</y>
+      <width>361</width>
+      <height>491</height>
+     </rect>
+    </property>
+    <property name="tabShape">
+     <enum>QTabWidget::Rounded</enum>
+    </property>
+    <property name="currentIndex">
+     <number>2</number>
+    </property>
+    <property name="tabsClosable">
+     <bool>false</bool>
+    </property>
+    <widget class="QWidget" name="controlTab">
+     <attribute name="title">
+      <string>Control</string>
+     </attribute>
+     <widget class="QWidget" name="formLayoutWidget_3">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>20</y>
+        <width>271</width>
+        <height>411</height>
+       </rect>
+      </property>
+      <layout class="QFormLayout" name="formLayout_3">
+       <property name="fieldGrowthPolicy">
+        <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+       </property>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_7">
+         <property name="text">
+          <string>Id from:</string>
+         </property>
+         <property name="buddy">
+          <cstring>receiveSvcontrolIdFrom</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_8">
+         <property name="text">
+          <string>Info:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QLineEdit" name="receiveSvcontrolIdFrom">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QPlainTextEdit" name="receiveSvcontrolInfo">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="chatTab">
+     <attribute name="title">
+      <string>Chat</string>
+     </attribute>
+     <widget class="QWidget" name="formLayoutWidget_4">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>20</y>
+        <width>271</width>
+        <height>411</height>
+       </rect>
+      </property>
+      <layout class="QFormLayout" name="formLayout_4">
+       <property name="fieldGrowthPolicy">
+        <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+       </property>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_9">
+         <property name="text">
+          <string>Id from:</string>
+         </property>
+         <property name="buddy">
+          <cstring>receiveChatIdFrom</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_10">
+         <property name="text">
+          <string>Id to (if private):</string>
+         </property>
+         <property name="buddy">
+          <cstring>receiveChatIdTo</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QLineEdit" name="receiveChatIdFrom">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QLineEdit" name="receiveChatIdTo">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_11">
+         <property name="text">
+          <string>Text:</string>
+         </property>
+         <property name="buddy">
+          <cstring>receiveChatText</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QPlainTextEdit" name="receiveChatText">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="drawingTab">
+     <attribute name="title">
+      <string>Drawing</string>
+     </attribute>
+     <widget class="QGroupBox" name="receiveTextBox">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>270</y>
+        <width>331</width>
+        <height>181</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Text</string>
+      </property>
+      <widget class="QWidget" name="formLayoutWidget_6">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>20</y>
+         <width>321</width>
+         <height>149</height>
+        </rect>
+       </property>
+       <layout class="QFormLayout" name="formLayout_6">
+        <property name="fieldGrowthPolicy">
+         <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+        </property>
+        <property name="labelAlignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_20">
+          <property name="text">
+           <string>Style:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveTextStyle</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLineEdit" name="receiveTextStyle">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_22">
+          <property name="text">
+           <string>Font face:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveTextFace</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLineEdit" name="receiveTextFace">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_23">
+          <property name="text">
+           <string>Info:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveTextText</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QPlainTextEdit" name="receiveTextText">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="receiveDrawingBox">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>10</y>
+        <width>161</width>
+        <height>251</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Drawing Data</string>
+      </property>
+      <widget class="QWidget" name="formLayoutWidget">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>20</y>
+         <width>141</width>
+         <height>244</height>
+        </rect>
+       </property>
+       <layout class="QFormLayout" name="formLayout">
+        <property name="fieldGrowthPolicy">
+         <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+        </property>
+        <property name="rowWrapPolicy">
+         <enum>QFormLayout::DontWrapRows</enum>
+        </property>
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_12">
+          <property name="text">
+           <string>Id from:</string>
+          </property>
+          <property name="buddy">
+           <cstring>recevieDrawingIdFrom</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLineEdit" name="recevieDrawingIdFrom">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_13">
+          <property name="text">
+           <string>DCByte:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveDrawingDCByte</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_14">
+          <property name="text">
+           <string>DNumber:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveDrawingNumber</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="label_15">
+          <property name="text">
+           <string>Width:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveDrawingWidth</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="QLabel" name="label_16">
+          <property name="text">
+           <string>Opacity:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveDrawingOpacity</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="0">
+         <widget class="QLabel" name="label_17">
+          <property name="text">
+           <string>Color:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveDrawingColor</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="0">
+         <widget class="QLabel" name="label_18">
+          <property name="text">
+           <string>Start x coord:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveDrawingXCoordinate</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="7" column="0">
+         <widget class="QLabel" name="label_19">
+          <property name="text">
+           <string>Start y coord:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveDrawingYCoordinate</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLineEdit" name="receiveDrawingDCByte">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QLineEdit" name="receiveDrawingNumber">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QLineEdit" name="receiveDrawingWidth">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="1">
+         <widget class="QLineEdit" name="receiveDrawingOpacity">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="1">
+         <widget class="QLineEdit" name="receiveDrawingColor">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="1">
+         <widget class="QLineEdit" name="receiveDrawingXCoordinate">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="7" column="1">
+         <widget class="QLineEdit" name="receiveDrawingYCoordinate">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="receiveFigureBox">
+      <property name="geometry">
+       <rect>
+        <x>190</x>
+        <y>10</y>
+        <width>161</width>
+        <height>251</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Figure</string>
+      </property>
+      <widget class="QWidget" name="formLayoutWidget_7">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>20</y>
+         <width>141</width>
+         <height>244</height>
+        </rect>
+       </property>
+       <layout class="QFormLayout" name="formLayout_7">
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_25">
+          <property name="text">
+           <string>Line joins:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveFigureLineJoin</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLineEdit" name="receiveFigureTool">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLineEdit" name="receiveFigureEvent">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QLineEdit" name="receiveFigureLineJoin">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="label_26">
+          <property name="text">
+           <string>End caps:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveFigureEndCaps</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_27">
+          <property name="text">
+           <string>Tool:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveFigureTool</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_28">
+          <property name="text">
+           <string>Event:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveFigureEvent</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QLineEdit" name="receiveFigureEndCaps">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="QLabel" name="label_21">
+          <property name="text">
+           <string>End x coord:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveFigureEndXCoordinate</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="0">
+         <widget class="QLabel" name="label_24">
+          <property name="text">
+           <string>End y coord:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveFigureEndYCoordinate</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="0">
+         <widget class="QLabel" name="label_29">
+          <property name="text">
+           <string>Miter Limit:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveFigureMiterLimit</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="7" column="0">
+         <widget class="QLabel" name="label_30">
+          <property name="text">
+           <string>Dash Phase:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveFigureDashPhase</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="1">
+         <widget class="QLineEdit" name="receiveFigureEndXCoordinate">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="1">
+         <widget class="QLineEdit" name="receiveFigureEndYCoordinate">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="1">
+         <widget class="QLineEdit" name="receiveFigureMiterLimit">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="7" column="1">
+         <widget class="QLineEdit" name="receiveFigureDashPhase">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </widget>
+   </widget>
+   <widget class="QGroupBox" name="receiveHeaderBox">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>20</y>
+      <width>361</width>
+      <height>111</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Header</string>
+    </property>
+    <widget class="QWidget" name="formLayoutWidget_2">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>201</width>
+       <height>91</height>
+      </rect>
+     </property>
+     <layout class="QFormLayout" name="formLayout_2">
+      <property name="fieldGrowthPolicy">
+       <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+      </property>
+      <property name="rowWrapPolicy">
+       <enum>QFormLayout::DontWrapRows</enum>
+      </property>
+      <property name="labelAlignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+      <property name="formAlignment">
+       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      </property>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>CByte:</string>
+        </property>
+        <property name="buddy">
+         <cstring>receiveHeaderCByte</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QComboBox" name="receiveHeaderCByte">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="layoutDirection">
+         <enum>Qt::LeftToRight</enum>
+        </property>
+        <property name="currentIndex">
+         <number>0</number>
+        </property>
+        <item>
+         <property name="text">
+          <string>CTL_CL_BMSG</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_CL_PMSG</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_CL_FIG</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_CL_DRW</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_CL_CLIST</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_CL_PWD</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_CL_FILEASK</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_CL_FILEOK</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_CL_DISC</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_CL_NAME</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_SV_CLRM</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_SV_CLADD</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_SV_CLIST</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_SV_PWDASK</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_SV_PWDOK</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_SV_PWDFAIL</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_SV_FILE</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_SV_ID</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_SV_NAMEINUSE</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_FAIL</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="receiveHeaderSSize">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_6">
+        <property name="text">
+         <string>Size:</string>
+        </property>
+        <property name="buddy">
+         <cstring>receiveHeaderSSize</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>Endian:</string>
+        </property>
+        <property name="buddy">
+         <cstring>receiveHeaderEndian</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QCheckBox" name="receiveHeaderEndian">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </widget>
+   <widget class="QPushButton" name="receiveButton">
+    <property name="geometry">
+     <rect>
+      <x>130</x>
+      <y>640</y>
+      <width>85</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Receive</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QGroupBox" name="groupBox_6">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>410</x>
+     <y>0</y>
+     <width>381</width>
+     <height>671</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>9</pointsize>
+     <weight>50</weight>
+     <bold>false</bold>
+    </font>
+   </property>
+   <property name="title">
+    <string>TO SEND</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
+   </property>
+   <widget class="QTabWidget" name="tabWidget">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>140</y>
+      <width>361</width>
+      <height>491</height>
+     </rect>
+    </property>
+    <property name="tabShape">
+     <enum>QTabWidget::Rounded</enum>
+    </property>
+    <property name="currentIndex">
+     <number>0</number>
+    </property>
+    <property name="tabsClosable">
+     <bool>false</bool>
+    </property>
+    <widget class="QWidget" name="controlTab_2">
+     <attribute name="title">
+      <string>Control</string>
+     </attribute>
+     <widget class="QWidget" name="formLayoutWidget_5">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>20</y>
+        <width>271</width>
+        <height>411</height>
+       </rect>
+      </property>
+      <layout class="QFormLayout" name="formLayout_5">
+       <property name="fieldGrowthPolicy">
+        <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+       </property>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_31">
+         <property name="text">
+          <string>Id from:</string>
+         </property>
+         <property name="buddy">
+          <cstring>receiveSvcontrolIdFrom</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_32">
+         <property name="text">
+          <string>Info:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QLineEdit" name="svcontrolIdFrom">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QPlainTextEdit" name="svcontrolInfo">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="plainText">
+          <string/>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="chatTab_2">
+     <attribute name="title">
+      <string>Chat</string>
+     </attribute>
+     <widget class="QWidget" name="formLayoutWidget_8">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>20</y>
+        <width>271</width>
+        <height>411</height>
+       </rect>
+      </property>
+      <layout class="QFormLayout" name="formLayout_8">
+       <property name="fieldGrowthPolicy">
+        <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+       </property>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_33">
+         <property name="text">
+          <string>Id from:</string>
+         </property>
+         <property name="buddy">
+          <cstring>receiveChatIdFrom</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_34">
+         <property name="text">
+          <string>Id to (if private):</string>
+         </property>
+         <property name="buddy">
+          <cstring>receiveChatIdTo</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QLineEdit" name="chatIdFrom">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QLineEdit" name="chatIdTo">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_35">
+         <property name="text">
+          <string>Text:</string>
+         </property>
+         <property name="buddy">
+          <cstring>receiveChatText</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QPlainTextEdit" name="chatText">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="drawingTab_2">
+     <attribute name="title">
+      <string>Drawing</string>
+     </attribute>
+     <widget class="QGroupBox" name="groupBox_7">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>270</y>
+        <width>321</width>
+        <height>181</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Text</string>
+      </property>
+      <widget class="QWidget" name="formLayoutWidget_9">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>20</y>
+         <width>311</width>
+         <height>149</height>
+        </rect>
+       </property>
+       <layout class="QFormLayout" name="formLayout_9">
+        <property name="fieldGrowthPolicy">
+         <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+        </property>
+        <property name="labelAlignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_36">
+          <property name="text">
+           <string>Style:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveTextStyle</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLineEdit" name="textStyle">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_37">
+          <property name="text">
+           <string>Font face:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveTextFace</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLineEdit" name="textFace">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_38">
+          <property name="text">
+           <string>Info:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveTextText</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QPlainTextEdit" name="textText">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="groupBox_8">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>10</y>
+        <width>161</width>
+        <height>251</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Drawing Data</string>
+      </property>
+      <widget class="QWidget" name="formLayoutWidget_10">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>20</y>
+         <width>141</width>
+         <height>244</height>
+        </rect>
+       </property>
+       <layout class="QFormLayout" name="formLayout_10">
+        <property name="fieldGrowthPolicy">
+         <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+        </property>
+        <property name="rowWrapPolicy">
+         <enum>QFormLayout::DontWrapRows</enum>
+        </property>
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_39">
+          <property name="text">
+           <string>Id from:</string>
+          </property>
+          <property name="buddy">
+           <cstring>recevieDrawingIdFrom</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLineEdit" name="drawingIdFrom">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_40">
+          <property name="text">
+           <string>DCByte:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveDrawingDCByte</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_41">
+          <property name="text">
+           <string>DNumber:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveDrawingNumber</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="label_42">
+          <property name="text">
+           <string>Width:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveDrawingWidth</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="QLabel" name="label_43">
+          <property name="text">
+           <string>Opacity:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveDrawingOpacity</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="0">
+         <widget class="QLabel" name="label_44">
+          <property name="text">
+           <string>Color:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveDrawingColor</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="0">
+         <widget class="QLabel" name="label_45">
+          <property name="text">
+           <string>Start x coord:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveDrawingXCoordinate</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="7" column="0">
+         <widget class="QLabel" name="label_46">
+          <property name="text">
+           <string>Start y coord:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveDrawingYCoordinate</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLineEdit" name="drawingDCByte">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QLineEdit" name="drawingNumber">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QLineEdit" name="drawingWidth">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="1">
+         <widget class="QLineEdit" name="drawingOpacity">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="1">
+         <widget class="QLineEdit" name="drawingColor">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="1">
+         <widget class="QLineEdit" name="drawingXCoordinate">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="7" column="1">
+         <widget class="QLineEdit" name="drawingYCoordinate">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="groupBox_9">
+      <property name="geometry">
+       <rect>
+        <x>180</x>
+        <y>10</y>
+        <width>161</width>
+        <height>251</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Figure</string>
+      </property>
+      <widget class="QWidget" name="formLayoutWidget_11">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>20</y>
+         <width>141</width>
+         <height>244</height>
+        </rect>
+       </property>
+       <layout class="QFormLayout" name="formLayout_11">
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_47">
+          <property name="text">
+           <string>Line joins:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveFigureLineJoin</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLineEdit" name="figureTool">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLineEdit" name="figureEvent">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QLineEdit" name="figureLineJoin">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="label_48">
+          <property name="text">
+           <string>End caps:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveFigureEndCaps</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_49">
+          <property name="text">
+           <string>Tool:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveFigureTool</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_50">
+          <property name="text">
+           <string>Event:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveFigureEvent</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QLineEdit" name="figureEndCaps">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="QLabel" name="label_51">
+          <property name="text">
+           <string>End x coord:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveFigureEndXCoordinate</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="0">
+         <widget class="QLabel" name="label_52">
+          <property name="text">
+           <string>End y coord:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveFigureEndYCoordinate</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="0">
+         <widget class="QLabel" name="label_53">
+          <property name="text">
+           <string>Miter Limit:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveFigureMiterLimit</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="7" column="0">
+         <widget class="QLabel" name="label_54">
+          <property name="text">
+           <string>Dash Phase:</string>
+          </property>
+          <property name="buddy">
+           <cstring>receiveFigureDashPhase</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="1">
+         <widget class="QLineEdit" name="figureEndXCoordinate">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="1">
+         <widget class="QLineEdit" name="figureEndYCoordinate">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="1">
+         <widget class="QLineEdit" name="figureMiterLimit">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="7" column="1">
+         <widget class="QLineEdit" name="figureDashPhase">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </widget>
+   </widget>
+   <widget class="QGroupBox" name="groupBox_10">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>20</y>
+      <width>341</width>
+      <height>111</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Header</string>
+    </property>
+    <widget class="QWidget" name="formLayoutWidget_12">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>201</width>
+       <height>91</height>
+      </rect>
+     </property>
+     <layout class="QFormLayout" name="formLayout_12">
+      <property name="fieldGrowthPolicy">
+       <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+      </property>
+      <property name="rowWrapPolicy">
+       <enum>QFormLayout::DontWrapRows</enum>
+      </property>
+      <property name="labelAlignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+      <property name="formAlignment">
+       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      </property>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_55">
+        <property name="text">
+         <string>CByte:</string>
+        </property>
+        <property name="buddy">
+         <cstring>receiveHeaderCByte</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QComboBox" name="headerCByte">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="layoutDirection">
+         <enum>Qt::LeftToRight</enum>
+        </property>
+        <property name="currentIndex">
+         <number>0</number>
+        </property>
+        <item>
+         <property name="text">
+          <string>CTL_CL_BMSG</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_CL_PMSG</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_CL_FIG</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_CL_DRW</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_CL_CLIST</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_CL_PWD</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_CL_FILEASK</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_CL_FILEOK</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_CL_DISC</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_CL_NAME</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_SV_CLRM</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_SV_CLADD</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_SV_CLIST</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_SV_PWDASK</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_SV_PWDOK</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_SV_PWDFAIL</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_SV_FILE</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_SV_ID</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_SV_NAMEINUSE</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_FAIL</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="headerSSize">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_56">
+        <property name="text">
+         <string>Size:</string>
+        </property>
+        <property name="buddy">
+         <cstring>receiveHeaderSSize</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_57">
+        <property name="text">
+         <string>Endian:</string>
+        </property>
+        <property name="buddy">
+         <cstring>receiveHeaderEndian</cstring>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QCheckBox" name="headerEndian">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </widget>
+   <widget class="QPushButton" name="sendButton">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>140</x>
+      <y>640</y>
+      <width>85</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Send</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QPushButton" name="exitButton">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>340</x>
+     <y>690</y>
+     <width>85</width>
+     <height>27</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Exit</string>
+   </property>
+  </widget>
+ </widget>
+ <tabstops>
+  <tabstop>receiveTabWidget</tabstop>
+  <tabstop>receiveSvcontrolIdFrom</tabstop>
+  <tabstop>receiveChatIdFrom</tabstop>
+  <tabstop>receiveChatIdTo</tabstop>
+  <tabstop>receiveChatText</tabstop>
+  <tabstop>exitButton</tabstop>
+  <tabstop>receiveButton</tabstop>
+  <tabstop>sendButton</tabstop>
+  <tabstop>receiveFigureTool</tabstop>
+  <tabstop>receiveFigureEvent</tabstop>
+  <tabstop>receiveFigureLineJoin</tabstop>
+  <tabstop>receiveFigureEndCaps</tabstop>
+  <tabstop>receiveTextStyle</tabstop>
+  <tabstop>receiveTextFace</tabstop>
+  <tabstop>receiveTextText</tabstop>
+ </tabstops>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>exitButton</sender>
+   <signal>clicked()</signal>
+   <receiver>Main</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>91</x>
+     <y>703</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>258</x>
+     <y>695</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

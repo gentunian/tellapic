@@ -65,6 +65,7 @@ typedef struct cl {
   int                clidx;
   int                fd;
   char               *name;
+  int                namelen;
   struct sockaddr_in address;
 
 } client_t;

@@ -2,9 +2,9 @@ CC       = gcc
 BUILDDIR = build/
 ABSBUILDDIR = /home/seba/UNIVERSIDAD/TrabajoFinal/tellapic/build
 SRCDIR   = src/
-LIBDIR   = bench/swig
+LIBDIR   = src/lib
 INCDIR   = include/
-CFLAGS   = -ggdb -I$(INCDIR)
+CFLAGS   = -ggdb -I$(INCDIR) -DDEBUG=1
 
 
 server: list.o libtellapic.so common.o console.o

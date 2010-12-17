@@ -14,27 +14,50 @@
 #ifndef CONSTANTS_H_
 #define CONSTANTS_H_
 
-/* from stream */
-#define ENDIAN_INDEX    0
-#define CBYTE_INDEX     1
-#define SBYTE_INDEX     2
-#define HEADER_SIZE     6
+#define MAX_TEXT_SIZE    256
+#define MAX_INFO_SIZE    128
+#define MAX_FONTFACE_LEN 48
 
+/* from stream */
+#define ENDIAN_INDEX               0
+#define CBYTE_INDEX                1
+#define SBYTE_INDEX                2
+#define HEADER_SIZE                6
+
+/* This data streams have a fixed size */
+#define FIG_STREAM_SIZE              43 + HEADER_SIZE
+#define CTL_STREAM_SIZE              1 + HEADER_SIZE
+#define DRWU_STREAM_SIZE             6 + HEADER_SIZE
+#define DRWI_STREAM_SIZE             33 + HEADER_SIZE
+
+/* This streams size may be variable but not more than the values below */
+#define MIN_FIGTXT_STREAM_SIZE       HEADER_SIZE + DDATA_FONTFACE_INDEX + 2
+#define MIN_PMSG_STREAM_SIZE         HEADER_SIZE + 3
+#define MIN_BMSG_STREAM_SIZE         HEADER_SIZE + 2
+#define MIN_CTLEXT_STREAM_SIZE       HEADER_SIZE + 2
+#define MAX_FIGTXT_STREAM_SIZE       MAX_TEXT_SIZE + MAX_FONTFACE_LEN + HEADER_SIZE + DDATA_FONTFACE_INDEX
+#define MAX_PMSG_STREAM_SIZE         MAX_TEXT_SIZE + HEADER_SIZE + 2
+#define MAX_BMSG_STREAM_SIZE         MAX_TEXT_SIZE + HEADER_SIZE + 1 
+#define MAX_CTLEXT_STREAM_SIZE       MAX_INFO_SIZE + HEADER_SIZE + 1
+
+
+#define PMSG_TEXT_OFFSET    2
+#define BMSG_TEXT_OFFSET    1
 
 /* All data sections has the sender's id as the first byte */
-#define DATA_IDFROM_INDEX   0
+#define DATA_IDFROM_INDEX          0
 
 
 /* Indexes for PMSG (private message) data section. */
 /* Useful for getting data from data section array  */
-#define DATA_PMSG_IDFROM_INDEX DATA_IDFROM_INDEX
-#define DATA_PMSG_IDTO_INDEX   1
-#define DATA_PMSG_TEXT_INDEX   2
+#define DATA_PMSG_IDFROM_INDEX     DATA_IDFROM_INDEX
+#define DATA_PMSG_IDTO_INDEX       1
+#define DATA_PMSG_TEXT_INDEX       2
 
 
 /* Indexes for BMSG (broadcast message) data section */
-#define DATA_BMSG_IDFROM_INDEX DATA_IDFROM_INDEX
-#define DATA_BMSG_TEXT_INDEX   1
+#define DATA_BMSG_IDFROM_INDEX     DATA_IDFROM_INDEX
+#define DATA_BMSG_TEXT_INDEX       1
 
 
 /* Indexes for FIG (drawn figure) data section */
@@ -53,11 +76,13 @@
 #define DDATA_MITER_INDEX          27
 #define DDATA_DASHPHASE_INDEX      31
 #define DDATA_DASHARRAY_INDEX      35
+
+/* for text */
 #define DDATA_FONTSTYLE_INDEX      21
 #define DDATA_FONTLEN_INDEX        22
 #define DDATA_FONTFACE_INDEX       23
-#define DDATA_TEXT_INDEX(fontnamelen) \
-  DDATA_FONTFACE_INDEX + fontnamelen
+#define DDATA_TEXT_INDEX(fontface_len)		\
+  (DDATA_FONTFACE_INDEX + fontface_len)
 
 
 /* Indexes for CLADD (client connected) data section */
@@ -111,18 +136,10 @@
 #define CTL_SV_NAMEINUSE 0x90
 
 
-/* Paint properties */
-/*
-#define LINE_JOIN_MITER   0
-#define LINE_JOIN_ROUND   1
-#define LINE_JOIN_BEVEL   2
-#define END_CAPS_BUTT     0
-#define END_CAPS_ROUND    1
-#define END_CAPS_SQUARE   2
-*/
-#define FONT_STYLE_NORMAL 0
-#define FONT_STYLE_BOLD   1
-#define FONT_STYLE_ITALIC 2
+/* Face properties */
+#define FONT_STYLE_NORMAL      0
+#define FONT_STYLE_BOLD        1
+#define FONT_STYLE_ITALIC      2
 #define FONT_STYLE_BOLD_ITALIC FONT_STYLE_BOLD + FONT_STYLE_ITALIC
 
 

@@ -14,6 +14,8 @@
 #ifndef TYPES_H_
 #define TYPES_H_
 
+#include "constants.h"
+
 typedef unsigned char byte_t;  //basic byte unit
 
 
@@ -53,58 +55,59 @@ typedef struct {
 
 typedef struct {
   byte_t    idto;
-  char*     text;
+  char      text[MAX_TEXT_SIZE];
 } pmessage_t;
 
 
 typedef struct {
   byte_t    idfrom;
   union {
-    char*      text;
+    char       text[MAX_TEXT_SIZE];
     pmessage_t private;
   } type;
 } message_t;
 
 
 typedef struct {
-  point_t      point2;       //byte 21
-  byte_t       linejoin;     //byte 25
-  byte_t       endcaps;      //byte 26
-  float        miterlimit;   //byte 27
-  float        dash_phase;   //byte 31
-  float        dash_array[]; //byte 35
+  point_t      point2;       //byte 21   4 bytes on stream
+  byte_t       linejoin;     //byte 25   1 byte on stream
+  byte_t       endcaps;      //byte 26   1 byte on stream
+  float        miterlimit;   //byte 27   4 bytes on stream
+  float        dash_phase;   //byte 31   4 bytes on stream
+  float        dash_array[2]; //byte 35  8 bytes on stream
 } figure_t;
 
 
 typedef struct {
-  byte_t       style;        //byte 21
-  byte_t       namesize;     //byte 22
-  char         *face;        //byte 23
-  char         *info;        //byte 23+namesize
+  byte_t       style;                      //byte 21
+  byte_t       facelen;                    //byte 22
+  char         face[MAX_FONTFACE_LEN];     //byte 23
+  char         info[MAX_TEXT_SIZE];        //byte 23+FONT_FACE_LEN
 } text_t;
 
 
 typedef struct {
-  byte_t       idfrom;       //byte 0
-  byte_t       dcbyte;       //byte 1
-  int          number;       //byte 2
-  float        width;        //byte 6
-  float        opacity;      //byte 10
-  color_t      color;        //byte 14
-  point_t      point1;       //byte 17
+  byte_t       idfrom;       //byte 0    1 byte on stream
+  byte_t       dcbyte;       //byte 1    1 byte on stream
+  int          number;       //byte 2    4 bytes on stream
+  float        width;        //byte 6    4 bytes on stream
+  float        opacity;      //byte 10   4 bytes on stream
+  color_t      color;        //byte 14   3 bytes on stream
+  point_t      point1;       //byte 17   4 bytes on stream
   union {
     figure_t   figure;
-    text_t     text;
+    text_t     text;        // total: FONT_FACE_LEN + MAX_TEX_SIZE + 1 bytes on stream
   } type;
 } ddata_t;
 
 
 typedef struct {
   byte_t   idfrom;
-  byte_t   *info;
+  byte_t   info[MAX_INFO_SIZE];
 } svcontrol_t;
 
 
+/*
 typedef struct {
   union {
     ddata_t     drawing;
@@ -112,11 +115,16 @@ typedef struct {
     svcontrol_t control;
   } type;
 } data_t;
-
+*/
 
 typedef struct {
   header_t header;
-  data_t   data;
+  //data_t   data;
+  union {
+    ddata_t     drawing;
+    message_t   chat;
+    svcontrol_t control;
+  } data;
 } stream_t;
 
 #endif

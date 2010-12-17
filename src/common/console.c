@@ -179,7 +179,7 @@ console_t *console_create(char *title, char *prompt) {
 			       FALSE,
 			       FALSE);
 
-  /* bindCDKObject (vENTRY, console->entry, KEY_TAB, myCB, console->scrollwindow->swindow); */
+  bindCDKObject (vENTRY, console->entry, KEY_TAB, myCB, console->scrollwindow->swindow);
   refreshCDKScreen(console->screen);
 
   pthread_t tid;
