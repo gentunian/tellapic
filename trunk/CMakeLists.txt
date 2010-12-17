@@ -18,7 +18,13 @@ set(SERVER_SRCS ${COMMON_SRCS} ${SRCDIR}/server/server.c)
 
 include_directories(include)
 
-add_library(tellapic SHARED bench/swig/tellapic.c)
+add_library(tellapic SHARED src/lib/tellapic.c)
 
 add_executable(server ${SERVER_SRCS})
+if(CMAKE_BUILD_TYPE MATCHES "Debug")
+    set_target_properties(server PROPERTIES COMPILE_FLAGS -DDEBUG)
+endif()
 target_link_libraries(server tellapic ${CDK_LIBRARIES} ${OPENSSL_LIBRARIES} ${LIBRARIES})
+
+# Now create the SWIG wrappers
+add_subdirectory(swig)
