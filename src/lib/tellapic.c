@@ -951,7 +951,7 @@ tellapic_send_fig(int fd, int tool, int idfrom, int dnum, float w, float op, int
   __setcbyte(rawstream, tool);
   __setssize(rawstream, FIG_STREAM_SIZE);
   __setidfrom(rawstream, idfrom);
-  //__setdcbyte();
+  __setdcbyte(rawstraem, tool);
   __setdnum(rawstream, dnum);
   __setwidth(rawstream, w);
   __setopacity(rawstream, op);

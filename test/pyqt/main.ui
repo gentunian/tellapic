@@ -314,12 +314,12 @@
            <string>Id from:</string>
           </property>
           <property name="buddy">
-           <cstring>recevieDrawingIdFrom</cstring>
+           <cstring>receiveDrawingIdFrom</cstring>
           </property>
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QLineEdit" name="recevieDrawingIdFrom">
+         <widget class="QLineEdit" name="receiveDrawingIdFrom">
           <property name="enabled">
            <bool>false</bool>
           </property>
@@ -1175,7 +1175,7 @@
            <string>Id from:</string>
           </property>
           <property name="buddy">
-           <cstring>recevieDrawingIdFrom</cstring>
+           <cstring>receiveDrawingIdFrom</cstring>
           </property>
          </widget>
         </item>
