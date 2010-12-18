@@ -225,19 +225,19 @@ class MainTest(QtGui.QDialog):
                         
                 elif stream.header.cbyte in self.ctldrawing:
                     if stream.header.cbyte == tellapic.CTL_CL_FIG:
-                        self.ui.drawingDCByte.setText(str(stream.data.drawing.dcbyte))
-                        self.ui.drawingNumber.setText(str(stream.data.drawing.number))
-                        self.ui.drawingWidth.setText(str(stream.data.drawing.width))
-                        self.ui.drawingOpacity.setText(str(stream.data.drawing.opacity))
-                        self.ui.drawingColor.setText(str(stream.data.drawing.color.red) + str(stream.data.drawing.color.green) + str(stream.data.drawing.color.blue))
-                        self.ui.drawingXCoordinate.setText(str(stream.data.drawing.point1.x))
-                        self.ui.drawingYCoordinate.setText(str(stream.data.drawing.point1.y))
-                        self.ui.figureEndCaps.setText(str(stream.data.drawing.type.figure.endcaps))
-                        self.ui.figureLineJoin.setText(str(stream.data.drawing.type.figure.linejoin))
-                        self.ui.figureMiterLimit.setText(str(stream.data.drawing.type.figure.miterlimit))
-                        self.ui.figureDashPhase.setText(str(stream.data.drawing.type.figure.dash_phase))
-                        self.ui.figureEndXCoordinate.setText(str(stream.data.drawing.type.figure.point2.x))
-                        self.ui.figureEndYCoordinate.setText(str(stream.data.drawing.type.figure.point2.y))
+                        self.ui.receiveDrawingDCByte.setText(str(stream.data.drawing.dcbyte))
+                        self.ui.receiveDrawingNumber.setText(str(stream.data.drawing.number))
+                        self.ui.receiveDrawingWidth.setText(str(stream.data.drawing.width))
+                        self.ui.receiveDrawingOpacity.setText(str(stream.data.drawing.opacity))
+                        self.ui.receiveDrawingColor.setText(str(stream.data.drawing.color.red) + str(stream.data.drawing.color.green) + str(stream.data.drawing.color.blue))
+                        self.ui.receiveDrawingXCoordinate.setText(str(stream.data.drawing.point1.x))
+                        self.ui.receiveDrawingYCoordinate.setText(str(stream.data.drawing.point1.y))
+                        self.ui.receiveFigureEndCaps.setText(str(stream.data.drawing.type.figure.endcaps))
+                        self.ui.receiveFigureLineJoin.setText(str(stream.data.drawing.type.figure.linejoin))
+                        self.ui.receiveFigureMiterLimit.setText(str(stream.data.drawing.type.figure.miterlimit))
+                        self.ui.receiveFigureDashPhase.setText(str(stream.data.drawing.type.figure.dash_phase))
+                        self.ui.receiveFigureEndXCoordinate.setText(str(stream.data.drawing.type.figure.point2.x))
+                        self.ui.receiveFigureEndYCoordinate.setText(str(stream.data.drawing.type.figure.point2.y))
                     else:
                         pass
 
