@@ -307,8 +307,9 @@ int
 tellapic_isctlext(header_t header) 
 {
 
-  return (header.cbyte == CTL_CL_PWD ||
-	  header.cbyte == CTL_CL_NAME ||
+  return (header.cbyte == CTL_CL_PWD   ||
+	  header.cbyte == CTL_CL_NAME  ||
+	  header.cbyte == CTL_SV_CLADD ||
 	  header.cbyte == CTL_SV_FILE);
 }
 
@@ -673,8 +674,9 @@ tellapic_read_pwd(int fd, char *pwd, int *len)
 	    {
 	      __ctledatacpy(&stream, data, nbytes);
 	      *len = nbytes - 1;
-	      pwd = malloc(*len);
+	      pwd = malloc(*len + 1);
 	      strncpy(pwd, (char *)stream.data.control.info, *len);
+	      pwd[*len] = '\0';
 	    }
 	  else
 	    {
@@ -795,11 +797,11 @@ tellapic_read_header_b(int fd)
       /* This will check 2 things: */
       /* First, if the header.cbyte corresponds with the header.ssize. */
       /* And second, whether or not the header.cbyte is a valid value. */
-      if ( !(tellapic_ischatb(header)  && header.ssize <= MAX_BMSG_STREAM_SIZE   && header.ssize > MIN_BMSG_STREAM_SIZE) &&
-	   !(tellapic_ischatp(header)  && header.ssize <= MAX_PMSG_STREAM_SIZE   && header.ssize > MIN_PMSG_STREAM_SIZE) &&
+      if ( !(tellapic_ischatb(header)  && header.ssize <= MAX_BMSG_STREAM_SIZE   && header.ssize >= MIN_BMSG_STREAM_SIZE) &&
+	   !(tellapic_ischatp(header)  && header.ssize <= MAX_PMSG_STREAM_SIZE   && header.ssize >= MIN_PMSG_STREAM_SIZE) &&
 	   //!(tellapic_isfigtxt(header) && header.ssize <= MAX_FIGTXT_STREAM_SIZE && header.ssize > MIN_FIGTXT_STREAM_SIZE) &&
-	   !(tellapic_isfig(header)    && header.ssize <= MAX_FIGTXT_STREAM_SIZE && header.ssize > MIN_FIGTXT_STREAM_SIZE) &&
-	   !(tellapic_isctlext(header) && header.ssize <= MAX_CTLEXT_STREAM_SIZE && header.ssize > MIN_CTLEXT_STREAM_SIZE) &&
+	   !(tellapic_isfig(header)    && header.ssize <= MAX_FIGTXT_STREAM_SIZE && header.ssize >= MIN_FIGTXT_STREAM_SIZE) &&
+	   !(tellapic_isctlext(header) && header.ssize <= MAX_CTLEXT_STREAM_SIZE && header.ssize >= MIN_CTLEXT_STREAM_SIZE) &&
 	   !(tellapic_isdrw(header)    && (header.ssize == DRWI_STREAM_SIZE || header.ssize == DRWU_STREAM_SIZE)) &&
 	   !(tellapic_isctl(header)    && header.ssize == CTL_STREAM_SIZE)
 	   //!(tellapic_isfig(header)    && header.ssize == FIG_STREAM_SIZE)
@@ -864,7 +866,7 @@ tellapic_send(int socket, stream_t *stream)
 
     case CTL_CL_FIG:
     case CTL_CL_DRW:
-      __ddatatostream(rawstream+HEADER_SIZE, *stream);
+      __ddatatostream(rawstream, *stream);
       break;
 
 
@@ -1122,12 +1124,12 @@ tellapic_build_ctle(int ctl, int idfrom, int infosize, char *info)
     {
       memcpy(stream.data.control.info, info, infosize);
       memset(&stream.data.control.info[infosize], '\0', MAX_INFO_SIZE - infosize);
-      stream.header.ssize = HEADER_SIZE + infosize + 2;
+      stream.header.ssize = HEADER_SIZE + infosize + 1;
     }
   else
     {
       memcpy(stream.data.control.info, info, MAX_INFO_SIZE);
-      stream.header.ssize = HEADER_SIZE + MAX_INFO_SIZE + 2;
+      stream.header.ssize = HEADER_SIZE + MAX_INFO_SIZE + 1;
     }
 
   return stream;

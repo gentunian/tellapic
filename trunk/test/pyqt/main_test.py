@@ -2,8 +2,12 @@ from PyQt4 import QtCore, QtGui
 #from waiting import Ui_Waiting
 from main import Ui_Main
 import tellapic
+import select
+import time
+import Queue
 import threading
-
+import signal
+import os
 
 class MainTest(QtGui.QDialog):
     ctl = { tellapic.CTL_CL_FILEASK   : 'CTL_CL_FILEASK',
@@ -30,8 +34,7 @@ class MainTest(QtGui.QDialog):
     ctldrawing = { tellapic.CTL_CL_FIG : 'CTL_CL_FIG',
                    tellapic.CTL_CL_DRW : 'CTL_CL_DRW'
                    }
-    id = 0
-    fd = 0
+
     cbyte = {tellapic.CTL_CL_BMSG : 'CTL_CL_BMSG',
              tellapic.CTL_CL_PMSG : 'CTL_CL_PMSG',
              tellapic.CTL_CL_FIG  : 'CTL_CL_FIG',
@@ -53,13 +56,18 @@ class MainTest(QtGui.QDialog):
              tellapic.CTL_SV_NAMEINUSE: 'CTL_SV_NAMEINUSE',
              tellapic.CTL_FAIL : 'CTL_FAIL'}
 
-    def __init__(self):
+    def __init__(self, queue, endcommand, fd):
         QtGui.QDialog.__init__(self)
 
         # Set up the user interface from Designer.
+        self.fd = fd
+        self.id = fd
         self.ui = Ui_Main()
         self.ui.setupUi(self)
         self.setModal(False)
+        self.queue = queue
+        self.endcommand = endcommand
+        self.ui.receiveButton.setEnabled(False)
 
         # Make some local modifications.
         #self.ui.colorDepthCombo.addItem("2 colors (1 bit per pixel)")
@@ -113,8 +121,10 @@ class MainTest(QtGui.QDialog):
 
     @QtCore.pyqtSlot()
     def on_exitButton_clicked(self):
-        if self.fd != 0:
-            tellapic.tellapic_close_fd(self.fd)
+        print("exiting gui...")
+        tellapic.tellapic_close_fd(self.fd)
+        self.endcommand()
+
 
 
     @QtCore.pyqtSlot()
@@ -185,82 +195,130 @@ class MainTest(QtGui.QDialog):
             self.ui.receiveTabWidget.setCurrentIndex(0)
         
     
-    def updateUi(self, stream):
-        self.ui.receiveHeaderEndian.setChecked(False)
-        self.ui.receiveHeaderSSize.setText(str(stream.header.ssize))
-        self.ui.receiveHeaderCByte.setCurrentIndex(self.ui.receiveHeaderCByte.findText(self.cbyte[stream.header.cbyte]))
-        self.on_receiveHeaderCByte_activated(self.ui.receiveHeaderCByte.currentIndex())
-        
-        if stream.header.cbyte in self.ctl:
-            self.ui.receiveSvcontrolIdFrom.setText(str(stream.data.control.idfrom))
-            
-        elif stream.header.cbyte in self.ctli:
-            self.ui.receiveSvcontrolIdFrom.setText(str(stream.data.control.idfrom))
-            self.ui.receiveSvcontrolInfo.setText(str(stream.data.control.info))
-            
-        elif stream.header.cbyte in self.ctlchat:
-            self.ui.receiveChatIdFrom.setText(str(stream.data.chat.idfrom))
-            if stream.header.cbyte == tellapic.CTL_CL_BMSG:
-                self.ui.receiveChatText.setText(str(stream.data.chat.type.text))
-            else:
-                self.ui.receiveChatIdTo.setText(str(stream.data.chat.type.private.idto))
-                self.ui.receiveChatText.setText(str(stream.data.chat.type.private.text))
+    def updateUi(self):
+        #print("updateUi()")
+        while self.queue.qsize():
+            try:
+                msg = self.queue.get(0)
+                print("trying read...")
+                stream = tellapic.tellapic_read_stream_b(self.fd)
+                print("stream cbyte read: ", stream.header.cbyte, "size: ", stream.header.ssize)
+                self.ui.receiveHeaderEndian.setChecked(False)
+                self.ui.receiveHeaderSSize.setText(str(stream.header.ssize))
+                self.ui.receiveHeaderCByte.setCurrentIndex(self.ui.receiveHeaderCByte.findText(self.cbyte[stream.header.cbyte]))
+                self.on_receiveHeaderCByte_activated(self.ui.receiveHeaderCByte.currentIndex())
                 
-        elif stream.header.cbyte in self.ctldrawing:
-            if stream.header.cbyte == tellapic.CTL_CL_FIG:
-                self.ui.drawingDCByte.setText(str(stream.data.drawing.dcbyte))
-                self.ui.drawingNumber.setText(str(stream.data.drawing.dnumber))
-                self.ui.drawingWidth.setText(stream.data.drawing.width)
-                self.ui.drawingOpacity.setText(stream.data.drawing.opacity)
-                self.ui.drawingColor.setText(str(stream.data.drawing.color.red) + str(stream.data.drawing.color.green) + str(stream.data.drawing.color.blue))
-                self.ui.drawingXCoordinate.text(str(stream.data.drawing.point1.x))
-                self.ui.drawingYCoordinate.text(str(stream.data.drawing.point1.y))
-                self.ui.figureEndCaps.text(str(stream.data.drawing.type.figure.endcaps))
-                self.ui.figureLineJoin.text(str(stream.data.drawing.type.figure.linejoin))
-                self.ui.figureMiterLimit.text(str(stream.data.drawing.type.figure.miterlimit))
-                self.ui.figureDashPhase.text(str(stream.data.drawing.type.figure.dash_phase))
-                self.ui.figureEndXCoordinate.text(str(stream.data.drawing.type.figure.point2.x))
-                self.ui.figureEndYCoordinate.text(str(stream.data.drawing.type.figure.point2.y))
-            else:
+                if stream.header.cbyte in self.ctl:
+                    self.ui.receiveSvcontrolIdFrom.setText(str(stream.data.control.idfrom))
+                    
+                elif stream.header.cbyte in self.ctli:
+                    self.ui.receiveSvcontrolIdFrom.setText(str(stream.data.control.idfrom))
+                    self.ui.receiveSvcontrolInfo.appendPlainText(str(stream.data.control.info))
+                    
+                elif stream.header.cbyte in self.ctlchat:
+                    self.ui.receiveChatIdFrom.setText(str(stream.data.chat.idfrom))
+                    if stream.header.cbyte == tellapic.CTL_CL_BMSG:
+                        self.ui.receiveChatText.setText(str(stream.data.chat.type.text))
+                    else:
+                        self.ui.receiveChatIdTo.setText(str(stream.data.chat.type.private.idto))
+                        self.ui.receiveChatText.appendPlaintText(str(stream.data.chat.type.private.text))
+                        
+                elif stream.header.cbyte in self.ctldrawing:
+                    if stream.header.cbyte == tellapic.CTL_CL_FIG:
+                        self.ui.drawingDCByte.setText(str(stream.data.drawing.dcbyte))
+                        self.ui.drawingNumber.setText(str(stream.data.drawing.number))
+                        self.ui.drawingWidth.setText(str(stream.data.drawing.width))
+                        self.ui.drawingOpacity.setText(str(stream.data.drawing.opacity))
+                        self.ui.drawingColor.setText(str(stream.data.drawing.color.red) + str(stream.data.drawing.color.green) + str(stream.data.drawing.color.blue))
+                        self.ui.drawingXCoordinate.setText(str(stream.data.drawing.point1.x))
+                        self.ui.drawingYCoordinate.setText(str(stream.data.drawing.point1.y))
+                        self.ui.figureEndCaps.setText(str(stream.data.drawing.type.figure.endcaps))
+                        self.ui.figureLineJoin.setText(str(stream.data.drawing.type.figure.linejoin))
+                        self.ui.figureMiterLimit.setText(str(stream.data.drawing.type.figure.miterlimit))
+                        self.ui.figureDashPhase.setText(str(stream.data.drawing.type.figure.dash_phase))
+                        self.ui.figureEndXCoordinate.setText(str(stream.data.drawing.type.figure.point2.x))
+                        self.ui.figureEndYCoordinate.setText(str(stream.data.drawing.type.figure.point2.y))
+                    else:
+                        pass
+
+                self.queue.task_done()
+
+            except Queue.Empty:
                 pass
-            
 
-class MyReader(QtCore.QThread):
 
-    def __init__(self,  mdialog):
-        QtCore.QThread.__init__(self)
-        self.exiting = False
-        self.dialog = mdialog
-        self.ui = self.dialog.ui
+# stolen from: http://www.informit.com/articles/article.aspx?p=30708&seqNum=3
+class ThreadClient:
+    def __init__(self):
+        # Create the queue
+        self.queue = Queue.Queue()
         self.fd = tellapic.tellapic_connect_to("localhost", 4455)
 
-    def __del__(self):
-        self.exiting = True
-        self.wait()
+        # Set up the GUI part
+        self.gui = MainTest(self.queue, self.endApplication, self.fd)
+        self.gui.show()
+
+        # A timer to periodically call periodicCall :-)
+        self.timer = QtCore.QTimer()
+        QtCore.QObject.connect(self.timer, QtCore.SIGNAL("timeout()"), self.periodicCall)
+
+        # Start the timer -- this replaces the initial call 
+        # to periodicCall
+        self.timer.start(100)
+
+        # Set up the thread to do asynchronous I/O
+        # More can be made if necessary
+        self.running = 1
+        self.thread1 = threading.Thread(target=self.workerThread1)
+        self.thread1.start()
 
 
-    def setfd(self, fd):
-        print("setting fd to: ", fd)
-        self.fd = fd
-        self.start()
+    def periodicCall(self):
+        """
+        Check every 100 ms if there is something new in the queue.
+        """
+        self.gui.updateUi()
+        if not self.running:
+            root.quit()
+      
+    def endApplication(self):
+        while self.queue.qsize():
+            self.queue.get(0)
+            self.queue.task_done()
+        self.running = 0
+        tellapic.tellapic_close_fd(self.fd)
+        print("ending thread")
+        os.kill(os.getpid(), signal.SIGTERM)
 
+    def workerThread1(self):
+        """
+        This is where we handle the asynchronous I/O. For example, 
+        it may be a 'select()'.
+        One important thing to remember is that the thread has to 
+        yield control.
+        """
+        while self.running:
+            # To simulate asynchronous I/O, we create a random number
+            # at random intervals. Replace the following 2 lines 
+            # with the real thing.
+            try:
+                print("waiting on select")
+                r, w, e = select.select([self.fd], [], [])
+                self.queue.put(1)
+                self.queue.join()
+            except select.error, v:
+                print("error")
+                raise
+                break
+            
 
-    
-    def run(self):
-        if self.fd != 0:
-            while not self.exiting:
-                print("running with fd: ", self.fd)
-                stream = tellapic.tellapic_read_stream_b(self.fd)
-                #self.dialog.setStream(stream)
-                #self.emit(QtCore.SIGNAL("output()"))
-                print("Stream read")
-
-        else:
-            return 0
 
 if __name__ == "__main__":
     import sys
-    app = QtGui.QApplication(sys.argv)
-    ui = MainTest()
-    ui.show() 
-    sys.exit(app.exec_())
+    root = QtGui.QApplication(sys.argv)
+    client = ThreadClient()
+    #ui = MainTest()
+    #ui.show()
+    sys.exit(root.exec_())
+
+
