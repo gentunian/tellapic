@@ -20,11 +20,14 @@ package com.tellapic.chat;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 
+import javax.swing.AbstractAction;
 import javax.swing.GroupLayout;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -32,8 +35,11 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JViewport;
+import javax.swing.KeyStroke;
 import javax.swing.LayoutStyle;
-import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.text.Keymap;
 
 import com.tellapic.UserManager;
 import com.tellapic.Utils;
@@ -48,22 +54,61 @@ public class ChatView extends JPanel implements Observer {
 
 	private static final long serialVersionUID = -4356214471573728672L;
 
-	private JTabbedPane     tabbedPane;
-	private JTextField      inputText;
-	private IChatController controller;
-	private ArrayList<JTextArea>     tabContents;
+	private int                      currentTabIndex;
+	private String                   currentTabTitle;
+	private JTabbedPane              tabbedPane;
+	private JTextField               inputText;
+	private IChatController          controller;
+	private ArrayList<JTextArea>     chatTabs;
+	
 	
 	public ChatView(IChatController c) {
 		setName(Utils.msg.getString("chatview"));
-		controller = c;
 		ChatClientModel.getInstance().addObserver(this);
-		tabContents = new ArrayList<JTextArea>();
-		inputText   = new JTextField();
-		tabbedPane  = new JTabbedPane();
+		
+		controller = c;
+		chatTabs   = new ArrayList<JTextArea>();
+		inputText  = new JTextField();
+		tabbedPane = new JTabbedPane();
 		inputText.setPreferredSize(new Dimension(100,20));
 
+		Keymap map = inputText.getKeymap();
+		map.addActionForKeyStroke(
+				KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, InputEvent.CTRL_DOWN_MASK),
+				new AbstractAction("Change Tab"){
+					private static final long serialVersionUID = 1L;
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						tabbedPane.setSelectedIndex((currentTabIndex+1)%tabbedPane.getTabCount());
+					}
+				});
+		
+		map.addActionForKeyStroke(
+				KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, InputEvent.CTRL_DOWN_MASK),
+				new AbstractAction("Change Tab"){
+					private static final long serialVersionUID = 1L;
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						if (currentTabIndex == 0)
+							tabbedPane.setSelectedIndex(tabbedPane.getTabCount()-1);
+						else
+							tabbedPane.setSelectedIndex((currentTabIndex-1)%tabbedPane.getTabCount());
+					}
+				});
+		
+		tabbedPane.addChangeListener(new ChangeListener(){
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				System.out.println("selected tab: "+((JTabbedPane)e.getSource()).getSelectedIndex());
+				currentTabIndex = ((JTabbedPane)e.getSource()).getSelectedIndex();
+				currentTabTitle = ((JTabbedPane)e.getSource()).getTitleAt(currentTabIndex);
+				inputText.requestFocus();
+			}
+		});
+		
 		GroupLayout layout = new GroupLayout(ChatView.this);
 		setLayout(layout);
+		
 		layout.setHorizontalGroup(
 				layout.createParallelGroup(GroupLayout.Alignment.LEADING)
 				.addGroup(layout.createSequentialGroup()
@@ -73,6 +118,7 @@ public class ChatView extends JPanel implements Observer {
 								.addComponent(inputText, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 376, Short.MAX_VALUE))
 								.addContainerGap())
 		);
+		
 		layout.setVerticalGroup(
 				layout.createParallelGroup(GroupLayout.Alignment.LEADING)
 				.addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
@@ -85,34 +131,29 @@ public class ChatView extends JPanel implements Observer {
 		inputText.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				// TODO: The input should be recognize by some chat protocol.
+				// TODO: The input should be recognized by some chat protocol.
 				// then, it should build a Message object to be sent to the model
 				// and through the net.
-
-				// Get the tab current index
-				int    tabIndex = tabbedPane.getSelectedIndex();
-
-				// Get the tab title
-				String tabTitle = tabbedPane.getTitleAt(tabIndex);
 
 				// If we are in the general tab, then the message will be 
 				// broadcasted to all connected clients. However, if the message is
 				// like: "/msg <to> <text>" it won't be deliver to all connected clients.
-				// So, as a general rule, the text is first analyzed. If "/msg" is found,
-				// the tabTitle will be ignored. If "/msg" is not found and the current tab
-				// is the general tab, then 'null' will be passed as an argument. Finally,
-				// if "/msg" is not found and we aren't in the general tab, the tabTitle
+				// So, as a general rule, the text is first analyzed by Message.build().
+				// If "/msg" is found, the currentTabTitle will be ignored. 
+				// If "/msg" is not found and the current tab is the general tab, 
+				// then 'null' will be passed as the 'to' argument for Message.build(). Finally,
+				// if "/msg" is not found and we aren't in the general tab, the currentTabTitle
 				// will be set as an argument indicating the recipient of the message.
-				boolean pvt = (tabIndex != 0);
+				boolean pvt = (currentTabIndex != 0);
 
 				// The input text
 				String text = inputText.getText();
 
 				if (controller != null) {
-					Map.Entry<String, Message> mapEntry = Message.build(UserManager.getInstance().getLocalUser().getName(), pvt? tabTitle : null, text);
+					Map.Entry<String, Message> mapEntry = Message.build(UserManager.getInstance().getLocalUser().getName(), pvt? currentTabTitle : null, text);
 					Message message = mapEntry.getValue();
 					if (message == null) {
-						updateTab(tabIndex, mapEntry.getKey());
+						updateTab(currentTabIndex, mapEntry.getKey());
 					} else {
 						controller.handleInput(message, true);
 					}
@@ -140,13 +181,13 @@ public class ChatView extends JPanel implements Observer {
 
 		// Add a tab to the tabbed pane
 		tabbedPane.addTab(title, areaScrollPane);
-		
+
 		// This creates a label with a button at the right
 		JPanel tabComponent = new ChatViewTabComponent(tabbedPane);
 		tabbedPane.setTabComponentAt(tabbedPane.indexOfTab(title), tabComponent); 
 
 		//TODO: check this out. We need to have something to hold the chats (query the model?)
-		tabContents.add(content);
+		chatTabs.add(content);
 		
 		return tabbedPane.indexOfTab(title); 
 	}

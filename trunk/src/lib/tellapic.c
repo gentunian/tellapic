@@ -485,21 +485,21 @@ __chatdatacpy(stream_t *dest, byte_t *data, int ssize)
   if (dest->header.cbyte == CTL_CL_PMSG)
     {
       textsize = ssize - HEADER_SIZE - PMSG_TEXT_OFFSET;
-      dest->data.chat.type.private.idto = data[DATA_PMSG_IDTO_INDEX];
-      memcpy(dest->data.chat.type.private.text, data + DATA_PMSG_TEXT_INDEX, textsize);
+      dest->data.chat.type.privmsg.idto = data[DATA_PMSG_IDTO_INDEX];
+      memcpy(dest->data.chat.type.privmsg.text, data + DATA_PMSG_TEXT_INDEX, textsize);
 
       /* Fill with '\0's and prevent segfault */
       if (textsize < MAX_TEXT_SIZE)
-	memset(&dest->data.chat.type.private.text[textsize], '\0', MAX_TEXT_SIZE - textsize);
+	memset(&dest->data.chat.type.privmsg.text[textsize], '\0', MAX_TEXT_SIZE - textsize);
     }
   else
     {
       textsize = ssize - HEADER_SIZE - BMSG_TEXT_OFFSET;
-      memcpy(dest->data.chat.type.text, data + DATA_BMSG_TEXT_INDEX, textsize);
+      memcpy(dest->data.chat.type.broadmsg, data + DATA_BMSG_TEXT_INDEX, textsize);
 
       /* Fill with '\0's and prevent segfault */
       if (textsize < MAX_TEXT_SIZE)
-	memset(&dest->data.chat.type.text[textsize], '\0', MAX_TEXT_SIZE - textsize);
+	memset(&dest->data.chat.type.broadmsg[textsize], '\0', MAX_TEXT_SIZE - textsize);
     }
 }
 
@@ -855,13 +855,13 @@ tellapic_send(int socket, stream_t *stream)
     {
     case  CTL_CL_PMSG:
       rawstream[DATA_PMSG_IDFROM_INDEX+HEADER_SIZE] = stream->data.chat.idfrom;
-      rawstream[DATA_PMSG_IDTO_INDEX+HEADER_SIZE]   = stream->data.chat.type.private.idto;
-      memcpy(rawstream+DATA_PMSG_TEXT_INDEX+HEADER_SIZE, stream->data.chat.type.private.text, stream->header.ssize - HEADER_SIZE - 2);
+      rawstream[DATA_PMSG_IDTO_INDEX+HEADER_SIZE]   = stream->data.chat.type.privmsg.idto;
+      memcpy(rawstream+DATA_PMSG_TEXT_INDEX+HEADER_SIZE, stream->data.chat.type.privmsg.text, stream->header.ssize - HEADER_SIZE - 2);
       break;
 
     case CTL_CL_BMSG:
       rawstream[DATA_BMSG_IDFROM_INDEX+HEADER_SIZE] = stream->data.chat.idfrom;
-      memcpy(rawstream+DATA_BMSG_TEXT_INDEX+HEADER_SIZE, stream->data.chat.type.text, stream->header.ssize - HEADER_SIZE - 1);
+      memcpy(rawstream+DATA_BMSG_TEXT_INDEX+HEADER_SIZE, stream->data.chat.type.broadmsg, stream->header.ssize - HEADER_SIZE - 1);
       break;
 
     case CTL_CL_FIG:
@@ -1175,16 +1175,16 @@ tellapic_build_chat(int cbyte, int idfrom, int idto, int textsize, char *text)
 
   if (cbyte == CTL_CL_PMSG) 
     {
-      stream.data.chat.type.private.idto = idto;
+      stream.data.chat.type.privmsg.idto = idto;
       if (textsize < MAX_TEXT_SIZE)
 	{
-	  memcpy(stream.data.chat.type.private.text, text, textsize);
-	  memset(&stream.data.chat.type.private.text[textsize], '\0', MAX_TEXT_SIZE - textsize);
+	  memcpy(stream.data.chat.type.privmsg.text, text, textsize);
+	  memset(&stream.data.chat.type.privmsg.text[textsize], '\0', MAX_TEXT_SIZE - textsize);
 	  stream.header.ssize = HEADER_SIZE + textsize + 2;
 	}
       else
 	{
-	  memcpy(stream.data.chat.type.private.text, text, MAX_TEXT_SIZE);
+	  memcpy(stream.data.chat.type.privmsg.text, text, MAX_TEXT_SIZE);
 	  stream.header.ssize = HEADER_SIZE + MAX_TEXT_SIZE + 2;
 	}
     } 
@@ -1192,13 +1192,13 @@ tellapic_build_chat(int cbyte, int idfrom, int idto, int textsize, char *text)
     {
       if (textsize < MAX_TEXT_SIZE)
 	{
-	  memcpy(stream.data.chat.type.text, text, textsize);
-	  memset(&stream.data.chat.type.text[textsize], '\0', MAX_TEXT_SIZE - textsize);
+	  memcpy(stream.data.chat.type.broadmsg, text, textsize);
+	  memset(&stream.data.chat.type.broadmsg[textsize], '\0', MAX_TEXT_SIZE - textsize);
 	  stream.header.ssize = HEADER_SIZE + textsize + 1;
 	}
       else
 	{
-	  memcpy(stream.data.chat.type.text, text, MAX_TEXT_SIZE);
+	  memcpy(stream.data.chat.type.broadmsg, text, MAX_TEXT_SIZE);
 	  stream.header.ssize = HEADER_SIZE + MAX_TEXT_SIZE + 1;
 	}
     }

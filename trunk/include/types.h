@@ -62,8 +62,8 @@ typedef struct {
 typedef struct {
   byte_t    idfrom;
   union {
-    char       text[MAX_TEXT_SIZE];
-    pmessage_t private;
+    char       broadmsg[MAX_TEXT_SIZE];
+    pmessage_t privmsg;
   } type;
 } message_t;
 

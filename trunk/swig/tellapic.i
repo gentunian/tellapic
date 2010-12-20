@@ -1,14 +1,14 @@
 %module tellapic
 %{
   
-#include "../include/types.h"
-#include "../include/constants.h"
-#include   "../include/tellapic.h"
+#include "types.h"
+#include "constants.h"
+#include   "tellapic.h"
   %}
 
-%include "../include/types.h"
-%include "../include/constants.h"
-%include "../include/tellapic.h"
+%include "types.h"
+%include "constants.h"
+%include "tellapic.h"
 %pragma(java) jniclassclassmodifiers="class"
 
 

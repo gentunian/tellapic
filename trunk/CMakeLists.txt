@@ -7,20 +7,32 @@ find_package(OpenSSL REQUIRED)
 
 set(LIBRARIES pthread)
 
-set(SRCDIR src)
+#Sets the root build directory.
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/build) 
 
-set(COMMON_SRCS ${SRCDIR}/common/list.c
+# Sets the python bindings output path for the generated swig library.
+set(LIBRARY_OUTPUT_PATH ${EXECUTABLE_OUTPUT_PATH}/lib) 
+
+# Sets the root source directory
+set(SRCDIR ${PROJECT_SOURCE_DIR}/src)
+
+# Sets the root include directory
+set(INCDIR ${PROJECT_SOURCE_DIR}/include)
+
+set(COMMON_FILES ${SRCDIR}/common/list.c
   ${SRCDIR}/common/common.c
   ${SRCDIR}/common/console.c
 )
 
-set(SERVER_SRCS ${COMMON_SRCS} ${SRCDIR}/server/server.c)
+set(SERVER_FILE ${COMMON_FILES} ${SRCDIR}/server/server.c)
 
-include_directories(include)
+# Includes the include root directory.
+include_directories(${INCDIR})
 
-add_library(tellapic SHARED src/lib/tellapic.c)
+add_library(tellapic SHARED ${SRCDIR}/lib/tellapic.c)
 
-add_executable(server ${SERVER_SRCS})
+add_executable(server ${SERVER_FILE})
+
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
     set_target_properties(server PROPERTIES COMPILE_FLAGS -DDEBUG)
 endif()

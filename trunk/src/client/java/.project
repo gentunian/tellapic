@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>Tellapic</name>
+	<name>tellapic</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -14,4 +14,11 @@
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>swig</name>
+			<type>2</type>
+			<location>/home/seba/UNIVERSIDAD/TrabajoFinal/tellapic/swig</location>
+		</link>
+	</linkedResources>
 </projectDescription>
