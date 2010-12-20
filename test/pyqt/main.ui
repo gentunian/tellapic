@@ -298,7 +298,7 @@
          <x>10</x>
          <y>20</y>
          <width>141</width>
-         <height>244</height>
+         <height>231</height>
         </rect>
        </property>
        <layout class="QFormLayout" name="formLayout">
@@ -489,7 +489,7 @@
          <x>10</x>
          <y>20</y>
          <width>141</width>
-         <height>244</height>
+         <height>231</height>
         </rect>
        </property>
        <layout class="QFormLayout" name="formLayout_7">
@@ -913,7 +913,7 @@
      <enum>QTabWidget::Rounded</enum>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>2</number>
     </property>
     <property name="tabsClosable">
      <bool>false</bool>
@@ -1159,7 +1159,7 @@
          <x>10</x>
          <y>20</y>
          <width>141</width>
-         <height>244</height>
+         <height>231</height>
         </rect>
        </property>
        <layout class="QFormLayout" name="formLayout_10">
@@ -1350,7 +1350,7 @@
          <x>10</x>
          <y>20</y>
          <width>141</width>
-         <height>244</height>
+         <height>231</height>
         </rect>
        </property>
        <layout class="QFormLayout" name="formLayout_11">

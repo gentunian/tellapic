@@ -88,7 +88,11 @@ class MainTest(QtGui.QDialog):
             stream = tellapic.tellapic_build_ctle(value, int(self.ui.svcontrolIdFrom.text()), self.ui.svcontrolInfo.toPlainText().length(), str(self.ui.svcontrolInfo.toPlainText()))
 
         elif value in self.ctlchat:
-            stream = tellapic.tellapic_build_chat(value, int(self.ui.chatIdFrom.text()), int(self.ui.chatIdTo.text()),self.ui.chatText.text().lenght(), str(self.ui.chatText.text()))
+            try:
+                idto = int(self.ui.chatIdTo.text())
+            except:
+                idto = 0
+            stream = tellapic.tellapic_build_chat(value, int(self.ui.chatIdFrom.text()), idto, self.ui.chatText.toPlainText().size(), str(self.ui.chatText.toPlainText()))
 
         elif value in self.ctldrawing:
             if value == tellapic.CTL_CL_FIG:
@@ -130,7 +134,7 @@ class MainTest(QtGui.QDialog):
     @QtCore.pyqtSlot()
     def on_receiveButton_clicked(self):
         if self.fd == 0:
-            self.fd = tellapic.tellapic_connect_to("localhost", 4455)
+            self.fd = tellapic.tellapic_connect_to("arg1v1.dyndns.org", 4455)
 
         if self.fd <= 0:
             return 0
@@ -249,10 +253,10 @@ class MainTest(QtGui.QDialog):
 
 # stolen from: http://www.informit.com/articles/article.aspx?p=30708&seqNum=3
 class ThreadClient:
-    def __init__(self):
+    def __init__(self, host, port):
         # Create the queue
         self.queue = Queue.Queue()
-        self.fd = tellapic.tellapic_connect_to("localhost", 4455)
+        self.fd = tellapic.tellapic_connect_to(host, port)
 
         # Set up the GUI part
         self.gui = MainTest(self.queue, self.endApplication, self.fd)
@@ -313,12 +317,23 @@ class ThreadClient:
             
 
 
+def usage():
+    print("python2 main_test.py -h <hostname> -p <port>")
+    print("or")
+    print("python2 main_test.py --host=<hostname> --port=<port>")
+
+
+
 if __name__ == "__main__":
     import sys
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Connects to a tellapic server')
+    parser.add_argument('-c', '--host', required=True, nargs=1, type=str, help='the host name to connect to.')
+    parser.add_argument('-p', '--port', required=True, nargs=1, type=int, help='the HOST port to use.')
+    args = parser.parse_args()
     root = QtGui.QApplication(sys.argv)
-    client = ThreadClient()
-    #ui = MainTest()
-    #ui.show()
+    client = ThreadClient(args.host[0], args.port[0])
     sys.exit(root.exec_())
 
 
