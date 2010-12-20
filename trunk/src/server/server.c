@@ -396,7 +396,7 @@ int find_free_thread(tdata_t thread_data[]) {
 void 
 *manage_client(void *arg) 
 {
-
+  char      buff[256]; //TODO: #define MAX_BUFMSG_SIZE 256
   char      address[INET_ADDRSTRLEN];          /* this will hold the IP address                   */
   tdata_t   *thread = (tdata_t *) arg;         /* a thread data structure                         */
   int       fdmax   = thread->client->fd + 1;  /* max file descriptor number to be used by select */
@@ -409,12 +409,11 @@ void
   inet_ntop(AF_INET, &(thread->client->address.sin_addr), address, INET_ADDRSTRLEN);  /* copy the client IPV6 address */
   
 
-  if (DEBUG) 
-    {
-      char      buff[256];
-      sprintf(buff, "[NFO]:\tConnection attempt from: </B/24>%s<!B!24>. Asigned socket number </B/24>%d<!B!24> on thread number %d",address,  thread->client->fd, thread->tnum);
-      print_output(buff);
-    }
+#ifdef DEBUG 
+  memset(buff, '\0', 256);
+  sprintf(buff, "[NFO]:\tConnection attempt from: </B/24>%s<!B!24>. Asigned socket number </B/24>%d<!B!24> on thread number %d",address,  thread->client->fd, thread->tnum);
+  print_output(buff);
+#endif
 
 
   if(authclient(thread->client) == 0) 
@@ -445,13 +444,11 @@ void
   FD_SET(thread->readpipe, &readfdset);    /* add the pipe-event to the set  */
 
 
-  if (DEBUG) 
-    {
-      char buff[256];
-      sprintf(buff, "[NFO]:\tClient connected from </B/24>%s<!B!24> to thread number </B/24>%d<!B!24> on socket number </B/24>%d<!B!24>\n", address, thread->tnum, thread->client->fd);
-      print_output(buff);
-    }
-
+#ifdef DEBUG 
+  memset(buff, '\0', 256);
+  sprintf(buff, "[NFO]:\tClient connected from </B/24>%s<!B!24> to thread number </B/24>%d<!B!24> on socket number </B/24>%d<!B!24>\n", address, thread->tnum, thread->client->fd);
+  print_output(buff);
+#endif
 
 
   pthread_mutex_lock(&ccbitsetmutex);                  /* Lock the shared resource   */
@@ -461,12 +458,11 @@ void
   pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL); /* set the cancel state of this thread */
 
 
-  if (DEBUG) 
-    {
-      char buff[256];
-      sprintf(buff, "[NFO]:\tMain attendance loop start on thread %d", thread->tnum);
-      print_output(buff);
-    }
+#ifdef DEBUG 
+  memset(buff, '\0', 256);
+  sprintf(buff, "[NFO]:\tMain attendance loop start on thread %d", thread->tnum);
+  print_output(buff);
+#endif
 
 
   while(thread->tstate != THREAD_STATE_END) 
@@ -474,13 +470,12 @@ void
       fdsetcopy = readfdset;   /* Maintain a copy of the file descriptor set */
 
     
-      if (DEBUG)
-	{
-	  char buff[256];
-	  sprintf(buff, "[NFO]:\tEntering select() on thread %d", thread->tnum);
-	  print_output(buff);
-	}
-
+#ifdef DEBUG
+      memset(buff, '\0', 256);
+      sprintf(buff, "[NFO]:\tEntering select() on thread %d", thread->tnum);
+      print_output(buff);
+#endif
+  
 
       int rv = select(fdmax, &fdsetcopy, NULL, NULL, NULL);
 
@@ -493,12 +488,11 @@ void
       else
 	{
 
-	  if (DEBUG)
-	    {
-	      char buff[256];
-	      sprintf(buff, "[NFO]:\tEXIT Select on thread %d", thread->tnum);
-	      print_output(buff);
-	    }
+#ifdef DEBUG
+	  memset(buff, '\0', 256);
+	  sprintf(buff, "[NFO]:\tEXIT Select on thread %d", thread->tnum);
+	  print_output(buff);
+#endif
 
 
 	  // Check if select() has set the socket ready for reading
@@ -518,12 +512,11 @@ void
   pthread_mutex_unlock(&ccbitsetmutex);  /* Unlock the shared resource */
   pthread_cleanup_pop(1);                /* pop the cleanup function */
 
-  if (DEBUG) 
-    {
-      char buff[256];
-      sprintf(buff, "[NFO]:\tThread %d exiting normally. Closing link with client.", thread->tnum);    /* this thread has no more reason to live */
-      print_output(buff);
-    }
+#ifdef DEBUG 
+  memset(buff, '\0', 256);
+  sprintf(buff, "[NFO]:\tThread %d exiting normally. Closing link with client.", thread->tnum);    /* this thread has no more reason to live */
+  print_output(buff);
+#endif
 
   pthread_exit(NULL);
 }
@@ -553,12 +546,11 @@ authclient(client_t *client)
 
       pwd = tellapic_read_pwd(client->fd, pwd, &newpwdlen);
 
-      if (DEBUG) 
-	{
-	  char buff[256];
-	  sprintf(buff, "[NFO]:\tPassword read from client fd %d was %s with lenght %d for message CTL_SV_ID (%d)", client->fd, pwd, newpwdlen, CTL_SV_ID);
-	  print_output(buff);
-	}
+#ifdef DEBUG 
+      char buff[256];
+      sprintf(buff, "[NFO]:\tPassword read from client fd %d was %s with lenght %d for message CTL_SV_ID (%d)", client->fd, pwd, newpwdlen, CTL_SV_ID);
+      print_output(buff);
+#endif
 
       if (pwd != NULL)
 	{
@@ -571,12 +563,11 @@ authclient(client_t *client)
 	      tellapic_send_ctl(client->fd, client->fd, CTL_SV_PWDOK);                                	 /* Send CTL_SV_PWDOK to client */
 	      stream_t stream = tellapic_read_stream_b(client->fd); 	                                 /* Read client response        */
 
-	      if (DEBUG) 
-		{
-		  char buff[256]; 
-		  sprintf(buff, "[NFO]:\tResponse read from client fd %d was cbyte %d for message CTL_SV_PWDOK (%d) with size: %d", client->fd, stream.header.cbyte, CTL_SV_PWDOK, stream.header.ssize);
-		  print_output(buff);
-		}
+#ifdef DEBUG 
+	      char buff[256]; 
+	      sprintf(buff, "[NFO]:\tResponse read from client fd %d was cbyte %d for message CTL_SV_PWDOK (%d) with size: %d", client->fd, stream.header.cbyte, CTL_SV_PWDOK, stream.header.ssize);
+	      print_output(buff);
+#endif
 
 	      if (stream.header.cbyte == CTL_CL_NAME && stream.data.control.idfrom == client->fd) 
 		{     
@@ -612,12 +603,11 @@ forward_stream(tdata_t *thread)
   read(thread->readpipe, &msgaddress, sizeof(msgaddress));            /* Read the message address and clear the pipe */
   message = (mitem_t *) msgaddress;                                   /* Cast to mitem_t*  */
 
-  if (DEBUG)
-    {
-      char buff[256];
-      sprintf(buff, "[NFO]:\tMessage address was %p. Cbyte is: %d and size is %d.", message, message->stream.header.cbyte, message->stream.header.ssize);
-      print_output(buff);
-    }
+#ifdef DEBUG
+  char buff[256];
+  sprintf(buff, "[NFO]:\tMessage address was %p. Cbyte is: %d and size is %d.", message, message->stream.header.cbyte, message->stream.header.ssize);
+  print_output(buff);
+#endif
 
   result  = tellapic_send(thread->client->fd, &(message->stream));      /* Forward data to this client */
 
@@ -632,12 +622,11 @@ forward_stream(tdata_t *thread)
       
       pthread_mutex_unlock(&message->mutex);
       
-    if (DEBUG) 
-      {
-	char buff[256];
-	sprintf(buff, "[NFO]:\tForwarding ok on thread %d", thread->tnum);
-	print_output(buff);
-      }
+#ifdef DEBUG 
+      char buff[256];
+      sprintf(buff, "[NFO]:\tForwarding ok on thread %d", thread->tnum);
+      print_output(buff);
+#endif
     
     }
 }
@@ -752,12 +741,11 @@ queue_message(mitem_t *msg, tdata_t *thread)
 	  msg->delivers++;
 	  pthread_mutex_unlock(&msg->mutex);
 
-	  if (DEBUG) 
-	    {
-	      char   buf[256];
-	      sprintf(buf, "Sending msg address </B>%p<!B> to thread </B>%d<!B>. Stream cbyte is: %d", address, thread[i].tnum, msg->stream.header.cbyte);
-	      print_output(buf);
-	    }
+#ifdef DEBUG 
+	  char   buf[256];
+	  sprintf(buf, "Sending msg address </B>%p<!B> to thread </B>%d<!B>. Stream cbyte is: %d", address, thread[i].tnum, msg->stream.header.cbyte);
+	  print_output(buf);
+#endif
       
 	  // We are sending a pointer address to the thread i. So, this queue behaves as an array with direct access to it.
 	  // The thread i will read the pipe, will cast the void* to mitem_t* and it will deliver the message to the client
