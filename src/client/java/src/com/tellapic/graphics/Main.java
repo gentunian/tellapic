@@ -17,6 +17,11 @@
  */  
 package com.tellapic.graphics;
 
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
+
+
+import com.tellapic.ReceiverThread;
 import com.tellapic.UserManager;
 
 /**
@@ -27,25 +32,33 @@ import com.tellapic.UserManager;
  */
 public class Main {
 
-	static DrawingAreaModel drawingAreaModel;
+	static DrawingAreaModel  drawingAreaModel;
 	static DrawingAreaView   dav;
+	
+	static {
+		System.loadLibrary("tellapicjava");
+	}
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
 		
+		int fd = tellapic.tellapic_connect_to("localhost", 4455);
+		ReceiverThread r = new ReceiverThread(fd);
+		Thread t = new Thread(r);
+		t.start();
 		  // UI theme
-//        try {
-//            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-//        } catch (UnsupportedLookAndFeelException e) {
-//            //fallback
-//        } catch (ClassNotFoundException e) {
-//            //fallback
-//        } catch (InstantiationException e) {
-//            //fallback
-//        } catch (IllegalAccessException e) {
-//            //fallback
-//        }
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (UnsupportedLookAndFeelException e) {
+            //fallback
+        } catch (ClassNotFoundException e) {
+            //fallback
+        } catch (InstantiationException e) {
+            //fallback
+        } catch (IllegalAccessException e) {
+            //fallback
+        }
 		ToolFactory.registerTool(Ellipse.class.getName());
 		ToolFactory.registerTool(Line.class.getName());
 		ToolFactory.registerTool(Zoom.class.getName());

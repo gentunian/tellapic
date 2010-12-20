@@ -1,7 +1,7 @@
 from PyQt4 import QtCore, QtGui
 #from waiting import Ui_Waiting
 from main import Ui_Main
-import tellapic
+import pytellapic
 import select
 import time
 import Queue
@@ -222,10 +222,10 @@ class MainTest(QtGui.QDialog):
                 elif stream.header.cbyte in self.ctlchat:
                     self.ui.receiveChatIdFrom.setText(str(stream.data.chat.idfrom))
                     if stream.header.cbyte == tellapic.CTL_CL_BMSG:
-                        self.ui.receiveChatText.setText(str(stream.data.chat.type.text))
+                        self.ui.receiveChatText.setText(str(stream.data.chat.type.broadmsg))
                     else:
                         self.ui.receiveChatIdTo.setText(str(stream.data.chat.type.private.idto))
-                        self.ui.receiveChatText.appendPlaintText(str(stream.data.chat.type.private.text))
+                        self.ui.receiveChatText.appendPlaintText(str(stream.data.chat.type.privmsg.text))
                         
                 elif stream.header.cbyte in self.ctldrawing:
                     if stream.header.cbyte == tellapic.CTL_CL_FIG:

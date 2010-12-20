@@ -88,10 +88,11 @@ public class Message {
 			throw new IllegalArgumentException("from can't be null");
 		
 		AbstractMap.SimpleEntry<String, Message> mapEntry = null;
+		
 		if (text.startsWith("/")) {
 			// Check which of the available command was issued, if any.
 			if (text.startsWith("msg ", 1)) {
-				// Syntax: "/msg <to> <text>" The <to> will override 'to' argument.
+				// Syntax: "/msg <to> <text>" The <to> command option will override 'to' argument.
 				String[] processedInput = text.substring(5).split(" ", 2);
 				if (processedInput.length < 2) {
 					mapEntry = new AbstractMap.SimpleEntry<String, Message>("* "+Utils.msg.getString("usage")+": /msg <to> <message>\n", null);

@@ -655,7 +655,7 @@ void fetch_stream(tdata_t *thread) {
     switch(stream.header.cbyte) {
 
     case CTL_CL_PMSG:
-      item->tothread = (1 << stream.data.chat.type.private.idto);
+      item->tothread = (1 << stream.data.chat.type.privmsg.idto);
     case CTL_CL_BMSG:
     case CTL_CL_FIG:
       queue_message(item, thread);

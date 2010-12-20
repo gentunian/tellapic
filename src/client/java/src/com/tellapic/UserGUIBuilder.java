@@ -76,6 +76,7 @@ public class UserGUIBuilder {
 	private JFrame                  drawingWindow;
 	
 	public UserGUIBuilder(LocalUser user) {
+		
 		// Get the drawing area model instance. Its where all Drawing objects will live.
 //		DrawingAreaModel  drawingAreaModel = DrawingAreaModel.getInstance();
 		
@@ -122,14 +123,14 @@ public class UserGUIBuilder {
 		JScrollPane scrollPane = new JScrollPane(drawingAreaView);
 		scrollPane.setName(drawingAreaView.getName());
 		
-				
+		
 		/****************************************/
 		/* Creates the dockable station and gui */
 		/****************************************/
 		drawingWindow = new JFrame("drawing window");
 		CControl     control1 = new CControl(drawingWindow);
 		CGrid            grid = new CGrid(control1);
-		CContentArea  content = control1.getContentArea();		
+		CContentArea  content = control1.getContentArea();
 		SingleCDockable dock1 = wrapToDockable(toolView);
 		SingleCDockable dock2 = wrapToDockable(propertyView);
 		SingleCDockable dock3 = wrapToDockable(scrollPane);
@@ -246,7 +247,7 @@ public class UserGUIBuilder {
 		        }	
 			}
 		});
-		themeJava.setSelected(true);
+		themeGTK.setSelected(true);
 		group.add(themeGTK);
 		group.add(themeJava);
 		fileMenu.setMnemonic(KeyEvent.VK_F);
