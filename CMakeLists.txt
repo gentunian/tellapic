@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 2.8)
 project(tellapic)
 
+#set(CMAKE_VERBOSE_MAKEFILE 1)
+
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/Modules")
+
 find_package(CDK REQUIRED)
 find_package(OpenSSL REQUIRED)
 
@@ -39,4 +42,6 @@ endif()
 target_link_libraries(server tellapic ${CDK_LIBRARIES} ${OPENSSL_LIBRARIES} ${LIBRARIES})
 
 # Now create the SWIG wrappers
-add_subdirectory(swig)
+set(CLIENTS_DIR ${SRCDIR}/client)
+
+add_subdirectory(${SRCDIR}/swig)

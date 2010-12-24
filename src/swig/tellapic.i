@@ -3,7 +3,7 @@
   
 #include "types.h"
 #include "constants.h"
-#include   "tellapic.h"
+#include "tellapic.h"
   %}
 
 %include "types.h"
