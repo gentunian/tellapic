@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(tellapic)
 
-#set(CMAKE_VERBOSE_MAKEFILE 1)
+set(CMAKE_VERBOSE_MAKEFILE 2)
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/Modules")
 
