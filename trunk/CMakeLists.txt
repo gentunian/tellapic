@@ -39,4 +39,4 @@ endif()
 target_link_libraries(server tellapic ${CDK_LIBRARIES} ${OPENSSL_LIBRARIES} ${LIBRARIES})
 
 # Now create the SWIG wrappers
-add_subdirectory(swig)
+add_subdirectory(${SRCDIR}/swig)
