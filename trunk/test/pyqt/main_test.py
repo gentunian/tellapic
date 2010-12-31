@@ -10,51 +10,51 @@ import signal
 import os
 
 class MainTest(QtGui.QDialog):
-    ctl = { tellapic.CTL_CL_FILEASK   : 'CTL_CL_FILEASK',
-            tellapic.CTL_CL_FILEOK    : 'CTL_CL_FILEOK',
-            tellapic.CTL_SV_PWDFAIL   : 'CTL_SV_PWDFAIL',
-            tellapic.CTL_SV_PWDOK     : 'CTL_SV_PWDOK',
-            tellapic.CTL_SV_PWDASK    : 'CTL_SV_PWDASK',
-            tellapic.CTL_SV_CLIST     : 'CTL_SV_CLIST',
-            tellapic.CTL_SV_CLRM      : 'CTL_SV_CLRM',
-            tellapic.CTL_SV_ID        : 'CTL_SV_ID0',
-            tellapic.CTL_SV_NAMEINUSE : 'CTL_SV_NAMEINUSE' 
+    ctl = { pytellapic.CTL_CL_FILEASK   : 'CTL_CL_FILEASK',
+            pytellapic.CTL_CL_FILEOK    : 'CTL_CL_FILEOK',
+            pytellapic.CTL_SV_PWDFAIL   : 'CTL_SV_PWDFAIL',
+            pytellapic.CTL_SV_PWDOK     : 'CTL_SV_PWDOK',
+            pytellapic.CTL_SV_PWDASK    : 'CTL_SV_PWDASK',
+            pytellapic.CTL_SV_CLIST     : 'CTL_SV_CLIST',
+            pytellapic.CTL_SV_CLRM      : 'CTL_SV_CLRM',
+            pytellapic.CTL_SV_ID        : 'CTL_SV_ID0',
+            pytellapic.CTL_SV_NAMEINUSE : 'CTL_SV_NAMEINUSE' 
             }
     
-    ctli = { tellapic.CTL_SV_FILE  : 'CTL_SV_FILE',
-             tellapic.CTL_CL_PWD   : 'CTL_CL_PWD',
-             tellapic.CTL_CL_NAME  : 'CTL_CL_NAME', 
-             tellapic.CTL_SV_CLADD : 'CTL_SV_CLADD' 
+    ctli = { pytellapic.CTL_SV_FILE  : 'CTL_SV_FILE',
+             pytellapic.CTL_CL_PWD   : 'CTL_CL_PWD',
+             pytellapic.CTL_CL_NAME  : 'CTL_CL_NAME', 
+             pytellapic.CTL_SV_CLADD : 'CTL_SV_CLADD' 
              }
     
-    ctlchat = { tellapic.CTL_CL_BMSG : 'CTL_CL_BMSG', 
-                tellapic.CTL_CL_PMSG : 'CTL_CL_PMSG'
+    ctlchat = { pytellapic.CTL_CL_BMSG : 'CTL_CL_BMSG', 
+                pytellapic.CTL_CL_PMSG : 'CTL_CL_PMSG'
                 }
     
-    ctldrawing = { tellapic.CTL_CL_FIG : 'CTL_CL_FIG',
-                   tellapic.CTL_CL_DRW : 'CTL_CL_DRW'
+    ctldrawing = { pytellapic.CTL_CL_FIG : 'CTL_CL_FIG',
+                   pytellapic.CTL_CL_DRW : 'CTL_CL_DRW'
                    }
 
-    cbyte = {tellapic.CTL_CL_BMSG : 'CTL_CL_BMSG',
-             tellapic.CTL_CL_PMSG : 'CTL_CL_PMSG',
-             tellapic.CTL_CL_FIG  : 'CTL_CL_FIG',
-             tellapic.CTL_CL_DRW : 'CTL_CL_DRW',
-             tellapic.CTL_CL_CLIST: 'CTL_CL_CLIST', 
-             tellapic.CTL_CL_PWD: 'CTL_CL_PWD',
-             tellapic.CTL_CL_FILEASK: 'CTL_CL_FILEASK',
-             tellapic.CTL_CL_FILEOK: 'CTL_CL_FILEOK', 
-             tellapic.CTL_CL_DISC: 'CTL_CL_DISC', 
-             tellapic.CTL_CL_NAME:'CTL_CL_NAME',
-             tellapic.CTL_SV_CLRM:'CTL_SV_CLRM',
-             tellapic.CTL_SV_CLADD:'CTL_SV_CLADD',
-             tellapic.CTL_SV_CLIST:'CTL_SV_CLIST',
-             tellapic.CTL_SV_PWDASK:'CTL_SV_PWDASK',
-             tellapic.CTL_SV_PWDOK:'CTL_SV_PWDOK',
-             tellapic.CTL_SV_PWDFAIL:'CTL_SV_PWDFAIL',
-             tellapic.CTL_SV_FILE:'CTL_SV_FILE', 
-             tellapic.CTL_SV_ID:'CTL_SV_ID',
-             tellapic.CTL_SV_NAMEINUSE: 'CTL_SV_NAMEINUSE',
-             tellapic.CTL_FAIL : 'CTL_FAIL'}
+    cbyte = {pytellapic.CTL_CL_BMSG : 'CTL_CL_BMSG',
+             pytellapic.CTL_CL_PMSG : 'CTL_CL_PMSG',
+             pytellapic.CTL_CL_FIG  : 'CTL_CL_FIG',
+             pytellapic.CTL_CL_DRW : 'CTL_CL_DRW',
+             pytellapic.CTL_CL_CLIST: 'CTL_CL_CLIST', 
+             pytellapic.CTL_CL_PWD: 'CTL_CL_PWD',
+             pytellapic.CTL_CL_FILEASK: 'CTL_CL_FILEASK',
+             pytellapic.CTL_CL_FILEOK: 'CTL_CL_FILEOK', 
+             pytellapic.CTL_CL_DISC: 'CTL_CL_DISC', 
+             pytellapic.CTL_CL_NAME:'CTL_CL_NAME',
+             pytellapic.CTL_SV_CLRM:'CTL_SV_CLRM',
+             pytellapic.CTL_SV_CLADD:'CTL_SV_CLADD',
+             pytellapic.CTL_SV_CLIST:'CTL_SV_CLIST',
+             pytellapic.CTL_SV_PWDASK:'CTL_SV_PWDASK',
+             pytellapic.CTL_SV_PWDOK:'CTL_SV_PWDOK',
+             pytellapic.CTL_SV_PWDFAIL:'CTL_SV_PWDFAIL',
+             pytellapic.CTL_SV_FILE:'CTL_SV_FILE', 
+             pytellapic.CTL_SV_ID:'CTL_SV_ID',
+             pytellapic.CTL_SV_NAMEINUSE: 'CTL_SV_NAMEINUSE',
+             pytellapic.CTL_FAIL : 'CTL_FAIL'}
 
     def __init__(self, queue, endcommand, fd):
         QtGui.QDialog.__init__(self)
@@ -82,24 +82,25 @@ class MainTest(QtGui.QDialog):
                 break
 
         if value in self.ctl:
-            stream = tellapic.tellapic_build_ctl(value, int(self.ui.svcontrolIdFrom.text()))
+            pytellapic.tellapic_send_ctl(self.fd, int(self.ui.svcontrolIdFrom.text()), value)
 
         elif value in self.ctli:
-            stream = tellapic.tellapic_build_ctle(value, int(self.ui.svcontrolIdFrom.text()), self.ui.svcontrolInfo.toPlainText().length(), str(self.ui.svcontrolInfo.toPlainText()))
+            pytellapic.tellapic_send_ctle(self.fd, int(self.ui.svcontrolIdFrom.text()), value, self.ui.svcontrolInfo.toPlainText().length(), str(self.ui.svcontrolInfo.toPlainText()))
 
         elif value in self.ctlchat:
             try:
                 idto = int(self.ui.chatIdTo.text())
+                pytellapic.tellapic_send_chatp(self.fd, int(self.ui.chatIdFrom.text()), idto, self.ui.chatText.toPlainText().size(), str(self.ui.chatText.toPlainText()))
             except:
                 idto = 0
-            stream = tellapic.tellapic_build_chat(value, int(self.ui.chatIdFrom.text()), idto, self.ui.chatText.toPlainText().size(), str(self.ui.chatText.toPlainText()))
+                pytellapic.tellapic_send_chatb(self.fd, int(self.ui.chatIdFrom.text()), self.ui.chatText.toPlainText().size(), str(self.ui.chatText.toPlainText()))
 
         elif value in self.ctldrawing:
-            if value == tellapic.CTL_CL_FIG:
-                stream = tellapic.stream_t()
+            if value == pytellapic.CTL_CL_FIG:
+                stream = pytellapic.stream_t()
                 stream.header.endian = 0
                 stream.header.cbyte = value
-                stream.header.ssize = tellapic.FIG_STREAM_SIZE
+                stream.header.ssize = pytellapic.FIG_STREAM_SIZE
                 stream.data.drawing.idfrom = self.id
                 stream.data.drawing.dcbyte = int(self.ui.drawingDCByte.text())
                 stream.data.drawing.dnumber = int(self.ui.drawingNumber.text())
@@ -116,17 +117,18 @@ class MainTest(QtGui.QDialog):
                 stream.data.drawing.type.figure.dash_phase = float(self.ui.figureDashPhase.text())
                 stream.data.drawing.type.figure.point2.x = int(self.ui.figureEndXCoordinate.text())
                 stream.data.drawing.type.figure.point2.y = int(self.ui.figureEndYCoordinate.text())
+                pytellapic.tellapic_send(self.fd, stream)
 
         else:
             pass
 
-        tellapic.tellapic_send(self.fd, stream)
+
 
 
     @QtCore.pyqtSlot()
     def on_exitButton_clicked(self):
         print("exiting gui...")
-        tellapic.tellapic_close_fd(self.fd)
+        pytellapic.tellapic_close_fd(self.fd)
         self.endcommand()
 
 
@@ -134,12 +136,12 @@ class MainTest(QtGui.QDialog):
     @QtCore.pyqtSlot()
     def on_receiveButton_clicked(self):
         if self.fd == 0:
-            self.fd = tellapic.tellapic_connect_to("arg1v1.dyndns.org", 4455)
+            self.fd = pytellapic.tellapic_connect_to("arg1v1.dyndns.org", 4455)
 
         if self.fd <= 0:
             return 0
 
-        stream = tellapic.tellapic_read_stream_b(self.fd);
+        stream = pytellapic.tellapic_read_stream_b(self.fd);
         self.updateUi(stream)
 
 
@@ -205,7 +207,7 @@ class MainTest(QtGui.QDialog):
             try:
                 msg = self.queue.get(0)
                 print("trying read...")
-                stream = tellapic.tellapic_read_stream_b(self.fd)
+                stream = pytellapic.tellapic_read_stream_b(self.fd)
                 print("stream cbyte read: ", stream.header.cbyte, "size: ", stream.header.ssize)
                 self.ui.receiveHeaderEndian.setChecked(False)
                 self.ui.receiveHeaderSSize.setText(str(stream.header.ssize))
@@ -221,14 +223,14 @@ class MainTest(QtGui.QDialog):
                     
                 elif stream.header.cbyte in self.ctlchat:
                     self.ui.receiveChatIdFrom.setText(str(stream.data.chat.idfrom))
-                    if stream.header.cbyte == tellapic.CTL_CL_BMSG:
-                        self.ui.receiveChatText.setText(str(stream.data.chat.type.broadmsg))
+                    if stream.header.cbyte == pytellapic.CTL_CL_BMSG:
+                        self.ui.receiveChatText.appendPlainText(str(stream.data.chat.type.broadmsg))
                     else:
                         self.ui.receiveChatIdTo.setText(str(stream.data.chat.type.private.idto))
                         self.ui.receiveChatText.appendPlaintText(str(stream.data.chat.type.privmsg.text))
                         
                 elif stream.header.cbyte in self.ctldrawing:
-                    if stream.header.cbyte == tellapic.CTL_CL_FIG:
+                    if stream.header.cbyte == pytellapic.CTL_CL_FIG:
                         self.ui.receiveDrawingDCByte.setText(str(stream.data.drawing.dcbyte))
                         self.ui.receiveDrawingNumber.setText(str(stream.data.drawing.number))
                         self.ui.receiveDrawingWidth.setText(str(stream.data.drawing.width))
@@ -256,7 +258,7 @@ class ThreadClient:
     def __init__(self, host, port):
         # Create the queue
         self.queue = Queue.Queue()
-        self.fd = tellapic.tellapic_connect_to(host, port)
+        self.fd = pytellapic.tellapic_connect_to(host, port)
 
         # Set up the GUI part
         self.gui = MainTest(self.queue, self.endApplication, self.fd)
@@ -290,7 +292,7 @@ class ThreadClient:
             self.queue.get(0)
             self.queue.task_done()
         self.running = 0
-        tellapic.tellapic_close_fd(self.fd)
+        pytellapic.tellapic_close_fd(self.fd)
         print("ending thread")
         os.kill(os.getpid(), signal.SIGTERM)
 
