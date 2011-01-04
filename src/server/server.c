@@ -1,4 +1,4 @@
-/*
+/**
  *   Copyright (c) 2010 Sebastián Treu
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -11,6 +11,7 @@
  *   GNU General Public License for more details.
  *
  */  
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -36,6 +37,8 @@
 #include "common.h"
 #include "tellapic.h"
 
+
+//TODO: Portability.
 MUTEX_TYPE         *mutex_buf; //this is initialized by THREAD__setup();
 MUTEX_TYPE         clcmutex = PTHREAD_MUTEX_INITIALIZER;
 int                clccount = 0; //shared
@@ -45,29 +48,13 @@ list_t             *msgqueue;
 MUTEX_TYPE         queuemutex = PTHREAD_MUTEX_INITIALIZER;
 int                CONTINUE = 1; //this NEEDS to be global as the handler interrupt manages program execution
 args_t             args;
+console_t          *console = NULL;
 
-console_t          *console;
 
-/*************** JUST FOR TESTING *************/
-MUTEX_TYPE         cmmutex = PTHREAD_MUTEX_INITIALIZER;
-MUTEX_TYPE         camutex = PTHREAD_MUTEX_INITIALIZER;
-unsigned long      cm = 0;
-unsigned long      ca = 0;
-/**********************************************/
 
-//TEMPORAL
-void fetch_stream(tdata_t *thread);
-void forward_stream(tdata_t *thread);
-void queue_message(mitem_t *item, tdata_t *thread);
-void unqueue_message(mitem_t *item);
-int find_free_thread(tdata_t thread_data[]);
-void *console_thread(void *a);
-void print_output(char *msg);
-void process_command(char *cmd, tdata_t *thread_data);
-void help();
-void nocmd();
-void send_pwdok(client_t *client);
-
+/**
+ *
+ */
 int main(int argc, char *argv[]) {
   int                cMsgBufLen = 256; //TODO: #define ...
   char               cMsgBuf[cMsgBufLen];
@@ -79,6 +66,8 @@ int main(int argc, char *argv[]) {
   struct sigaction   sig_action;                                          /* signal handler for external signal management */
   pthread_attr_t     joinattr;                                            /* thread joinable attribute for joinable threads */
   tdata_t            thread_data[MAX_CLIENTS];                            /* this is the main shared data */
+  fd_set             readset;
+  fd_set             copyset;
 
 
   sig_action.sa_handler = signal_handler;
@@ -99,292 +88,388 @@ int main(int argc, char *argv[]) {
     exit(1);
 
   args.svfd = start_server(atoi(argv[1]), &serveraddr);                    /* Prepare the server for listen */
+
   for(i = 0; i < MAX_CLIENTS; i++)                                         /* Initialize main data structures and global variables */
     data_init_thread(&thread_data[i], i);
+
   pthread_attr_init(&joinattr);                                            /* initialize and create a thread joinable attribute */
   pthread_attr_setdetachstate(&joinattr, PTHREAD_CREATE_JOINABLE); 
   msgqueue = list_make_empty(msgqueue);
   thread_data[SV_THREAD].tstate = THREAD_STATE_ACT;                        /* set server thread state as active */
   setnonblock(args.svfd);
+
   console = console_create("<C>Server output\0", "</B/24> >>> \0");
   if (console == NULL)
     print_output("Could not start console\n");
 
-  fd_set readset;
-  fd_set copyset;
-  int fdmax = MAX(args.svfd, console->infd);
+  int fdmax = args.svfd + 1;
   FD_ZERO(&readset);
   FD_SET(args.svfd, &readset);
-  FD_SET(console->infd, &readset);
 
-  while(CONTINUE) {
-    copyset = readset;
-    int notfound = 1;
-    int addrlen  = sizeof(clientaddr);
-      
-    /* TODO: add some kind of verbose level to the command line */
-    //write(console->outfd, "<server>[NFO]:\tWaiting for incoming connections", 256);
-    print_output("[NFO]:\tWaiting for incoming connections");
-
-    rv = pselect(fdmax + 1, &copyset, NULL, NULL, NULL, &sig_action.sa_mask);
-
-    if (rv < 0) {
-      //write(console->outfd, "<server>[ERR]:\tSelect error:", 256);
-      print_output("</K/16>[ERR]:\tSelect error.<!K!16>");
-      CONTINUE = 0;
+  if (console != NULL)
+    {
+      fdmax = MAX(args.svfd, console->infd);
+      FD_SET(console->infd, &readset);
     }
-    else {
 
-      if (FD_ISSET(args.svfd, &copyset)) {
-	if ((clfd = accept(args.svfd, (struct sockaddr *)&clientaddr, &addrlen)) == -1) {
-	  print_output("</B>[WRN]:<!B>\tConnection refused.");
-	} else {
-	  //ca++;  //JUST FOR TESTING PURPOSES
-	  char buff[256];
-	  sprintf(buff, "[NFO]:\tConnection attempt from %s.", inet_ntoa(clientaddr.sin_addr));
-	  print_output(buff);
+  while(CONTINUE) 
+    {
+      int notfound = 1;                  
+      int addrlen  = sizeof(clientaddr); /* the address structure length */
 
-	  int tnum = find_free_thread(thread_data);
+      copyset = readset;                 /* copy the read file descriptor set to be used and modified by select() call */
 
-	  if (tnum != -1) {
-	    tnum--;
-	    if (new_client_thread(&thread_data[tnum], clfd, clientaddr)) {
-	      rv = pthread_create(&thread_data[tnum].tid, &joinattr, manage_client, &thread_data[tnum]);
-	      if (THREAD_get_error(rv, WARN, tnum)) {
-		close(thread_data[tnum].client->fd);
-		free(thread_data[tnum].client);
-		set_tstate(&thread_data[tnum], THREAD_STATE_FREE);
-	      }
-	    } else {
-	      set_tstate(&thread_data[tnum], THREAD_STATE_FREE);
-	      close(clfd);
-	      print_output("</B>[WRN]:<!B>\tClient node allocation falied!");
-	    }
-	  } else {
-	    print_output("</B>[WRN]:<!B>\tServer reached full capacity.");
-	    close(clfd);
-	  }
-	}
-      }
+      /* TODO: add some kind of verbose level to the command line */
+      print_output("[NFO]:\tWaiting for incoming connections");
 
-      if (console_isenabled(console) && FD_ISSET(console->infd, &copyset)) { 
-	read(console->infd, &cMsgBuf, cMsgBufLen);
-	if (strcmp(cMsgBuf, "q") == 0 || strcmp(cMsgBuf, "quit") == 0) {
-	  FD_CLR(console->infd, &readset);
-	  console_destroy(console);
+      rv = pselect(fdmax + 1, &copyset, NULL, NULL, NULL, &sig_action.sa_mask);
+
+      if (rv < 0) 
+	{
+	  /* Is selects exits with <0 then take that error as fatal and end the server */
+	  print_output("</K/16>[ERR]:\tFatal error... Terminating server...<!K!16>");
+	  if (console != NULL)
+	    console_destroy(console);
 	  CONTINUE = 0;
-	  close(args.svfd);
-	} else {
-	  process_command(cMsgBuf, thread_data);
 	}
-	memset(cMsgBuf, 0, 256);
-      }
+      else 
+	{
+	  /***************************************************************************************/
+	  /* Check if select() call exit because the server file descriptor was ready to be read */
+	  /***************************************************************************************/
+	  if (FD_ISSET(args.svfd, &copyset)) 
+	    {
+	      /* Try accepting the incoming connection. If we succeed, allocate memory. If we don't just inform that. */
+	      if ((clfd = accept(args.svfd, (struct sockaddr *)&clientaddr, &addrlen)) == -1) 
+		{
+		  print_output("</B>[WRN]:<!B>\tConnection refused.");
+		}
+	      else 
+		{
+		  char buff[256];
+		  sprintf(buff, "[NFO]:\tConnection attempt from %s.", inet_ntoa(clientaddr.sin_addr));
+		  print_output(buff);
+
+		  int tnum = find_free_thread(thread_data);   /* find a thread to hold the client connection */
+
+		  if (tnum != -1) 
+		    {
+		      allocate_and_launch(&thread_data[tnum - 1], clfd, clientaddr, joinattr);
+		    } 
+		  else
+		    {
+		      print_output("</B>[WRN]:<!B>\tServer reached full capacity.");
+		      close(clfd);
+		    }
+		}
+	    }
+	  
+
+	  /*************************************************************/
+	  /* Check if select() call exit for reading a console command */
+	  /*************************************************************/
+	  if (console != NULL && console_isenabled(console) && FD_ISSET(console->infd, &copyset)) 
+	    { 
+	      read(console->infd, &cMsgBuf, cMsgBufLen);
+
+	      /* Read command from console pipe. Quit the server if 'q' or 'quit' was issued. */
+	      if (strcmp(cMsgBuf, "q") == 0 || strcmp(cMsgBuf, "quit") == 0) 
+		{
+		  /* Remove the pipe from the read set */
+		  FD_CLR(console->infd, &readset);
+
+		  /* Remove the server file descriptor from the read set */
+		  FD_CLR(args.svfd, &readset);
+
+		  /* Destroy the console instance */
+		  console_destroy(console);
+
+		  /* Inform the server we are going down... */
+		  CONTINUE = 0;
+
+		  /* Close the server file descriptor */
+		  close(args.svfd);
+		} 
+	      else
+		{
+		  /* ...else, process the command issued. */
+		  process_command(cMsgBuf, thread_data);
+		}
+
+	      /* Set to 0 the command line buffer */
+	      memset(cMsgBuf, 0, 256);
+	    }
+	}
     }
-  }
-  char buff[256];
-  memset(buff, 0, 256);
-  sprintf(buff, "[NFO]:\tServer is going down...");
-  print_output(buff);
+
+  print_output("[NFO]:\tServer is going down...");
 
   pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL); /* set the cancel state of this thread */
-  pthread_setcanceltype(PTHREAD_CANCEL_ENABLE, NULL); /* set the cancel state of this thread */
+  pthread_setcanceltype(PTHREAD_CANCEL_ENABLE, NULL);  /* set the cancel type of this thread */
 
-  for( i = 0; i < MAX_CLIENTS; i++) {
-    if ( thread_data[i].tstate != THREAD_STATE_NEW) {
-      //wprintw(mainscr, "<server>[NFO]:\tSending cancel signal to thread with pid %ld and number %d\n", thread_data[i].tid, thread_data[i].tnum);
-      pthread_cancel(thread_data[i].tid);
-      pthread_detach(thread_data[i].tid);
-    }
-  }
+  cancel_threads(thread_data);
 
   pthread_attr_destroy(&joinattr);
 
-  if (console != NULL && console_isenabled(console))
-    console_destroy(console);
+  /* Destroy the console instance. */
+  if (console != NULL) console_destroy(console);
 
   print_output("[NFO]:\tCurses unloaded.");
 
-  /****************************************************/
-  /********** TESTING PURPOSES ************************/
-  /****************************************************/
-  /*
-  wprintw(mainscr, "\nserver exits correctly with a total of:\n");
-  wrefresh(mainscr);
-  wprintw(mainscr, "\n\tConnection attemps: %ld\n",ca);
-  wrefresh(mainscr);
-  wprintw(mainscr, "\tConnections made: %ld\n", cm);
-  wrefresh(mainscr);
-
-  */
-  
+  /* Iterate over the nodes freeing its memory. */
   list_node_t *node = NULL;
-  for (node = list_get_head(msgqueue); node != NULL; node = list_get_next(node)) {
+  for (node = list_get_head(msgqueue); node != NULL; node = list_get_next(node)) 
     unqueue_message(node->item);
-  }
+
+  /* iterate over the list freeing the nodes. This must be called after realising node's memory. */
   list_free(msgqueue);
+
+  /* free the msgqueue list pointer */
   free(msgqueue);
-  free(args.pwd);
+
+  /* close the loaded file */
   fclose(args.image);
+
   print_output("[NFO]:\tServer exits normally");
   pthread_exit(NULL);
 }
 
 
+/**
+ *
+ */
+void
+allocate_and_launch(tdata_t *thread, int fd, struct sockaddr_in addr, pthread_attr_t attr)
+{
+  int rv = 0;
+
+  if (new_client_thread(thread, fd, addr)) 
+    {
+      rv = pthread_create(&thread->tid, &attr, manage_client, thread);
+
+      if (THREAD_get_error(rv, WARN, thread->tnum)) 
+	{
+	  close(thread->client->fd);
+	  free(thread->client);
+	  set_tstate(thread, THREAD_STATE_FREE);
+	}
+    } 
+  else 
+    {
+      set_tstate(thread, THREAD_STATE_FREE);
+      close(fd);
+      print_output("</B>[WRN]:<!B>\tClient node allocation falied!");
+    }
+}
+
 
 /**
  *
  */
-void process_command(char *cmd, tdata_t *thread_data) {
-  char *args[20];
+void
+cancel_threads(tdata_t *thread_data) 
+{
+  int i;
+  for( i = 0; i < MAX_CLIENTS; i++) 
+    {
+      if ( thread_data[i].tstate != THREAD_STATE_NEW) 
+	{
+	  pthread_cancel(thread_data[i].tid);
+	  pthread_detach(thread_data[i].tid);
+	}
+    }
+}
+
+
+/**
+ *
+ */
+void
+process_command(char *cmd, tdata_t *thread_data) 
+{
+  char args[20][256];
   char buff[256];
-  int n;
-  int i = 0, j = 0;
+  int  n;
+  int  i = 0;
+  int  j = 0;
+
   memset(args, 0, 20);
   memset(buff, 0, 256);
 
   // snippet stolen from internet to avoid using strtok()
-  while (*cmd != '\0') {
-    args[i] = malloc(sizeof(char) * 20);
-    int items_read = sscanf(cmd, "%31[^ ]%n", args[i], &n);
-    i++;
-    if (items_read == 1)
-      cmd += n; /* advance the pointer by the number of characters read */
-    if ( *cmd != ' ' ) {
-      break; /* didn't find an expected delimiter, done? */
+  while (*cmd != '\0') 
+    {
+      int items_read = sscanf(cmd, "%31[^ ]%n", args[i], &n);
+      i++;
+      if (items_read == 1)
+	cmd += n; /* advance the pointer by the number of characters read */
+      if ( *cmd != ' ' ) 
+	{
+	  break; /* didn't find an expected delimiter, done? */
+	}
+      ++cmd; /* skip the delimiter */
+
+      if (i >= 20) //avoid going off args[] limits.
+	break;
     }
-    ++cmd; /* skip the delimiter */
-  }
 
   // Command is tokenized in args array.
-  if(strcmp(args[0], "help") == 0 && args[1] == NULL) {
-    help();
-    free(args[0]);
-
-  } else if (strcmp(args[0], "threads") == 0 && args[1] == NULL) {
-    int i = 0;
-    pthread_mutex_lock(&ccbitsetmutex);
-    for(i; i < MAX_CLIENTS; i++) {
-      if (ccbitset & (1 << i)) {
-	sprintf(buff, "command output: </B>Thread </24>%d<!24> is alive<!B>", i);
-	print_output(buff);
-      }
+  if(strcmp(args[0], "help") == 0 && i <= 1)
+    {
+      help();
     }
-    pthread_mutex_unlock(&ccbitsetmutex);
-    sprintf(buff, "command output: </B>You can type </24>info <thread-number><!24> to get a more detailed information.");
-    print_output(buff);
-    free(args[0]);
-
-  } else if (strcmp(args[0], "msglist") == 0) {
-    list_node_t *node = NULL;
-    int i = 0;
-    pthread_mutex_lock(&queuemutex);
-    for(node = list_get_head(msgqueue); node != NULL; node = list_get_next(node)) {
-      sprintf(buff, "command output: </B>MessageList[%d] -> %p<!B>", i++, list_get_item(node));
+  else if (strcmp(args[0], "threads") == 0 && i <= 1) 
+    {
+      int i = 0;
+      pthread_mutex_lock(&ccbitsetmutex);
+      for(i; i < MAX_CLIENTS; i++) 
+	{
+	  if (ccbitset & (1 << i)) 
+	    {
+	      sprintf(buff, "command output: </B>Thread </24>%d<!24> is alive<!B>", i);
+	      print_output(buff);
+	    }
+	}
+      pthread_mutex_unlock(&ccbitsetmutex);
+      sprintf(buff, "command output: </B>You can type </24>info <thread-number><!24> to get a more detailed information.");
       print_output(buff);
-    }
-    pthread_mutex_unlock(&queuemutex);
-
-    if (i == 0) {
-      memset(buff, 0, 256);
-      sprintf(buff, "command output: </B>MessageList is empty!<!B>");
-      print_output(buff);
-    }
-    free(args[0]);
-
-  } else if (strcmp(args[0], "info") == 0) {
-    if (args[1] != NULL) {
-      int tnum = strtol(args[1], NULL, 10);
-      if (tnum < MAX_CLIENTS && tnum >= 0) {
-	sprintf(buff, "command output: </B>Thread </24>%d<!24> status: </24>%s<!24>", tnum, tstatus[thread_data[tnum].tstate]);
-	print_output(buff);
-	pthread_mutex_lock(&ccbitsetmutex);
-	if (ccbitset & (1 << tnum)) {
-	  char str[INET_ADDRSTRLEN];
-	  inet_ntop(AF_INET, &(thread_data[tnum].client->address.sin_addr), str, INET_ADDRSTRLEN);
-	  sprintf(buff, "command output: </B>Thread </24>%d<!24> socket number: </24>%d<!24>", tnum, thread_data[tnum].client->fd);
-	  print_output(buff);
-	  sprintf(buff, "command output: </B>Thread </24>%d<!24> client name: </24>%s<!24>", tnum, thread_data[tnum].client->name);
-	  print_output(buff);
-	  sprintf(buff, "command output: </B>Thread </24>%d<!24> internet address: </24>%s<!24>", tnum, str);
-	  print_output(buff);
-	} else {
-	  sprintf(buff, "command output: </B>Thread </24>%d<!24> is not connected to any client.", tnum);
+    } 
+  else if (strcmp(args[0], "msglist") == 0 && i <= 1) 
+    {
+      list_node_t *node = NULL;
+      int i = 0;
+      pthread_mutex_lock(&queuemutex);
+      for(node = list_get_head(msgqueue); node != NULL; node = list_get_next(node)) 
+	{
+	  sprintf(buff, "command output: </B>MessageList[%d] -> %p<!B>", i++, list_get_item(node));
 	  print_output(buff);
 	}
-	pthread_mutex_unlock(&ccbitsetmutex);
-	free(args[1]);
-	free(args[0]);
-      }
+      pthread_mutex_unlock(&queuemutex);
+      
+      if (i == 0) 
+	{
+	  memset(buff, 0, 256);
+	  sprintf(buff, "command output: </B>MessageList is empty!<!B>");
+	  print_output(buff);
+	}
+    } 
+  else if (strcmp(args[0], "info") == 0 && i <= 2) 
+    {
+      int tnum = strtol(args[1], NULL, 10);
+      if (tnum < MAX_CLIENTS && tnum >= 0) 
+	{
+	  sprintf(buff, "command output: </B>Thread </24>%d<!24> status: </24>%s<!24>", tnum, tstatus[thread_data[tnum].tstate]);
+	  print_output(buff);
+	  pthread_mutex_lock(&ccbitsetmutex);
+	  if (ccbitset & (1 << tnum)) 
+	    {
+	      char str[INET_ADDRSTRLEN];
+	      inet_ntop(AF_INET, &(thread_data[tnum].client->address.sin_addr), str, INET_ADDRSTRLEN);
+	      sprintf(buff, "command output: </B>Thread </24>%d<!24> socket number: </24>%d<!24>", tnum, thread_data[tnum].client->fd);
+	      print_output(buff);
+	      sprintf(buff, "command output: </B>Thread </24>%d<!24> client name: </24>%s<!24>", tnum, thread_data[tnum].client->name);
+	      print_output(buff);
+	      sprintf(buff, "command output: </B>Thread </24>%d<!24> internet address: </24>%s<!24>", tnum, str);
+	      print_output(buff);
+	    } 
+	  else
+	    {
+	      sprintf(buff, "command output: </B>Thread </24>%d<!24> is not connected to any client.", tnum);
+	      print_output(buff);
+	    }
+	  pthread_mutex_unlock(&ccbitsetmutex);
+	}
+    } 
+  else if (strcmp(args[0], "close") == 0 && i <= 2)
+    { //TODO:
+    
+    } 
+  else if (strcmp(args[0], "examine") == 0 && i <= 2) 
+    { //TODO:
+    
+    } 
+  else
+    {
+      nocmd();
     }
-
-  } else if (strcmp(args[0], "close") == 0) {
-    free(args[0]);
-
-  } else if (strcmp(args[0], "examine") == 0) {
-    free(args[0]);
-
-  } else {
-    for(j=0; j < i; j++)
-      free(args[j]);
-    nocmd();
-  }
 }
 
-
-void print_output(char *msg) {
-  if (console != NULL && console_isenabled(console)) {
-    write(console->scrollwindow->outfd, msg, 256);
-  } else {
-    printf("TEST %s\n", msg);
-  }
-}
 
 /**
  *
  */
-int find_free_thread(tdata_t thread_data[]) {
-  int notfound = 1;
-  int i;
-  char buff[256];
-  for(i = 0; i < MAX_CLIENTS && notfound; i++) {
-    /* sprintf(buff, "[NFO]:\tsearching place on %d and locking", i); */
-    /* print_output(buff); */
-    /* memset(buff, '\0', 256); */
-    pthread_mutex_lock(&thread_data[i].stmutex);
-    switch(thread_data[i].tstate) {
-    case THREAD_STATE_NEW:
-      /* sprintf(buff, "[NFO]:\tthread %d was never used", i); */
-      /* print_output(buff); */
-      /* memset(buff, '\0', 256); */
-      thread_data[i].tstate = THREAD_STATE_INIT;
-      notfound = 0;
-      break;
-
-    case THREAD_STATE_FREE:
-      /* sprintf(buff, "[NFO]:\tthread %d was used.", i); */
-      /* print_output(buff); */
-      /* memset(buff, '\0', 256); */
-      pthread_join(thread_data[i].tid, NULL);
-      thread_data[i].tstate = THREAD_STATE_INIT;
-      notfound = 0;
-      break;
-    }
-    /**
-     * MAN PAGE:
-     * --------
-     * After a canceled thread has terminated, a join with that  thread  using
-     * pthread_join()  obtains  PTHREAD_CANCELED as the threads exit status.
-     * (Joining with a thread is the only way to know  that  cancellation  has
-     * completed.)
-     * RETURN VALUE
-     *   On  success, pthread_cancel() returns 0; on error, it returns a nonzero
-     *   error number.
-     */
-    pthread_mutex_unlock(&thread_data[i].stmutex);
+void
+print_output(char *msg) 
+{
+  if (console != NULL && console_isenabled(console)) 
+    {
+      write(console->scrollwindow->outfd, msg, 256);
+    } else {
+    printf("TEST %s\n", msg);
   }
+}
 
+
+/**
+ *
+ */
+int
+find_free_thread(tdata_t thread_data[]) 
+{
+  int  notfound = 1;  /* used for find a free/new thread structure each time a client connects */
+  int  i;             /* used for iterate over tdata_t structure */
+  char buff[256];     /* used for printing messages on screen */
+
+  for(i = 0; i < MAX_CLIENTS && notfound; i++)
+    {
+
+#ifdef DEBUG
+      sprintf(buff, "[NFO]:\tsearching place on %d and locking", i);
+      print_output(buff);
+      memset(buff, '\0', 256);
+#endif
+
+      pthread_mutex_lock(&thread_data[i].stmutex);
+
+      switch(thread_data[i].tstate) 
+	{
+	case THREAD_STATE_NEW:
+#ifdef DEBUG
+	  sprintf(buff, "[NFO]:\tthread %d was never used", i);
+	  print_output(buff);
+	  memset(buff, '\0', 256);
+#endif
+	  thread_data[i].tstate = THREAD_STATE_INIT;
+	  notfound = 0;
+	  break;
+	  
+	case THREAD_STATE_FREE:
+#ifdef DEBUG
+	  sprintf(buff, "[NFO]:\tthread %d was used.", i);
+	  print_output(buff);
+	  memset(buff, '\0', 256);
+#endif
+	  pthread_join(thread_data[i].tid, NULL);
+	  thread_data[i].tstate = THREAD_STATE_INIT;
+	  notfound = 0;
+	  break;
+	}
+      /**
+       * MAN PAGE:
+       * --------
+       * After a canceled thread has terminated, a join with that  thread  using
+       * pthread_join()  obtains  PTHREAD_CANCELED as the threads exit status.
+       * (Joining with a thread is the only way to know  that  cancellation  has
+       * completed.)
+       * RETURN VALUE
+       *   On  success, pthread_cancel() returns 0; on error, it returns a nonzero
+       *   error number.
+       */
+      pthread_mutex_unlock(&thread_data[i].stmutex);
+    }
+  
   return (notfound)? -1 : i;
-
+  
 }
 
 
@@ -416,28 +501,46 @@ void
 #endif
 
 
-  if(authclient(thread->client) == 0) 
+  if(authclient(thread) == 0) 
     {
+      tellapic_send_ctl(thread->client->fd, thread->client->fd, CTL_CL_DISC); //TODO: put this in the cleanup?
       char buff[256];
       sprintf(buff, "</B/16>[ERR]:\tCould not auth with client. Closing link on thread number %d.<!B!16>", thread->tnum);
       print_output(buff);
       pthread_exit(NULL);
     }
 
+#ifdef DEBUG 
+  memset(buff, '\0', 256);
+  sprintf(buff, "[NFO]:\tClient %d authed.", thread->client->fd);
+  print_output(buff);
+#endif
 
-  /* TODO: send to connected clients this client id and name */
-  mitem_t *msg = malloc(sizeof(mitem_t));
-  if (msg == NULL) 
+  // The client is authed (poorly) with the server now. He/she should ask for the file we are sharing/discussing.
+  tellapic_send_ctl(thread->client->fd, thread->client->fd, CTL_SV_AUTHOK);
+
+
+#ifdef DEBUG 
+  memset(buff, '\0', 256);
+  sprintf(buff, "[NFO]:\tWaiting for client %d to ask for file.", thread->client->fd);
+  print_output(buff);
+#endif
+  // Take note to change this behaviour so later releases can extend the server to hold
+  // more than just 1 image per instance. It would be nice to have an arbitrary list of images
+  // dinamically created by the owner of this session
+  stream_t stream = tellapic_read_stream_b(thread->client->fd);
+  if (stream.header.cbyte == CTL_CL_FILEASK)
     {
-      // abort?
+
+#ifdef DEBUG 
+      memset(buff, '\0', 256);
+      sprintf(buff, "[NFO]:\tSending file to client %d.", thread->client->fd);
+      print_output(buff);
+#endif
+      tellapic_send_file(thread->client->fd, fileno(args.image), args.filesize);
     }
-
-  msg->stream   = tellapic_build_ctle(CTL_SV_CLADD, thread->client->fd, thread->client->namelen, thread->client->name);
-  msg->tothread = -1; //TODO: #define or something here...
-  msg->delivers = 0;
-  pthread_mutex_init(&msg->mutex, NULL);
-  queue_message(msg, thread);
-
+  else
+    pthread_exit(NULL); //it is supposed to be a CTL_CL_FILEASK stream
 
   FD_ZERO(&readfdset);                     /* initialize file descriptor set */
   FD_SET(thread->client->fd, &readfdset);  /* add client socket to the set   */
@@ -450,6 +553,17 @@ void
   print_output(buff);
 #endif
 
+  // send the connected clients to this client
+  int i;
+  for(i = 0 - thread->tnum; i < MAX_CLIENTS - thread->tnum; i++)
+    {
+      pthread_mutex_lock(&thread[i].stmutex);
+      if (thread[i].tstate == THREAD_STATE_ACT)
+	{
+	  tellapic_send_ctle(thread->client->fd, thread[i].client->fd, CTL_SV_CLADD, thread[i].client->namelen, thread[i].client->name);
+	}
+      pthread_mutex_unlock(&thread[i].stmutex);
+    }
 
   pthread_mutex_lock(&ccbitsetmutex);                  /* Lock the shared resource   */
   ccbitset |= (1 << thread->tnum);                     /* Set the bit flag indicating this client thread number connection */
@@ -457,6 +571,17 @@ void
   set_tstate(thread, THREAD_STATE_ACT);                /* set the thread state to INIT */
   pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL); /* set the cancel state of this thread */
 
+  mitem_t *msg = malloc(sizeof(mitem_t));
+  if (msg == NULL) 
+    {
+      // abort?
+    }
+
+  msg->stream   = tellapic_build_ctle(CTL_SV_CLADD, thread->client->fd, thread->client->namelen, thread->client->name);
+  msg->tothread = -1; //TODO: #define or something here...
+  msg->delivers = 0;
+  pthread_mutex_init(&msg->mutex, NULL);
+  queue_message(msg, thread);
 
 #ifdef DEBUG 
   memset(buff, '\0', 256);
@@ -464,11 +589,9 @@ void
   print_output(buff);
 #endif
 
-
   while(thread->tstate != THREAD_STATE_END) 
     {
       fdsetcopy = readfdset;   /* Maintain a copy of the file descriptor set */
-
     
 #ifdef DEBUG
       memset(buff, '\0', 256);
@@ -476,9 +599,7 @@ void
       print_output(buff);
 #endif
   
-
       int rv = select(fdmax, &fdsetcopy, NULL, NULL, NULL);
-
 
       if (rv < 0) 
 	{
@@ -527,7 +648,7 @@ void
  *
  */
 int
-authclient(client_t *client) 
+authclient(tdata_t *thread) 
 {
   int      newpwdlen = 0;
   char     *pwd  = NULL;
@@ -535,58 +656,92 @@ authclient(client_t *client)
   int      try   = 0;
   
   // The server is the first to talk. It sends the client id. (fd)
-  int rc = tellapic_send_ctl(client->fd, client->fd, CTL_SV_ID);
+  int rc = tellapic_send_ctl(thread->client->fd, thread->client->fd, CTL_SV_ID);
   if (rc <= 0)
     return pwdok;
   
   while(!pwdok && try < MAX_PWD_TRIES) 
     {
-      //stream_t stream = tellapic_read_stream_b(client->fd);
-      //if (stream.header.cbyte == CTL_CL_PWD && stream.data.control.idfrom == client->fd) {
-
-      pwd = tellapic_read_pwd(client->fd, pwd, &newpwdlen);
+      
+      // we know we need to read a password. Use this library function for it.
+      pwd = tellapic_read_pwd(thread->client->fd, pwd, &newpwdlen);
 
 #ifdef DEBUG 
       char buff[256];
-      sprintf(buff, "[NFO]:\tPassword read from client fd %d was %s with lenght %d for message CTL_SV_ID (%d)", client->fd, pwd, newpwdlen, CTL_SV_ID);
+      sprintf(buff, "[NFO]:\tPassword read from client fd %d was %s with lenght %d for message CTL_SV_ID (%d)", thread->client->fd, pwd, newpwdlen, CTL_SV_ID);
       print_output(buff);
 #endif
 
       if (pwd != NULL)
 	{
 	  // Compare password sent here
-	  pwdok = (strncmp(args.pwd, hexastr2binary(pwd), newpwdlen) == 0);
-  
+	  // pwdok = (strncmp(args.pwd, hexastr2binary(pwd), newpwdlen) == 0);
+	  // Just compare plain text.
+	  pwdok = (strncmp(args.pwd, pwd, newpwdlen) == 0);
 	  if (pwdok) 
 	    {
-	  
-	      tellapic_send_ctl(client->fd, client->fd, CTL_SV_PWDOK);                                	 /* Send CTL_SV_PWDOK to client */
-	      stream_t stream = tellapic_read_stream_b(client->fd); 	                                 /* Read client response        */
+	      tellapic_send_ctl(thread->client->fd, thread->client->fd, CTL_SV_PWDOK);                                	 /* Send CTL_SV_PWDOK to client */
 
+	      do
+		{
+		  stream_t stream = tellapic_read_stream_b(thread->client->fd); 	                                 /* Read client response        */
 #ifdef DEBUG 
-	      char buff[256]; 
-	      sprintf(buff, "[NFO]:\tResponse read from client fd %d was cbyte %d for message CTL_SV_PWDOK (%d) with size: %d", client->fd, stream.header.cbyte, CTL_SV_PWDOK, stream.header.ssize);
-	      print_output(buff);
+		  char buff[256]; 
+		  sprintf(buff, "[NFO]:\tResponse from client %d was cbyte %d with size: %d", thread->client->fd, stream.header.cbyte, CTL_SV_PWDOK, stream.header.ssize);
+		  print_output(buff);
 #endif
+		  if (stream.header.cbyte == CTL_CL_NAME && stream.data.control.idfrom == thread->client->fd) 
+		    {
+		      if (thread->client->name != NULL)
+			free(thread->client->name);
 
-	      if (stream.header.cbyte == CTL_CL_NAME && stream.data.control.idfrom == client->fd) 
-		{     
-		  
-		  // TODO: check that name is not already used!
-		  client->name = malloc(stream.header.ssize - HEADER_SIZE);	                             /* Allocate memory for client name  */
-		  client->namelen = stream.header.ssize - HEADER_SIZE - 1;
-		  memcpy(client->name, stream.data.control.info, stream.header.ssize - HEADER_SIZE - 1);      /* Copy the client name             */
-		  client->name[stream.header.ssize - HEADER_SIZE - 1] = '\0';                                 /* Add a trailing '\0' just in case */
-		  
-		} else return 0;         /* If it isn't a CTL_CL_NAME packet is an invalid sequence */
-	      
-	    } else try++;
-	  
-	} else try = MAX_PWD_TRIES;  /* it's not a valid sequence so, disconnect the client */
-      
+		      thread->client->name = malloc(stream.header.ssize - HEADER_SIZE);	                              /* Allocate memory for client name  */
+		      thread->client->namelen = stream.header.ssize - HEADER_SIZE - 1;
+		      memcpy(thread->client->name, stream.data.control.info, stream.header.ssize - HEADER_SIZE - 1);  /* Copy the client name             */
+		      thread->client->name[stream.header.ssize - HEADER_SIZE - 1] = '\0';                             /* Add a trailing '\0' just in case */
+		    }
+		  else 
+		    {
+		      return 0;         /* If it isn't a CTL_CL_NAME packet is an invalid sequence */
+		    }
+		}
+	      while(isnameinuse(thread) && tellapic_send_ctl(thread->client->fd, thread->client->fd, CTL_SV_NAMEINUSE));
+	    } 
+	  else 
+	    {
+	      try++;
+	      tellapic_send_ctl(thread->client->fd, thread->client->fd, CTL_SV_PWDFAIL);
+	    }
+	} 
+      else
+	{
+	  try = MAX_PWD_TRIES;  /* it's not a valid sequence so, disconnect the client */
+	}
     }
 
   return pwdok;
+}
+
+
+/**
+ *
+ */
+int
+isnameinuse(tdata_t *thread)
+{
+  int inuse = 0;
+  int current = thread->tnum;
+  int i = 0;
+  for(i = 0 - current; i < MAX_CLIENTS - current && !inuse; i++)
+    {
+      pthread_mutex_lock(&thread[i].stmutex);
+      if (thread[i].tstate == THREAD_STATE_INIT || thread[i].tstate == THREAD_STATE_ACT)
+	if(strncmp(thread->client->name, thread[i].client->name, thread->client->namelen))
+	  inuse = 1;
+      pthread_mutex_unlock(&thread[i].stmutex);
+    }
+
+  return inuse;
 }
 
 
@@ -655,7 +810,7 @@ void fetch_stream(tdata_t *thread) {
     switch(stream.header.cbyte) {
 
     case CTL_CL_PMSG:
-      item->tothread = (1 << stream.data.chat.type.privmsg.idto);
+      item->tothread = stream.data.chat.type.privmsg.idto;
     case CTL_CL_BMSG:
     case CTL_CL_FIG:
       queue_message(item, thread);
@@ -730,7 +885,7 @@ queue_message(mitem_t *msg, tdata_t *thread)
 
       // If thread[i] is connected with a client and this message is private, ensure that is for him. 
       // If it isn't for him, then do nothing. Else, if it isn't private, send it anyway.
-      if (ccbitset & (1 << thread[i].tnum) && (msg->tothread == -1 || msg->tothread == thread[i].tnum) && current != thread[i].tnum) 
+      if (ccbitset & (1 << thread[i].tnum) && (msg->tothread == -1 || msg->tothread == thread[i].client->fd) && current != thread[i].tnum) 
 	{
 
 	  // msg is sent to N threads. When msg->delivers reachs 0, means that all threads have processed the message msg. If
@@ -1042,39 +1197,64 @@ void signal_handler(int sig) {
  * ----------
  * Checks programs arguments.
  */
-int args_check(int argc, char *argv[]) {
+int
+args_check(int argc, char *argv[]) 
+{
   FILE      *file = NULL;
   int       i     = 0;
 
   /* Check if the program was called correctly */
-  if (argc != 4) {
-      printf("Usage:\n ./server <port> <path-to-file> <sha1sum-password>\n");
-      return 0;
-  }
-  else {
-    /* Port number must be higher thanb 1024 */
-    if (atoi(argv[1]) < 1024) {
-      printf("Invalid port number. Must be higher than 1024\n");
-      //return INVALID_PORT;
+  if (argc != 3) 
+    {
+      printf("Usage:\n ./server <port> <path-to-file> \n");
       return 0;
     }
-    if ((file = fopen(argv[2], "r")) == NULL) {
-      printf("Failed to open file: %s\n",argv[2]);
-      //return FILE_ERR;
-      return 0;
-    }
-    for(i = 0; argv[3][i] != '\0'; i++);
-    if ( i != SHA_DIGEST_LENGTH * 2) {
-      printf("Password must be encripted 160-bits long (sha1sum).\n");
-      //return PWD_LEN_ERR;
-      return 0;
-    }
+  else 
+    {
+      /* Port number must be higher thanb 1024 */
+      if (atoi(argv[1]) < 1024) 
+	{
+	  printf("Invalid port number. Must be higher than 1024\n");
+	  //return INVALID_PORT;
+	  return 0;
+	}
+      if ((file = fopen(argv[2], "r")) == NULL) 
+	{
+	  printf("Failed to open file: %s\n",argv[2]);
+	  //return FILE_ERR;
+	  return 0;
+	}
+      // for(i = 0; argv[3][i] != '\0'; i++);
+      /* if ( i != SHA_DIGEST_LENGTH * 2) { */
+      /*   printf("Password must be encripted 160-bits long (sha1sum).\n"); */
+      /*   //return PWD_LEN_ERR; */
+      /*   return 0; */
+      /* } */
   }
 
   /* at this point args are ok */
   args.port = atoi(argv[1]);  
-  args.pwd = hexastr2binary(argv[3]);
   args.image = file;
+  fseek(file, 0L, SEEK_END);
+  args.filesize = ftell(file);
+  rewind(file);
+  if (args.filesize > powl(2, 32))
+    {
+      print_output("File size to large.");
+      return 0;
+    }
+
+  //args.pwd = hexastr2binary(argv[3]);
+  write(fileno(stdout), "Reading password: ", 19);
+  fflush(stdout);
+
+  //TODO: set stdin to non-blocking. For every char read, put a '*' or just nothing.
+  int bytes = read(fileno(stdin), args.pwd, MAX_PWD_SIZE);
+
+  if (bytes < 0) // read has failed.
+    return 0;
+
+  memset(args.pwd+bytes, '\0', MAX_PWD_SIZE - bytes);
 
   return 1;
 }
