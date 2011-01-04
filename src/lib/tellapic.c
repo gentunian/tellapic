@@ -7,6 +7,7 @@
 #include <netdb.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "types.h"
 #include "constants.h"
@@ -47,11 +48,11 @@ __setcbyte(byte_t *str, int cbyte)
  *
  */
 void
-__setssize(byte_t *str, int v) {
+__setssize(byte_t *str, long v) {
   str[SBYTE_INDEX]  = (v>>24) & 0xff; 
   str[SBYTE_INDEX+1]= (v>>16) & 0xff; 
   str[SBYTE_INDEX+2]= (v>>8)  & 0xff; 
-  str[SBYTE_INDEX+3]= (v>>0)  & 0xff;
+  str[SBYTE_INDEX+3]= (v>>0)  & 0xff;  
 }
 
 
@@ -277,9 +278,7 @@ tellapic_ischatb(header_t header)
 int 
 tellapic_ischatp(header_t header) 
 {
-
   return (header.cbyte == CTL_CL_PMSG);
-
 }
 
 
@@ -290,12 +289,13 @@ int
 tellapic_isctl(header_t header)
 {
   return (header.cbyte == CTL_CL_FILEASK ||
-	  header.cbyte == CTL_CL_FILEOK ||
+	  header.cbyte == CTL_CL_FILEOK  ||
 	  header.cbyte == CTL_SV_PWDFAIL ||
-	  header.cbyte == CTL_SV_PWDOK ||
-	  header.cbyte == CTL_CL_CLIST ||
-	  header.cbyte == CTL_SV_CLRM ||
-	  header.cbyte == CTL_SV_ID ||
+	  header.cbyte == CTL_SV_PWDOK   ||
+	  header.cbyte == CTL_CL_CLIST   ||
+	  header.cbyte == CTL_SV_CLRM    ||
+	  header.cbyte == CTL_SV_ID      ||
+	  header.cbyte == CTL_SV_AUTHOK  ||
 	  header.cbyte == CTL_SV_NAMEINUSE);
 }
 
@@ -304,13 +304,22 @@ tellapic_isctl(header_t header)
  * Returns a non-zero value if 'stream' is an extended control stream.
  */
 int 
-tellapic_isctlext(header_t header) 
+tellapic_isctle(header_t header) 
 {
 
   return (header.cbyte == CTL_CL_PWD   ||
 	  header.cbyte == CTL_CL_NAME  ||
-	  header.cbyte == CTL_SV_CLADD ||
-	  header.cbyte == CTL_SV_FILE);
+	  header.cbyte == CTL_SV_CLADD);
+}
+
+
+/**
+ *
+ */
+int
+tellapic_isfile(header_t header)
+{
+  return header.cbyte == CTL_SV_FILE;
 }
 
 
@@ -354,11 +363,11 @@ tellapic_isfig(header_t header)
 /**
  * Shift buf to the left with n bytes.
  */
-int
+long
 __lbshift(byte_t *buf, int n) 
 {
   byte_t *data  = (buf + n - 1);
-  int    result = 0;
+  long    result = 0;
   int i;
 
   for(i = 0; i < n; i++)
@@ -464,7 +473,7 @@ __ddatatostream(byte_t *rawstream, stream_t stream)
       __settextstyle(rawstream, stream.data.drawing.type.text.style);
       __setfacelen(rawstream, stream.data.drawing.type.text.facelen);
       memcpy(rawstream+DDATA_FONTFACE_INDEX, stream.data.drawing.type.text.face, stream.data.drawing.type.text.facelen);
-      int textsize = stream.header.ssize - (HEADER_SIZE + DDATA_TEXT_INDEX(stream.data.drawing.type.text.facelen));
+      long textsize = stream.header.ssize - (HEADER_SIZE + DDATA_TEXT_INDEX(stream.data.drawing.type.text.facelen));
       memcpy(rawstream+DDATA_TEXT_INDEX(stream.data.drawing.type.text.facelen), stream.data.drawing.type.text.info, textsize);
     }
   }
@@ -476,15 +485,15 @@ __ddatatostream(byte_t *rawstream, stream_t stream)
  * for any chat control byte.
  */
 void
-__chatdatacpy(stream_t *dest, byte_t *data, int ssize) 
+__chatdatacpy(stream_t *dest, byte_t *data, long datasize) 
 {
-  int textsize = 0;
+  long textsize = 0;
 
   dest->data.chat.idfrom = data[DATA_IDFROM_INDEX];
 
   if (dest->header.cbyte == CTL_CL_PMSG)
     {
-      textsize = ssize - HEADER_SIZE - PMSG_TEXT_OFFSET;
+      textsize = datasize - PMSG_TEXT_OFFSET;
       dest->data.chat.type.privmsg.idto = data[DATA_PMSG_IDTO_INDEX];
       memcpy(dest->data.chat.type.privmsg.text, data + DATA_PMSG_TEXT_INDEX, textsize);
 
@@ -494,7 +503,7 @@ __chatdatacpy(stream_t *dest, byte_t *data, int ssize)
     }
   else
     {
-      textsize = ssize - HEADER_SIZE - BMSG_TEXT_OFFSET;
+      textsize = datasize - BMSG_TEXT_OFFSET;
       memcpy(dest->data.chat.type.broadmsg, data + DATA_BMSG_TEXT_INDEX, textsize);
 
       /* Fill with '\0's and prevent segfault */
@@ -509,7 +518,7 @@ __chatdatacpy(stream_t *dest, byte_t *data, int ssize)
  * data structure for any ctl extended control byte.
  */
 void
-__ctledatacpy(stream_t *dest, byte_t *data, int datasize)
+__ctledatacpy(stream_t *dest, byte_t *data, long datasize)
 {
 
   dest->data.control.idfrom = data[DATA_IDFROM_INDEX];
@@ -537,6 +546,18 @@ __ctldatacpy(stream_t *dest, byte_t *data)
 
 
 /**
+ *
+ */
+void
+__filedatacpy(stream_t *dest, byte_t *data, long datasize)
+{
+  dest->data.file = malloc(datasize);
+
+  memcpy(dest->data.file, data, datasize);
+}
+
+
+/**
  * Copies a bunch of bytes from data section to a data structure.
  *
  *  Note that tellapic_read_data_b() has
@@ -544,7 +565,7 @@ __ctldatacpy(stream_t *dest, byte_t *data)
  * datasize + HEADER_SIZE is the total amount of data in the whole stream read.
  */
 void
-__figdatacpy(stream_t *dest, byte_t *data, int datasize) 
+__figdatacpy(stream_t *dest, byte_t *data, long datasize) 
 {
 
   /* Copy the fixed section either for text or a figure. */
@@ -655,9 +676,10 @@ tellapic_read_pwd(int fd, char *pwd, int *len)
 {
   byte_t     *header  = malloc(HEADER_SIZE);
   int        nbytes   = __read_b(fd, HEADER_SIZE, header);
-  stream_t   stream;
-  
+  stream_t   stream;  /* This is used only as a placeholder. Avoid it for future release, use instead local variables*/
+
   *len = 0;
+
   stream.header.cbyte = CTL_FAIL;
 
   if (nbytes == HEADER_SIZE && header[CBYTE_INDEX] == CTL_CL_PWD) 
@@ -665,10 +687,11 @@ tellapic_read_pwd(int fd, char *pwd, int *len)
       stream.header.endian = header[ENDIAN_INDEX];
       stream.header.cbyte  = header[CBYTE_INDEX];
       stream.header.ssize  = __lbshift(header+SBYTE_INDEX, 4);
-      
+
       if (stream.header.ssize <= MAX_CTLEXT_STREAM_SIZE && stream.header.ssize > MIN_CTLEXT_STREAM_SIZE)
 	{
 	  byte_t *data = malloc(stream.header.ssize - HEADER_SIZE);
+	  int    error = 0;
 	  nbytes = __read_b(fd, stream.header.ssize - HEADER_SIZE, data);
 	  if (nbytes == stream.header.ssize - HEADER_SIZE)
 	    {
@@ -678,16 +701,8 @@ tellapic_read_pwd(int fd, char *pwd, int *len)
 	      strncpy(pwd, (char *)stream.data.control.info, *len);
 	      pwd[*len] = '\0';
 	    }
-	  else
-	    {
-	      stream.header.cbyte = CTL_FAIL;
-	    }
 
 	  free(data);
-	}
-      else
-	{
-	  stream.header.cbyte = CTL_FAIL;
 	}
     }
 
@@ -708,9 +723,9 @@ tellapic_read_pwd(int fd, char *pwd, int *len)
 stream_t
 tellapic_read_data_b(int fd, header_t header) 
 {
-  int      datasize = header.ssize - HEADER_SIZE;
+  long     datasize = header.ssize - HEADER_SIZE;
   byte_t   *data    = malloc(datasize);
-  int      nbytes   = __read_b(fd, datasize, data);
+  long     nbytes   = __read_b(fd, datasize, data);
   stream_t stream;
 
 
@@ -742,9 +757,12 @@ tellapic_read_data_b(int fd, header_t header)
 
 	case CTL_SV_CLADD:
 	case CTL_CL_PWD:
-	case CTL_SV_FILE:
 	case CTL_CL_NAME:
 	  __ctledatacpy(&stream, data, datasize);
+	  break;
+
+	case CTL_SV_FILE:
+	  __filedatacpy(&stream, data, datasize);
 	  break;
 
 	case CTL_CL_FILEASK:
@@ -756,6 +774,7 @@ tellapic_read_data_b(int fd, header_t header)
 	case CTL_SV_CLRM:
 	case CTL_SV_ID:
 	case CTL_SV_NAMEINUSE:
+	case CTL_SV_AUTHOK:
 	  __ctldatacpy(&stream, data);
 	  break;
 
@@ -784,6 +803,7 @@ tellapic_read_data_b(int fd, header_t header)
 header_t
 tellapic_read_header_b(int fd) 
 {
+
   byte_t     *data  = malloc(HEADER_SIZE);
   int        nbytes = __read_b(fd, HEADER_SIZE, data);
   header_t   header;
@@ -801,8 +821,9 @@ tellapic_read_header_b(int fd)
 	   !(tellapic_ischatp(header)  && header.ssize <= MAX_PMSG_STREAM_SIZE   && header.ssize >= MIN_PMSG_STREAM_SIZE) &&
 	   //!(tellapic_isfigtxt(header) && header.ssize <= MAX_FIGTXT_STREAM_SIZE && header.ssize > MIN_FIGTXT_STREAM_SIZE) &&
 	   !(tellapic_isfig(header)    && header.ssize <= MAX_FIGTXT_STREAM_SIZE && header.ssize >= MIN_FIGTXT_STREAM_SIZE) &&
-	   !(tellapic_isctlext(header) && header.ssize <= MAX_CTLEXT_STREAM_SIZE && header.ssize >= MIN_CTLEXT_STREAM_SIZE) &&
+	   !(tellapic_isctle(header)   && header.ssize <= MAX_CTLEXT_STREAM_SIZE && header.ssize >= MIN_CTLEXT_STREAM_SIZE) &&
 	   !(tellapic_isdrw(header)    && (header.ssize == DRWI_STREAM_SIZE || header.ssize == DRWU_STREAM_SIZE)) &&
+	   !(tellapic_isfile(header)   && header.ssize <= MAX_STREAM_SIZE && header.ssize >= MIN_CTLEXT_STREAM_SIZE) &&
 	   !(tellapic_isctl(header)    && header.ssize == CTL_STREAM_SIZE)
 	   //!(tellapic_isfig(header)    && header.ssize == FIG_STREAM_SIZE)
 	   ) 
@@ -822,7 +843,6 @@ tellapic_read_header_b(int fd)
 
   // Free the data stream as we already filled up the stream structure for clients.
   free(data);
-
   return header;
 }
 
@@ -876,6 +896,9 @@ tellapic_send(int socket, stream_t *stream)
       break;
 
     case CTL_SV_FILE:
+      memcpy(rawstream+HEADER_SIZE, stream->data.file, stream->header.ssize - HEADER_SIZE);
+      break;
+
     case CTL_CL_PWD:
     case CTL_SV_CLADD:
     case CTL_CL_NAME:
@@ -889,6 +912,7 @@ tellapic_send(int socket, stream_t *stream)
     case CTL_SV_CLRM:
     case CTL_SV_ID:
     case CTL_SV_NAMEINUSE:
+    case CTL_SV_AUTHOK:
       rawstream[DATA_IDFROM_INDEX+HEADER_SIZE] = stream->data.control.idfrom;
       break;
 
@@ -901,6 +925,29 @@ tellapic_send(int socket, stream_t *stream)
 
   free(rawstream);
   return r;
+}
+
+
+/**
+ *
+ */
+int
+tellapic_send_file(int fd, int filefd, long filesize)
+{
+
+  byte_t *rawstream = malloc(filesize + HEADER_SIZE);
+
+  __setendian(rawstream, 0);
+  __setcbyte(rawstream, CTL_SV_FILE);
+  __setssize(rawstream, filesize);
+
+  read(filefd, rawstream + HEADER_SIZE, filesize);
+
+  int r = send(fd, rawstream, filesize + HEADER_SIZE, 0);
+
+  free(rawstream);
+
+  return r;  
 }
 
 
@@ -928,8 +975,8 @@ tellapic_send_text(int fd, int idfrom, int dnum, float w, float op, int red, int
   __settextstyle(rawstream, style);
   __setfacelen(rawstream, facelen);
 
-  memcpy(rawstream+DDATA_FONTFACE_INDEX, face, facelen);
-  memcpy(rawstream+DDATA_TEXT_INDEX(facelen), text, textlen);
+  memcpy(rawstream+HEADER_SIZE+DDATA_FONTFACE_INDEX, face, facelen);
+  memcpy(rawstream+HEADER_SIZE+DDATA_TEXT_INDEX(facelen), text, textlen);
   
   int r = send(fd, rawstream, ssize, 0);
 
@@ -968,7 +1015,6 @@ tellapic_send_fig(int fd, int tool, int idfrom, int dnum, float w, float op, int
   __setdp(rawstream, dp);
   __setda(rawstream, da);
 
-  
   int r = send(fd, rawstream, FIG_STREAM_SIZE, 0);
 
   free(rawstream);
@@ -992,7 +1038,7 @@ tellapic_send_chatp(int fd, int idfrom, int idto, int textlen, char* text)
   __setidfrom(rawstream, idfrom);
   __setidto(rawstream, idto);
 
-  memcpy(rawstream+DATA_PMSG_TEXT_INDEX, text, textlen);
+  memcpy(rawstream+HEADER_SIZE+DATA_PMSG_TEXT_INDEX, text, textlen);
 
   int r = send(fd, rawstream, ssize, 0);
 
@@ -1016,7 +1062,7 @@ tellapic_send_chatb(int fd, int idfrom, int textlen, char* text)
   __setssize(rawstream, ssize);
   __setidfrom(rawstream, idfrom);
 
-  memcpy(rawstream+DATA_BMSG_TEXT_INDEX, text, textlen);
+  memcpy(rawstream+HEADER_SIZE+DATA_BMSG_TEXT_INDEX, text, textlen);
 
   int r = send(fd, rawstream, ssize, 0);
 
@@ -1030,7 +1076,7 @@ tellapic_send_chatb(int fd, int idfrom, int textlen, char* text)
  *
  */
 int
-tellapic_send_ctlext(int fd, int idfrom, int ctle, int infolen, char *info)
+tellapic_send_ctle(int fd, int idfrom, int ctle, int infolen, char *info)
 {
   int    ssize = HEADER_SIZE + infolen + 1;
   byte_t *rawstream = malloc(ssize);
@@ -1040,7 +1086,7 @@ tellapic_send_ctlext(int fd, int idfrom, int ctle, int infolen, char *info)
   __setssize(rawstream, ssize);
   __setidfrom(rawstream, idfrom);
   
-  memcpy(rawstream+DATA_BMSG_TEXT_INDEX, info, infolen);  
+  memcpy(rawstream+HEADER_SIZE+1, info, infolen);  
 
   int r = send(fd, rawstream, ssize, 0);
 
@@ -1080,7 +1126,7 @@ tellapic_connect_to(const char *hostname, int port)
   int sd;
   struct hostent *host;
   struct sockaddr_in addr;
-  
+
   if ( (host = gethostbyname(hostname)) == NULL )
       return -1;
 
@@ -1159,7 +1205,7 @@ tellapic_build_ctl(int ctl, int idfrom)
  *
  */
 stream_t 
-tellapic_build_chat(int cbyte, int idfrom, int idto, int textsize, char *text) 
+tellapic_build_chat(int cbyte, int idfrom, int idto, int textsize, char *text) //TODO: something is wrong HERE!
 {
   stream_t stream;
 
@@ -1204,6 +1250,26 @@ tellapic_build_chat(int cbyte, int idfrom, int idto, int textsize, char *text)
     }
 
   return stream;
+}
+
+
+/**
+ *
+ */
+char *
+tellapic_bytetp2charp(byte_t *value)
+{
+  return (char *)value;
+}
+
+
+/**
+ *
+ */
+char
+tellapic_bytet2char(byte_t value)
+{
+  return (char)value;
 }
 
 
