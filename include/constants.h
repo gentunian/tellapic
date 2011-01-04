@@ -1,4 +1,4 @@
-/*****************************************************************************
+/**
  *   Copyright (c) 2010 Sebastián Treu.
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -10,13 +10,16 @@
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *   GNU General Public License for more details.
  *
- *****************************************************************************/
+ */
+
 #ifndef CONSTANTS_H_
 #define CONSTANTS_H_
 
 #define MAX_TEXT_SIZE    256
 #define MAX_INFO_SIZE    128
 #define MAX_FONTFACE_LEN 48
+#define MAX_STREAM_SIZE  4294967296ULL // 2^32
+#define MAX_FILE_SIZE    MAX_STREAM_SIZE - HEADER_SIZE - 1
 
 /* from stream */
 #define ENDIAN_INDEX               0
@@ -110,30 +113,33 @@
 #define DATA_FILE_INDEX        1
 
 
-/* from client */
-#define CTL_CL_BMSG     0x11
-#define CTL_CL_PMSG     0x21
-#define CTL_CL_FIG      0x31
-#define CTL_CL_DRW      0x41
-#define CTL_CL_CLIST    0x51
-#define CTL_CL_PWD      0x61
-#define CTL_CL_FILEASK  0x71
-#define CTL_CL_FILEOK   0x81
-#define CTL_CL_DISC     0x91
-#define CTL_CL_NAME     0xb1
+/****************************/
+/* Control byte from client */
+/****************************/
+#define CTL_CL_BMSG     0x11   /* is chat */
+#define CTL_CL_PMSG     0x21   /* is chat */
+#define CTL_CL_FIG      0x31   /* is fig  */
+#define CTL_CL_DRW      0x41   /* is drw  */
+#define CTL_CL_CLIST    0x51   /* is ctle */
+#define CTL_CL_PWD      0x61   /* is ctle */
+#define CTL_CL_FILEASK  0x71   /* is ctl  */
+#define CTL_CL_FILEOK   0x81   /* is ctl  */
+#define CTL_CL_DISC     0x91   /* is ctl  */
+#define CTL_CL_NAME     0xa1   /* is ctle */
 #define CTL_FAIL        0x00
 
 
 /* from server */
-#define CTL_SV_CLADD     0x10
-#define CTL_SV_CLRM      0x20
-#define CTL_SV_CLIST     0x30
-#define CTL_SV_PWDASK    0x40
-#define CTL_SV_PWDOK     0x50
-#define CTL_SV_PWDFAIL   0x60
-#define CTL_SV_FILE      0x70
-#define CTL_SV_ID        0x80
-#define CTL_SV_NAMEINUSE 0x90
+#define CTL_SV_CLADD     0x10   /* is ctle */
+#define CTL_SV_CLRM      0x20   /* is ctle */
+#define CTL_SV_CLIST     0x30   /* is ctle */
+#define CTL_SV_PWDASK    0x40   /* is ctl  */
+#define CTL_SV_PWDOK     0x50   /* is ctl  */
+#define CTL_SV_PWDFAIL   0x60   /* is ctl  */
+#define CTL_SV_FILE      0x70   /* is ctle */
+#define CTL_SV_ID        0x80   /* is ctl  */
+#define CTL_SV_NAMEINUSE 0x90   /* is ctl  */
+#define CTL_SV_AUTHOK    0xa0   /* is ctl  */
 
 
 /* Face properties */
