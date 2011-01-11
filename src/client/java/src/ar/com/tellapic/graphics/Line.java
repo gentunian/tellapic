@@ -4,6 +4,7 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 
 import ar.com.tellapic.Utils;
+import ar.com.tellapic.lib.tellapic;
 
 /**
  * 
@@ -31,7 +32,7 @@ public final class Line extends Tool {
 	*/
 	
 	public Line() {
-		super(Line.class.getSimpleName(), "/icons/line.png", Utils.msg.getString("linetooltip"));
+		super(tellapic.TOOL_LINE, Line.class.getSimpleName(), "/icons/line.png", Utils.msg.getString("linetooltip"));
 		firstPoint = new Point2D.Double();
 		inUse      = false;
 	}

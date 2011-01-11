@@ -108,7 +108,7 @@ public class Drawing extends AbstractDrawing {
 	 * @return the alpha or null
 	 */
 	@Override
-	public Composite getAlpha() {
+	public Composite getComposite() {
 		if (alphaProperty == null)
 			return null;
 		

@@ -3,6 +3,7 @@ package ar.com.tellapic.graphics;
 import java.awt.geom.Point2D;
 
 import ar.com.tellapic.Utils;
+import ar.com.tellapic.lib.tellapic;
 
 public final class Text extends Tool {
 	private Point2D            firstPoint;
@@ -20,7 +21,7 @@ public final class Text extends Tool {
 	*/
 	
 	public Text() {
-		super(Text.class.getSimpleName(), "/icons/text.png", Utils.msg.getString("texttooltip"));
+		super(tellapic.TOOL_TEXT, Text.class.getSimpleName(), "/icons/text.png", Utils.msg.getString("texttooltip"));
 		firstPoint = new Point2D.Double();
 		temporalDrawing = new Drawing(getName());
 		temporalDrawing.setShape(null);

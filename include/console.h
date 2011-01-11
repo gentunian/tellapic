@@ -1,3 +1,18 @@
+/**
+ *   Copyright (c) 2010 Sebastián Treu.
+ *
+ *   This program is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; version 2 of the License.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ */
+
+
 #ifndef _CONSOLE_H_
 #define _CONSOLE_H_
 
@@ -36,9 +51,16 @@ typedef struct contype {
 
 
 
-console_t *console_create(char *title, char *prompt);
-int console_disable(console_t *console);
-int console_enable(console_t *console);
-int console_isenabled(console_t *console);
+console_t *
+console_create(char *title, char *prompt);
+
+int
+console_disable(console_t *console);
+
+int
+console_enable(console_t *console);
+
+int
+console_isenabled(console_t *console);
 
 #endif

@@ -19,5 +19,5 @@ public interface IToolBoxController {
 	 * 
 	 * @param tool the Tool selected
 	 */
-	public void selectToolEvent(String toolName);
+	public void selectToolByName(String toolName);
 }

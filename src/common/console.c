@@ -106,16 +106,19 @@ void
 	      char *cmd = injectCDKEntry(console->entry, c);
 	      
 	      char b[134];
-	      sprintf(b, "cmdlen: %d", cmdlen);
-	      addCDKSwindow(console->scrollwindow->swindow, b, BOTTOM);
+
 	      if (cmd != NULL && cmdlen > 0) 
 		{
-		  write(console->outfd, cmd, cmdlen);    /* forward the data input to the console client pipe. */
+		  char *str = malloc(cmdlen+1);
+		  strncpy(str, cmd, cmdlen);
+		  str[cmdlen] = '\0';
+		  write(console->outfd, str, cmdlen+1);    /* forward the data input to the console client pipe. */
 		  cmdlen = 0;
 		  pthread_mutex_lock(&console->mutex);
 		  cleanCDKEntry(console->entry);
 		  refreshCDKScreen (console->screen);
 		  pthread_mutex_unlock(&console->mutex);
+		  free(str);
 		}
 	      else
 		{

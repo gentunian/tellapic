@@ -1,4 +1,4 @@
-/*****************************************************************************
+/**
  *   Copyright (c) 2010 Sebastián Treu.
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -10,7 +10,8 @@
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *   GNU General Public License for more details.
  *
- *****************************************************************************/
+ */
+
 #ifndef TYPES_H_
 #define TYPES_H_
 
@@ -41,15 +42,15 @@ typedef enum {
 
 
 typedef struct {
-  int x;
-  int y;
+  unsigned int x;
+  unsigned int y;
 } point_t;
 
 
 typedef struct {
-  byte_t    endian;            //endian byte
-  byte_t    cbyte;             //control byte
-  int       ssize;
+  byte_t             endian;            //endian byte
+  byte_t             cbyte;             //control byte
+  unsigned long      ssize;
 } header_t;
 
 
@@ -87,16 +88,16 @@ typedef struct {
 
 
 typedef struct {
-  byte_t       idfrom;       //byte 0    1 byte on stream
-  byte_t       dcbyte;       //byte 1    1 byte on stream
-  int          number;       //byte 2    4 bytes on stream
-  float        width;        //byte 6    4 bytes on stream
-  float        opacity;      //byte 10   4 bytes on stream
-  color_t      color;        //byte 14   3 bytes on stream
-  point_t      point1;       //byte 17   4 bytes on stream
+  byte_t                     idfrom;       //byte 0    1 byte on stream
+  byte_t                     dcbyte;       //byte 1    1 byte on stream
+  unsigned long              number;       //byte 2    4 bytes on stream
+  float                      width;        //byte 6    4 bytes on stream
+  float                      opacity;      //byte 10   4 bytes on stream
+  color_t                    color;        //byte 14   3 bytes on stream
+  point_t                    point1;       //byte 17   4 bytes on stream
   union {
-    figure_t   figure;
-    text_t     text;        // total: FONT_FACE_LEN + MAX_TEX_SIZE + 1 bytes on stream
+    figure_t                 figure;
+    text_t                   text;        // total: FONT_FACE_LEN + MAX_TEX_SIZE + 1 bytes on stream
   } type;
 } ddata_t;
 
@@ -107,23 +108,13 @@ typedef struct {
 } svcontrol_t;
 
 
-/*
-typedef struct {
-  union {
-    ddata_t     drawing;
-    message_t   chat;
-    svcontrol_t control;
-  } type;
-} data_t;
-*/
-
 typedef struct {
   header_t header;
-  //data_t   data;
   union {
     ddata_t     drawing;
-    message_t   chat;
+    message_t   chat; 
     svcontrol_t control;
+    byte_t      *file;
   } data;
 } stream_t;
 

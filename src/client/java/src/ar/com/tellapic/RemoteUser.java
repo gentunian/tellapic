@@ -17,7 +17,9 @@
  */  
 package ar.com.tellapic;
 
+import ar.com.tellapic.graphics.IPaintPropertyController;
 import ar.com.tellapic.graphics.IToolBoxController;
+import ar.com.tellapic.graphics.PaintPropertyController;
 import ar.com.tellapic.graphics.ToolBoxController;
 
 /**
@@ -28,19 +30,22 @@ import ar.com.tellapic.graphics.ToolBoxController;
  */
 public class RemoteUser extends AbstractUser {
 
-	private IToolBoxController c;
-	
+	private IToolBoxController       toolboxController;
+	private IPaintPropertyController paintController;
 	/**
 	 * @param id
 	 */
 	public RemoteUser(int id, String name) {
 		super(id, name);
-		c = new ToolBoxController(getToolBoxModel());
+		setToolboxController(new ToolBoxController(getToolBoxModel()));
+		setPaintController(new PaintPropertyController(getToolBoxModel()));
 	}
 
+	/*
 	public void selectTool(String name) {
-		c.selectToolEvent(name);
+		toolboxController.selectToolByName(name);
 	}
+	*/
 	
 	/* (non-Javadoc)
 	 * @see com.tellapic.AbstractUser#isRemote()
@@ -66,5 +71,33 @@ public class RemoteUser extends AbstractUser {
 	public boolean isSpecial() {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	/**
+	 * @param toolboxController the toolboxController to set
+	 */
+	public void setToolboxController(IToolBoxController toolboxController) {
+		this.toolboxController = toolboxController;
+	}
+
+	/**
+	 * @return the toolboxController
+	 */
+	public IToolBoxController getToolboxController() {
+		return toolboxController;
+	}
+
+	/**
+	 * @param paintController the paintController to set
+	 */
+	public void setPaintController(IPaintPropertyController paintController) {
+		this.paintController = paintController;
+	}
+
+	/**
+	 * @return the paintController
+	 */
+	public IPaintPropertyController getPaintController() {
+		return paintController;
 	}
 }

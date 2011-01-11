@@ -1,51 +1,170 @@
+/**
+ *   Copyright (c) 2010 Sebastián Treu.
+ *
+ *   This program is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; version 2 of the License.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ */
+#ifndef __TELLAPIC__H__
+#define __TELLAPIC__H__
+
 #include "types.h"
 
+
+/**
+ *
+ */
 char *
 tellapic_read_pwd(int fd, char *, int *len);
 
+/**
+ *
+ */
 stream_t
 tellapic_read_data_b(int fd, header_t header);
 
+/**
+ *
+ */
 header_t
 tellapic_read_header_b(int fd);
 
+/**
+ *
+ */
 int 
 tellapic_send(int socket, stream_t *stream);
 
+/**
+ *
+ */
 int
 tellapic_connect_to(const char *hostname, int port);
 
+/**
+ *
+ */
 void
 tellapic_close_fd(int fd);
 
+/**
+ *
+ */
 stream_t
 tellapic_read_stream_b(int fd);
 
+/**
+ *
+ */
 int
 tellapic_send_text(int fd, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int style, int facelen, char *face, int textlen, char *text);
 
+/**
+ *
+ */
 int
 tellapic_send_fig(int fd, int tool, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int x2, int y2, int lj, int ec, float ml, float dp, float da[]);
 
+/**
+ *
+ */
 int
 tellapic_send_chatp(int fd, int idfrom, int idto, int textlen, char* text);
 
+/**
+ *
+ */
 int
 tellapic_send_chatb(int fd, int idfrom, int textlen, char* text);
 
+/**
+ *
+ */
 int
-tellapic_send_ctlext(int fd, int idfrom, int ctle, int infolen, char *info);
+tellapic_send_ctle(int fd, int idfrom, int ctle, int infolen, char *info);
 
+/**
+ *
+ */
 int
 tellapic_send_ctl(int fd, int idfrom, int ctl);
 
+/**
+ *
+ */
 stream_t 
 tellapic_build_ctle(int ctl, int idfrom, int infosize, char *info);
 
+/**
+ *
+ */
 stream_t
 tellapic_build_ctl(int ctl, int idfrom);
 
+/**
+ *
+ */
 stream_t 
 tellapic_build_chat(int cbyte, int idfrom, int idto, int textsize, char *text);
 
+/**
+ *
+ */
+int 
+tellapic_ischatb(header_t header);
 
+/**
+ *
+ */
+int 
+tellapic_ischatp(header_t header);
+
+/**
+ *
+ */
+int 
+tellapic_isctl(header_t header);
+
+/**
+ *
+ */
+int 
+tellapic_isfile(header_t header);
+
+/**
+ *
+ */
+int 
+tellapic_isctle(header_t header);
+
+/**
+ *
+ */
+int 
+tellapic_isdrw(header_t header);
+
+/**
+ *
+ */
+int 
+tellapic_isfigtxt(stream_t stream);
+
+/**
+ *
+ */
+int
+tellapic_isfig(header_t header);
+
+/**
+ *
+ */
+void
+tellapic_free(stream_t *stream);
+
+#endif

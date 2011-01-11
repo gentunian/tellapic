@@ -60,7 +60,7 @@ public abstract class AbstractDrawing {
 	/**
 	 * @return the alpha
 	 */
-	public abstract Composite getAlpha();
+	public abstract Composite getComposite();
 
 	/**
 	 * @return the font

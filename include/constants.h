@@ -15,10 +15,12 @@
 #ifndef CONSTANTS_H_
 #define CONSTANTS_H_
 
-#define MAX_TEXT_SIZE    256
+#define MAX_TEXT_SIZE    512
 #define MAX_INFO_SIZE    128
 #define MAX_FONTFACE_LEN 48
-#define MAX_STREAM_SIZE  4294967296ULL // 2^32
+
+/* 2^32 - 1 == 11111111 11111111 111111111 11111111 Maximum value for header.ssize (4 bytes) */
+#define MAX_STREAM_SIZE  4294967295ULL
 #define MAX_FILE_SIZE    MAX_STREAM_SIZE - HEADER_SIZE - 1
 
 /* from stream */
@@ -131,7 +133,7 @@
 
 /* from server */
 #define CTL_SV_CLADD     0x10   /* is ctle */
-#define CTL_SV_CLRM      0x20   /* is ctle */
+#define CTL_SV_CLRM      0x20   /* is ctl  */
 #define CTL_SV_CLIST     0x30   /* is ctle */
 #define CTL_SV_PWDASK    0x40   /* is ctl  */
 #define CTL_SV_PWDOK     0x50   /* is ctl  */

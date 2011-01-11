@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry exported="true" kind="lib" path="/home/seba/UNIVERSIDAD/TrabajoFinal/tellapic/seba-branch/src/swig/java/tellapicjava.jar"/>
+	<classpathentry kind="lib" path="/home/seba/UNIVERSIDAD/TrabajoFinal/tellapic/build/lib/java/tellapicjava.jar"/>
 	<classpathentry kind="src" path="src">
 		<attributes>
-			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="/home/seba/UNIVERSIDAD/TrabajoFinal/tellapic/swig"/>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="/home/seba/UNIVERSIDAD/TrabajoFinal/tellapic/build/lib/java"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>

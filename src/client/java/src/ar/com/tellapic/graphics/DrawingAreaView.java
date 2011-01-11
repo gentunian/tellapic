@@ -31,15 +31,16 @@ import ar.com.tellapic.Utils;
 public class DrawingAreaView extends JPanel implements Observer {
 	private static final long serialVersionUID = 1L;
 
-	private Image   background;
-	private Image   foreground;
-	private Drawing temporalDrawing;
-	private ArrayList<Drawing> temporalDrawings;
+	private Image                   background;
+	private Image                   foreground;
+	private Drawing                 temporalDrawing;
+	private ArrayList<Drawing>      temporalDrawings;
 	private ArrayList<AbstractUser> userList;
-	BufferedImage backimage;
-	GraphicsEnvironment ge;
-	GraphicsDevice gd;
-	GraphicsConfiguration gc;
+	private BufferedImage           backimage;
+	private GraphicsEnvironment     ge;
+	private GraphicsDevice          gd;
+	private GraphicsConfiguration   gc;
+	
 	
 	private static class Holder {
 		private final static DrawingAreaView INSTANCE = new DrawingAreaView();
@@ -54,7 +55,7 @@ public class DrawingAreaView extends JPanel implements Observer {
 		userList = new ArrayList<AbstractUser>();
 		backimage = null;
 		try {
-			backimage = ImageIO.read(getClass().getResource("/icons/backimage.jpg"));			
+			backimage = ImageIO.read(getClass().getResource("/icons/backimage.jpg"));
 		} catch (IOException e) {
 		}
 		ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
@@ -62,6 +63,22 @@ public class DrawingAreaView extends JPanel implements Observer {
 		gc = gd.getDefaultConfiguration();
 		setPreferredSize(new Dimension(backimage.getWidth(), backimage.getHeight()));
 	}
+	
+	
+	public void setImage(BufferedImage img) {
+		backimage = img;
+		gd = ge.getDefaultScreenDevice();
+		gc = gd.getDefaultConfiguration();
+		setPreferredSize(new Dimension(backimage.getWidth(), backimage.getHeight()));
+		
+		background = gc.createCompatibleImage(backimage.getWidth(), backimage.getHeight(), Transparency.TRANSLUCENT);
+		foreground = gc.createCompatibleImage(backimage.getWidth(), backimage.getHeight(), Transparency.TRANSLUCENT);
+		Graphics2D frontArea     = (Graphics2D) foreground.getGraphics();
+		frontArea.drawImage(backimage, 0, 0, null);
+
+		repaint();
+	}
+	
 	
 	public static DrawingAreaView getInstance() {
 		return Holder.INSTANCE;
@@ -201,7 +218,7 @@ public class DrawingAreaView extends JPanel implements Observer {
 	
 	private void drawDrawing(Graphics2D g, Drawing drawing, PaintProperty[] overridedProperties) {
 		if (drawing.hasAlphaProperty())
-			g.setComposite(drawing.getAlpha());
+			g.setComposite(drawing.getComposite());
 		
 		if (drawing.hasColorProperty())
 			g.setColor(drawing.getColor());

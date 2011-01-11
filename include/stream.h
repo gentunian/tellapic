@@ -1,4 +1,4 @@
-/*****************************************************************************
+/**
  *   Copyright (c) 2009 Sebastián Treu and Virginia Boscaro.
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,8 @@
  * This is the header where some protocols functions and types are defined, as
  * well as constants and macros regarding to the data to be held by the stream.
  *
- *****************************************************************************/
+ */
+
 #ifndef _STREAM_H_
 #define _STREAM_H_
 

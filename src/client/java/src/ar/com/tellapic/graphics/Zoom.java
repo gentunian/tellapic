@@ -17,7 +17,7 @@ public final class Zoom extends Tool {
 	*/
 	
 	public Zoom() {
-		super(Zoom.class.getSimpleName(), "/icons/zoom.png", Utils.msg.getString("zoomtooltip"));
+		super(99, Zoom.class.getSimpleName(), "/icons/zoom.png", Utils.msg.getString("zoomtooltip"));
 	}
 
 

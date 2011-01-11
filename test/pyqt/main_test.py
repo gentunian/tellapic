@@ -18,7 +18,8 @@ class MainTest(QtGui.QDialog):
             pytellapic.CTL_SV_CLIST     : 'CTL_SV_CLIST',
             pytellapic.CTL_SV_CLRM      : 'CTL_SV_CLRM',
             pytellapic.CTL_SV_ID        : 'CTL_SV_ID0',
-            pytellapic.CTL_SV_NAMEINUSE : 'CTL_SV_NAMEINUSE' 
+            pytellapic.CTL_SV_NAMEINUSE : 'CTL_SV_NAMEINUSE',
+            pytellapic.CTL_SV_AUTHOK    : 'CTL_SV_AUTHOK'
             }
     
     ctli = { pytellapic.CTL_SV_FILE  : 'CTL_SV_FILE',
@@ -54,6 +55,7 @@ class MainTest(QtGui.QDialog):
              pytellapic.CTL_SV_FILE:'CTL_SV_FILE', 
              pytellapic.CTL_SV_ID:'CTL_SV_ID',
              pytellapic.CTL_SV_NAMEINUSE: 'CTL_SV_NAMEINUSE',
+             pytellapic.CTL_SV_AUTHOK: 'CTL_SV_AUTHOK',
              pytellapic.CTL_FAIL : 'CTL_FAIL'}
 
     def __init__(self, queue, endcommand, fd):

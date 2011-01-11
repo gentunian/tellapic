@@ -224,7 +224,7 @@ public class UserManager implements IUserManager, IUserManagerState {
 
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.IUserManagerState#getUserName(int)
-	 */
+	
 	@Override
 	public String getUserName(int id) {
 		for(AbstractUser user : users.values()) {
@@ -233,8 +233,21 @@ public class UserManager implements IUserManager, IUserManagerState {
 		}
 		return null;
 	}
+	*/
 
-
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.IUserManagerState#getUserName(int)
+	 */
+	@Override
+	public AbstractUser getUser(int id) {
+		for(AbstractUser user : users.values()) {
+			if (user.getUserId() == id)
+				return user;
+		}
+		return null;
+	}
+	
+	
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.IUserManager#delUser(int)
 	 */
