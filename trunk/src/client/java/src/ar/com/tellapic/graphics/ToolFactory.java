@@ -1,33 +1,37 @@
 package ar.com.tellapic.graphics;
 
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import ar.com.tellapic.Utils;
 
 public class ToolFactory {
-	private static Set<String> registeredTools = Collections.synchronizedSet(new HashSet<String>());
+	private static Map<Integer, String> registeredTools = Collections.synchronizedMap(new HashMap<Integer,String>());
 	
-	public static boolean registerTool(String className) {
-		Utils.logMessage("Adding tool name "+className);
-		return registeredTools.add(className);
+	public static boolean registerTool(int id, String toolClassName) {
+		Utils.logMessage("Adding tool name "+toolClassName);
+		Integer toolId = Integer.valueOf(id);
+		registeredTools.put(toolId, toolClassName);
+		//TODO: WTF?
+		return true;
 	}
 	
 	
-	public static Set<String> getRegisteredToolNames() {
+	public static Map<Integer, String> getRegisteredToolNames() {
 		return registeredTools;
 	}
 	
 	
 	@SuppressWarnings("unchecked")
-	public static Tool createTool(String toolName) {
+	public static Tool createTool(String toolClassName) {
 		Tool tool = null;		
-		if (registeredTools.contains(toolName)) {
+		if (registeredTools.containsValue(toolClassName)) {
 			Class<Tool> toolClass = null;
 			//Method instanceMethod = null;
 			try {
-				toolClass      = (Class<Tool>) Class.forName(toolName);
+				toolClass      = (Class<Tool>) Class.forName(toolClassName);
 				//instanceMethod = toolClass.getMethod("getInstance");
 				//tool           = (Tool) instanceMethod.invoke((Object[])null, (Object[])null);
 				tool = toolClass.newInstance();

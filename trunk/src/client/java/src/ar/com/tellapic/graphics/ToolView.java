@@ -155,7 +155,7 @@ public class ToolView extends JPanel implements Observer {
 		public void actionPerformed(ActionEvent e) {
 			if (controller != null) {
 				//Tool tool = ToolFactory.getTool(((JToggleButton) e.getSource()).getName());
-				controller.selectToolEvent(((JToggleButton) e.getSource()).getName());
+				controller.selectToolByName(((JToggleButton) e.getSource()).getName());
 			}
 		}		
 	}

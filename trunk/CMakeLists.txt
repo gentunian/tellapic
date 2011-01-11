@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 project(tellapic)
-
+include(TestBigEndian)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/Modules")
 find_package(CDK REQUIRED)
 find_package(OpenSSL REQUIRED)
@@ -33,8 +33,11 @@ add_library(tellapic SHARED ${SRCDIR}/lib/tellapic.c)
 
 add_executable(server ${SERVER_FILE})
 
+test_big_endian(BIG_ENDIAN_VALUE)
+
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
     set_target_properties(server PROPERTIES COMPILE_FLAGS -DDEBUG)
+    set_target_properties(server PROPERTIES COMPILE_FLAGS -DBIG_ENDIAN_VALUE=${BIG_ENDIAN_VALUE})
 endif()
 target_link_libraries(server tellapic ${CDK_LIBRARIES} ${OPENSSL_LIBRARIES} ${LIBRARIES})
 

@@ -36,7 +36,7 @@
 #define MAX_CLIENTS        32             /* define the maximum threads number */
 #define SV_THREAD           MAX_CLIENTS   /* signal thread will be the last one */
 #define BUFFER_SIZE      1024             /* buffer size */
-#define MSG_FROM_SERVER     0             /* the stream came from the server instead of a particular client */
+//#define MSG_FROM_SERVER     0             /* the stream came from the server instead of a particular client */
 #define MAX_PWD_TRIES       5             /* number of retries for password fail */
 #define FATAL              -1             /* fatal error flag */
 #define WARN               -2             /* warning flag */
@@ -47,6 +47,7 @@
 #define THREAD_ERR_EAGAIN  14             /* thread error wrapped from pthread */
 #define THREAD_ERROR_NONE   0             /* thread error wrapped from pthread */
 #define THREAD_SOME_ERROR -99             /* some error on thread managment */
+#define MAX_PWD_SIZE       128
 
 /* states where a thread could be */
 typedef enum {
@@ -90,9 +91,10 @@ typedef struct tdata {
 typedef struct args {
   int                port;
   int                svfd;
-  char               *pwd;
+  char               pwd[MAX_PWD_SIZE];
+  int                pwdlen;
   FILE               *image;
-
+  long               filesize;
 } args_t;
 
 
@@ -110,18 +112,171 @@ typedef struct msgitem {
 /**********************/
 /* functions profiles */
 /**********************/
-int                start_server(int port, struct sockaddr_in *addr);
-void               signal_handler(int sig);
-void               *manage_client(void *arg);
-void               manage_client_cleanup(void *arg);
-void               r_free();
-void               thread_abort();
-int                args_check(int argc, char *argv[]);
-void               data_init();
-void               data_init_thread(tdata_t *thread, int i);
-int                THREAD_get_error(int value, int severity, int tid);
-int                new_client_data(int i, int clfd, struct sockaddr_in clientaddr);
-void               set_tstate(tdata_t *thread, thread_state_t state);
-void               send_write_signal(tdata_t *thread);
-void               data_init_pipes(tdata_t *thread);
+
+//TODO: comment the profiles.
+
+/**
+ *
+ */
+int
+start_server(int port, struct sockaddr_in *addr);
+
+/**
+ *
+ */
+void
+signal_handler(int sig);
+
+/**
+ *
+ */
+void
+*manage_client(void *arg);
+
+/**
+ *
+ */
+void
+manage_client_cleanup(void *arg);
+
+/**
+ *
+ */
+void
+thread_abort();
+
+/**
+ *
+ */
+int
+args_check(int argc, char *argv[]);
+
+/**
+ *
+ */
+void
+data_init();
+
+/**
+ *
+ */
+void
+data_init_thread(tdata_t *thread, int i);
+
+/**
+ *
+ */
+int
+THREAD_get_error(int value, int severity, int tid);
+
+/**
+ *
+ */
+int
+new_client_thread(tdata_t *thread, int clfd, struct sockaddr_in clientaddr);
+
+/**
+ *
+ */
+void
+set_tstate(tdata_t *thread, thread_state_t state);
+
+/**
+ *
+ */
+void
+send_write_signal(tdata_t *thread);
+
+/**
+ *
+ */
+void
+data_init_pipes(tdata_t *thread);
+
+/**
+ *
+ */
+void
+allocate_and_launch(tdata_t *thread, int fd, struct sockaddr_in addr, pthread_attr_t attr);
+
+/**
+ *
+ */
+void
+cancel_threads();
+ 
+/**
+ *
+ */
+void
+fetch_stream(tdata_t *thread);
+
+/**
+ *
+ */
+void
+forward_stream(tdata_t *thread);
+
+/**
+ *
+ */
+void
+queue_message(mitem_t *item, tdata_t *thread);
+
+/**
+ *
+ */
+void
+unqueue_message(mitem_t *item);
+
+/**
+ *
+ */
+int
+find_free_thread(tdata_t thread_data[]);
+
+/**
+ *
+ */
+void *
+console_thread(void *a);
+
+/**
+ *
+ */
+void
+print_output(char *msg);
+
+/**
+ *
+ */
+void
+process_command(char *cmd, tdata_t *thread_data);
+
+/**
+ *
+ */
+void
+help();
+
+/**
+ *
+ */
+void
+nocmd();
+
+/**
+ *
+ */
+void
+send_pwdok(client_t *client);
+
+
+/**
+ * Taken from libc manual pages:
+ * http://www.gnu.org/software/libc/manual/html_node/getpass.html#index-
+ */
+ssize_t
+my_getpass (void *pwd);
+
 #endif

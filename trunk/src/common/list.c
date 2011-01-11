@@ -297,3 +297,4 @@ list_node_t *list_remove_item(list_t *listPtr, void *item)
 
   return NULL;
 }
+

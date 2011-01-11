@@ -298,7 +298,7 @@
          <x>10</x>
          <y>20</y>
          <width>141</width>
-         <height>231</height>
+         <height>244</height>
         </rect>
        </property>
        <layout class="QFormLayout" name="formLayout">
@@ -489,7 +489,7 @@
          <x>10</x>
          <y>20</y>
          <width>141</width>
-         <height>231</height>
+         <height>244</height>
         </rect>
        </property>
        <layout class="QFormLayout" name="formLayout_7">
@@ -806,6 +806,11 @@
         <item>
          <property name="text">
           <string>CTL_SV_NAMEINUSE</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_SV_AUTHOK</string>
          </property>
         </item>
         <item>
@@ -1159,7 +1164,7 @@
          <x>10</x>
          <y>20</y>
          <width>141</width>
-         <height>231</height>
+         <height>244</height>
         </rect>
        </property>
        <layout class="QFormLayout" name="formLayout_10">
@@ -1350,7 +1355,7 @@
          <x>10</x>
          <y>20</y>
          <width>141</width>
-         <height>231</height>
+         <height>244</height>
         </rect>
        </property>
        <layout class="QFormLayout" name="formLayout_11">
@@ -1667,6 +1672,11 @@
         <item>
          <property name="text">
           <string>CTL_SV_NAMEINUSE</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CTL_SV_AUTHOK</string>
          </property>
         </item>
         <item>

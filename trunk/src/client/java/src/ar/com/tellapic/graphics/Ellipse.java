@@ -5,6 +5,7 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 
 import ar.com.tellapic.Utils;
+import ar.com.tellapic.lib.tellapic;
 
 public final class Ellipse extends Tool {
 	private Ellipse2D           ellipse;
@@ -24,7 +25,7 @@ public final class Ellipse extends Tool {
 	*/
 	
 	public Ellipse() {
-		super(Ellipse.class.getSimpleName(), "/icons/ellipse.png", Utils.msg.getString("ellipsetooltip"));
+		super(tellapic.TOOL_ELLIPSE, Ellipse.class.getSimpleName(), "/icons/ellipse.png", Utils.msg.getString("ellipsetooltip"));
 		firstPoint = new Point2D.Double();
 		inUse      = false;
 	}

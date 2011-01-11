@@ -4,6 +4,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
 import ar.com.tellapic.Utils;
+import ar.com.tellapic.lib.tellapic;
 
 public final class Rectangle extends Tool {
 	private Point2D             firstPoint;
@@ -23,7 +24,7 @@ public final class Rectangle extends Tool {
 	*/
 	
 	public Rectangle() {
-		super(Rectangle.class.getSimpleName(), "/icons/rectangle.png", Utils.msg.getString("rectangletooltip"));
+		super(tellapic.TOOL_RECT, Rectangle.class.getSimpleName(), "/icons/rectangle.png", Utils.msg.getString("rectangletooltip"));
 		firstPoint = new Point2D.Double();
 		inUse = false;
 	}

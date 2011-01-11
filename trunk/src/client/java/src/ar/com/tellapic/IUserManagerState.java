@@ -31,7 +31,7 @@ public interface IUserManagerState {
 	public LocalUser                         getLocalUser();
 	public RemoteUser                        getRemoteUser(String userName);
 	public AbstractUser                      getUser(String userName);
-	public String                            getUserName(int id);
+	public AbstractUser                      getUser(int id);
 	public HashMap<String, RemoteUser>       getRemoteUsers();
 	public HashMap<String, AbstractUser>     getUsers();
 }

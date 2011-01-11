@@ -16,8 +16,8 @@ public abstract class Tool {
 	private boolean  enabled;
 
 	
-	public Tool(String name, String iconPath) {
-		this(name, iconPath, "No description provided.");
+	public Tool(int id, String name, String iconPath) {
+		this(id, name, iconPath, "No description provided.");
 	}
 	
 	/**
@@ -25,7 +25,7 @@ public abstract class Tool {
 	 * @param type the tool type being created
 	 * @param name the tool name being created
 	 */
-	public Tool(String name, String iconPath, String description) throws IllegalArgumentException {
+	public Tool(int id, String name, String iconPath, String description) throws IllegalArgumentException {
 		if (name == null || iconPath == null)
 			throw new IllegalArgumentException();
 		
@@ -33,6 +33,7 @@ public abstract class Tool {
 		this.toolTipText = description;
 		this.iconPath    = iconPath;
 		this.name        = name;
+		this.id          = id;
 	}
 	
 	

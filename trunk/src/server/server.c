@@ -29,6 +29,7 @@
 #include <stdarg.h>
 #include <openssl/sha.h>
 #include <ncurses.h>
+#include <termios.h>
 
 #include "console.h"
 #include "server.h"
@@ -100,12 +101,11 @@ int main(int argc, char *argv[]) {
 
   console = console_create("<C>Server output\0", "</B/24> >>> \0");
   if (console == NULL)
-    print_output("Could not start console\n");
+    print_output("Could not start console: \n");
 
   int fdmax = args.svfd + 1;
   FD_ZERO(&readset);
   FD_SET(args.svfd, &readset);
-
   if (console != NULL)
     {
       fdmax = MAX(args.svfd, console->infd);
@@ -537,7 +537,8 @@ void
       sprintf(buff, "[NFO]:\tSending file to client %d.", thread->client->fd);
       print_output(buff);
 #endif
-      tellapic_send_file(thread->client->fd, fileno(args.image), args.filesize);
+
+      tellapic_send_file(thread->client->fd, args.image, args.filesize);
     }
   else
     pthread_exit(NULL); //it is supposed to be a CTL_CL_FILEASK stream
@@ -668,7 +669,7 @@ authclient(tdata_t *thread)
 
 #ifdef DEBUG 
       char buff[256];
-      sprintf(buff, "[NFO]:\tPassword read from client fd %d was %s with lenght %d for message CTL_SV_ID (%d)", thread->client->fd, pwd, newpwdlen, CTL_SV_ID);
+      sprintf(buff, "[NFO]:\tPassword read from client %d was %s. </16>Try number %d<!16>.", thread->client->fd, pwd, try);
       print_output(buff);
 #endif
 
@@ -676,8 +677,8 @@ authclient(tdata_t *thread)
 	{
 	  // Compare password sent here
 	  // pwdok = (strncmp(args.pwd, hexastr2binary(pwd), newpwdlen) == 0);
-	  // Just compare plain text.
-	  pwdok = (strncmp(args.pwd, pwd, newpwdlen) == 0);
+	  // Just compare plain text.	  
+	  pwdok = (args.pwdlen == newpwdlen) && (strncmp(args.pwd, pwd, newpwdlen) == 0);
 	  if (pwdok) 
 	    {
 	      tellapic_send_ctl(thread->client->fd, thread->client->fd, CTL_SV_PWDOK);                                	 /* Send CTL_SV_PWDOK to client */
@@ -710,7 +711,8 @@ authclient(tdata_t *thread)
 	  else 
 	    {
 	      try++;
-	      tellapic_send_ctl(thread->client->fd, thread->client->fd, CTL_SV_PWDFAIL);
+	      if (try < MAX_PWD_TRIES)
+		tellapic_send_ctl(thread->client->fd, thread->client->fd, CTL_SV_PWDFAIL);
 	    }
 	} 
       else
@@ -736,7 +738,7 @@ isnameinuse(tdata_t *thread)
     {
       pthread_mutex_lock(&thread[i].stmutex);
       if (thread[i].tstate == THREAD_STATE_INIT || thread[i].tstate == THREAD_STATE_ACT)
-	if(strncmp(thread->client->name, thread[i].client->name, thread->client->namelen))
+	if(thread[i].tnum != thread->tnum && (strncmp(thread->client->name, thread[i].client->name, thread[i].client->namelen) == 0))
 	  inuse = 1;
       pthread_mutex_unlock(&thread[i].stmutex);
     }
@@ -931,7 +933,9 @@ void unqueue_message(mitem_t *msg){
  */
 void manage_client_cleanup(void *arg) {
   tdata_t *thread = (tdata_t *) arg;
-
+  char  buff[128];
+  sprintf(buff, "[</8>WRN<!8>]:\tThread %d is closing link now...", thread->tnum);
+  print_output(buff);
   if (thread->client->name != NULL)
     free(thread->client->name);
 
@@ -1243,22 +1247,42 @@ args_check(int argc, char *argv[])
       print_output("File size to large.");
       return 0;
     }
-
-  //args.pwd = hexastr2binary(argv[3]);
-  write(fileno(stdout), "Reading password: ", 19);
+  
+  printf("Password: ");
   fflush(stdout);
-
-  //TODO: set stdin to non-blocking. For every char read, put a '*' or just nothing.
-  int bytes = read(fileno(stdin), args.pwd, MAX_PWD_SIZE);
-
-  if (bytes < 0) // read has failed.
-    return 0;
-
-  memset(args.pwd+bytes, '\0', MAX_PWD_SIZE - bytes);
-
+  args.pwdlen = read(fileno(stdin), args.pwd, MAX_PWD_SIZE) - 1;
+  printf("%d\n", args.pwdlen);
   return 1;
 }
 
+
+/**
+ *
+ */
+ssize_t
+my_getpass (void *pwd)
+{
+  struct termios old, new;
+  int nread;
+     
+  /* Turn echoing off and fail if we can't. */
+  if (tcgetattr (fileno (stdin), &old) != 0)
+    return -1;
+  new = old;
+  new.c_lflag &= ~ECHO;
+  if (tcsetattr (fileno (stdin), TCSAFLUSH, &new) != 0)
+    return -1;
+     
+  /* Read the password. */
+  nread = read(fileno(stdin), pwd, MAX_PWD_SIZE);
+
+  //nread = getline (lineptr, n, stream);
+     
+  /* Restore terminal. */
+  (void) tcsetattr (fileno (stdin), TCSAFLUSH, &old);
+     
+  return nread;
+}
 
 
 /**

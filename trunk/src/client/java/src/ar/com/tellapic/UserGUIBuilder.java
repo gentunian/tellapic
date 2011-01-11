@@ -17,6 +17,7 @@
  */  
 package ar.com.tellapic;
 
+import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Rectangle;
@@ -72,7 +73,7 @@ public class UserGUIBuilder {
 	private ToolView                toolView;
 	private PaintPropertyView       propertyView;
 	private ChatView                chatView;
-	private JFrame                  drawingWindow;
+	private JFrame                  mainWindow;
 	
 	public UserGUIBuilder(LocalUser user) {
 		
@@ -124,8 +125,9 @@ public class UserGUIBuilder {
 		/****************************************/
 		/* Creates the dockable station and gui */
 		/****************************************/
-		drawingWindow = new JFrame("drawing window");
-		CControl     control1 = new CControl(drawingWindow);
+		mainWindow = new JFrame("drawing window");
+		mainWindow.getContentPane().add(SimpleStatusBar.getInstance(), BorderLayout.SOUTH);
+		CControl     control1 = new CControl(mainWindow);
 		CGrid            grid = new CGrid(control1);
 		CContentArea  content = control1.getContentArea();
 		SingleCDockable dock1 = wrapToDockable(toolView);
@@ -134,20 +136,22 @@ public class UserGUIBuilder {
 		SingleCDockable dock4 = wrapToDockable(chatView);
 		SingleCDockable dock5 = wrapToDockable(userView);
 		
-		drawingWindow.setPreferredSize(new Dimension(400,400));
+		
+		mainWindow.setPreferredSize(new Dimension(400,400));
 		grid.add(0,   0, 50,   50, dock1);
 		grid.add(0,  50, 50,  100, dock2);
 		grid.add(50,  0, 300, 400, dock3);
 		grid.add(350, 0 , 50,  50, dock5);
 		grid.add(350,50,  50, 100, dock4);
 		content.deploy(grid);
-		drawingWindow.add(content);
-		drawingWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		drawingWindow.setLayout(new GridLayout(1,1));
-		drawingWindow.setExtendedState(JFrame.MAXIMIZED_BOTH);
-		drawingWindow.setJMenuBar(createMenuBar());
-		drawingWindow.pack();
-		drawingWindow.setVisible(true);
+		mainWindow.add(content, BorderLayout.CENTER);
+		mainWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		//mainWindow.setLayout(new GridLayout(2,1));
+		mainWindow.setExtendedState(JFrame.MAXIMIZED_BOTH);
+		mainWindow.setJMenuBar(createMenuBar());
+		
+		mainWindow.pack();
+		mainWindow.setVisible(true);
 	}	
 	
 	
@@ -160,10 +164,19 @@ public class UserGUIBuilder {
 		final JMenu testMenuUserAction  = new JMenu("User Ations");
 		JMenuItem addUserItem     = new JMenuItem("Add User");
 		JMenuItem delUserItem     = new JMenuItem("Remove User");
+		JMenuItem reconnect       = new JMenuItem("Reconnect");
 		JMenu themeSubMenu = new JMenu(Utils.msg.getString("theme"));
 		JCheckBoxMenuItem themeJava = new JCheckBoxMenuItem("JAVA");
 		JCheckBoxMenuItem themeGTK  = new JCheckBoxMenuItem("GTK");
 		ButtonGroup group = new ButtonGroup();
+		
+		optionsMenu.add(reconnect);
+		reconnect.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				NetManager.getInstance().reconnect();
+			}
+		});
 		
 		addUserItem.addActionListener(new ActionListener() {
 			@Override
@@ -214,7 +227,7 @@ public class UserGUIBuilder {
 			public void itemStateChanged(ItemEvent arg0) {
 				try {
 		            UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-		            SwingUtilities.updateComponentTreeUI(drawingWindow);
+		            SwingUtilities.updateComponentTreeUI(mainWindow);
 		        } catch (UnsupportedLookAndFeelException e) {
 		            //fallback
 		        } catch (ClassNotFoundException e) {
@@ -231,7 +244,7 @@ public class UserGUIBuilder {
 			public void itemStateChanged(ItemEvent arg0) {
 				try {
 		            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		            SwingUtilities.updateComponentTreeUI(drawingWindow);
+		            SwingUtilities.updateComponentTreeUI(mainWindow);
 		        } catch (UnsupportedLookAndFeelException e) {
 		            //fallback
 		        } catch (ClassNotFoundException e) {
@@ -287,7 +300,7 @@ public class UserGUIBuilder {
 					r.setSeed(System.currentTimeMillis());
 					
 //					user.getToolBoxModel().setCurrentTool(source.getName());
-					user.selectTool(source.getName());
+					user.getToolboxController().selectToolByName(source.getName());
 					RemoteMouseEvent event = new RemoteMouseEvent(user, DrawingAreaView.getInstance(), 501, System.currentTimeMillis(), MouseEvent.BUTTON1_DOWN_MASK, r.nextInt(DrawingAreaView.getInstance().getWidth()), r.nextInt(DrawingAreaView.getInstance().getHeight()), 1, false, MouseEvent.BUTTON1);
 //					MouseEvent event = new MouseEvent(DrawingAreaView.getInstance(), 501, System.currentTimeMillis(), MouseEvent.BUTTON1_DOWN_MASK, 10, 10, 1, false, MouseEvent.BUTTON1);
 					DrawingAreaView.getInstance().dispatchEvent(event);

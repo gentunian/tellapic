@@ -24,7 +24,12 @@ import java.util.regex.Pattern;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
+import javax.swing.JTabbedPane;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
+
+import ar.com.tellapic.chat.ChatViewTabComponent;
 
 /**
  * @author 
@@ -401,7 +406,24 @@ public class MainDialog extends javax.swing.JDialog {
 		);
 
 		jTabbedPane1.addTab("Join Session", jPanel2);
+		jTabbedPane1.addChangeListener(new ChangeListener(){
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				int currentTabIndex = ((JTabbedPane)e.getSource()).getSelectedIndex();
 
+				switch(currentTabIndex) {
+				
+				case CREATE_TAB:
+					createPortField.requestFocus(true);
+					break;
+					
+				case JOIN_TAB:
+					joinHostField.requestFocus(true);
+					break;
+				}
+			}
+		});
+		
 		getContentPane().add(jTabbedPane1, java.awt.BorderLayout.CENTER);
 
 		pack();
@@ -416,7 +438,7 @@ public class MainDialog extends javax.swing.JDialog {
 	}
 
 	private void joinPortFieldActionPerformed(java.awt.event.ActionEvent evt) {
-		// TODO add your handling code here:
+
 	}
 
 	private void exit(java.awt.event.ActionEvent evt) {
@@ -502,19 +524,19 @@ public class MainDialog extends javax.swing.JDialog {
 			if (isNumeric(tf.getText())) {
 				port = Integer.parseInt(tf.getText());
 				if (port <= 1024) {
-					tf.setBackground(Color.orange);
+					tf.setBackground(Color.orange); //TODO: this shouldn't be done here. implemente shouldYieldFocus() instead
 					portSet = false;
 				}
 				else {
-					tf.setBackground(Color.white);
+					tf.setBackground(Color.white); //TODO: this shouldn't be done here. implemente shouldYieldFocus() instead
 					portSet = true;
 				}
 			}
 			else {
-				tf.setBackground(Color.orange);
+				tf.setBackground(Color.orange); //TODO: this shouldn't be done here. implemente shouldYieldFocus() instead
 				portSet = false;
 			}
-			enableButton(jTabbedPane1.getSelectedIndex());
+			enableButton(jTabbedPane1.getSelectedIndex());  //TODO: this shouldn't be done here. implemente shouldYieldFocus() instead
 			return portSet;
 		}
 	}
@@ -541,20 +563,20 @@ public class MainDialog extends javax.swing.JDialog {
 			javax.swing.JTextField tf = (javax.swing.JTextField) input;
 			boolean ret = false;
 			if (tf.getText().length() == 0) {
-				tf.setBackground(Color.orange);
+				tf.setBackground(Color.orange); //TODO: this shouldn't be done here. implemente shouldYieldFocus() instead
 				if (tf.getName().equals("createUsernameField") || tf.getName().equals("joinUsernameField"))
 					userSet = false;
 				else
 					hostSet = false;
 			} else {
-				tf.setBackground(Color.white);
+				tf.setBackground(Color.white); //TODO: this shouldn't be done here. implemente shouldYieldFocus() instead
 				ret = true;
 				if (tf.getName().equals("createUsernameField") || tf.getName().equals("joinUsernameField"))
 					userSet = true;
 				else
 					hostSet = true;
 			}
-			enableButton(jTabbedPane1.getSelectedIndex());
+			enableButton(jTabbedPane1.getSelectedIndex()); //TODO: this shouldn't be done here. implemente shouldYieldFocus() instead
 			return ret;
 		}
 	}

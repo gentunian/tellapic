@@ -45,7 +45,7 @@ public class ChatController implements IChatController {
 		model.addMessage(message);
 		if (fromView) {
 			//connection.sendMessage(message);
-			int fd = NetManager.getInstance().getSocketFd();
+			int fd = NetManager.getInstance().getFd();
 			int idFrom = UserManager.getInstance().getLocalUser().getUserId();
 			String text = message.getText();
 			if (message.isPrivate()) {

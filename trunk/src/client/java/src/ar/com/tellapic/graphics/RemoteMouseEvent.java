@@ -62,7 +62,7 @@ public class RemoteMouseEvent extends MouseEvent {
 	 * @param popupTrigger
 	 * @param button
 	 */
-	public RemoteMouseEvent(RemoteUser user, Component source, int id, long when, int modifiers,	int x, int y, int clickCount, boolean popupTrigger, int button) {
+	public RemoteMouseEvent(RemoteUser user, Component source, int id, long when, int modifiers, int x, int y, int clickCount, boolean popupTrigger, int button) {
 		super(source, id, when, modifiers, x, y, clickCount, popupTrigger, button);
 		this.user = user;
 	}

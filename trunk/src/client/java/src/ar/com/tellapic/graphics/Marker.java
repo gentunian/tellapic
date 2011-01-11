@@ -4,6 +4,7 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 
 import ar.com.tellapic.Utils;
+import ar.com.tellapic.lib.tellapic;
 
 public final class Marker extends Tool {
 	private Line2D              line;
@@ -23,7 +24,7 @@ public final class Marker extends Tool {
 	*/
 	
 	public Marker() {
-		super(Marker.class.getSimpleName(), "/icons/marker.png", Utils.msg.getString("markertooltip"));
+		super(tellapic.TOOL_MARKER, Marker.class.getSimpleName(), "/icons/marker.png", Utils.msg.getString("markertooltip"));
 		firstPoint = new Point2D.Double();
 		inUse = false;
 	}

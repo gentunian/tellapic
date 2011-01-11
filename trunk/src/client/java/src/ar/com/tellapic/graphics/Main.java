@@ -17,12 +17,16 @@
  */  
 package ar.com.tellapic.graphics;
 
+import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
 import ar.com.tellapic.MainDialog;
 import ar.com.tellapic.NetManager;
+import ar.com.tellapic.SessionUtils;
 import ar.com.tellapic.UserManager;
+import ar.com.tellapic.Utils;
+import ar.com.tellapic.lib.tellapic;
 
 
 /**
@@ -71,9 +75,9 @@ public class Main {
 					System.out.println("Joining to server "+main.getRemoteHost()+":"+main.getRemotePort());
 					int r = NetManager.getInstance().connect(main.getRemoteHost(), main.getRemotePort(), main.getJoinUsername(), main.getJoinPassword());
 					if (r > 0)
-						initiate(NetManager.getInstance().getServerId(), NetManager.getInstance().getServerUsername());
+						initiate(SessionUtils.getId(), SessionUtils.getUsername());
 					else
-						System.out.println("Join failed.");
+						JOptionPane.showMessageDialog(null, Utils.msg.getString("errorconnect"), Utils.msg.getString("errorconnecttitle"), JOptionPane.ERROR_MESSAGE);
 					break;
 					
 				default:
@@ -94,12 +98,12 @@ public class Main {
 	
 	
 	public static void initiate(int id, String name) {
-		ToolFactory.registerTool(Ellipse.class.getName());
-		ToolFactory.registerTool(Line.class.getName());
-		ToolFactory.registerTool(Zoom.class.getName());
-		ToolFactory.registerTool(Rectangle.class.getName());
-		ToolFactory.registerTool(Text.class.getName());
-		ToolFactory.registerTool(Marker.class.getName());
+		ToolFactory.registerTool(tellapic.TOOL_ELLIPSE, Ellipse.class.getName());
+		ToolFactory.registerTool(tellapic.TOOL_LINE, Line.class.getName());
+		ToolFactory.registerTool(99, Zoom.class.getName());
+		ToolFactory.registerTool(tellapic.TOOL_RECT, Rectangle.class.getName());
+		ToolFactory.registerTool(tellapic.TOOL_TEXT, Text.class.getName());
+		ToolFactory.registerTool(tellapic.TOOL_MARKER, Marker.class.getName());
 		
 		// simulate we are connected with id = 0
 		UserManager userManager = UserManager.getInstance();
