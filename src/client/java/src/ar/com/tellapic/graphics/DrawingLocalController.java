@@ -22,7 +22,6 @@ import java.awt.BasicStroke;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-import java.awt.geom.Rectangle2D;
 
 import ar.com.tellapic.AbstractUser;
 import ar.com.tellapic.LocalUser;
@@ -82,6 +81,34 @@ public class DrawingLocalController extends MouseAdapter {
 			
 			// This will trigger an update() to the DrawingAreaView
 			user.setTemporalDrawing(usedTool.getDrawing());
+			Drawing drawing = user.getTemporalDrawing();
+			if (usedTool.isLiveModeSupported() && !(event instanceof RemoteMouseEvent)) {
+				int wrappedButton = 0; 
+				if (event.getButton() == MouseEvent.BUTTON1)
+					wrappedButton = tellapic.BUTTON_LEFT;
+				else if (event.getButton() == MouseEvent.BUTTON2)
+					wrappedButton = tellapic.BUTTON_RIGHT;
+				else
+					wrappedButton = tellapic.BUTTON_LEFT;
+				
+				int toolEvent = usedTool.getToolId() | tellapic.EVENT_DRAG | wrappedButton;
+				System.out.println("tellapic_send_drw_using");
+				tellapic.tellapic_send_drw_using(
+						NetManager.getInstance().getFd(),
+						toolEvent,
+						SessionUtils.getId(),
+						1,
+						//((BasicStroke)drawing.getStroke()).getLineWidth(),
+						1.0f,
+						//((AlphaComposite)drawing.getComposite()).getAlpha(),
+						1.0f,
+						drawing.getColor().getRed(),
+						drawing.getColor().getGreen(),
+						drawing.getColor().getBlue(),
+						eventX,
+						eventY
+				);
+			}
 		}
 	}
 	
@@ -92,21 +119,34 @@ public class DrawingLocalController extends MouseAdapter {
 	 */
 	@Override
 	public void mouseReleased(MouseEvent event) {
-//		Utils.logMessage("Mouse released: "+event.getButton());
 		printEventInfo(event);
 		AbstractUser user = (event instanceof RemoteMouseEvent)? ((RemoteMouseEvent) event).getUser() : UserManager.getInstance().getLocalUser();
 		
 		Tool usedTool = user.getToolBoxModel().getLastUsedTool();
 
-		if (event.getButton() == MouseEvent.BUTTON1) {
-			if (usedTool != null && usedTool.isBeingUsed()) {
-				Drawing drawing = usedTool.onFinishDraw();
-				if (drawing != null) {
-					// This will trigger an update() to the DrawingAreaView
-					user.addDrawing(drawing);
+		if (usedTool == null)
+			return;
+		
+		if (usedTool.isBeingUsed() && event.getButton() == MouseEvent.BUTTON1) {
+			Drawing drawing = usedTool.onFinishDraw();
+			
+			if (drawing == null) 
+				return;
+			
+			// This will trigger an update() to the DrawingAreaView
+			user.addDrawing(drawing);
+			
+			/* Avoid loopbacking a remote event and send it again to the server */
+			if (!(event instanceof RemoteMouseEvent)) {
+				
+				/* If this is not a Remote Event check the direct or deferred tool mode */
+				/* and send data accordingly to the server.  */ 
+				if (!usedTool.isLiveModeSupported()) {
+					/* No live mode implies a deferred mode */
 					
-					if (!(event instanceof RemoteMouseEvent)) {
-						Rectangle2D bounds = drawing.getShape().getBounds2D();
+					if (!usedTool.hasFontProperties()) {
+						
+						java.awt.Rectangle bounds = drawing.getShape().getBounds();
 						tellapic.tellapic_send_fig(
 								NetManager.getInstance().getFd(),
 								usedTool.getToolId(), 
@@ -119,24 +159,67 @@ public class DrawingLocalController extends MouseAdapter {
 								drawing.getColor().getBlue(),
 								(int)bounds.getX(),
 								(int)bounds.getY(),
-								(int)event.getX(),
-								(int)event.getY(),
+								(int)(bounds.getX() + bounds.getWidth()),
+								(int)(bounds.getY() + bounds.getHeight()),
 								((BasicStroke)drawing.getStroke()).getLineJoin(),
 								((BasicStroke)drawing.getStroke()).getEndCap(),
 								((BasicStroke)drawing.getStroke()).getMiterLimit(),
 								((BasicStroke)drawing.getStroke()).getDashPhase(),
-								new float[] {1.0f, 1.0f}
-								//((BasicStroke)drawing.getStroke()).getDashArray()
+								((BasicStroke)drawing.getStroke()).getDashArray()
 						);
-						int x1 = (int) bounds.getX();
-						int y1 = (int) bounds.getY();
-						int x2 = (int) event.getX();
-						int y2 = (int) event.getY();
-						System.out.println("COORDS SENT: "+x1+","+y1+") ("+x2+","+y2+")");
+						System.out.println("SENT COORD: ("+(int)bounds.getX()+","+(int)bounds.getY()+") ("+(int)(bounds.getX() + bounds.getWidth())+","+(int)(bounds.getY() + bounds.getHeight())+")");
+						
+					} else {
+						tellapic.tellapic_send_text(
+								NetManager.getInstance().getFd(),
+								SessionUtils.getId(),
+								1,
+								((BasicStroke)drawing.getStroke()).getLineWidth(),
+								((AlphaComposite)drawing.getComposite()).getAlpha(),
+								drawing.getColor().getRed(),
+								drawing.getColor().getGreen(),
+								drawing.getColor().getBlue(),
+								drawing.getTextX(),
+								drawing.getTextY(),
+								drawing.getFont().getStyle(),
+								drawing.getFont().getName().length(),
+								drawing.getFont().getName(),
+								drawing.getText().length(),
+								drawing.getText()
+						);
 					}
+				} else {
+					int wrappedButton = 0; 
+					if (event.getButton() == MouseEvent.BUTTON1)
+						wrappedButton = tellapic.BUTTON_LEFT;
+					else if (event.getButton() == MouseEvent.BUTTON2)
+						wrappedButton = tellapic.BUTTON_RIGHT;
+					else
+						wrappedButton = tellapic.BUTTON_LEFT;
+					
+					int toolEvent = usedTool.getToolId() | tellapic.EVENT_RELEASE | wrappedButton;
+					System.out.println("tellapic_send_drw_using");
+					tellapic.tellapic_send_drw_using(
+							NetManager.getInstance().getFd(),
+							toolEvent,
+							SessionUtils.getId(),
+							1,
+							((BasicStroke)drawing.getStroke()).getLineWidth(),
+							((AlphaComposite)drawing.getComposite()).getAlpha(),
+							drawing.getColor().getRed(),
+							drawing.getColor().getGreen(),
+							drawing.getColor().getBlue(),
+							(int)event.getX(),
+							(int)event.getY()
+					);
+				
 				}
+			} else {
+				System.out.println("Remote Release Event Processed");
 			}
 		}
+	
+
 		
 		if (event.getButton() == MouseEvent.BUTTON3 && event.getModifiersEx() == MouseEvent.BUTTON1_DOWN_MASK) {
 			usedTool.onRestore();
@@ -153,15 +236,18 @@ public class DrawingLocalController extends MouseAdapter {
 		printEventInfo(event);
 		//Utils.logMessage("Mouse pressed: "+event.getButton());
 		
-		double x = event.getX();
-		double y = event.getY();
-		
 		AbstractUser user = (event instanceof RemoteMouseEvent)? ((RemoteMouseEvent) event).getUser() : UserManager.getInstance().getLocalUser();
 		
 		//DrawingAreaView.getInstance();
 		IToolBoxState toolBoxState = user.getToolBoxModel();
 		Tool usedTool = toolBoxState.getLastUsedTool();
-
+		
+		if (usedTool == null)
+			return;
+		
+		double x = event.getX();
+		double y = event.getY();
+		
 		if (event.getButton() == MouseEvent.BUTTON1) {
 			usedTool.init(x, y);
 			Drawing drawing = usedTool.getDrawing();
@@ -178,6 +264,39 @@ public class DrawingLocalController extends MouseAdapter {
 			if (usedTool.hasFontProperties())
 				drawing.setFont(toolBoxState.getFontProperty());
 
+			if (usedTool.isLiveModeSupported() && !(event instanceof RemoteMouseEvent)) {
+				int wrappedButton = 0; 
+				if (event.getButton() == MouseEvent.BUTTON1)
+					wrappedButton = tellapic.BUTTON_LEFT;
+				else if (event.getButton() == MouseEvent.BUTTON2)
+					wrappedButton = tellapic.BUTTON_RIGHT;
+				else
+					wrappedButton = tellapic.BUTTON_MIDDLE;
+				
+				int toolEvent = usedTool.getToolId() | tellapic.EVENT_PRESS | wrappedButton;
+				System.out.println("tellapic_send_drw_init() with toolEvent: "+toolEvent);
+				tellapic.tellapic_send_drw_init(
+						NetManager.getInstance().getFd(),
+						toolEvent,
+						SessionUtils.getId(),
+						1,
+						((BasicStroke)drawing.getStroke()).getLineWidth(),
+						((AlphaComposite)drawing.getComposite()).getAlpha(),
+						drawing.getColor().getRed(),
+						drawing.getColor().getGreen(),
+						drawing.getColor().getBlue(),
+						(int)x,
+						(int)y,
+						0,
+						0,
+						((BasicStroke)drawing.getStroke()).getLineJoin(),
+						((BasicStroke)drawing.getStroke()).getEndCap(),
+						((BasicStroke)drawing.getStroke()).getMiterLimit(),
+						((BasicStroke)drawing.getStroke()).getDashPhase(),
+						((BasicStroke)drawing.getStroke()).getDashArray()
+				);
+
+			}
 		} else if (usedTool != null) {
 			//TODO: The tool is actually paused. Rename the tool's method onCancel().
 			usedTool.onCancel();
