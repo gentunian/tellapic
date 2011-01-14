@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Observable;
 
 import ar.com.tellapic.AbstractUser;
-import ar.com.tellapic.Utils;
+import ar.com.tellapic.utils.Utils;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;

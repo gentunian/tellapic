@@ -56,6 +56,7 @@ public abstract class PaintProperty implements Cloneable {
 		return name;
 	}
 	
+	@Override
 	public Object clone() {
 		try {
 			return super.clone();

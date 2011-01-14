@@ -158,18 +158,22 @@ public class Drawing extends AbstractDrawing {
 			colorProperty  = (PaintPropertyColor) colorProperty.clone();
 	}
 	
+	@Override
 	public boolean hasAlphaProperty() {
 		return alphaProperty != null;
 	}
 	
+	@Override
 	public boolean hasStrokeProperty() {
 		return strokeProperty != null;
 	}
 
+	@Override
 	public boolean hasColorProperty() {
 		return colorProperty != null;
 	}
 
+	@Override
 	public boolean hasFontProperty() {
 		return fontProperty != null;
 	}	
@@ -178,6 +182,7 @@ public class Drawing extends AbstractDrawing {
 		return shape != null;
 	}
 	
+	@Override
 	public String toString() {
 		return name;
 	}

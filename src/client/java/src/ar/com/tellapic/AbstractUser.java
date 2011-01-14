@@ -139,6 +139,7 @@ public abstract class AbstractUser extends Observable {
 	/**
 	 * 
 	 */
+	@Override
 	public String toString() {
 		return name;
 	}

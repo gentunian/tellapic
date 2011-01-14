@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.NoSuchElementException;
 import java.util.Observable;
 
-import ar.com.tellapic.Utils;
+import ar.com.tellapic.utils.Utils;
 
 /**
  * 
@@ -119,7 +119,6 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	public HashMap<String,Tool> getTools() {
 		return tools;
 	}
-
 	
 	
 	/*
@@ -130,14 +129,14 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	public void addTool(Tool tool) throws IllegalArgumentException {
 		if (tool == null)
 			throw new IllegalArgumentException("tool cannot be null");
-				
+		
 		tools.put(tool.getName(), tool);
 		Utils.logMessage("Tool added: "+tool.getName()+". Notifying observers...");
 		setChanged();
 		notifyObservers(new ActionData(ADD_TOOL, tool));
 	}
-
-
+	
+	
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.IToolBoxManager#setStrokePropertyCaps(int)
 	 */
@@ -155,8 +154,16 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	 * @see ar.com.tellapic.graphics.IToolBoxManager#setStrokePropertyDash(float[], float)
 	 */
 	@Override
-	public void setStrokePropertyDash(float[] dash, float dashPhase) {
-		// TODO Auto-generated method stub
+	public void setStrokePropertyDash(float[] dash, float dashPhase) throws IllegalArgumentException {
+		if (dash == null)
+			throw new IllegalArgumentException("dash cannot be null.");
+		if (dash.length != 2)
+			throw new IllegalArgumentException("dash must have only 2 elements.");
+		if (dashPhase < 0)
+			throw new IllegalArgumentException("dashPhase must be a non-negative number.");
+		
+		strokeProperty.setDash(dash);
+		strokeProperty.setDash_phase(dashPhase);
 	}
 
 

@@ -68,7 +68,6 @@ public class LocalUser extends AbstractUser {
 	 */
 	@Override
 	public boolean isRemote() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 

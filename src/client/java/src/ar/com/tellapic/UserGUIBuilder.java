@@ -19,10 +19,11 @@ package ar.com.tellapic;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.GridLayout;
+import java.awt.Frame;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
@@ -55,6 +56,7 @@ import ar.com.tellapic.graphics.RemoteMouseEvent;
 import ar.com.tellapic.graphics.ToolBoxController;
 import ar.com.tellapic.graphics.ToolBoxModel;
 import ar.com.tellapic.graphics.ToolView;
+import ar.com.tellapic.utils.Utils;
 import bibliothek.gui.dock.common.CContentArea;
 import bibliothek.gui.dock.common.CControl;
 import bibliothek.gui.dock.common.CGrid;
@@ -147,7 +149,7 @@ public class UserGUIBuilder {
 		mainWindow.add(content, BorderLayout.CENTER);
 		mainWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		//mainWindow.setLayout(new GridLayout(2,1));
-		mainWindow.setExtendedState(JFrame.MAXIMIZED_BOTH);
+		mainWindow.setExtendedState(Frame.MAXIMIZED_BOTH);
 		mainWindow.setJMenuBar(createMenuBar());
 		
 		mainWindow.pack();
@@ -301,12 +303,12 @@ public class UserGUIBuilder {
 					
 //					user.getToolBoxModel().setCurrentTool(source.getName());
 					user.getToolboxController().selectToolByName(source.getName());
-					RemoteMouseEvent event = new RemoteMouseEvent(user, DrawingAreaView.getInstance(), 501, System.currentTimeMillis(), MouseEvent.BUTTON1_DOWN_MASK, r.nextInt(DrawingAreaView.getInstance().getWidth()), r.nextInt(DrawingAreaView.getInstance().getHeight()), 1, false, MouseEvent.BUTTON1);
+					RemoteMouseEvent event = new RemoteMouseEvent(user, DrawingAreaView.getInstance(), 501, System.currentTimeMillis(), InputEvent.BUTTON1_DOWN_MASK, r.nextInt(DrawingAreaView.getInstance().getWidth()), r.nextInt(DrawingAreaView.getInstance().getHeight()), 1, false, MouseEvent.BUTTON1);
 //					MouseEvent event = new MouseEvent(DrawingAreaView.getInstance(), 501, System.currentTimeMillis(), MouseEvent.BUTTON1_DOWN_MASK, 10, 10, 1, false, MouseEvent.BUTTON1);
 					DrawingAreaView.getInstance().dispatchEvent(event);
 					int i = 1;
 					for(i = 0; i < 300; i++) {
-						event = new RemoteMouseEvent(user, DrawingAreaView.getInstance(), 506, System.currentTimeMillis(), MouseEvent.BUTTON1_DOWN_MASK, i, i, 0, false, MouseEvent.NOBUTTON);
+						event = new RemoteMouseEvent(user, DrawingAreaView.getInstance(), 506, System.currentTimeMillis(), InputEvent.BUTTON1_DOWN_MASK, i, i, 0, false, MouseEvent.NOBUTTON);
 						try {
 							Thread.sleep(100);
 							DrawingAreaView.getInstance().dispatchEvent(event);

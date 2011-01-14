@@ -25,8 +25,8 @@ import ar.com.tellapic.MainDialog;
 import ar.com.tellapic.NetManager;
 import ar.com.tellapic.SessionUtils;
 import ar.com.tellapic.UserManager;
-import ar.com.tellapic.Utils;
-import ar.com.tellapic.lib.tellapic;
+import ar.com.tellapic.lib.tellapicConstants;
+import ar.com.tellapic.utils.Utils;
 
 
 /**
@@ -42,6 +42,7 @@ public class Main {
 	
 	static {
 		System.loadLibrary("tellapicjava");
+		
 	}
 	
 	/**
@@ -89,6 +90,7 @@ public class Main {
 		} else {
 			//TODO
 		}
+		System.out.println("HOLA");
 	}
 	
 	public static int verifyDialogInput(MainDialog main) {
@@ -98,14 +100,13 @@ public class Main {
 	
 	
 	public static void initiate(int id, String name) {
-		ToolFactory.registerTool(tellapic.TOOL_ELLIPSE, Ellipse.class.getName());
-		ToolFactory.registerTool(tellapic.TOOL_LINE, Line.class.getName());
-		ToolFactory.registerTool(99, Zoom.class.getName());
-		ToolFactory.registerTool(tellapic.TOOL_RECT, Rectangle.class.getName());
-		ToolFactory.registerTool(tellapic.TOOL_TEXT, Text.class.getName());
-		ToolFactory.registerTool(tellapic.TOOL_MARKER, Marker.class.getName());
+		ToolFactory.registerToolClassName(tellapicConstants.TOOL_ELLIPSE, EllipseNet.class.getName());
+		ToolFactory.registerToolClassName(tellapicConstants.TOOL_LINE, LineNet.class.getName());
+		ToolFactory.registerToolClassName(99, Zoom.class.getName());
+		ToolFactory.registerToolClassName(tellapicConstants.TOOL_RECT, RectangleNet.class.getName());
+		ToolFactory.registerToolClassName(tellapicConstants.TOOL_TEXT, TextNet.class.getName());
+		ToolFactory.registerToolClassName(tellapicConstants.TOOL_MARKER, MarkerNet.class.getName());
 		
-		// simulate we are connected with id = 0
 		UserManager userManager = UserManager.getInstance();
 		userManager.createLocalUser(id, name);
 	}

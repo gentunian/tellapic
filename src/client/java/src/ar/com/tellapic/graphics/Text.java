@@ -2,26 +2,25 @@ package ar.com.tellapic.graphics;
 
 import java.awt.geom.Point2D;
 
-import ar.com.tellapic.Utils;
-import ar.com.tellapic.lib.tellapic;
+import ar.com.tellapic.lib.tellapicConstants;
+import ar.com.tellapic.utils.Utils;
 
-public final class Text extends Tool {
+public class Text extends Tool {
 	private Point2D            firstPoint;
 	private Drawing            temporalDrawing;
 	
-	/*TODO: remove singleton for use 1 toolbox per client. 12/10/2010
-	private static class TextHolder {
-		private static final Text TEXT_INSTANCE = new Text();
-	}
-
 	
-	public static Text getInstance() {
-		return TextHolder.TEXT_INSTANCE;
+	
+	public Text(String name) {
+		super(tellapicConstants.TOOL_TEXT, name, "/icons/text.png", Utils.msg.getString("texttooltip"));
+		firstPoint = new Point2D.Double();
+		temporalDrawing = new Drawing(getName());
+		temporalDrawing.setShape(null);
 	}
-	*/
+	
 	
 	public Text() {
-		super(tellapic.TOOL_TEXT, Text.class.getSimpleName(), "/icons/text.png", Utils.msg.getString("texttooltip"));
+		super(tellapicConstants.TOOL_TEXT, "Text", "/icons/text.png", Utils.msg.getString("texttooltip"));
 		firstPoint = new Point2D.Double();
 		temporalDrawing = new Drawing(getName());
 		temporalDrawing.setShape(null);
@@ -53,11 +52,51 @@ public final class Text extends Tool {
 	 * @see ar.com.tellapic.graphics.Tool#init(double, double)
 	 */
 	@Override
-	public void init(double x, double y) {
+	public void onPress(int x, int y, int button, int mask) {
 		firstPoint.setLocation(x, y);
 	}
 
+	
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#draw(double, double)
+	 */
+	@Override
+	public void onDrag(int x, int y, boolean simetric, int button) {
+	}
 
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#onFinishDraw()
+	 */
+	@Override
+	public Drawing onRelease(int x, int y, int button) {
+		if (temporalDrawing.getText().length() > 0) {
+			temporalDrawing.setTextX((int) firstPoint.getX());
+			temporalDrawing.setTextY((int) firstPoint.getY());
+			temporalDrawing.cloneProperties();
+			return temporalDrawing;
+		}
+		return null;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#onRestore()
+	 */
+	@Override
+	public void onRestore() {
+
+	}
+	
+	
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#onCancel()
+	 */
+	@Override
+	public void onCancel() {
+	}
+	
+	
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.Tool#moveTo(double, double)
 	 */
@@ -73,14 +112,6 @@ public final class Text extends Tool {
 	@Override
 	public boolean isFilleable() {
 		return false;
-	}
-
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#draw(double, double)
-	 */
-	@Override
-	public void onDraw(double x, double y, boolean simetric) {
 	}
 
 
@@ -124,10 +155,10 @@ public final class Text extends Tool {
 	 * @see ar.com.tellapic.graphics.Tool#onMove(double, double)
 	 */
 	@Override
-	protected Drawing onMove(double x, double y) {
+	public Drawing onMove(int x, int y) {
 		firstPoint.setLocation(x, y);
-		temporalDrawing.setTextX((int) x);
-		temporalDrawing.setTextY((int) y);
+		temporalDrawing.setTextX(x);
+		temporalDrawing.setTextY(y);
 		return temporalDrawing;
 	}
 
@@ -150,29 +181,6 @@ public final class Text extends Tool {
 	}
 
 
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onFinishDraw()
-	 */
-	@Override
-	public Drawing onFinishDraw() {
-		if (temporalDrawing.getText().length() > 0) {
-			temporalDrawing.setTextX((int) firstPoint.getX());
-			temporalDrawing.setTextY((int) firstPoint.getY());
-			temporalDrawing.cloneProperties();
-			return temporalDrawing;
-		}
-		return null;
-	}
-
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onCancel()
-	 */
-	@Override
-	protected void onCancel() {
-		
-	}
-
 
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.Tool#isLiveModeSupported()
@@ -184,10 +192,37 @@ public final class Text extends Tool {
 
 
 	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onRestore()
+	 * @see ar.com.tellapic.graphics.Tool#setAlpha(ar.com.tellapic.graphics.PaintPropertyAlpha)
 	 */
 	@Override
-	public void onRestore() {
+	public void setAlpha(PaintPropertyAlpha alpha) {
+		temporalDrawing.setAlpha(alpha);
+	}
 
-	}	
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#setColor(ar.com.tellapic.graphics.PaintPropertyColor)
+	 */
+	@Override
+	public void setColor(PaintPropertyColor color) {
+		temporalDrawing.setColor(color);
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#setFont(ar.com.tellapic.graphics.PaintPropertyFont)
+	 */
+	@Override
+	public void setFont(PaintPropertyFont font) {
+		temporalDrawing.setFont(font);
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#setStroke(ar.com.tellapic.graphics.PaintPropertyStroke)
+	 */
+	@Override
+	public void setStroke(PaintPropertyStroke stroke) {
+		temporalDrawing.setStroke(stroke);
+	}
 }

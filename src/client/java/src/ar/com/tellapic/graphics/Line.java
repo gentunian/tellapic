@@ -3,15 +3,15 @@
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 
-import ar.com.tellapic.Utils;
-import ar.com.tellapic.lib.tellapic;
+import ar.com.tellapic.lib.tellapicConstants;
+import ar.com.tellapic.utils.Utils;
 
 /**
  * 
  * @author seba
  *
  */
-public final class Line extends Tool {
+public class Line extends Tool {
 	private static final double ANGLE = 15;
 	private static final double STEP = (ANGLE * Math.PI) / 180;
 	
@@ -20,21 +20,19 @@ public final class Line extends Tool {
 	private Drawing             temporalDrawing;
 	private boolean             inUse;
 
-	/*TODO: remove singleton for use 1 toolbox per client. 12/10/2010
-	private static class LineHolder {
-		private static final Line LINE_INSTANCE = new Line();
-	}
-	
-	
-	public static Line getInstance() {
-		return LineHolder.LINE_INSTANCE;
-	}
-	*/
-	
-	public Line() {
-		super(tellapic.TOOL_LINE, Line.class.getSimpleName(), "/icons/line.png", Utils.msg.getString("linetooltip"));
+
+	public Line(String name) {
+		super(tellapicConstants.TOOL_LINE, name, "/icons/line.png", Utils.msg.getString("linetooltip"));
 		firstPoint = new Point2D.Double();
 		inUse      = false;
+		temporalDrawing = new Drawing(getName());
+	}
+	
+	public Line() {
+		super(tellapicConstants.TOOL_LINE, "Line", "/icons/line.png", Utils.msg.getString("linetooltip"));
+		firstPoint = new Point2D.Double();
+		inUse      = false;
+		temporalDrawing = new Drawing(getName());
 	}
 
 
@@ -64,17 +62,74 @@ public final class Line extends Tool {
 	 * @see ar.com.tellapic.graphics.Tool#init(double, double)
 	 */
 	@Override
-	public void init(double x, double y) {
+	public void onPress(int x, int y, int button, int mask) {
 		if (inUse)
 			throw new IllegalStateException("init cannot be called with the tool being used");
 		
 		firstPoint.setLocation(x, y);
 		line            = new Line2D.Double(firstPoint, firstPoint);
-		temporalDrawing = new Drawing(getName());
 		inUse = true;
+		temporalDrawing.setShape(line);
+	}
+
+	
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#draw(double, double)
+	 */
+	@Override
+	public void onDrag(int x, int y, boolean symmetric, int button) {
+		if (inUse) {
+			double angle = Math.atan2(x - firstPoint.getX(), y - firstPoint.getY()) + Math.PI/2;
+			if ( angle < 0)
+				angle = (Math.PI - Math.abs(angle)) + Math.PI;
+
+			int newX = x;
+			int newY = y;
+
+			if (symmetric) {
+				double steppedAngle = (Math.round(angle / STEP) * STEP);
+				double dist = firstPoint.distance(x, y);
+				newX = (int) (dist * Math.cos(steppedAngle - Math.PI) + firstPoint.getX());
+				newY = (int) (dist * Math.sin(steppedAngle) + firstPoint.getY());
+			} 
+
+			line.setLine(firstPoint.getX(), firstPoint.getY(), newX, newY);
+		}
 	}
 
 
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#onFinishDraw()
+	 */
+	@Override
+	public Drawing onRelease(int x, int y, int button) {
+		if (inUse && line.getP1().distance(line.getP2()) > 0.0) {
+			temporalDrawing.cloneProperties();
+			inUse = false;
+			return temporalDrawing;
+		}
+		return null;
+	}
+	
+	
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#onCancel()
+	 */
+	@Override
+	public void onCancel() {
+		inUse = false;
+	}
+	
+	
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#onRestore()
+	 */
+	@Override
+	public void onRestore() {
+		inUse = true;
+	}
+	
+	
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.Tool#moveTo(double, double)
 	 */
@@ -93,30 +148,6 @@ public final class Line extends Tool {
 		return false;
 	}
 
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#draw(double, double)
-	 */
-	@Override
-	public void onDraw(double x, double y, boolean symmetric) {
-		if (inUse) {
-			double angle = Math.atan2(x - firstPoint.getX(), y - firstPoint.getY()) + Math.PI/2;
-			if ( angle < 0)
-				angle = (Math.PI - Math.abs(angle)) + Math.PI;
-
-			int newX = (int) x;
-			int newY = (int) y;
-
-			if (symmetric) {
-				double steppedAngle = (Math.round(angle / STEP) * STEP);
-				double dist = firstPoint.distance(x, y);
-				newX = (int) (dist * Math.cos(steppedAngle - Math.PI) + firstPoint.getX());
-				newY = (int) (dist * Math.sin(steppedAngle) + firstPoint.getY());
-			} 
-
-			line.setLine(firstPoint.getX(), firstPoint.getY(), newX, newY);
-		}
-	}
 
 
 	/* (non-Javadoc)
@@ -159,7 +190,7 @@ public final class Line extends Tool {
 	 * @see ar.com.tellapic.graphics.Tool#onMove(double, double)
 	 */
 	@Override
-	protected Drawing onMove(double x, double y) {
+	public Drawing onMove(int x, int y) {
 		return null;		
 	}
 
@@ -183,30 +214,6 @@ public final class Line extends Tool {
 
 
 	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onFinishDraw()
-	 */
-	@Override
-	public Drawing onFinishDraw() {
-		if (inUse && line.getP1().distance(line.getP2()) > 0.0) {
-			temporalDrawing.setShape(line);
-			temporalDrawing.cloneProperties();
-			inUse = false;
-			return temporalDrawing;
-		}
-		return null;
-	}
-
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onCancel()
-	 */
-	@Override
-	protected void onCancel() {
-		inUse = false;
-	}
-
-
-	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.Tool#isLiveModeSupported()
 	 */
 	@Override
@@ -214,12 +221,34 @@ public final class Line extends Tool {
 		return false;
 	}
 
-
 	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onRestore()
+	 * @see ar.com.tellapic.graphics.Tool#setAlpha(ar.com.tellapic.graphics.PaintPropertyAlpha)
 	 */
 	@Override
-	public void onRestore() {
-		inUse = true;
+	public void setAlpha(PaintPropertyAlpha alpha) {
+		temporalDrawing.setAlpha(alpha);
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#setColor(ar.com.tellapic.graphics.PaintPropertyColor)
+	 */
+	@Override
+	public void setColor(PaintPropertyColor color) {
+		temporalDrawing.setColor(color);
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#setFont(ar.com.tellapic.graphics.PaintPropertyFont)
+	 */
+	@Override
+	public void setFont(PaintPropertyFont font) {
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#setStroke(ar.com.tellapic.graphics.PaintPropertyStroke)
+	 */
+	@Override
+	public void setStroke(PaintPropertyStroke stroke) {
+		temporalDrawing.setStroke(stroke);
 	}
 }

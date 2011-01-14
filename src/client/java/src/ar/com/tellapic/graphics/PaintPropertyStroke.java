@@ -18,16 +18,15 @@ public final class PaintPropertyStroke extends PaintProperty {
 		lineJoins   = BasicStroke.JOIN_MITER;
 		miterLimit = 10f;
 		dash_phase  = 0f;
-	}
-	/*
-	private static class PaintPropertyStrokeHolder {
-		private static final PaintPropertyStroke INSTANCE = new PaintPropertyStroke();
+		/* Alternate entries in the array represent the user space lengths of the opaque and
+		 * transparent segments of the dashes. As the pen moves along the outline of the Shape
+		 * to be stroked, the user space distance that the pen travels is accumulated.
+		 * The distance value is used to index into the dash array.
+		 * The pen is opaque when its current cumulative distance maps to an even element of
+		 * the dash array and transparent otherwise. */
+		dash = new float[]{ 1, 1}; 
 	}
 	
-	public static PaintPropertyStroke getInstance() {
-		return PaintPropertyStrokeHolder.INSTANCE;
-	}
-	*/
 	
 	/**
 	 * @param width the width to set
@@ -35,8 +34,8 @@ public final class PaintPropertyStroke extends PaintProperty {
 	public void setWidth(float width) {
 		this.width = width;
 	}
-
-
+	
+	
 	/**
 	 * @return the width
 	 */

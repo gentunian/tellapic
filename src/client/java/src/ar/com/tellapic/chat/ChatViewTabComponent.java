@@ -62,6 +62,7 @@ public class ChatViewTabComponent extends JPanel {
 		label = new JLabel() {
 			private static final long serialVersionUID = 1L;
 
+			@Override
 			public String getText() {
 				int i = pane.indexOfTabComponent(ChatViewTabComponent.this);
 				if (i != -1) {
@@ -119,10 +120,12 @@ public class ChatViewTabComponent extends JPanel {
 		}
 
 		//we don't want to update UI for this button
+		@Override
 		public void updateUI() {
 		}
 
 		//paint the cross
+		@Override
 		protected void paintComponent(Graphics g) {
 			super.paintComponent(g);
 			Graphics2D g2 = (Graphics2D) g.create();
@@ -143,6 +146,7 @@ public class ChatViewTabComponent extends JPanel {
 	}
 
 	private final static MouseListener buttonMouseListener = new MouseAdapter() {
+		@Override
 		public void mouseEntered(MouseEvent e) {
 			Component component = e.getComponent();
 			if (component instanceof AbstractButton) {
@@ -151,6 +155,7 @@ public class ChatViewTabComponent extends JPanel {
 			}
 		}
 
+		@Override
 		public void mouseExited(MouseEvent e) {
 			Component component = e.getComponent();
 			if (component instanceof AbstractButton) {

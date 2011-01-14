@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
 
-import ar.com.tellapic.Utils;
+import ar.com.tellapic.utils.Utils;
 
 /**
  * @author 
@@ -174,9 +174,9 @@ public class ChatClientModel extends Observable implements IChatModelManager, IC
 	 */
 	@Override
 	public User getUser(String name) {
-		for(User user : users) {
-			
-		}
+//		for(User user : users) {
+//			
+//		}
 		return null;
 	}
 
@@ -185,9 +185,9 @@ public class ChatClientModel extends Observable implements IChatModelManager, IC
 	 */
 	@Override
 	public User getUser(int userId) {
-		for(User user : users) {
-			
-		}
+//		for(User user : users) {
+//			
+//		}
 		return null;
 	}
 
