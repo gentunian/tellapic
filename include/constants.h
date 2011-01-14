@@ -30,10 +30,10 @@
 #define HEADER_SIZE                6
 
 /* This data streams have a fixed size */
-#define FIG_STREAM_SIZE              43 + HEADER_SIZE
-#define CTL_STREAM_SIZE              1 + HEADER_SIZE
-#define DRWU_STREAM_SIZE             6 + HEADER_SIZE
-#define DRWI_STREAM_SIZE             33 + HEADER_SIZE
+#define FIG_STREAM_SIZE              44 + HEADER_SIZE
+#define CTL_STREAM_SIZE              1  + HEADER_SIZE
+#define DRW_USING_STREAM_SIZE        22 + HEADER_SIZE
+#define DRW_INIT_STREAM_SIZE         FIG_STREAM_SIZE
 
 /* This streams size may be variable but not more than the values below */
 #define MIN_FIGTXT_STREAM_SIZE       HEADER_SIZE + DDATA_FONTFACE_INDEX + 2
@@ -68,24 +68,25 @@
 /* Indexes for FIG (drawn figure) data section */
 #define DDATA_IDFROM_INDEX          DATA_IDFROM_INDEX
 #define DDATA_DCBYTE_INDEX          1
-#define DDATA_DNUMBER_INDEX         2
-#define DDATA_WIDTH_INDEX           6
-#define DDATA_OPACITY_INDEX        10
-#define DDATA_COLOR_INDEX          14
-#define DDATA_COORDX1_INDEX        17
-#define DDATA_COORDY1_INDEX        19
-#define DDATA_COORDX2_INDEX        21
-#define DDATA_COORDY2_INDEX        23
-#define DDATA_JOINS_INDEX          25
-#define DDATA_CAPS_INDEX           26
-#define DDATA_MITER_INDEX          27
-#define DDATA_DASHPHASE_INDEX      31
-#define DDATA_DASHARRAY_INDEX      35
+#define DDATA_DCBYTE_EXT_INDEX      2
+#define DDATA_DNUMBER_INDEX         3
+#define DDATA_WIDTH_INDEX           7
+#define DDATA_OPACITY_INDEX        11
+#define DDATA_COLOR_INDEX          15
+#define DDATA_COORDX1_INDEX        18
+#define DDATA_COORDY1_INDEX        20
+#define DDATA_COORDX2_INDEX        22
+#define DDATA_COORDY2_INDEX        24
+#define DDATA_JOINS_INDEX          26
+#define DDATA_CAPS_INDEX           27
+#define DDATA_MITER_INDEX          28
+#define DDATA_DASHPHASE_INDEX      32
+#define DDATA_DASHARRAY_INDEX      36
 
 /* for text */
-#define DDATA_FONTSTYLE_INDEX      21
-#define DDATA_FONTLEN_INDEX        22
-#define DDATA_FONTFACE_INDEX       23
+#define DDATA_FONTSTYLE_INDEX      22
+#define DDATA_FONTLEN_INDEX        23
+#define DDATA_FONTFACE_INDEX       24
 #define DDATA_TEXT_INDEX(fontface_len)		\
   (DDATA_FONTFACE_INDEX + fontface_len)
 
@@ -128,6 +129,7 @@
 #define CTL_CL_FILEOK   0x81   /* is ctl  */
 #define CTL_CL_DISC     0x91   /* is ctl  */
 #define CTL_CL_NAME     0xa1   /* is ctle */
+#define CTL_NOPIPE      0xb1 
 #define CTL_FAIL        0x00
 
 
@@ -164,15 +166,18 @@
 
 
 /* Events masks */
-#define BUTTON_LEFT     0x1
-#define BUTTON_RIGHT    0x2
-#define BUTTON_MIDDLE   0x3
-#define BUTTON_MASK     0x3
-#define EVENT_MASK      0xc
-#define EVENT_PRESS     0x4
-#define EVENT_DRAG      0x8
-#define EVENT_RELEASE   0xc
-#define EVENT_NULL      0x0
+#define BUTTON_LEFT      0x1
+#define BUTTON_RIGHT     0x2
+#define BUTTON_MIDDLE    0x3
+#define BUTTON_MASK      0x3
+#define EVENT_MASK       0xc
+#define EVENT_PRESS      0x4
+#define EVENT_DRAG       0x8
+#define EVENT_RELEASE    0xc
+#define EVENT_CTL_DOWN   0x1
+#define EVENT_SHIFT_DOWN 0x2
+#define EVENT_ALT_DOWN   0x3
+#define EVENT_NULL       0x0
 /* 
  * An event example:
  *                                 tool       event   button
