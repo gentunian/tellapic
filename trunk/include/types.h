@@ -70,31 +70,32 @@ typedef struct {
 
 
 typedef struct {
-  point_t      point2;       //byte 21   4 bytes on stream
-  byte_t       linejoin;     //byte 25   1 byte on stream
-  byte_t       endcaps;      //byte 26   1 byte on stream
-  float        miterlimit;   //byte 27   4 bytes on stream
-  float        dash_phase;   //byte 31   4 bytes on stream
-  float        dash_array[2]; //byte 35  8 bytes on stream
+  point_t      point2;       //byte 22   4 bytes on stream
+  byte_t       linejoin;     //byte 26   1 byte on stream
+  byte_t       endcaps;      //byte 27   1 byte on stream
+  float        miterlimit;   //byte 28   4 bytes on stream
+  float        dash_phase;   //byte 32   4 bytes on stream
+  float        dash_array[2]; //byte 36  8 bytes on stream
 } figure_t;
 
 
 typedef struct {
-  byte_t       style;                      //byte 21
-  byte_t       facelen;                    //byte 22
-  char         face[MAX_FONTFACE_LEN];     //byte 23
-  char         info[MAX_TEXT_SIZE];        //byte 23+FONT_FACE_LEN
+  byte_t       style;                      //byte 22
+  byte_t       facelen;                    //byte 23
+  char         face[MAX_FONTFACE_LEN];     //byte 24
+  char         info[MAX_TEXT_SIZE];        //byte 25+FONT_FACE_LEN
 } text_t;
 
 
 typedef struct {
   byte_t                     idfrom;       //byte 0    1 byte on stream
   byte_t                     dcbyte;       //byte 1    1 byte on stream
-  unsigned long              number;       //byte 2    4 bytes on stream
-  float                      width;        //byte 6    4 bytes on stream
-  float                      opacity;      //byte 10   4 bytes on stream
-  color_t                    color;        //byte 14   3 bytes on stream
-  point_t                    point1;       //byte 17   4 bytes on stream
+  byte_t                     dcbyte_ext;   //byte 2    1 byte on stream
+  unsigned long              number;       //byte 3    4 bytes on stream
+  float                      width;        //byte 7    4 bytes on stream
+  float                      opacity;      //byte 11   4 bytes on stream
+  color_t                    color;        //byte 15   3 bytes on stream
+  point_t                    point1;       //byte 18   4 bytes on stream
   union {
     figure_t                 figure;
     text_t                   text;        // total: FONT_FACE_LEN + MAX_TEX_SIZE + 1 bytes on stream
