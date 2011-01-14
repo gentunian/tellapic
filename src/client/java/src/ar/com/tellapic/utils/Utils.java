@@ -15,10 +15,13 @@
  *         sebastian.treu(at)gmail.com
  *
  */
-package ar.com.tellapic;
+package ar.com.tellapic.utils;
 
+import java.awt.event.MouseEvent;
 import java.util.Locale;
 import java.util.ResourceBundle;
+
+import ar.com.tellapic.graphics.RemoteMouseEvent;
 
 /**
  * @author 
@@ -38,5 +41,23 @@ public final class Utils {
 	
 	public static void changeLocale() {
 		//TODO: fucking work to do
+	}
+	
+	/**
+	 * 
+	 * @param event
+	 */
+	public static void printEventInfo(MouseEvent event) {
+		Utils.logMessage("Mouse event:");
+		Utils.logMessage("\tbutton: "+event.getButton());
+		Utils.logMessage("\tclick count: "+event.getClickCount());
+		Utils.logMessage("\tid: "+event.getID());
+		Utils.logMessage("\tmodifiers: "+event.getModifiers());
+		Utils.logMessage("\tmodifiers ext: "+event.getModifiersEx());
+		Utils.logMessage("\twhen: "+event.getWhen());
+		Utils.logMessage("\tx: "+event.getX());
+		Utils.logMessage("\ty: "+event.getY());
+		Utils.logMessage("\tsource: "+event.getSource());
+		Utils.logMessage("\tinstanceof RemoteMouseEvent?: "+ (event instanceof RemoteMouseEvent));
 	}
 }
