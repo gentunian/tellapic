@@ -35,10 +35,12 @@ add_executable(server ${SERVER_FILE})
 
 test_big_endian(BIG_ENDIAN_VALUE)
 
-if(CMAKE_BUILD_TYPE MATCHES "Debug")
-    set_target_properties(server PROPERTIES COMPILE_FLAGS -DDEBUG)
-    set_target_properties(server PROPERTIES COMPILE_FLAGS -DBIG_ENDIAN_VALUE=${BIG_ENDIAN_VALUE})
-endif()
+#if(CMAKE_BUILD_TYPE MATCHES "Debug")
+
+set_target_properties(server PROPERTIES COMPILE_FLAGS -DBIG_ENDIAN_VALUE=${BIG_ENDIAN_VALUE})
+set_target_properties(server PROPERTIES COMPILE_FLAGS "-DBIG_ENDIAN_VALUE=${BIG_ENDIAN_VALUE} -DDEBUG")
+
+#endif()
 target_link_libraries(server tellapic ${CDK_LIBRARIES} ${OPENSSL_LIBRARIES} ${LIBRARIES})
 
 # Now create the SWIG wrappers
