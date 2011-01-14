@@ -3,31 +3,30 @@ package ar.com.tellapic.graphics;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
-import ar.com.tellapic.Utils;
+import ar.com.tellapic.utils.Utils;
 
 public class ToolFactory {
-	private static Map<Integer, String> registeredTools = Collections.synchronizedMap(new HashMap<Integer,String>());
+	private static Map<Integer, String> registeredToolsClassNames = Collections.synchronizedMap(new HashMap<Integer,String>());
 	
-	public static boolean registerTool(int id, String toolClassName) {
+	public static boolean registerToolClassName(int id, String toolClassName) {
 		Utils.logMessage("Adding tool name "+toolClassName);
 		Integer toolId = Integer.valueOf(id);
-		registeredTools.put(toolId, toolClassName);
+		registeredToolsClassNames.put(toolId, toolClassName);
 		//TODO: WTF?
 		return true;
 	}
 	
 	
-	public static Map<Integer, String> getRegisteredToolNames() {
-		return registeredTools;
+	public static Map<Integer, String> getRegisteredToolsClassNames() {
+		return registeredToolsClassNames;
 	}
 	
 	
 	@SuppressWarnings("unchecked")
 	public static Tool createTool(String toolClassName) {
 		Tool tool = null;		
-		if (registeredTools.containsValue(toolClassName)) {
+		if (registeredToolsClassNames.containsValue(toolClassName)) {
 			Class<Tool> toolClass = null;
 			//Method instanceMethod = null;
 			try {

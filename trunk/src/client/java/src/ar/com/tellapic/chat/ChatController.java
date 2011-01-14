@@ -30,7 +30,7 @@ import ar.com.tellapic.lib.tellapic;
  */
 public class ChatController implements IChatController {
 	private IChatModelManager model;
-	private IChatConnection   connection;
+	//private IChatConnection   connection;
 
 	public ChatController() {
 		this.model = ChatClientModel.getInstance();

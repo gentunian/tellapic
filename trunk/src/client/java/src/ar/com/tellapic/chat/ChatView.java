@@ -38,12 +38,13 @@ import javax.swing.JTextField;
 import javax.swing.JViewport;
 import javax.swing.KeyStroke;
 import javax.swing.LayoutStyle;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.Keymap;
 
 import ar.com.tellapic.UserManager;
-import ar.com.tellapic.Utils;
+import ar.com.tellapic.utils.Utils;
 
 /**
  * @author 
@@ -178,7 +179,7 @@ public class ChatView extends JPanel implements Observer {
 
 		// Set a scroll bar to the tab text area and set scrollbar's properties
 		JScrollPane areaScrollPane = new JScrollPane(content);
-		areaScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		areaScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 		areaScrollPane.setPreferredSize(new Dimension(250, 250));
 
 		// Add a tab to the tabbed pane

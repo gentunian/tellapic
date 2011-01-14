@@ -3,8 +3,6 @@
  */
 package ar.com.tellapic.graphics;
 
-import java.util.Map;
-
 /**
  * 
  * @author 
@@ -29,7 +27,7 @@ public class ToolBoxController implements IToolBoxController {
 	public ToolBoxController(IToolBoxManager model) {		
 		this.model = model;
 		
-		for(String toolName : ToolFactory.getRegisteredToolNames().values()) 
+		for(String toolName : ToolFactory.getRegisteredToolsClassNames().values()) 
 			model.addTool(ToolFactory.createTool(toolName));
 	}
 

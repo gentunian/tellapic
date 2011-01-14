@@ -31,6 +31,10 @@ import ar.com.tellapic.RemoteUser;
 public class RemoteMouseEvent extends MouseEvent {
 
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private RemoteUser user;
 	
 	/**

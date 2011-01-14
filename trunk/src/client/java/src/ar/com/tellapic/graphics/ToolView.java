@@ -19,7 +19,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
-import ar.com.tellapic.Utils;
+import ar.com.tellapic.utils.Utils;
 
 /**
  * 
@@ -27,8 +27,8 @@ import ar.com.tellapic.Utils;
  *
  */
 public class ToolView extends JPanel implements Observer {
-	private static final int WIDTH    = 100;
-	private static final int HEIGHT   = 150;
+//	private static final int WIDTH    = 100;
+//	private static final int HEIGHT   = 150;
 	private static final int ICON_GAP = 5;
 	private static final int ICON_SIZE = 32;
 	private static final long serialVersionUID = 1L;

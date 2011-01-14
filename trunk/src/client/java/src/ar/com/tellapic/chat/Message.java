@@ -21,7 +21,7 @@ import java.util.AbstractMap;
 import java.util.Map;
 
 import ar.com.tellapic.UserManager;
-import ar.com.tellapic.Utils;
+import ar.com.tellapic.utils.Utils;
 
 
 /**

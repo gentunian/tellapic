@@ -19,7 +19,7 @@ import javax.swing.JPanel;
 
 import ar.com.tellapic.AbstractUser;
 import ar.com.tellapic.UserManager;
-import ar.com.tellapic.Utils;
+import ar.com.tellapic.utils.Utils;
 
 /**
  * 
@@ -33,7 +33,7 @@ public class DrawingAreaView extends JPanel implements Observer {
 
 	private Image                   background;
 	private Image                   foreground;
-	private Drawing                 temporalDrawing;
+	//private Drawing                 temporalDrawing;
 	private ArrayList<Drawing>      temporalDrawings;
 	private ArrayList<AbstractUser> userList;
 	private BufferedImage           backimage;
@@ -126,7 +126,7 @@ public class DrawingAreaView extends JPanel implements Observer {
 			
 			//TODO: Se deberia tener una lista de todos los temporales que se estan dibujando de
 			//todos los usuarios. Es decir, los temporales de los usuarios que estan dibujando.
-			Drawing temporalDrawing = user.getTemporalDrawing();
+			//Drawing temporalDrawing = user.getTemporalDrawing();
 						
 			
 			if (firstNotDrawn != null) {
@@ -163,6 +163,7 @@ public class DrawingAreaView extends JPanel implements Observer {
 	//ello, y para mantener una compatibilidad con la idea de dibujar solamente lo
 	//ultimo dibujado, se debe crear de cero (es decir, vacia) una capa transparente
 	//que se dibuje arriba de la imagen de fondo.
+	@Override
 	public void paint(Graphics g) {
 		if (foreground == null) {
 			foreground = gc.createCompatibleImage(backimage.getWidth(), backimage.getHeight(), Transparency.TRANSLUCENT);

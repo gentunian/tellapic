@@ -25,11 +25,12 @@ import java.util.regex.Pattern;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JTabbedPane;
+import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import ar.com.tellapic.chat.ChatViewTabComponent;
+import ar.com.tellapic.utils.Utils;
 
 /**
  * @author 
@@ -109,7 +110,7 @@ public class MainDialog extends javax.swing.JDialog {
 		joinAddFavouriteButton = new javax.swing.JButton();
 
 		setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-		setTitle("Choose");
+		setTitle(Utils.msg.getString("MainDialog.0")); //$NON-NLS-1$
 		setLocationByPlatform(true);
 		setModal(true);
 		setResizable(false);
@@ -123,19 +124,20 @@ public class MainDialog extends javax.swing.JDialog {
 		jPanel1.setMaximumSize(new java.awt.Dimension(221, 390));
 		jPanel1.setMinimumSize(new java.awt.Dimension(221, 390));
 
-		createImageArea.setToolTipText("Click here to choose the file you wish to share/discuss.");
+		createImageArea.setToolTipText(Utils.msg.getString("MainDialog.1")); //$NON-NLS-1$
 		createImageArea.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 		createImageArea.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 		createImageArea.addMouseListener(new java.awt.event.MouseAdapter() {
+			@Override
 			public void mouseClicked(java.awt.event.MouseEvent evt) {
 				createImageAreaMouseClicked(evt);
 			}
 		});
 
-		createCreateButton.setText("Create");
+		createCreateButton.setText(Utils.msg.getString("MainDialog.2")); //$NON-NLS-1$
 		createCreateButton.setEnabled(false);
 		
-		createExitButton.setText("Exit");
+		createExitButton.setText(Utils.msg.getString("MainDialog.3")); //$NON-NLS-1$
 		createExitButton.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
 				exit(evt);
@@ -143,34 +145,35 @@ public class MainDialog extends javax.swing.JDialog {
 		});
 
 		createFileField.setEditable(false);
-		createFileField.setHorizontalAlignment(javax.swing.JTextField.LEFT);
-		createFileField.setToolTipText("The file you want to share/discuss.");
+		createFileField.setHorizontalAlignment(SwingConstants.LEFT);
+		createFileField.setToolTipText(Utils.msg.getString("MainDialog.4")); //$NON-NLS-1$
 		createFileField.setCursor(new java.awt.Cursor(java.awt.Cursor.TEXT_CURSOR));
 		createFileField.addMouseListener(new java.awt.event.MouseAdapter() {
+			@Override
 			public void mouseClicked(java.awt.event.MouseEvent evt) {
 				createFileFieldMouseClicked(evt);
 			}
 		});
 
 		createFileLabel.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-		createFileLabel.setText("File:");
+		createFileLabel.setText(Utils.msg.getString("MainDialog.5")); //$NON-NLS-1$
 
 		createPasswordLabel.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-		createPasswordLabel.setText("Password:");
+		createPasswordLabel.setText(Utils.msg.getString("MainDialog.6")); //$NON-NLS-1$
 
-		createPasswordField.setToolTipText("The password to protect undesirable connections.");
+		createPasswordField.setToolTipText(Utils.msg.getString("MainDialog.7")); //$NON-NLS-1$
 
-		createUsernameField.setToolTipText("The user name you choose for your session.");
+		createUsernameField.setToolTipText(Utils.msg.getString("MainDialog.8")); //$NON-NLS-1$
 		createUsernameField.setInputVerifier(new NonEmptyVerifier());
-		createUsernameField.setName("createUsernameField"); // NOI18N
+		createUsernameField.setName(Utils.msg.getString("MainDialog.9")); // NOI18N //$NON-NLS-1$
 
 		createUsernameLabel.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-		createUsernameLabel.setText("Username:");
+		createUsernameLabel.setText(Utils.msg.getString("MainDialog.10")); //$NON-NLS-1$
 
 		createPortLabel.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-		createPortLabel.setText("Port:");
+		createPortLabel.setText(Utils.msg.getString("MainDialog.11")); //$NON-NLS-1$
 
-		createPortField.setToolTipText("Set the listening sertver port. It should be greater than 1024.");
+		createPortField.setToolTipText(Utils.msg.getString("MainDialog.12")); //$NON-NLS-1$
 		createPortField.setInputVerifier(new PortVerifier());
 		createPortField.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -232,7 +235,7 @@ public class MainDialog extends javax.swing.JDialog {
 																.addContainerGap())
 		);
 
-		jTabbedPane1.addTab("Start session", jPanel1);
+		jTabbedPane1.addTab(Utils.msg.getString("MainDialog.13"), jPanel1); //$NON-NLS-1$
 
 		jPanel3.setMinimumSize(new java.awt.Dimension(221, 390));
 
@@ -241,13 +244,18 @@ public class MainDialog extends javax.swing.JDialog {
 
 				},
 				new String [] {
-						"Host", "Port", "User", "Pwd"
+						Utils.msg.getString("MainDialog.14"), Utils.msg.getString("MainDialog.15"), Utils.msg.getString("MainDialog.16"), Utils.msg.getString("MainDialog.17") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 				}
 		) {
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
 			Class[] types = new Class [] {
 					java.lang.String.class, java.lang.Integer.class, java.lang.String.class, java.lang.String.class
 			};
 
+			@Override
 			public Class getColumnClass(int columnIndex) {
 				return types [columnIndex];
 			}
@@ -258,17 +266,17 @@ public class MainDialog extends javax.swing.JDialog {
 		jScrollPane1.setViewportView(favouriteTable);
 		favouriteTable.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
 
-		favouriteJoinButton.setText("Join");
+		favouriteJoinButton.setText(Utils.msg.getString("MainDialog.18")); //$NON-NLS-1$
 		favouriteJoinButton.setEnabled(false);
 
-		favouriteExitButton.setText("Exit");
+		favouriteExitButton.setText(Utils.msg.getString("MainDialog.19")); //$NON-NLS-1$
 		favouriteExitButton.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
 				favouriteExitButtonActionPerformed(evt);
 			}
 		});
 
-		favouriteDeleteButton.setText("Delete");
+		favouriteDeleteButton.setText(Utils.msg.getString("MainDialog.20")); //$NON-NLS-1$
 		favouriteDeleteButton.setEnabled(false);
 
 		javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
@@ -300,18 +308,18 @@ public class MainDialog extends javax.swing.JDialog {
 								.addContainerGap())
 		);
 
-		jTabbedPane1.addTab("Favourites", jPanel3);
+		jTabbedPane1.addTab(Utils.msg.getString("MainDialog.21"), jPanel3); //$NON-NLS-1$
 
 		jPanel2.setMinimumSize(new java.awt.Dimension(221, 390));
 
 		joinPasswordLabel.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-		joinPasswordLabel.setText("Password:");
+		joinPasswordLabel.setText(Utils.msg.getString("MainDialog.22")); //$NON-NLS-1$
 
 		joinUsernameLabel.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-		joinUsernameLabel.setText("Username:");
+		joinUsernameLabel.setText(Utils.msg.getString("MainDialog.23")); //$NON-NLS-1$
 
 		joinUsernameField.setInputVerifier(new NonEmptyVerifier());
-		joinUsernameField.setName("joinUsernameField"); // NOI18N
+		joinUsernameField.setName(Utils.msg.getString("MainDialog.24")); // NOI18N //$NON-NLS-1$
 
 		joinPortField.setInputVerifier(new PortVerifier());
 		joinPortField.addActionListener(new java.awt.event.ActionListener() {
@@ -321,22 +329,22 @@ public class MainDialog extends javax.swing.JDialog {
 		});
 
 		joinPortLabel.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-		joinPortLabel.setText("Port:");
+		joinPortLabel.setText(Utils.msg.getString("MainDialog.25")); //$NON-NLS-1$
 
 		joinHostLabel.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-		joinHostLabel.setText("Host:");
+		joinHostLabel.setText(Utils.msg.getString("MainDialog.26")); //$NON-NLS-1$
 
 		joinHostField.setInputVerifier(new NonEmptyVerifier());
-		joinHostField.setName("joinHostField"); // NOI18N
+		joinHostField.setName(Utils.msg.getString("MainDialog.27")); // NOI18N //$NON-NLS-1$
 
-		joinExitButton.setText("Exit");
+		joinExitButton.setText(Utils.msg.getString("MainDialog.28")); //$NON-NLS-1$
 		joinExitButton.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
 				joinExitButtonexit(evt);
 			}
 		});
 
-		joinJoinButton.setText("Join");
+		joinJoinButton.setText(Utils.msg.getString("MainDialog.29")); //$NON-NLS-1$
 		joinJoinButton.setEnabled(false);
 		joinJoinButton.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -344,7 +352,7 @@ public class MainDialog extends javax.swing.JDialog {
 			}
 		});
 
-		joinAddFavouriteButton.setText("Add to Favourite");
+		joinAddFavouriteButton.setText(Utils.msg.getString("MainDialog.30")); //$NON-NLS-1$
 		joinAddFavouriteButton.setEnabled(false);
 		joinAddFavouriteButton.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -405,7 +413,7 @@ public class MainDialog extends javax.swing.JDialog {
 																.addComponent(joinJoinButton)))
 		);
 
-		jTabbedPane1.addTab("Join Session", jPanel2);
+		jTabbedPane1.addTab(Utils.msg.getString("MainDialog.31"), jPanel2); //$NON-NLS-1$
 		jTabbedPane1.addChangeListener(new ChangeListener(){
 			@Override
 			public void stateChanged(ChangeEvent e) {
@@ -460,11 +468,11 @@ public class MainDialog extends javax.swing.JDialog {
 
 	private void createImageAreaMouseClicked(java.awt.event.MouseEvent evt) {
 		JFileChooser chooser = new JFileChooser();
-		FileNameExtensionFilter filter = new FileNameExtensionFilter("JPG & GIF Images", "jpg", "gif");
+		FileNameExtensionFilter filter = new FileNameExtensionFilter(Utils.msg.getString("MainDialog.32"), Utils.msg.getString("MainDialog.33"), Utils.msg.getString("MainDialog.34")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		chooser.setFileFilter(filter);
 		int returnVal = chooser.showOpenDialog(this);
 		if (returnVal == JFileChooser.APPROVE_OPTION) {
-			System.out.println("You chose to open this file: "+chooser.getSelectedFile().getName());
+			System.out.println(Utils.msg.getString("MainDialog.35")+chooser.getSelectedFile().getName()); //$NON-NLS-1$
 			createFileField.setText(chooser.getSelectedFile().getAbsolutePath());
 			fileSet = true;
 			ImageIcon icon = new ImageIcon(chooser.getSelectedFile().getAbsolutePath());
@@ -518,6 +526,7 @@ public class MainDialog extends javax.swing.JDialog {
 
 
 	class PortVerifier extends javax.swing.InputVerifier {
+		@Override
 		public boolean verify(javax.swing.JComponent input) {
 			javax.swing.JTextField tf = (javax.swing.JTextField) input;
 			int port = 0;
@@ -559,19 +568,20 @@ public class MainDialog extends javax.swing.JDialog {
 	}
 
 	class NonEmptyVerifier extends javax.swing.InputVerifier {
+		@Override
 		public boolean verify(javax.swing.JComponent input) {
 			javax.swing.JTextField tf = (javax.swing.JTextField) input;
 			boolean ret = false;
 			if (tf.getText().length() == 0) {
 				tf.setBackground(Color.orange); //TODO: this shouldn't be done here. implemente shouldYieldFocus() instead
-				if (tf.getName().equals("createUsernameField") || tf.getName().equals("joinUsernameField"))
+				if (tf.getName().equals(Utils.msg.getString("MainDialog.36")) || tf.getName().equals(Utils.msg.getString("MainDialog.37"))) //$NON-NLS-1$ //$NON-NLS-2$
 					userSet = false;
 				else
 					hostSet = false;
 			} else {
 				tf.setBackground(Color.white); //TODO: this shouldn't be done here. implemente shouldYieldFocus() instead
 				ret = true;
-				if (tf.getName().equals("createUsernameField") || tf.getName().equals("joinUsernameField"))
+				if (tf.getName().equals(Utils.msg.getString("MainDialog.38")) || tf.getName().equals(Utils.msg.getString("MainDialog.39"))) //$NON-NLS-1$ //$NON-NLS-2$
 					userSet = true;
 				else
 					hostSet = true;
@@ -582,7 +592,7 @@ public class MainDialog extends javax.swing.JDialog {
 	}
 
 	public static boolean isNumeric(String aStringValue) {
-		Pattern pattern = Pattern.compile("\\d+");
+		Pattern pattern = Pattern.compile(Utils.msg.getString("MainDialog.40")); //$NON-NLS-1$
 		Matcher matcher = pattern.matcher(aStringValue);
 		return matcher.matches();
 	}

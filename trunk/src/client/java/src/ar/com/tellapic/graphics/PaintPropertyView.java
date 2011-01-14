@@ -31,7 +31,7 @@ import javax.swing.event.CaretListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import ar.com.tellapic.Utils;
+import ar.com.tellapic.utils.Utils;
 
 public class PaintPropertyView extends JPanel implements Observer {
 	
@@ -188,7 +188,7 @@ public class PaintPropertyView extends JPanel implements Observer {
 			add(fontPanel);
 		else
 			remove(fontPanel);
-		int h = getSize().height + (fontPanelDimension.height * (enabled? 1 : -1) );
+//		int h = getSize().height + (fontPanelDimension.height * (enabled? 1 : -1) );
 //		Utils.logMessage("new h: "+h);
 //		setMinimumSize(new Dimension(getSize().width, h));
 //		printSizes();
@@ -646,7 +646,7 @@ public class PaintPropertyView extends JPanel implements Observer {
 					controller.handleWidthChange(value);
 				
 				if (s.getName().equals("opacity"))
-					controller.handleOpacityChange((float)(value)/100f);
+					controller.handleOpacityChange((value)/100f);
 
 			}
 		}

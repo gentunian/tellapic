@@ -33,6 +33,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
+import ar.com.tellapic.utils.Utils;
+
 /**
  * @author 
  *          Sebastian Treu
@@ -46,7 +48,7 @@ public class UserView extends JPanel implements Observer {
 	private DefaultMutableTreeNode rootNode;
 	private DefaultTreeModel       treeModel;
 	private JScrollPane            treeView;
-	private final IUserManagerController controller = UserManagerController.getInstance();
+	//private final IUserManagerController controller = UserManagerController.getInstance();
 	
 //	private Some treeTableModel;
 //	private JTreeTable treeTable;

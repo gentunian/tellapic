@@ -2,7 +2,7 @@ package ar.com.tellapic.graphics;
 
 import java.awt.geom.Point2D;
 
-import ar.com.tellapic.Utils;
+import ar.com.tellapic.utils.Utils;
 
 public final class Zoom extends Tool {
 	/*TODO: remove singleton for use 1 toolbox per client. 12/10/2010
@@ -45,22 +45,64 @@ public final class Zoom extends Tool {
 	 * @see ar.com.tellapic.graphics.Tool#init(double, double)
 	 */
 	@Override
-	public void init(double x, double y) {
+	public void onPress(int x, int y, int button, int mask) {
 		// TODO Auto-generated method stub
 		
 	}
-
-
+	
+	
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#draw(double, double)
+	 */
+	@Override
+	public void onDrag(int x, int y, boolean simetric, int button) {
+	}
+	
+	
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.Tool#moveTo(double, double)
 	 */
 	@Override
 	public void moveTo(double x, double y) {
-		// TODO Auto-generated method stub
-		
 	}
 
 
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#onMove(double, double)
+	 */
+	@Override
+	public Drawing onMove(int x, int y) {
+		return null;
+	}
+	
+	
+	/*
+	 * non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#onFinishDraw()
+	 */
+	@Override
+	public Drawing onRelease(int x, int y, int button) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#onCancel()
+	 */
+	@Override
+	public void onCancel() {
+	}
+	
+	
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#onRestore()
+	 */
+	@Override
+	public void onRestore() {
+	}
+	
+	
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.Tool#isFilleable()
 	 */
@@ -68,16 +110,6 @@ public final class Zoom extends Tool {
 	public boolean isFilleable() {
 		// TODO Auto-generated method stub
 		return false;
-	}
-
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#draw(double, double)
-	 */
-	@Override
-	public void onDraw(double x, double y, boolean simetric) {
-		// TODO Auto-generated method stub
-		
 	}
 
 
@@ -118,15 +150,6 @@ public final class Zoom extends Tool {
 
 
 	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onMove(double, double)
-	 */
-	@Override
-	protected Drawing onMove(double x, double y) {
-		return null;
-	}
-
-
-	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.Tool#isOnMoveSupported()
 	 */
 	@Override
@@ -143,28 +166,8 @@ public final class Zoom extends Tool {
 		// TODO Auto-generated method stub
 		return false;
 	}
-
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onFinishDraw()
-	 */
-	@Override
-	public Drawing onFinishDraw() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onCancel()
-	 */
-	@Override
-	protected void onCancel() {
-		// TODO Auto-generated method stub
-		
-	}
-
-
+	
+	
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.Tool#isLiveModeSupported()
 	 */
@@ -175,10 +178,40 @@ public final class Zoom extends Tool {
 
 
 	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onRestore()
+	 * @see ar.com.tellapic.graphics.Tool#setAlpha(ar.com.tellapic.graphics.PaintPropertyAlpha)
 	 */
 	@Override
-	public void onRestore() {
+	public void setAlpha(PaintPropertyAlpha alpha) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#setColor(ar.com.tellapic.graphics.PaintPropertyColor)
+	 */
+	@Override
+	public void setColor(PaintPropertyColor color) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#setFont(ar.com.tellapic.graphics.PaintPropertyFont)
+	 */
+	@Override
+	public void setFont(PaintPropertyFont font) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#setStroke(ar.com.tellapic.graphics.PaintPropertyStroke)
+	 */
+	@Override
+	public void setStroke(PaintPropertyStroke stroke) {
 		// TODO Auto-generated method stub
 		
 	}
