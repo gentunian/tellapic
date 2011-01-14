@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
   thread_data[SV_THREAD].tstate = THREAD_STATE_ACT;                        /* set server thread state as active */
   setnonblock(args.svfd);
 
-  console = console_create("<C>Server output\0", "</B/24> >>> \0");
+  //console = console_create("<C>Server output\0", "</B/24> >>> \0");
   if (console == NULL)
     print_output("Could not start console: \n");
 
@@ -175,20 +175,14 @@ int main(int argc, char *argv[]) {
 	      /* Read command from console pipe. Quit the server if 'q' or 'quit' was issued. */
 	      if (strcmp(cMsgBuf, "q") == 0 || strcmp(cMsgBuf, "quit") == 0) 
 		{
-		  /* Remove the pipe from the read set */
+		  /* Remove the console pipe from the read set */
 		  FD_CLR(console->infd, &readset);
 
 		  /* Remove the server file descriptor from the read set */
 		  FD_CLR(args.svfd, &readset);
 
-		  /* Destroy the console instance */
-		  console_destroy(console);
-
 		  /* Inform the server we are going down... */
 		  CONTINUE = 0;
-
-		  /* Close the server file descriptor */
-		  close(args.svfd);
 		} 
 	      else
 		{
@@ -201,6 +195,9 @@ int main(int argc, char *argv[]) {
 	    }
 	}
     }
+
+  /* Close the server file descriptor */
+  close(args.svfd);
 
   print_output("[NFO]:\tServer is going down...");
 
@@ -503,7 +500,6 @@ void
 
   if(authclient(thread) == 0) 
     {
-      tellapic_send_ctl(thread->client->fd, thread->client->fd, CTL_CL_DISC); //TODO: put this in the cleanup?
       char buff[256];
       sprintf(buff, "</B/16>[ERR]:\tCould not auth with client. Closing link on thread number %d.<!B!16>", thread->tnum);
       print_output(buff);
@@ -664,7 +660,7 @@ authclient(tdata_t *thread)
   while(!pwdok && try < MAX_PWD_TRIES) 
     {
       
-      // we know we need to read a password. Use this library function for it.
+      /* we know we need to read a password. Use this library function for it. */
       pwd = tellapic_read_pwd(thread->client->fd, pwd, &newpwdlen);
 
 #ifdef DEBUG 
@@ -675,9 +671,8 @@ authclient(tdata_t *thread)
 
       if (pwd != NULL)
 	{
-	  // Compare password sent here
-	  // pwdok = (strncmp(args.pwd, hexastr2binary(pwd), newpwdlen) == 0);
-	  // Just compare plain text.	  
+
+	  //TODO: CHECK strncmp() !! sigsegv 
 	  pwdok = (args.pwdlen == newpwdlen) && (strncmp(args.pwd, pwd, newpwdlen) == 0);
 	  if (pwdok) 
 	    {
@@ -726,7 +721,7 @@ authclient(tdata_t *thread)
 
 
 /**
- *
+ * TODO: CHECK strncmp() sigsegv
  */
 int
 isnameinuse(tdata_t *thread)
@@ -738,7 +733,9 @@ isnameinuse(tdata_t *thread)
     {
       pthread_mutex_lock(&thread[i].stmutex);
       if (thread[i].tstate == THREAD_STATE_INIT || thread[i].tstate == THREAD_STATE_ACT)
-	if(thread[i].tnum != thread->tnum && (strncmp(thread->client->name, thread[i].client->name, thread[i].client->namelen) == 0))
+	if(thread[i].tnum != thread->tnum && 
+	   thread[i].client->namelen == thread->client->namelen &&
+	   (strncmp(thread->client->name, thread[i].client->name, thread[i].client->namelen) == 0))
 	  inuse = 1;
       pthread_mutex_unlock(&thread[i].stmutex);
     }
@@ -773,9 +770,11 @@ forward_stream(tdata_t *thread)
 
       pthread_mutex_lock(&message->mutex);
       message->delivers--;
-      
+
+      /*
       if (message->delivers == 0)
-	unqueue_message(message);
+	unqueue_message(message); 
+      */
       
       pthread_mutex_unlock(&message->mutex);
       
@@ -814,11 +813,9 @@ void fetch_stream(tdata_t *thread) {
     case CTL_CL_PMSG:
       item->tothread = stream.data.chat.type.privmsg.idto;
     case CTL_CL_BMSG:
+    case CTL_CL_DRW:
     case CTL_CL_FIG:
       queue_message(item, thread);
-      break;
-
-    case CTL_CL_DRW:
       break;
 
     case CTL_CL_FILEASK:
@@ -827,12 +824,13 @@ void fetch_stream(tdata_t *thread) {
 
 
     case CTL_CL_DISC:
-      item->stream.header.endian = 0;
+    case CTL_NOPIPE:
+      item->stream.header.endian = 1;
       item->stream.header.cbyte = CTL_SV_CLRM;
       item->stream.header.ssize = HEADER_SIZE + 1;
       item->stream.data.control.idfrom = thread->client->fd;
       queue_message(item, thread);
-      thread->tstate = THREAD_STATE_END;
+      set_tstate(thread, THREAD_STATE_END);
       break;
 
     default:
@@ -933,6 +931,15 @@ void unqueue_message(mitem_t *msg){
  */
 void manage_client_cleanup(void *arg) {
   tdata_t *thread = (tdata_t *) arg;
+  
+  /* First thing to do set this state to free     */
+  /* so no other thread can access thread->client */
+  /* memmory. thread->client memmory is accesed   */
+  /* or should be accesed only when thread state  */
+  /* is ACTIVE or INIT.                           */
+  set_tstate(thread, THREAD_STATE_FREE);
+  tellapic_send_ctl(thread->client->fd, thread->client->fd, CTL_CL_DISC);
+
   char  buff[128];
   sprintf(buff, "[</8>WRN<!8>]:\tThread %d is closing link now...", thread->tnum);
   print_output(buff);
@@ -941,9 +948,6 @@ void manage_client_cleanup(void *arg) {
 
   close(thread->client->fd);
   free(thread->client);
-
-  /* set this state to free */
-  set_tstate(thread, THREAD_STATE_FREE);
 }
 
 
