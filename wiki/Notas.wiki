@@ -213,7 +213,8 @@ El byte de control puede indicar todas estas cosas:
 
 }}}
 
-        CTL_CL_BMSG       0x11 (17)
+----
+        =CTL_CL_BMSG       0x11 (17)=
 
         * Descripción:
                 Mensaje global de un usuario hacia todos los demás usuarios conectados. (broadcast message)
@@ -257,7 +258,7 @@ El byte de control puede indicar todas estas cosas:
 
 ----
 
-        CTL_CL_PMSG       0x21 (_33_)
+        =CTL_CL_PMSG       0x21 (33)=
         
         * Descripción:
                 Mensaje privado de un usuario hacia uno particular que esté conectado. (private message)
@@ -299,8 +300,7 @@ El byte de control puede indicar todas estas cosas:
 
 ----
 
-
-        CTL_CL_FIG        0x31 (49)
+        =CTL_CL_FIG        0x31 (49)=
 
         * Descripción:
                 Una "figura" que se ha dibujado por algún cliente.
@@ -385,7 +385,7 @@ El byte de control puede indicar todas estas cosas:
 
 ----
 
-        CTL_CL_DRW        0x41 (65)
+        =CTL_CL_DRW        0x41 (65)=
         
         * Descripción: 
                 Un "dibujo" que está siendo dibujado (live mode)
@@ -519,7 +519,7 @@ El byte de control puede indicar todas estas cosas:
 
 ----
 
-CTL_SV_CLADD      0x10 (16)
+   =CTL_SV_CLADD      0x10 (16)=
 
   * Descripción:
 Indica que un nuevo cliente se a conectado al servidor. Provee el id y el nombre del cliente que se acaba de conectar. De esta forma,
@@ -559,7 +559,7 @@ Tamaño del STREAM.
 
 }}}
 
-        CTL_SV_CLRM       0x20 (32)
+        =CTL_SV_CLRM       0x20 (32)=
 
   * Descripción:
 Informa la desconexión de un cliente.
@@ -598,7 +598,7 @@ Informa la desconexión de un cliente.
 
 ----
 
-CTL_SV_CLIST      0x30 (48)
+    =CTL_SV_CLIST      0x30 (48)=
 
   * Descripción:
 Una lista de los clientes que se encuentran actualmente conectados al servidor. El tamaño del paquete es variable, dependiendo 
@@ -640,7 +640,7 @@ seguido de una lista de (id, nombre) donde nombre es una cadena null terminated.
 
 ----
 
-CTL_CL_CLIST      0x51 (81)
+    =CTL_CL_CLIST      0x51 (81)=
 
   * Descripción:
 Solicitar al servidor la lista de clientes conectados.
@@ -678,7 +678,7 @@ Tamaño del STREAM.
 
 ----
 
-       CTL_SV_PWDASK     0x40 (64)
+     =CTL_SV_PWDASK     0x40 (64)=
 
   * Descripción:
 Solicitar la contraseña de sesión al cliente que intenta comunicarse.
@@ -716,7 +716,7 @@ Solicitar la contraseña de sesión al cliente que intenta comunicarse.
 
 ----
 
-CTL_CL_PWD        0x61 (97)
+    =CTL_CL_PWD        0x61 (97)=
 
   * Descripción:
 Un paquete con la contraseña de sesión enviado por un cliente.
@@ -755,7 +755,7 @@ Un paquete con la contraseña de sesión enviado por un cliente.
 
 ----
 
-CTL_SV_PWDOK      0x50 (80)
+    =CTL_SV_PWDOK      0x50 (80)=
 
   * Descripción:
 Informa que la contraseña de sesión enviada por el cliente es correcta.
@@ -776,8 +776,9 @@ Informa que la contraseña de sesión enviada por el cliente es correcta.
   * Bytes de datos:
   - <id>: el id del cliente que envió la contraseña.
 
+----
 
-CTL_SV_PWDFAIL    0x60 (96)
+   =CTL_SV_PWDFAIL    0x60 (96)=
 
   * Descripción:
 Informa que la contraseña de sesión enviada por el cliente es incorrecta.
@@ -802,7 +803,7 @@ Informa que la contraseña de sesión enviada por el cliente es incorrecta.
 
 ----
 
-CTL_CL_FILEASK    0x71 (113)
+    =CTL_CL_FILEASK    0x71 (113)=
 
   * Descripción:
 Petición del archivo de imagen que se está "observando" corrientemente. Un cliente recién conectado puede solicitar
@@ -824,7 +825,7 @@ al servidor que le pase el archivo que el cliente que inició la sesión (o el d
 
 ----
 
-CTL_CL_FILEOK     0x81 (129)
+    =CTL_CL_FILEOK     0x81 (129)=
 
   * Descripción:
 Informa que el archivo de imagen se recibió correctamente.
@@ -845,7 +846,7 @@ Informa que el archivo de imagen se recibió correctamente.
 
 ----
 
-CTL_SV_FILE       0x70 (112)
+   =CTL_SV_FILE       0x70 (112)=
 
   * Descripción:
 Archivo de imagen a enviar a un cliente que lo solicitó.
