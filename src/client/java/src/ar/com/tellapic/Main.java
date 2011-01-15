@@ -15,16 +15,21 @@
  *         sebastian.treu(at)gmail.com
  *
  */  
-package ar.com.tellapic.graphics;
+package ar.com.tellapic;
 
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
-import ar.com.tellapic.MainDialog;
-import ar.com.tellapic.NetManager;
-import ar.com.tellapic.SessionUtils;
-import ar.com.tellapic.UserManager;
+import ar.com.tellapic.graphics.DrawingAreaModel;
+import ar.com.tellapic.graphics.DrawingAreaView;
+import ar.com.tellapic.graphics.EllipseNet;
+import ar.com.tellapic.graphics.LineNet;
+import ar.com.tellapic.graphics.MarkerNet;
+import ar.com.tellapic.graphics.RectangleNet;
+import ar.com.tellapic.graphics.TextNet;
+import ar.com.tellapic.graphics.ToolFactory;
+import ar.com.tellapic.graphics.Zoom;
 import ar.com.tellapic.lib.tellapicConstants;
 import ar.com.tellapic.utils.Utils;
 
