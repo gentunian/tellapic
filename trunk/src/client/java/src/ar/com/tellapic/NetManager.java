@@ -308,11 +308,17 @@ public class NetManager extends Observable {
 						IPaintPropertyController c = remoteUser.getPaintController();
 
 						remoteUser.getToolboxController().selectToolByName(toolClassName.split("[a-z].*\\.")[1]);
-						c.handleEndCapsChange(drawing.getType().getFigure().getEndcaps());
-						c.handleLineJoinsChange(drawing.getType().getFigure().getLinejoin());
-						c.handleOpacityChange(drawing.getOpacity());
-						c.handleWidthChange((int)drawing.getWidth());
-						
+						if ((remoteTool & tellapicConstants.TOOL_TEXT) == tellapicConstants.TOOL_TEXT) {
+							c.handleFontSizeChange((int)drawing.getWidth());
+							c.handleFontStyleChange(drawing.getType().getText().getStyle());
+							c.handleTextChange(drawing.getType().getText().getInfo());
+							c.handleFontFaceChange(drawing.getType().getText().getFace());
+						} else {
+							c.handleEndCapsChange(drawing.getType().getFigure().getEndcaps());
+							c.handleLineJoinsChange(drawing.getType().getFigure().getLinejoin());
+							c.handleOpacityChange(drawing.getOpacity());
+							c.handleWidthChange((int)drawing.getWidth());
+						}
 						createAndDispatchPressEvent(remoteUser, drawing, eventAndButton, eventExt);
 						createAndDispatchDragEvent(remoteUser, drawing, eventAndButton, eventExt);
 						createAndDispatchReleaseEvent(remoteUser, drawing, eventAndButton, eventExt);

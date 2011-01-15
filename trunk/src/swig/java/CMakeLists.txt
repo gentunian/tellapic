@@ -1,5 +1,3 @@
-#include(FindSWIG)
-find_package(SWIG REQUIRED)
 find_package(Java)
 
 include(FindJNI)
@@ -27,12 +25,12 @@ set(CMAKE_SWIG_FLAGS "-package" ${SWIG_JAVA_PACKAGE_NAME})
 
 # Sets  -outdir <dir>   - Set language specific files output directory to <dir>
 # This is where .java generetad files will go. Better path? It will flood the dir with .java files
-set(CMAKE_SWIG_OUTDIR ar/com/tellapic/lib) 
+set(CMAKE_SWIG_OUTDIR ${CMAKE_CURRENT_BINARY_DIR}/ar/com/tellapic/lib) 
 
 
 #
 #
-set(LIBRARY_OUTPUT_PATH ${EXECUTABLE_OUTPUT_PATH}/lib/java) 
+#set(LIBRARY_OUTPUT_PATH ${EXECUTABLE_OUTPUT_PATH}/lib/java) 
 
 
 # Add the java module and link it
@@ -57,6 +55,6 @@ endif()
 add_custom_command(
   TARGET tellapicjava 
   POST_BUILD 
-  COMMAND ${Java_JAVAC_EXECUTABLE} ARGS ${JAVA_DEBUG_FLAG} ar/com/tellapic/lib/*.java
-  COMMAND ${Java_JAR_EXECUTABLE} ARGS -cfv ${EXECUTABLE_OUTPUT_PATH}/lib/java/tellapicjava.jar ar
+  COMMAND ${Java_JAVAC_EXECUTABLE} ARGS ${JAVA_DEBUG_FLAG} ${CMAKE_CURRENT_BINARY_DIR}/ar/com/tellapic/lib/*.java
+  COMMAND ${Java_JAR_EXECUTABLE} ARGS -cfv tellapicjava.jar ${CMAKE_CURRENT_BINARY_DIR}/ar
   )
