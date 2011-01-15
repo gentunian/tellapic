@@ -55,6 +55,6 @@ endif()
 add_custom_command(
   TARGET tellapicjava 
   POST_BUILD 
-  COMMAND ${Java_JAVAC_EXECUTABLE} ARGS ${JAVA_DEBUG_FLAG} ${CMAKE_CURRENT_BINARY_DIR}/ar/com/tellapic/lib/*.java
-  COMMAND ${Java_JAR_EXECUTABLE} ARGS -cfv tellapicjava.jar ${CMAKE_CURRENT_BINARY_DIR}/ar
+  COMMAND cmake -E chdir ${CMAKE_CURRENT_BINARY_DIR} ${Java_JAVAC_EXECUTABLE} ARGS ${JAVA_DEBUG_FLAG} ar/com/tellapic/lib/*.java
+  COMMAND cmake -E chdir ${CMAKE_CURRENT_BINARY_DIR} ${Java_JAR_EXECUTABLE} ARGS -cfv tellapicjava.jar ar
   )
