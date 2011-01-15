@@ -623,9 +623,9 @@ __setddata(byte_t *rawstream, stream_t stream)
 	  // Treat text different
 	  __settextstyle(rawstream, stream.data.drawing.type.text.style);
 	  __setfacelen(rawstream, stream.data.drawing.type.text.facelen);
-	  memcpy(rawstream + DDATA_FONTFACE_INDEX, stream.data.drawing.type.text.face, stream.data.drawing.type.text.facelen);
+	  memcpy(rawstream + DDATA_FONTFACE_INDEX + HEADER_SIZE, stream.data.drawing.type.text.face, stream.data.drawing.type.text.facelen);
 	  long textsize = stream.header.ssize - (HEADER_SIZE + DDATA_TEXT_INDEX(stream.data.drawing.type.text.facelen));
-	  memcpy(rawstream + DDATA_TEXT_INDEX(stream.data.drawing.type.text.facelen), stream.data.drawing.type.text.info, textsize);
+	  memcpy(rawstream + DDATA_TEXT_INDEX(stream.data.drawing.type.text.facelen) + HEADER_SIZE, stream.data.drawing.type.text.info, textsize);
 	}
     }
   else {
@@ -1254,7 +1254,8 @@ tellapic_send_text(int fd, int idfrom, int dnum, float w, float op, int red, int
   byte_t rawstream[ssize];
 
   __setendian(rawstream);
-  __setcbyte(rawstream, TOOL_TEXT | EVENT_NULL);
+  __setcbyte(rawstream, CTL_CL_FIG);
+  __setdcbyte(rawstream, TOOL_TEXT | EVENT_NULL);
   __setssize(rawstream, ssize);
   __setidfrom(rawstream, idfrom);
   __setdnum(rawstream, dnum);
@@ -1268,8 +1269,8 @@ tellapic_send_text(int fd, int idfrom, int dnum, float w, float op, int red, int
   __settextstyle(rawstream, style);
   __setfacelen(rawstream, facelen);
 
-  memcpy(rawstream+HEADER_SIZE+DDATA_FONTFACE_INDEX, face, facelen);
-  memcpy(rawstream+HEADER_SIZE+DDATA_TEXT_INDEX(facelen), text, textlen);
+  memcpy(rawstream + HEADER_SIZE + DDATA_FONTFACE_INDEX, face, facelen);
+  memcpy(rawstream + HEADER_SIZE + DDATA_TEXT_INDEX(facelen), text, textlen);
   
   int r = send(fd, rawstream, ssize, 0);
 

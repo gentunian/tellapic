@@ -56,11 +56,12 @@ final public class TextNet extends Text {
 			return drawing;
 		
 		if (NetManager.getInstance().isConnected() && avoidLoopback) {
+			
 			tellapic.tellapic_send_text(
 					NetManager.getInstance().getFd(),
 					SessionUtils.getId(),
 					1,
-					((BasicStroke)drawing.getStroke()).getLineWidth(),
+					drawing.getFont().getSize2D(),
 					((AlphaComposite)drawing.getComposite()).getAlpha(),
 					drawing.getColor().getRed(),
 					drawing.getColor().getGreen(),
