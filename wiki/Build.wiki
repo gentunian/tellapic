@@ -1,0 +1,85 @@
+To build this package you will need cmake installed (2.8 preferred) and svn for download the sources.
+
+== Downloading the sources ==
+
+Create a directory to place the sources.
+
+{{{
+~ $ mkdir trunk
+~ $ cd trunk/
+~ $ svn checkout http://tellapic.googlecode.com/svn/trunk/ tellapic-read-only
+}}}
+
+When building, you should change to the tellapic-read-only directory.
+
+== Building all ==
+
+You will need this libraries installed on your system:
+
+  *Curses Development Kit (CDK library version 5.0). Future release will have this dependency as optional, but you won't be able to 'debug' on-the-fly the server instance.
+  *pthread (currently used version 2.12.2).
+
+{{{
+~ $ cd tellapic-read-only/
+~ $ mkdir build
+~ $ cd build/
+~ $ cmake ..
+~ $ make
+}}}
+
+== Building wrappers ==
+
+For *java* library:
+
+No extra dependency is needed more than jdk. Version of jdk used was openjdk6.
+
+{{{
+~ $ cd tellapic-read-only/
+~ $ mkdir build
+~ $ cd build/
+~ $ cmake ..
+~ $ make tellapicjava
+}}}
+
+For *python* lybrary:
+
+No extra dependency is needed.
+
+{{{
+~ $ cd tellapic-read-only/
+~ $ mkdir build
+~ $ cd build/
+~ $ cmake ..
+~ $ make pytellapic
+}}}
+
+= Details =
+
+Build output will be placed in <source-root>:
+{{{
+ + build
+ `------+ src
+        `------+ lib
+        |      `------+ tellapic.so
+        |
+        `------+ server
+        |      `------+ server
+        |
+        `------+ swig
+               `------+ python
+               |      `------+ _pytellapic.so
+               |      `------+ pytellapic.py
+               |
+               `------+ java
+                      `------+ tellapicjava.jar
+                      `------+ libtellapicjava.so
+}}}
+
+== List of files ==
+
+|| *tellapic.so* || _is the native protocol library written in c._ ||
+|| *server* || _is the server executable instance._ ||
+|| *`_`pytellapic.so* || _is the SWIG generated library to interact with python programs._ ||
+|| *pytellapic.py* || _is the SWIG generated python file for use within python programs._ ||
+|| *tellapijava.jar* ||   _is the SWIG generated java JNI classes._ ||
+|| *libtellapicjava.so* || _is the java native library._ ||
