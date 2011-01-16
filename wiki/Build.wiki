@@ -18,9 +18,9 @@ When building, you should change to the tellapic-read-only directory.
 
 You will need this libraries installed on your system:
 
-  *Curses Development Kit (CDK library version 5.0). Future release will have this dependency as optional, but you won't be able to 'debug' on-the-fly the server instance.
-  *pthread (currently used version 2.12.2).
-  *SWIG wrapper (2.0.1).
+  * Curses Development Kit (CDK library version 5.0). Future release will have this dependency as optional, but you won't be able to 'debug' on-the-fly the server instance.
+  * pthread (currently used version 2.12.2).
+  * SWIG wrapper (2.0.1).
 
 {{{
 ~ $ cd tellapic-read-only/
@@ -35,7 +35,7 @@ You can build just the wrapper. The next sections shows how to do it.
 == Building wrappers ==
 
 For all wrappers you will need:
-  *SWIG wrapper (2.0.1).
+  * SWIG wrapper (2.0.1).
 
 Building for *java* library:
 
