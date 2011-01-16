@@ -29,6 +29,8 @@ You will need this libraries installed on your system:
 ~ $ make
 }}}
 
+You can build just the wrapper. The next sections shows how to do it.
+
 == Building wrappers ==
 
 For *java* library:
