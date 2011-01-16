@@ -559,6 +559,8 @@ Tamaño del STREAM.
 
 }}}
 
+----
+
         =CTL_SV_CLRM       0x20 (32)=
 
   * Descripción:
