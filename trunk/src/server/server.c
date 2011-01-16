@@ -49,8 +49,12 @@ list_t             *msgqueue;
 MUTEX_TYPE         queuemutex = PTHREAD_MUTEX_INITIALIZER;
 int                CONTINUE = 1; //this NEEDS to be global as the handler interrupt manages program execution
 args_t             args;
-console_t          *console = NULL;
 
+#ifdef CDK_AWARE
+console_t          *console = NULL;
+#else
+char *console = NULL;
+#endif
 
 
 /**
@@ -99,9 +103,13 @@ int main(int argc, char *argv[]) {
   thread_data[SV_THREAD].tstate = THREAD_STATE_ACT;                        /* set server thread state as active */
   setnonblock(args.svfd);
 
-  //console = console_create("<C>Server output\0", "</B/24> >>> \0");
+#ifdef CDK_AWARE
+  console = console_create("<C>Server output\0", "</B/24> >>> \0");
   if (console == NULL)
     print_output("Could not start console: \n");
+#else
+  print_output("Could no start console. No cdk library found.");
+#endif
 
   int fdmax = args.svfd + 1;
   FD_ZERO(&readset);
