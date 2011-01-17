@@ -580,7 +580,10 @@ public class NetManager extends Observable {
 				svcontrol_t ctle = stream.getData().getControl();
 				int id = ctle.getIdfrom();
 				//String name = tellapic.tellapic_bytetp2charp(ctle.getInfo());
-				String name = ctle.getInfo().toString();
+				short[] s = ctle.getInfo();
+				String name = "";
+				for(int i =0 ; s[i] != 0; i++)
+					name += (char)s[i];
 				UserManager.getInstance().addUser(id, name);
 				
 			case tellapicConstants.CTL_SV_FILE:
