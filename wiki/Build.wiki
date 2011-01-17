@@ -21,6 +21,8 @@ You will need this libraries installed on your system:
   * Curses Development Kit (CDK library version 5.0). Future release will have this dependency as optional, but you won't be able to 'debug' on-the-fly the server instance.
   * pthread (currently used version 2.12.2).
   * SWIG wrapper (2.0.1).
+  * Java JDK 1.5.
+  * Python 2.7.1.
 
 {{{
 ~ $ cd tellapic-read-only/
