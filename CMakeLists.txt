@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 2.8)
 # CMake modules
 set(CMAKE_MODULE_PATH ${tellapic_SOURCE_DIR}/Modules ${CMAKE_MODULE_PATH})
 
-find_package(CDK REQUIRED)
+find_package(CDK QUIET)
 find_package(pthread REQUIRED)
 #find_package(OpenSSL REQUIRED)
 

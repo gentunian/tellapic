@@ -18,7 +18,6 @@
 package ar.com.tellapic.graphics;
 
 import java.awt.AlphaComposite;
-import java.awt.BasicStroke;
 
 import ar.com.tellapic.NetManager;
 import ar.com.tellapic.SessionUtils;

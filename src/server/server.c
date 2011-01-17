@@ -31,7 +31,10 @@
 #include <ncurses.h>
 #include <termios.h>
 
+#ifdef CDK_AWARE
 #include "console.h"
+#endif
+
 #include "server.h"
 #include "types.h"
 #include "constants.h"
@@ -114,11 +117,11 @@ int main(int argc, char *argv[]) {
   int fdmax = args.svfd + 1;
   FD_ZERO(&readset);
   FD_SET(args.svfd, &readset);
-  if (console != NULL)
-    {
-      fdmax = MAX(args.svfd, console->infd);
-      FD_SET(console->infd, &readset);
-    }
+
+#ifdef CDK_AWARE
+  fdmax = MAX(args.svfd, console->infd);
+  FD_SET(console->infd, &readset);
+#endif
 
   while(CONTINUE) 
     {
@@ -136,8 +139,10 @@ int main(int argc, char *argv[]) {
 	{
 	  /* Is selects exits with <0 then take that error as fatal and end the server */
 	  print_output("</K/16>[ERR]:\tFatal error... Terminating server...<!K!16>");
+#ifdef CDK_AWARE
 	  if (console != NULL)
 	    console_destroy(console);
+#endif
 	  CONTINUE = 0;
 	}
       else 
@@ -172,7 +177,7 @@ int main(int argc, char *argv[]) {
 		}
 	    }
 	  
-
+#ifdef CDK_AWARE
 	  /*************************************************************/
 	  /* Check if select() call exit for reading a console command */
 	  /*************************************************************/
@@ -201,6 +206,7 @@ int main(int argc, char *argv[]) {
 	      /* Set to 0 the command line buffer */
 	      memset(cMsgBuf, 0, 256);
 	    }
+#endif
 	}
     }
 
@@ -217,7 +223,9 @@ int main(int argc, char *argv[]) {
   pthread_attr_destroy(&joinattr);
 
   /* Destroy the console instance. */
+#ifdef CDK_AWARE
   if (console != NULL) console_destroy(console);
+#endif
 
   print_output("[NFO]:\tCurses unloaded.");
 
@@ -1193,8 +1201,10 @@ void thread_abort() {
 void signal_handler(int sig) {
   switch(sig) {
   case SIGINT:
+#ifdef CDK_AWARE
     if (console != NULL && !console_isenabled(console))
       console_enable(console);
+#endif
     break;
 
   case SIGPIPE:
