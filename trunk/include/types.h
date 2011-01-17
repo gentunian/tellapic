@@ -19,7 +19,6 @@
 
 typedef unsigned char byte_t;  //basic byte unit
 
-
 typedef struct {
   byte_t red;
   byte_t green;
