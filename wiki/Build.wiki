@@ -1,6 +1,6 @@
 <wiki:toc max_depth="2" />
 
-To build this package you will need cmake installed (2.8 preferred) and svn for download the sources.
+To build this package you will need cmake installed (2.8 preferred), and svn for download the sources.
 
 == Downloading the sources ==
 
@@ -18,11 +18,18 @@ When building, you should change to the tellapic-read-only directory.
 
 You will need this libraries installed on your system:
 
-  * Curses Development Kit (CDK library version 5.0). Future release will have this dependency as optional, but you won't be able to 'debug' on-the-fly the server instance.
+  * [http://invisible-island.net/cdk/ Curses Development Kit] (CDK library version 5.0). Optional, but you won't be able to 'debug' on-the-fly the server instance.
   * pthread (currently used version 2.12.2).
-  * SWIG wrapper (2.0.1).
-  * Java JDK 1.5.
-  * Python 2.7.1.
+
+And this tools:
+
+  * A C compiler for your operating system (Linux or Windows supported).
+  * [http://download.microsoft.com/download/vc15/patch/1.52/w95/en-us/nmake15.exe NMake] for *Windows*.
+  * [http://ftp.gnu.org/gnu/make/make-3.82.tar.gz Make] 3.82 for *Linux*.
+  * [http://www.cmake.org/cmake/resources/software.html CMake] 2.8 preferred.
+  * [http://www.swig.org SWIG wrapper] (2.0.1).
+  * [http://www.oracle.com/technetwork/java/javase/downloads/index.html Java Development Kit] (JDK 1.5 or above).
+  * [http://www.python.org/download/ Python] 2.7.1.
 
 {{{
 ~ $ cd tellapic-read-only/
@@ -38,6 +45,7 @@ You can build just the wrapper. The next sections shows how to do it.
 
 For all wrappers you will need:
   * SWIG wrapper (2.0.1).
+  * The correspondent language compiler or development kit.
 
 Building for *java* library:
 
