@@ -1,6 +1,6 @@
 <wiki:toc max_depth="2" />
 
-To build this package you will need cmake installed (2.8 preferred), and svn for download the sources.
+To build this package you will need cmake installed (2.8 preferred), and svn for download the sources. *Only linux build is supported.*
 
 == Downloading the sources ==
 
