@@ -1,11 +1,13 @@
 #
 set(COMMON_FILES ${tellapic_SOURCE_DIR}/src/common/list.c ${tellapic_SOURCE_DIR}/src/common/common.c)
 
-if (DEFINED CDK_AWARE)
-  set(COMMON_FILES ${COMMON_FILES} ${tellapic_SOURCE_DIR}/src/common/console.c)
+if (CDK_FOUND MATCHES TRUE)
+  set(ALL_FILES ${COMMON_FILES} ${tellapic_SOURCE_DIR}/src/common/console.c)
+  set(CDK_COMPILE_FLAG "-DCDK_AWARE=1")
 endif()
+
 # Set the server.c file to compile.
-set(SERVER_FILE ${COMMON_FILES} server.c)
+set(SERVER_FILE ${ALL_FILES} server.c)
 
 #
 include_directories(${INCDIR})
@@ -15,10 +17,6 @@ add_executable(server ${SERVER_FILE})
 
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
   set(DEBUG_COMPILE_FLAG "-DDEBUG=1")
-endif()
-
-if(DEFINED CDK_FOUND)
-  set(CDK_COMPILE_FLAG "-DCDK_AWARE=1")
 endif()
 
 #
