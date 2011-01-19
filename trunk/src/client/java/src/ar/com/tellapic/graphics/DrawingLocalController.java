@@ -174,7 +174,9 @@ public class DrawingLocalController extends MouseAdapter {
 				drawing.setStroke(toolBoxState.getStrokeProperty());
 			if (usedTool.hasFontProperties())
 				drawing.setFont(toolBoxState.getFontProperty());
-
+			if (usedTool.hasColorProperties())
+				drawing.setColor(toolBoxState.getColorProperty());
+			
 			// TODO: do we really need send every time the drawing? Its a reference, change the value
 			// and use it later on the view.
 			//view.update(usedTool.onMove(event.getX(), event.getY()), id);

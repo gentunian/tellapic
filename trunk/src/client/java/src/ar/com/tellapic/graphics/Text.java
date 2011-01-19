@@ -1,5 +1,6 @@
 package ar.com.tellapic.graphics;
 
+import java.awt.Cursor;
 import java.awt.geom.Point2D;
 
 import ar.com.tellapic.lib.tellapicConstants;
@@ -12,7 +13,7 @@ public class Text extends Tool {
 	
 	
 	public Text(String name) {
-		super(tellapicConstants.TOOL_TEXT, name, "/icons/text.png", Utils.msg.getString("texttooltip"));
+		super(tellapicConstants.TOOL_TEXT, name, "/icons/text.png", Utils.msg.getString("texttooltip"), Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
 		firstPoint = new Point2D.Double();
 		temporalDrawing = new Drawing(getName());
 		temporalDrawing.setShape(null);
@@ -20,11 +21,7 @@ public class Text extends Tool {
 	
 	
 	public Text() {
-		super(tellapicConstants.TOOL_TEXT, "Text", "/icons/text.png", Utils.msg.getString("texttooltip"));
-		firstPoint = new Point2D.Double();
-		temporalDrawing = new Drawing(getName());
-		temporalDrawing.setShape(null);
-		
+		this("Text");
 	}
 
 

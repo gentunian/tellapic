@@ -100,7 +100,7 @@ public abstract class AbstractUser extends Observable {
 	
 	public void addDrawing(Drawing drawing) {
 		// If the drawing we are added is a temporal, then, it should no more be one.
-		if (temporalDrawing.equals(drawing))
+		if (temporalDrawing!= null && temporalDrawing.equals(drawing))
 			temporalDrawing = null;
 		
 		drawingList.add(drawing);

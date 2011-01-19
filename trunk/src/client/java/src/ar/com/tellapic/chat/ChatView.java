@@ -41,6 +41,7 @@ import javax.swing.LayoutStyle;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.text.DefaultCaret;
 import javax.swing.text.Keymap;
 
 import ar.com.tellapic.UserManager;
@@ -140,7 +141,9 @@ public class ChatView extends JPanel implements Observer {
 
 				// The input text
 				String text = inputText.getText();
-
+				if (text.length() == 0)
+					return;
+				
 				if (controller != null) {
 					Map.Entry<String, Message> mapEntry = Message.build(UserManager.getInstance().getLocalUser().getName(), pvt? currentTabTitle : null, text);
 					Message message = mapEntry.getValue();
@@ -179,9 +182,11 @@ public class ChatView extends JPanel implements Observer {
 
 		// Set a scroll bar to the tab text area and set scrollbar's properties
 		JScrollPane areaScrollPane = new JScrollPane(content);
-		areaScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+		areaScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 		areaScrollPane.setPreferredSize(new Dimension(250, 250));
-
+		areaScrollPane.setAutoscrolls(true);
+		areaScrollPane.setWheelScrollingEnabled(true);
+		
 		// Add a tab to the tabbed pane
 		tabbedPane.addTab(title, areaScrollPane);
 
@@ -203,6 +208,9 @@ public class ChatView extends JPanel implements Observer {
 		textArea.append(message);
 		if (tabIndex != currentTabIndex)
 			((ChatViewTabComponent)tabbedPane.getTabComponentAt(tabIndex)).setTitleColor(Color.red);
+		DefaultCaret caret = (DefaultCaret)textArea.getCaret();
+		caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
+
 	}
 	
 	/* (non-Javadoc)
