@@ -7,7 +7,15 @@ cmake_minimum_required(VERSION 2.8)
 # CMake modules
 set(CMAKE_MODULE_PATH ${tellapic_SOURCE_DIR}/Modules ${CMAKE_MODULE_PATH})
 
-find_package(CDK QUIET)
+find_package(CURSES QUIET)
+
+# This is a bug workaround. Doing find_package(CDK QUIET) will not work if Curses aren't present on the system.
+# (IMHO it should, instead of quitting cmake).
+# FindCDK should propagate the QUIET, REQUIRED, EXACT, etc argument to the find_package(CURSES REQUIRED) call.
+if (CURSES_FOUND MATCHES TRUE)
+  find_package(CDK QUIET)
+endif()
+
 find_package(pthread REQUIRED)
 #find_package(OpenSSL REQUIRED)
 
