@@ -21,6 +21,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Observable;
 
@@ -30,9 +32,12 @@ import javax.swing.JOptionPane;
 import ar.com.tellapic.chat.ChatController;
 import ar.com.tellapic.chat.IChatController;
 import ar.com.tellapic.chat.Message;
+import ar.com.tellapic.graphics.Drawing;
 import ar.com.tellapic.graphics.DrawingAreaView;
 import ar.com.tellapic.graphics.IPaintPropertyController;
 import ar.com.tellapic.graphics.RemoteMouseEvent;
+import ar.com.tellapic.graphics.Tool;
+import ar.com.tellapic.graphics.ToolBoxModel;
 import ar.com.tellapic.graphics.ToolFactory;
 import ar.com.tellapic.lib.ddata_t;
 import ar.com.tellapic.lib.message_t;
@@ -258,7 +263,6 @@ public class NetManager extends Observable {
 			running = true;
 			while(running && isConnected()) {
 				stream = tellapic.tellapic_read_stream_b(fd);
-				System.out.println("something read");
 
 				if (stream.getHeader().getCbyte() != tellapicConstants.CTL_FAIL) {
 					
@@ -299,35 +303,8 @@ public class NetManager extends Observable {
 						
 					} else if (tellapic.tellapic_isfig(stream.getHeader()) == 1) {
 						System.out.println("Was fig");
-						ddata_t    drawing         = stream.getData().getDrawing();
-						RemoteUser remoteUser      = (RemoteUser) UserManager.getInstance().getUser(drawing.getIdfrom());
-						int        remoteTool      = drawing.getDcbyte() & tellapicConstants.TOOL_MASK;
-						int        eventAndButton  = drawing.getDcbyte() & (tellapicConstants.EVENT_MASK | tellapicConstants.BUTTON_MASK);
-						int        eventExt        = drawing.getDcbyte_ext();
-						String     toolClassName   = ToolFactory.getRegisteredToolsClassNames().get(remoteTool);
-						IPaintPropertyController c = remoteUser.getPaintController();
-
-						remoteUser.getToolboxController().selectToolByName(toolClassName.split("[a-z].*\\.")[1]);
-						if ((remoteTool & tellapicConstants.TOOL_TEXT) == tellapicConstants.TOOL_TEXT) {
-							c.handleFontSizeChange((int)drawing.getWidth());
-							c.handleFontStyleChange(drawing.getType().getText().getStyle());
-							c.handleTextChange(drawing.getType().getText().getInfo());
-							c.handleFontFaceChange(drawing.getType().getText().getFace());
-						} else {
-							c.handleEndCapsChange(drawing.getType().getFigure().getEndcaps());
-							c.handleLineJoinsChange(drawing.getType().getFigure().getLinejoin());
-							c.handleOpacityChange(drawing.getOpacity());
-							c.handleWidthChange((int)drawing.getWidth());
-						}
-						createAndDispatchPressEvent(remoteUser, drawing, eventAndButton, eventExt);
-						createAndDispatchDragEvent(remoteUser, drawing, eventAndButton, eventExt);
-						createAndDispatchReleaseEvent(remoteUser, drawing, eventAndButton, eventExt);
-						
-						int x1 = (int)drawing.getPoint1().getX();
-						int y1 = (int)drawing.getPoint1().getY();
-						int x2 = (int)drawing.getType().getFigure().getPoint2().getX();
-						int y2 = (int)drawing.getType().getFigure().getPoint2().getY();
-						System.out.println("RECEIVED COORDS: ("+x1+","+y1+") ("+x2+","+y2+")");
+						ddata_t    drawing    = stream.getData().getDrawing();
+						createAndAddFigure(drawing);
 						
 					} else if (tellapic.tellapic_isfigtxt(stream) == 1) {
 						System.out.println("Was text");
@@ -344,129 +321,321 @@ public class NetManager extends Observable {
 		/**
 		 * @param drawing
 		 */
-		private void createAndAddDrawing(ddata_t drawingData) {
-			Map<Integer, String> toolsClassNames = ToolFactory.getRegisteredToolsClassNames();
-			int        remoteTool      = drawingData.getDcbyte() & tellapicConstants.TOOL_MASK;
-			String     toolClassName   = toolsClassNames.get(remoteTool);
-			RemoteUser remoteUser      = (RemoteUser) UserManager.getInstance().getUser(drawingData.getIdfrom());
-			int        eventAndButton  = drawingData.getDcbyte() & (tellapicConstants.EVENT_MASK | tellapicConstants.BUTTON_MASK);
-			int        eventExtMod     = drawingData.getDcbyte_ext();
+		private void createAndAddFigure(ddata_t drawingData) {
+			/* Get the remote user who has drawn this figure */
+			RemoteUser remoteUser = (RemoteUser) UserManager.getInstance().getUser(drawingData.getIdfrom());
 			
-			switch(eventAndButton & tellapicConstants.EVENT_MASK) {
-
-			case tellapicConstants.EVENT_PRESS:
-				IPaintPropertyController c = remoteUser.getPaintController();
-				remoteUser.getToolboxController().selectToolByName(toolClassName.split("[a-z].*\\.")[1]);
+			/* Get the drawing control byte from protocol */
+			int dcbyte = drawingData.getDcbyte();
+			
+			/* Get the remote tool id he/she has used */
+			int remoteTool = dcbyte & tellapicConstants.TOOL_MASK;
+			
+			/* Get the mouse and event protocol data used in this figure */
+			int button   = dcbyte & tellapicConstants.EVENT_MASK;
+			int eventExt = drawingData.getDcbyte_ext();
+			
+			/* Get the tool class name for this local user */
+			String toolClassName = ToolFactory.getRegisteredToolsClassNames().get(remoteTool);
+			
+			/* Get the remote user paint controller */
+			IPaintPropertyController c = remoteUser.getPaintController();
+			ToolBoxModel toolBoxState  = remoteUser.getToolBoxModel();
+			
+			remoteUser.getToolboxController().selectToolByName(toolClassName.split("[a-z].*\\.")[1]);
+			
+			if ((remoteTool & tellapicConstants.TOOL_TEXT) == tellapicConstants.TOOL_TEXT) {
+				c.handleFontSizeChange((int)drawingData.getWidth());
+				c.handleFontStyleChange(drawingData.getType().getText().getStyle());
+				c.handleTextChange(drawingData.getType().getText().getInfo());
+				c.handleFontFaceChange(drawingData.getType().getText().getFace());
+				
+			} else {
 				c.handleEndCapsChange(drawingData.getType().getFigure().getEndcaps());
 				c.handleLineJoinsChange(drawingData.getType().getFigure().getLinejoin());
 				c.handleOpacityChange(drawingData.getOpacity());
 				c.handleWidthChange((int)drawingData.getWidth());
-				createAndDispatchPressEvent(remoteUser, drawingData, eventAndButton, eventExtMod);
-				break;
-
-			case tellapicConstants.EVENT_DRAG:
-				createAndDispatchDragEvent(remoteUser, drawingData, eventAndButton, eventExtMod);
-				break;
-
-			case tellapicConstants.EVENT_RELEASE:
-				createAndDispatchReleaseEvent(remoteUser, drawingData, eventAndButton, eventExtMod);
-				break;
+				
 			}
+			
+			int swingButton = convertToSwingButtonValue(button);
+			int swingMask   = getSwingMask(swingButton, eventExt);
+			
+			Tool usedTool = toolBoxState.getLastUsedTool();
+			avoidLoopback(usedTool);
+			if (usedTool.hasAlphaProperties())
+				usedTool.setAlpha(toolBoxState.getOpacityProperty());
+
+			if (usedTool.hasColorProperties())
+				usedTool.setColor(toolBoxState.getColorProperty());
+
+			if (usedTool.hasStrokeProperties())
+				usedTool.setStroke(toolBoxState.getStrokeProperty());
+
+			if (usedTool.hasFontProperties())
+				usedTool.setFont(toolBoxState.getFontProperty());
+
+			usedTool.onPress(
+					(int)drawingData.getPoint1().getX(),
+					(int)drawingData.getPoint1().getY(),
+					swingButton,
+					swingMask
+			);
+			usedTool.onDrag(
+					(int)drawingData.getType().getFigure().getPoint2().getX(),
+					(int)drawingData.getType().getFigure().getPoint2().getY(),
+					swingButton,
+					swingMask
+			);
+			remoteUser.setTemporalDrawing(usedTool.getDrawing());
+
+			Drawing drawing = usedTool.onRelease(
+					(int)drawingData.getType().getFigure().getPoint2().getX(),
+					(int)drawingData.getType().getFigure().getPoint2().getY(),
+					swingButton,
+					swingMask
+			);
+			
+			if (drawing == null) 
+				return;
+			
+			remoteUser.addDrawing(drawing);
+			
+//			createAndDispatchPressEvent(remoteUser, drawing, eventAndButton, eventExt);
+//			createAndDispatchDragEvent(remoteUser, drawing, eventAndButton, eventExt);
+//			createAndDispatchReleaseEvent(remoteUser, drawing, eventAndButton, eventExt);
+			
+			int x1 = (int)drawingData.getPoint1().getX();
+			int y1 = (int)drawingData.getPoint1().getY();
+			int x2 = (int)drawingData.getType().getFigure().getPoint2().getX();
+			int y2 = (int)drawingData.getType().getFigure().getPoint2().getY();
+			System.out.println("RECEIVED COORDS: ("+x1+","+y1+") ("+x2+","+y2+")");
+			
 		}
 
 		/**
-		 * @param remoteUser
-		 * @param drawing
-		 * @param button1
+		 * @param user
 		 */
-		private void createAndDispatchReleaseEvent(RemoteUser remoteUser, ddata_t drawing, int eventAndButton, int mod) {
-			int x = 0;
-			int y = 0;
-			if ((eventAndButton & tellapicConstants.EVENT_MASK) == tellapicConstants.EVENT_NULL) {
-				x = (int) drawing.getType().getFigure().getPoint2().getX();
-				y = (int) drawing.getType().getFigure().getPoint2().getY();
-			} else {
-				x = (int)drawing.getPoint1().getX();
-				y = (int)drawing.getPoint1().getY();
+		private void avoidLoopback(Tool usedTool) {
+			try {
+				Method avoidLoopback = usedTool.getClass().getMethod("setAvoidLoopback", boolean.class);
+				try {
+					avoidLoopback.invoke(usedTool, false);
+				} catch (IllegalArgumentException e) {
+					e.printStackTrace();
+				} catch (IllegalAccessException e) {
+					e.printStackTrace();
+				} catch (InvocationTargetException e) {
+					e.printStackTrace();
+				}
+			} catch (SecurityException e) {
+				e.printStackTrace();
+			} catch (NoSuchMethodException e) {
+				e.printStackTrace();
 			}
-			
-			int button = getButtonFromEvent(eventAndButton);
-			//int mask   = getMaskForButton(button, mod);
-			
-			RemoteMouseEvent event = new RemoteMouseEvent(
-					remoteUser,
-					DrawingAreaView.getInstance(),
-					502,
-					System.currentTimeMillis(),
-					MouseEvent.NOBUTTON,
-					x,
-					y,
-					0,
-					false,
-					button
-			);
-			DrawingAreaView.getInstance().dispatchEvent(event);
-			
-		}
-
-		/**
-		 * @param remoteUser 
-		 * @param drawing
-		 * @param buttonFromEvent
-		 */
-		private void createAndDispatchDragEvent(RemoteUser remoteUser, ddata_t drawing, int eventAndButton, int mod) {
-			int x = 0;
-			int y = 0;
-			int button = getButtonFromEvent(eventAndButton);
-			int mask = getMaskForButton(button, mod);
-
-			if ((eventAndButton & tellapicConstants.EVENT_MASK) == tellapicConstants.EVENT_NULL) {
-				x = (int) drawing.getType().getFigure().getPoint2().getX();
-				y = (int) drawing.getType().getFigure().getPoint2().getY();
-			} else {
-				x = (int)drawing.getPoint1().getX();
-				y = (int)drawing.getPoint1().getY();
-			}
-			
-			RemoteMouseEvent event = new RemoteMouseEvent(
-					remoteUser,
-					DrawingAreaView.getInstance(),
-					506,
-					System.currentTimeMillis(),
-					mask,
-					x,
-					y,
-					0,
-					false,
-					MouseEvent.NOBUTTON
-			);
-			Utils.printEventInfo(event);
-			DrawingAreaView.getInstance().dispatchEvent(event);
 		}
 
 		
 		/**
-		 * @param remoteUser 
 		 * @param drawing
 		 */
-		private void createAndDispatchPressEvent(RemoteUser remoteUser, ddata_t drawing, int eventAndButton, int mod) {
-			int button = getButtonFromEvent(eventAndButton);
-			int mask   = getMaskForButton(button, mod);
+		private void createAndAddDrawing(ddata_t drawingData) {
+			/* Get the remote user who is drawing */
+			RemoteUser remoteUser = (RemoteUser) UserManager.getInstance().getUser(drawingData.getIdfrom());
 			
-			RemoteMouseEvent event = new RemoteMouseEvent(
-					remoteUser,
-					DrawingAreaView.getInstance(),
-					501,
-					System.currentTimeMillis(),
-					mask,
-					(int)drawing.getPoint1().getX(),
-					(int)drawing.getPoint1().getY(),
-					1,
-					false,
-					button
-			);
-			DrawingAreaView.getInstance().dispatchEvent(event);
+			/* Get the Drawing Control Byte from the stream */
+			int dcbyte = drawingData.getDcbyte();
+			
+			/* Get the tool used by the remote user */
+			int remoteTool = dcbyte & tellapicConstants.TOOL_MASK;
+			
+			/* Get the event protocol data from the stream */
+			int event  = dcbyte & tellapicConstants.EVENT_MASK;
+			
+			/* Get the button protocol data from the stream */
+			int button = dcbyte & tellapicConstants.BUTTON_MASK;
+			
+			/* Get extra information about the event protocol data from the stream */
+			int extDcbyte = drawingData.getDcbyte_ext();
+			
+			/* Get all the registered tools in this local user */
+			Map<Integer, String> toolsClassNames = ToolFactory.getRegisteredToolsClassNames();
+			
+			/* With the tool used from the remote user, get the same tool in this local user */
+			String     toolClassName   = toolsClassNames.get(remoteTool);
+
+			/* Convert protocol mouse data to swing mouse data */
+			int swingButton = convertToSwingButtonValue(button);
+			int swingMask   = getSwingMask(swingButton, extDcbyte);
+			
+			/* Get the remote user paint controller to set paint properties */
+			IPaintPropertyController c = remoteUser.getPaintController();
+			
+			/* Get the remote user tool box model */
+			ToolBoxModel  toolBoxState = remoteUser.getToolBoxModel();
+			
+			/* Select the tool the remote user has used for this drawing and set its properties */
+			remoteUser.getToolboxController().selectToolByName(toolClassName.split("[a-z].*\\.")[1]);
+						
+			/* Get an instance of the used tool */
+			Tool usedTool = toolBoxState.getLastUsedTool();
+			
+			/* Avoid loopback information through the network. Each time a net tool is used */
+			/* it sends data through the network if loopback is set to true.                */
+			avoidLoopback(usedTool);
+			
+			switch(event) {
+
+			case tellapicConstants.EVENT_PRESS:
+				c.handleEndCapsChange(drawingData.getType().getFigure().getEndcaps());
+				c.handleLineJoinsChange(drawingData.getType().getFigure().getLinejoin());
+				c.handleOpacityChange(drawingData.getOpacity());
+				c.handleWidthChange((int)drawingData.getWidth());
+
+				if (usedTool.hasAlphaProperties())
+					usedTool.setAlpha(toolBoxState.getOpacityProperty());
+
+				if (usedTool.hasColorProperties())
+					usedTool.setColor(toolBoxState.getColorProperty());
+
+				if (usedTool.hasStrokeProperties())
+					usedTool.setStroke(toolBoxState.getStrokeProperty());
+
+				if (usedTool.hasFontProperties())
+					usedTool.setFont(toolBoxState.getFontProperty());
+
+				usedTool.onPress(
+						(int)drawingData.getPoint1().getX(),
+						(int)drawingData.getPoint1().getY(),
+						swingButton,
+						swingMask
+				);
+				
+				//createAndDispatchPressEvent(remoteUser, drawingData, eventAndButton, eventExtMod);
+				break;
+
+			case tellapicConstants.EVENT_DRAG:
+				usedTool.onDrag(
+						(int)drawingData.getPoint1().getX(), 
+						(int)drawingData.getPoint1().getY(), 
+						swingButton,
+						swingMask
+				);
+				remoteUser.setTemporalDrawing(usedTool.getDrawing());
+				//createAndDispatchDragEvent(remoteUser, drawingData, eventAndButton, eventExtMod);
+				break;
+
+			case tellapicConstants.EVENT_RELEASE:
+				Drawing drawing = usedTool.onRelease(
+						(int)drawingData.getPoint1().getX(),
+						(int)drawingData.getPoint1().getY(),
+						swingButton,
+						swingMask
+				);
+				
+				if (drawing == null) 
+					return;
+				
+				remoteUser.addDrawing(drawing);
+				
+				//createAndDispatchReleaseEvent(remoteUser, drawingData, eventAndButton, eventExtMod);
+				break;
+			}
 		}
+
+//		/**
+//		 * @param remoteUser
+//		 * @param drawing
+//		 * @param button1
+//		 */
+//		private void createAndDispatchReleaseEvent(RemoteUser remoteUser, ddata_t drawing, int eventAndButton, int mod) {
+//			int x = 0;
+//			int y = 0;
+//			if ((eventAndButton & tellapicConstants.EVENT_MASK) == tellapicConstants.EVENT_NULL) {
+//				x = (int) drawing.getType().getFigure().getPoint2().getX();
+//				y = (int) drawing.getType().getFigure().getPoint2().getY();
+//			} else {
+//				x = (int)drawing.getPoint1().getX();
+//				y = (int)drawing.getPoint1().getY();
+//			}
+//			
+//			int button = getButtonFromEvent(eventAndButton);
+//			//int mask   = getMaskForButton(button, mod);
+//			
+//			RemoteMouseEvent event = new RemoteMouseEvent(
+//					remoteUser,
+//					DrawingAreaView.getInstance(),
+//					502,
+//					System.currentTimeMillis(),
+//					MouseEvent.NOBUTTON,
+//					x,
+//					y,
+//					0,
+//					false,
+//					button
+//			);
+//			DrawingAreaView.getInstance().dispatchEvent(event);
+//			
+//		}
+//
+//		/**
+//		 * @param remoteUser 
+//		 * @param drawing
+//		 * @param buttonFromEvent
+//		 */
+//		private void createAndDispatchDragEvent(RemoteUser remoteUser, ddata_t drawing, int eventAndButton, int mod) {
+//			int x = 0;
+//			int y = 0;
+//			int button = getButtonFromEvent(eventAndButton);
+//			int mask = getMaskForButton(button, mod);
+//
+//			if ((eventAndButton & tellapicConstants.EVENT_MASK) == tellapicConstants.EVENT_NULL) {
+//				x = (int) drawing.getType().getFigure().getPoint2().getX();
+//				y = (int) drawing.getType().getFigure().getPoint2().getY();
+//			} else {
+//				x = (int)drawing.getPoint1().getX();
+//				y = (int)drawing.getPoint1().getY();
+//			}
+//			
+//			RemoteMouseEvent event = new RemoteMouseEvent(
+//					remoteUser,
+//					DrawingAreaView.getInstance(),
+//					506,
+//					System.currentTimeMillis(),
+//					mask,
+//					x,
+//					y,
+//					0,
+//					false,
+//					MouseEvent.NOBUTTON
+//			);
+//			Utils.printEventInfo(event);
+//			DrawingAreaView.getInstance().dispatchEvent(event);
+//		}
+//
+//		
+//		/**
+//		 * @param remoteUser 
+//		 * @param drawing
+//		 */
+//		private void createAndDispatchPressEvent(RemoteUser remoteUser, ddata_t drawing, int eventAndButton, int mod) {
+//			int button = getButtonFromEvent(eventAndButton);
+//			int mask   = getMaskForButton(button, mod);
+//			
+//			RemoteMouseEvent event = new RemoteMouseEvent(
+//					remoteUser,
+//					DrawingAreaView.getInstance(),
+//					501,
+//					System.currentTimeMillis(),
+//					mask,
+//					(int)drawing.getPoint1().getX(),
+//					(int)drawing.getPoint1().getY(),
+//					1,
+//					false,
+//					button
+//			);
+//			DrawingAreaView.getInstance().dispatchEvent(event);
+//		}
 		
 		
 		/**
@@ -474,22 +643,22 @@ public class NetManager extends Observable {
 		 * @param mod
 		 * @return
 		 */
-		private int getMaskForButton(int button, int mod) {
+		private int getSwingMask(int swingButton, int dcbyte_ext) {
 			int mask   = 0;
 			int modext = 0;
 			
-			if (button == MouseEvent.BUTTON1)
+			if (swingButton == MouseEvent.BUTTON1)
 				mask = InputEvent.BUTTON1_DOWN_MASK;
-			else if (button == MouseEvent.BUTTON2)
+			else if (swingButton == MouseEvent.BUTTON2)
 				mask = InputEvent.BUTTON2_DOWN_MASK;
 			else
 				mask = InputEvent.BUTTON3_DOWN_MASK;
 
-			if (mod == tellapicConstants.EVENT_CTL_DOWN)
+			if (dcbyte_ext == tellapicConstants.EVENT_CTL_DOWN)
 				modext = InputEvent.CTRL_DOWN_MASK;
-			else if (mod == tellapicConstants.EVENT_ALT_DOWN)
+			else if (dcbyte_ext == tellapicConstants.EVENT_ALT_DOWN)
 				modext = InputEvent.ALT_DOWN_MASK;
-			else if (mod == tellapicConstants.EVENT_SHIFT_DOWN)
+			else if (dcbyte_ext == tellapicConstants.EVENT_SHIFT_DOWN)
 				modext = InputEvent.SHIFT_DOWN_MASK;
 			else
 				modext = 0;
@@ -497,46 +666,17 @@ public class NetManager extends Observable {
 			return mask | modext;
 		}
 
-		/* 
-		 * An event example:
-		 *                             tool       event   button
-		 *                       _______________  ______  ______
-		 *                      /               \/      \/      \
-		 *	                    +---+---+---+---+---+---+---+---+
-		 *	drawing byte   =    | ? | ? | ? | ? | 0 | 1 | 0 | 1 |  Press Event Left Button
-		 *	                    +---+---+---+---+---+---+---+---+
-		 *
-		 *
-		 *                             tool       event   button
-		 *                       _______________  ______  ______
-		 *                      /               \/      \/      \
-		 *	                    +---+---+---+---+---+---+---+---+
-		 *	drawing byte   =    | ? | ? | ? | ? | 1 | 0 | 1 | 1 |  Drag Event Middle Button
-		 *	   	   	            +---+---+---+---+---+---+---+---+
-		 *
-		 *
-		 *                             tool       event   button
-		 *                       _______________  ______  ______
-		 *                      /               \/      \/      \
-		 *	   	   	            +---+---+---+---+---+---+---+---+
-		 *	drawing byte   =    | ? | ? | ? | ? | 1 | 1 | 1 | 0 |  Release Event Right Button
-		 *	   	   	            +---+---+---+---+---+---+---+---+
-		 *
-		 *
-		*/
-		private int getButtonFromEvent(int event) {
-			int button = 0;
-
-			if ((event & tellapicConstants.BUTTON_MASK) == tellapicConstants.BUTTON_LEFT)
-				button = MouseEvent.BUTTON1;
-			else if ((event & tellapicConstants.BUTTON_MASK) == tellapicConstants.BUTTON_RIGHT)
-				button = MouseEvent.BUTTON2;
-			else if ((event & tellapicConstants.BUTTON_MASK) == tellapicConstants.BUTTON_RIGHT)
-				button = MouseEvent.BUTTON3;
-			else
-				button = MouseEvent.BUTTON1;
-			
-			return button;
+		
+		/*
+		 * 
+		 */
+		private int convertToSwingButtonValue(int button) {
+			if (button == tellapicConstants.BUTTON_LEFT)
+				return MouseEvent.BUTTON1;
+			else if (button == tellapicConstants.BUTTON_RIGHT)
+				return MouseEvent.BUTTON2;
+			else 
+				return MouseEvent.BUTTON3;
 		}
 	}
 	

@@ -7,7 +7,9 @@ import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Image;
+import java.awt.RenderingHints;
 import java.awt.Transparency;
+import java.awt.RenderingHints.Key;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -40,12 +42,16 @@ public class DrawingAreaView extends JPanel implements Observer {
 	private GraphicsEnvironment     ge;
 	private GraphicsDevice          gd;
 	private GraphicsConfiguration   gc;
-	
+	private RenderingHints          rh;
 	
 	private static class Holder {
 		private final static DrawingAreaView INSTANCE = new DrawingAreaView();
 	}
 	
+	
+	/*
+	 * 
+	 */
 	private DrawingAreaView() {
 		setName(Utils.msg.getString("drawingarea"));
 		setPreferredSize(new Dimension(800,600));
@@ -61,10 +67,33 @@ public class DrawingAreaView extends JPanel implements Observer {
 		ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 		gd = ge.getDefaultScreenDevice();
 		gc = gd.getDefaultConfiguration();
+		rh = new RenderingHints(null);
 		setPreferredSize(new Dimension(backimage.getWidth(), backimage.getHeight()));
 	}
 	
 	
+	/**
+	 * 
+	 * @param rh
+	 */
+	public void setRenderingHints(RenderingHints rh) {
+		this.rh = rh;
+	}
+	
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public RenderingHints getRenderingHints() {
+		return rh;
+	}
+	
+	
+	/**
+	 * 
+	 * @param img
+	 */
 	public void setImage(BufferedImage img) {
 		backimage = img;
 		gd = ge.getDefaultScreenDevice();
@@ -80,10 +109,19 @@ public class DrawingAreaView extends JPanel implements Observer {
 	}
 	
 	
+	/**
+	 * 
+	 * @return
+	 */
 	public static DrawingAreaView getInstance() {
 		return Holder.INSTANCE;
 	}
 	
+	
+	/**
+	 * 
+	 * @param user
+	 */
 	public void addPainter(AbstractUser user) {
 		userList.add(user);
 	}
@@ -92,7 +130,7 @@ public class DrawingAreaView extends JPanel implements Observer {
 	//TODO: REFACTOR THIS THINKING ON MULTIPLE ACCESS TO THE DRAWING AREA VIEW (A.K.A. MULTI-THREADED)
 	@Override
 	public void update(Observable o, Object data) {
-		Utils.logMessage("Updating drawing area view: "+data);
+		//Utils.logMessage("Updating drawing area view: "+data);
 		AbstractUser user = (AbstractUser) o;
 		Integer     index = null;
 		
@@ -121,7 +159,7 @@ public class DrawingAreaView extends JPanel implements Observer {
 		
 		
 		if (!user.isRemoved() && user.isVisible()) {
-			Utils.logMessage("\tUser is visible: "+user);
+			//Utils.logMessage("\tUser is visible: "+user);
 			Drawing firstNotDrawn   = (index == null)? null : user.getDrawings().get(index);
 			
 			//TODO: Se deberia tener una lista de todos los temporales que se estan dibujando de
@@ -131,7 +169,7 @@ public class DrawingAreaView extends JPanel implements Observer {
 			
 			if (firstNotDrawn != null) {
 				drawDrawing(permanentArea, firstNotDrawn, null);
-				Utils.logMessage("\tFirstNotDrawn drawn: "+user);
+//				Utils.logMessage("\tFirstNotDrawn drawn: "+user);
 			}
 			
 			/**********************************************************/
@@ -170,7 +208,7 @@ public class DrawingAreaView extends JPanel implements Observer {
 			Graphics2D frontArea = (Graphics2D) foreground.getGraphics();
 			frontArea.drawImage(backimage, 0, 0, null);
 			
-			Utils.logMessage("foreground was null");
+			//Utils.logMessage("foreground was null");
 		}
 		
 //		Graphics2D frontArea = (Graphics2D) foreground.getGraphics();
@@ -196,6 +234,7 @@ public class DrawingAreaView extends JPanel implements Observer {
 		
 		//Draws the temporal drawings creating the ilusion of drawing.
 		Graphics2D frontArea = (Graphics2D) foreground.getGraphics();
+		frontArea.setRenderingHints(rh);
 		frontArea.drawImage(background, 0, 0, null);
 		for(AbstractUser user : UserManager.getInstance().getUsers().values()) {
 			if (!user.isRemoved() && user.isVisible()) {
@@ -206,10 +245,14 @@ public class DrawingAreaView extends JPanel implements Observer {
 			}
 		}
 		g.drawImage(foreground, 0, 0, null);
-		
 	}
 	
 	
+	/**
+	 * 
+	 * @param drawing
+	 * @param i
+	 */
 	public void update(Drawing drawing, int i) {
 		//temporalDrawing = drawing;
 		temporalDrawings.set(i, drawing);
@@ -218,6 +261,7 @@ public class DrawingAreaView extends JPanel implements Observer {
 	
 	
 	private void drawDrawing(Graphics2D g, Drawing drawing, PaintProperty[] overridedProperties) {
+		g.setRenderingHints(rh);
 		if (drawing.hasAlphaProperty())
 			g.setComposite(drawing.getComposite());
 		

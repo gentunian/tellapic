@@ -90,7 +90,7 @@ public abstract class Tool {
 	 * @param y the y coordinate.
 	 * @param symmetric whether or not this tool can use its symmetric feature (if it have any).
 	 */
-	public abstract void onDrag(int x, int y, boolean symmetric, int button);
+	public abstract void onDrag(int x, int y, int button, int mask);
 	
 	
 	/**
@@ -108,7 +108,7 @@ public abstract class Tool {
 	 * until someone calls {@link ar.com.tellapic.graphics.Tool#init(double, double)}.
 	 * @return The last drawing object state of this tool.
 	 */
-	public abstract Drawing onRelease(int x, int y, int button);
+	public abstract Drawing onRelease(int x, int y, int button, int mask);
 	
 	
 	/**

@@ -55,8 +55,8 @@ final public class LineNet extends Line {
 	 * @see ar.com.tellapic.graphics.Ellipse#onRelease(int)
 	 */
 	@Override
-	public Drawing onRelease(int x, int y, int button) {
-		Drawing drawing = super.onRelease(x, y, button);
+	public Drawing onRelease(int x, int y, int button, int mask) {
+		Drawing drawing = super.onRelease(x, y, button, mask);
 		if (drawing == null)
 			return drawing;
 		

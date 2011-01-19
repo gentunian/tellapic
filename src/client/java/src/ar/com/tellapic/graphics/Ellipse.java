@@ -1,6 +1,7 @@
 package ar.com.tellapic.graphics;
 
 import java.awt.Dimension;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 
@@ -69,8 +70,9 @@ public class Ellipse extends Tool {
 	 * @see ar.com.tellapic.graphics.Tool#draw(double, double)
 	 */
 	@Override
-	public void onDrag(int x, int y, boolean symmetric, int button) {
+	public void onDrag(int x, int y, int button, int mask) {
 		if (inUse) {
+			boolean symmetric = (mask & MouseEvent.CTRL_DOWN_MASK) == MouseEvent.CTRL_DOWN_MASK;
 			double initX   = firstPoint.getX();
 			double initY   = firstPoint.getY();
 			int    width   = (int) Math.abs(initX - x);
@@ -92,7 +94,7 @@ public class Ellipse extends Tool {
 	 * @see ar.com.tellapic.graphics.Tool#onFinishDraw()
 	 */
 	@Override
-	public Drawing onRelease(int x, int y, int button) {
+	public Drawing onRelease(int x, int y, int button, int mask) {
 		if (inUse && !ellipse.isEmpty()) {
 			temporalDrawing.cloneProperties();
 			inUse = false;

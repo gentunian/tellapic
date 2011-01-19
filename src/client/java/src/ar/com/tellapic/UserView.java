@@ -143,7 +143,7 @@ public class UserView extends JPanel implements Observer {
 	 */
 	@Override
 	public void update(Observable o, Object data) {
-		Utils.logMessage("Updating user view. Data received: "+data);
+		//Utils.logMessage("Updating user view. Data received: "+data);
 		
 		if (data != null) {
 			AbstractUser user = (AbstractUser) o;

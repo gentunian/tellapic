@@ -1,5 +1,6 @@
  package ar.com.tellapic.graphics;
 
+import java.awt.event.MouseEvent;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 
@@ -77,8 +78,9 @@ public class Line extends Tool {
 	 * @see ar.com.tellapic.graphics.Tool#draw(double, double)
 	 */
 	@Override
-	public void onDrag(int x, int y, boolean symmetric, int button) {
+	public void onDrag(int x, int y, int button, int mask) {
 		if (inUse) {
+			boolean symmetric = (mask & MouseEvent.CTRL_DOWN_MASK) == MouseEvent.CTRL_DOWN_MASK;
 			double angle = Math.atan2(x - firstPoint.getX(), y - firstPoint.getY()) + Math.PI/2;
 			if ( angle < 0)
 				angle = (Math.PI - Math.abs(angle)) + Math.PI;
@@ -102,7 +104,7 @@ public class Line extends Tool {
 	 * @see ar.com.tellapic.graphics.Tool#onFinishDraw()
 	 */
 	@Override
-	public Drawing onRelease(int x, int y, int button) {
+	public Drawing onRelease(int x, int y, int button, int mask) {
 		if (inUse && line.getP1().distance(line.getP2()) > 0.0) {
 			temporalDrawing.cloneProperties();
 			inUse = false;

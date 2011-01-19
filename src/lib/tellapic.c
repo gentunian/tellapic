@@ -1071,7 +1071,6 @@ tellapic_read_data_b(int fd, header_t header)
 	case CTL_SV_ID:
 	case CTL_SV_NAMEINUSE:
 	case CTL_SV_AUTHOK:
-	  printf("nbytes: %d datasize: %d\n", nbytes, datasize);
 	  __ctldatacpy(&stream, data);
 	  break;
 
