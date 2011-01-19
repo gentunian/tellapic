@@ -20,7 +20,6 @@ package ar.com.tellapic;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Frame;
-import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.RenderingHints.Key;
 import java.awt.event.ActionEvent;
@@ -32,7 +31,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.Random;
 
-import javax.sound.sampled.Line;
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
@@ -50,7 +48,6 @@ import ar.com.tellapic.chat.ChatController;
 import ar.com.tellapic.chat.ChatView;
 import ar.com.tellapic.graphics.DrawingAreaView;
 import ar.com.tellapic.graphics.DrawingLocalController;
-import ar.com.tellapic.graphics.Ellipse;
 import ar.com.tellapic.graphics.IToolBoxController;
 import ar.com.tellapic.graphics.PaintPropertyController;
 import ar.com.tellapic.graphics.PaintPropertyView;
@@ -64,6 +61,7 @@ import bibliothek.gui.dock.common.CControl;
 import bibliothek.gui.dock.common.CGrid;
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import bibliothek.gui.dock.common.SingleCDockable;
+import bibliothek.gui.dock.common.theme.ThemeMap;
 
 /**
  * @author 
@@ -123,6 +121,7 @@ public class UserGUIBuilder {
 		propertyView.setController(propertyController);
 		
 		JScrollPane scrollPane = new JScrollPane(drawingAreaView);
+
 		scrollPane.setName(drawingAreaView.getName());
 		
 		
@@ -139,7 +138,8 @@ public class UserGUIBuilder {
 		SingleCDockable dock3 = wrapToDockable(scrollPane);
 		SingleCDockable dock4 = wrapToDockable(chatView);
 		SingleCDockable dock5 = wrapToDockable(userView);
-				
+		ThemeMap t = control1.getThemes();
+		t.select(ThemeMap.KEY_BASIC_THEME);
 		mainWindow.setPreferredSize(new Dimension(400,400));
 		grid.add(0,   0, 50,   50, dock1);
 		grid.add(0,  50, 50,  100, dock2);
@@ -164,19 +164,8 @@ public class UserGUIBuilder {
 		JMenu fileMenu    = new JMenu(Utils.msg.getString("file"));
 		JMenu optionsMenu = new JMenu(Utils.msg.getString("options"));
 		JMenu testMenu    = new JMenu("testing");
-		final JMenu testMenuUserAction  = new JMenu("User Ations");
-		JMenuItem addUserItem     = new JMenuItem("Add User");
-		JMenuItem delUserItem     = new JMenuItem("Remove User");
-		JMenuItem reconnect       = new JMenuItem("Reconnect");
-		JMenu qualityMenu = new JMenu(Utils.msg.getString("quality"));
-		JMenu themeSubMenu = new JMenu(Utils.msg.getString("theme"));
-		JCheckBoxMenuItem themeJava = new JCheckBoxMenuItem("JAVA");
-		JCheckBoxMenuItem themeGTK  = new JCheckBoxMenuItem("GTK");
-		ButtonGroup group = new ButtonGroup();
-		
-		optionsMenu.add(reconnect);
-		buildQualityMenu(qualityMenu);
-		optionsMenu.add(qualityMenu);
+
+		JMenuItem reconnect = new JMenuItem("Reconnect");
 		reconnect.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -184,103 +173,125 @@ public class UserGUIBuilder {
 			}
 		});
 		
-		addUserItem.addActionListener(new ActionListener() {
+		/* Adds the reconnect option */
+		optionsMenu.add(reconnect);
+		
+		/* Adds the Quality menu */
+		optionsMenu.add(buildQualityMenu());
+		
+		/* Adds the Theme menu */
+		optionsMenu.add(buildThemeMenu());
+
+		/* Adds the View Menu */
+		optionsMenu.add(buildViewMenu());
+		
+		fileMenu.setMnemonic(KeyEvent.VK_F);
+		optionsMenu.setMnemonic(KeyEvent.VK_O);
+		
+		menuBar.add(fileMenu);
+		menuBar.add(optionsMenu);
+		menuBar.add(testMenu);
+		return menuBar;
+	}
+
+	
+	/**
+	 * @return
+	 */
+	private JMenuItem buildViewMenu() {
+		JMenu root = new JMenu("View");
+		JCheckBoxMenuItem grid  = new JCheckBoxMenuItem("Show Grid");
+		JMenuItem gridSize = new JMenuItem("Grid Size...");
+		JCheckBoxMenuItem ruler = new JCheckBoxMenuItem("Show Ruler");
+		
+		grid.addItemListener(new ItemListener(){
 			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				String name = JOptionPane.showInputDialog("User Name:");
-				if (name == null)
-					return;
-				UserManager.getInstance().addUser(9, name);
-				testMenuUserAction.setEnabled(true);
-				JMenu userMenu = new JMenu(name);
-				JMenuItem drawEllipseItem = new JMenuItem("Draw Ellipse");
-				JMenuItem drawBoxItem     = new JMenuItem("Draw Box");
-				JMenuItem drawLineItem    = new JMenuItem("Draw Line");
-				//JMenuItem drawTextItem    = new JMenuItem("Draw Text");
-				
-				drawEllipseItem.setName(Ellipse.class.getSimpleName());
-				drawEllipseItem.addActionListener(new Painter(userMenu));
-				drawBoxItem.setName(Rectangle.class.getSimpleName());
-				drawBoxItem.addActionListener(new Painter(userMenu));
-				drawLineItem.setName(Line.class.getSimpleName());
-				drawLineItem.addActionListener(new Painter(userMenu));
-				
-				userMenu.add(drawEllipseItem);
-				userMenu.add(drawBoxItem);
-				userMenu.add(drawLineItem);
-				//userMenu.add(drawTextItem);
-				testMenuUserAction.add(userMenu);
+			public void itemStateChanged(ItemEvent e) {
+				DrawingAreaView.getInstance().setGridEnabled((e.getStateChange() == ItemEvent.SELECTED));
 			}
 		});
 		
-		delUserItem.addActionListener(new ActionListener() {
+		gridSize.addActionListener(new ActionListener() {
 			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				String name = JOptionPane.showInputDialog("User Name:");
-				Utils.logMessage("Deleting user: "+name);
-				UserManager.getInstance().delUser(name);
-				for(int i = 0; i < testMenuUserAction.getMenuComponentCount(); i++) {
-					JMenu menu = (JMenu)testMenuUserAction.getMenuComponent(i);
-					Utils.logMessage("c :"+menu.getText());
-					if (menu.getText().equals(name)) 
-						testMenuUserAction.remove(menu);
-				}
-				testMenuUserAction.setEnabled(testMenuUserAction.getMenuComponentCount() > 0);
+			public void actionPerformed(ActionEvent e) {
+				Object[] possibilities = { 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60 };
+				Integer i = (Integer)JOptionPane.showInputDialog(
+						null,
+						"Grid size:",
+						"Select Grid Size",
+						JOptionPane.PLAIN_MESSAGE,
+						null,
+						possibilities,
+						DrawingAreaView.getInstance().getGridSize()
+				);
+
+				if (i != null)
+					DrawingAreaView.getInstance().setGridSize(i);
 			}
-		});		
+		});
+		grid.setSelected(true);
+		root.add(grid);
+		root.add(ruler);
+		root.addSeparator();
+		root.add(gridSize);
+		return root;
+	}
+
+
+
+	/**
+	 * @return
+	 */
+	private JMenuItem buildThemeMenu() {
+		JMenu root = new JMenu(Utils.msg.getString("theme"));
+		JCheckBoxMenuItem themeJava = new JCheckBoxMenuItem("JAVA");
+		JCheckBoxMenuItem themeGTK  = new JCheckBoxMenuItem("GTK");
+		ButtonGroup group = new ButtonGroup();
 		themeJava.addItemListener(new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent arg0) {
 				try {
-		            UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-		            SwingUtilities.updateComponentTreeUI(mainWindow);
-		        } catch (UnsupportedLookAndFeelException e) {
-		            //fallback
-		        } catch (ClassNotFoundException e) {
-		            //fallback
-		        } catch (InstantiationException e) {
-		            //fallback
-		        } catch (IllegalAccessException e) {
-		            //fallback
-		        }	
+					UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+					SwingUtilities.updateComponentTreeUI(mainWindow);
+				} catch (UnsupportedLookAndFeelException e) {
+					//fallback
+				} catch (ClassNotFoundException e) {
+					//fallback
+				} catch (InstantiationException e) {
+					//fallback
+				} catch (IllegalAccessException e) {
+					//fallback
+				}	
 			}
 		});
 		themeGTK.addItemListener(new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent arg0) {
 				try {
-		            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		            SwingUtilities.updateComponentTreeUI(mainWindow);
-		        } catch (UnsupportedLookAndFeelException e) {
-		            //fallback
-		        } catch (ClassNotFoundException e) {
-		            //fallback
-		        } catch (InstantiationException e) {
-		            //fallback
-		        } catch (IllegalAccessException e) {
-		            //fallback
-		        }	
+					UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+					SwingUtilities.updateComponentTreeUI(mainWindow);
+				} catch (UnsupportedLookAndFeelException e) {
+					//fallback
+				} catch (ClassNotFoundException e) {
+					//fallback
+				} catch (InstantiationException e) {
+					//fallback
+				} catch (IllegalAccessException e) {
+					//fallback
+				}	
 			}
 		});
 		themeGTK.setSelected(true);
 		group.add(themeGTK);
 		group.add(themeJava);
-		fileMenu.setMnemonic(KeyEvent.VK_F);
-		optionsMenu.setMnemonic(KeyEvent.VK_O);
-		menuBar.add(fileMenu);
-		themeSubMenu.add(themeJava);
-		themeSubMenu.add(themeGTK);
-		optionsMenu.add(themeSubMenu);
-		menuBar.add(optionsMenu);
-		testMenuUserAction.setEnabled(false);
-		testMenu.add(testMenuUserAction);
-		testMenu.add(addUserItem);
-		testMenu.add(delUserItem);
-		menuBar.add(testMenu);
-		return menuBar;
+		root.add(themeJava);
+		root.add(themeGTK);
+		
+		return root;
 	}
-	
-	
+
+
+
 	/*
 	 * Build the quality menu:
 	 * 
@@ -316,7 +327,8 @@ public class UserGUIBuilder {
 	 *                                          -> Normalize
 	 *                                          -> Pure
 	 */
-	private void buildQualityMenu(JMenu root) {
+	private JMenu buildQualityMenu() {
+		JMenu root                = new JMenu(Utils.msg.getString("quality"));
 		JMenu aaText              = new JMenu("Text Antialising");
 		JMenu aaShape             = new JMenu("Shape Antialising");
 		JMenu colorRendering      = new JMenu("Color Rendering");
@@ -412,6 +424,8 @@ public class UserGUIBuilder {
 						}
 				)
 		);
+		
+		return root;
 	}
 	
 	
