@@ -1,7 +1,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
-#include <openssl/sha.h>
+//#include <openssl/sha.h>
 #include "common.h"
 
 
@@ -15,7 +15,7 @@ int setnonblock(int fd) {
   }
 }
 
-
+/*
 unsigned char *hexastr2binary(unsigned char *sha1hexadigest) {  
   unsigned char *output = (unsigned char *) malloc(sizeof(unsigned char) * SHA_DIGEST_LENGTH );
   int i = 0;
@@ -26,7 +26,7 @@ unsigned char *hexastr2binary(unsigned char *sha1hexadigest) {
   }  
   return output;
 }
-
+*/
 
 int htoi(unsigned char hexdigit) {
   char hex[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };

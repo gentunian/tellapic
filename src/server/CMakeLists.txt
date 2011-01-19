@@ -1,6 +1,9 @@
 #
-set(COMMON_FILES ${tellapic_SOURCE_DIR}/src/common/list.c ${tellapic_SOURCE_DIR}/src/common/console.c ${tellapic_SOURCE_DIR}/src/common/common.c)
+set(COMMON_FILES ${tellapic_SOURCE_DIR}/src/common/list.c ${tellapic_SOURCE_DIR}/src/common/common.c)
 
+if (DEFINED CDK_AWARE)
+  set(COMMON_FILES ${COMMON_FILES} ${tellapic_SOURCE_DIR}/src/common/console.c)
+endif()
 # Set the server.c file to compile.
 set(SERVER_FILE ${COMMON_FILES} server.c)
 

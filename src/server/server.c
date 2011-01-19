@@ -27,11 +27,10 @@
 #include <pthread.h>
 #include <signal.h>
 #include <stdarg.h>
-#include <openssl/sha.h>
-#include <ncurses.h>
+//#include <openssl/sha.h>
 #include <termios.h>
-
 #ifdef CDK_AWARE
+#include <ncurses.h>
 #include "console.h"
 #endif
 
@@ -297,6 +296,7 @@ cancel_threads(tdata_t *thread_data)
 }
 
 
+#ifdef CDK_AWARE
 /**
  *
  */
@@ -409,7 +409,7 @@ process_command(char *cmd, tdata_t *thread_data)
       nocmd();
     }
 }
-
+#endif
 
 /**
  *
@@ -417,12 +417,16 @@ process_command(char *cmd, tdata_t *thread_data)
 void
 print_output(char *msg) 
 {
+#ifdef CDK_AWARE
   if (console != NULL && console_isenabled(console)) 
     {
       write(console->scrollwindow->outfd, msg, 256);
-    } else {
-    printf("TEST %s\n", msg);
-  }
+    } 
+  else
+#endif
+    {
+      printf("TEST %s\n", msg);
+    }
 }
 
 
@@ -790,10 +794,8 @@ forward_stream(tdata_t *thread)
       pthread_mutex_lock(&message->mutex);
       message->delivers--;
 
-      /*
       if (message->delivers == 0)
 	unqueue_message(message); 
-      */
       
       pthread_mutex_unlock(&message->mutex);
       
@@ -1344,6 +1346,7 @@ void data_init_pipes(tdata_t *thread) {
 }
 
 
+#ifdef CDK_WARE
 /**
  *
  */
@@ -1390,3 +1393,4 @@ void nocmd() {
   popupLabel (ScreenOf(console->entry), msg, 3);
   pthread_mutex_unlock(&console->mutex);
 }
+#endif
