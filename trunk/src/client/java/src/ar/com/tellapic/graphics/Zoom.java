@@ -55,7 +55,7 @@ public final class Zoom extends Tool {
 	 * @see ar.com.tellapic.graphics.Tool#draw(double, double)
 	 */
 	@Override
-	public void onDrag(int x, int y, boolean simetric, int button) {
+	public void onDrag(int x, int y, int button, int mask) {
 	}
 	
 	
@@ -81,7 +81,7 @@ public final class Zoom extends Tool {
 	 * @see ar.com.tellapic.graphics.Tool#onFinishDraw()
 	 */
 	@Override
-	public Drawing onRelease(int x, int y, int button) {
+	public Drawing onRelease(int x, int y, int button, int mask) {
 		// TODO Auto-generated method stub
 		return null;
 	}

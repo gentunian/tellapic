@@ -61,7 +61,7 @@ public class Text extends Tool {
 	 * @see ar.com.tellapic.graphics.Tool#draw(double, double)
 	 */
 	@Override
-	public void onDrag(int x, int y, boolean simetric, int button) {
+	public void onDrag(int x, int y, int button, int mask) {
 	}
 
 
@@ -69,7 +69,7 @@ public class Text extends Tool {
 	 * @see ar.com.tellapic.graphics.Tool#onFinishDraw()
 	 */
 	@Override
-	public Drawing onRelease(int x, int y, int button) {
+	public Drawing onRelease(int x, int y, int button, int mask) {
 		if (temporalDrawing.getText().length() > 0) {
 			temporalDrawing.setTextX((int) firstPoint.getX());
 			temporalDrawing.setTextY((int) firstPoint.getY());

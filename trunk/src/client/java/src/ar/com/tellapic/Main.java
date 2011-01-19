@@ -26,6 +26,7 @@ import ar.com.tellapic.graphics.DrawingAreaView;
 import ar.com.tellapic.graphics.EllipseNet;
 import ar.com.tellapic.graphics.LineNet;
 import ar.com.tellapic.graphics.MarkerNet;
+import ar.com.tellapic.graphics.PenNet;
 import ar.com.tellapic.graphics.RectangleNet;
 import ar.com.tellapic.graphics.TextNet;
 import ar.com.tellapic.graphics.ToolFactory;
@@ -111,6 +112,7 @@ public class Main {
 		ToolFactory.registerToolClassName(tellapicConstants.TOOL_RECT, RectangleNet.class.getName());
 		ToolFactory.registerToolClassName(tellapicConstants.TOOL_TEXT, TextNet.class.getName());
 		ToolFactory.registerToolClassName(tellapicConstants.TOOL_MARKER, MarkerNet.class.getName());
+		ToolFactory.registerToolClassName(tellapicConstants.TOOL_PATH, PenNet.class.getName());
 		
 		UserManager userManager = UserManager.getInstance();
 		userManager.createLocalUser(id, name);

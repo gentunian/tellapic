@@ -21,6 +21,8 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.RenderingHints.Key;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -137,8 +139,7 @@ public class UserGUIBuilder {
 		SingleCDockable dock3 = wrapToDockable(scrollPane);
 		SingleCDockable dock4 = wrapToDockable(chatView);
 		SingleCDockable dock5 = wrapToDockable(userView);
-		
-		
+				
 		mainWindow.setPreferredSize(new Dimension(400,400));
 		grid.add(0,   0, 50,   50, dock1);
 		grid.add(0,  50, 50,  100, dock2);
@@ -167,12 +168,15 @@ public class UserGUIBuilder {
 		JMenuItem addUserItem     = new JMenuItem("Add User");
 		JMenuItem delUserItem     = new JMenuItem("Remove User");
 		JMenuItem reconnect       = new JMenuItem("Reconnect");
+		JMenu qualityMenu = new JMenu(Utils.msg.getString("quality"));
 		JMenu themeSubMenu = new JMenu(Utils.msg.getString("theme"));
 		JCheckBoxMenuItem themeJava = new JCheckBoxMenuItem("JAVA");
 		JCheckBoxMenuItem themeGTK  = new JCheckBoxMenuItem("GTK");
 		ButtonGroup group = new ButtonGroup();
 		
 		optionsMenu.add(reconnect);
+		buildQualityMenu(qualityMenu);
+		optionsMenu.add(qualityMenu);
 		reconnect.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -276,10 +280,198 @@ public class UserGUIBuilder {
 		return menuBar;
 	}
 	
+	
+	/*
+	 * Build the quality menu:
+	 * 
+	 *  Quality -> Text Antialising -> Antialias on
+	 *                                 Antialias off
+	 *                                 Antialias default
+	 *                                 Antialias GASP
+	 *                                 Antialias LCD HRGB
+	 *                                 Antialias LCD HBGR
+	 *                                 Antialias LCD VRGB
+	 *                                 Antialias LCD VBGR
+	 *                                 
+	 *          -> Shape Antialiasing -> Antialias ON
+	 *                                -> Antialias DEFAULT
+	 *                                
+	 *          -> Color Rendering -> Quality
+	 *                             -> Speed
+	 *                             -> DEFAULT
+	 *                             
+	 *          -> Dithering -> Disable
+	 *                       -> Enable
+	 *                       -> DEFAULT
+	 *                       
+	 *          -> Image Interpolation -> Bicubic
+	 *                                 -> Bilinear
+	 *                                 -> Near neighbor
+	 *                                 
+	 *          -> Rendering Quality -> Quality
+	 *                               -> Speed
+	 *                               -> Default
+	 *                               
+	 *          -> Stroke Normalization Control -> DEFAULT
+	 *                                          -> Normalize
+	 *                                          -> Pure
+	 */
+	private void buildQualityMenu(JMenu root) {
+		JMenu aaText              = new JMenu("Text Antialising");
+		JMenu aaShape             = new JMenu("Shape Antialising");
+		JMenu colorRendering      = new JMenu("Color Rendering");
+		JMenu dithering           = new JMenu("Dithering");
+		JMenu imageInterpolation  = new JMenu("Image Interpolation");
+		JMenu renderingQuality    = new JMenu("Rendering Quality");
+		JMenu strokeNormalization = new JMenu("Stroke Normalization Control");
+
+		root.add(
+				buildAACheckBoxes(
+						aaText,
+						RenderingHints.KEY_TEXT_ANTIALIASING,
+						new Object[] {RenderingHints.VALUE_TEXT_ANTIALIAS_ON,
+								RenderingHints.VALUE_TEXT_ANTIALIAS_OFF,
+								RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT,
+								RenderingHints.VALUE_TEXT_ANTIALIAS_GASP,
+								RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB,
+								RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HBGR,
+								RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_VRGB,
+								RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_VBGR
+						}
+				)
+		);
+		
+		root.add(
+				buildAACheckBoxes(
+						aaShape,
+						RenderingHints.KEY_ANTIALIASING,
+						new Object[] { 
+								RenderingHints.VALUE_ANTIALIAS_ON,
+								RenderingHints.VALUE_ANTIALIAS_OFF,
+								RenderingHints.VALUE_ANTIALIAS_DEFAULT
+						}
+				)
+		);
+		
+		root.add(
+				buildAACheckBoxes(
+						colorRendering,
+						RenderingHints.KEY_COLOR_RENDERING,
+						new Object[] { 
+								RenderingHints.VALUE_COLOR_RENDER_QUALITY,
+								RenderingHints.VALUE_COLOR_RENDER_SPEED,
+								RenderingHints.VALUE_COLOR_RENDER_DEFAULT
+						}
+				)
+		);
+		
+		root.add(
+				buildAACheckBoxes(
+						dithering,
+						RenderingHints.KEY_DITHERING,
+						new Object[] {
+								RenderingHints.VALUE_DITHER_DISABLE,
+								RenderingHints.VALUE_DITHER_ENABLE,
+								RenderingHints.VALUE_DITHER_DEFAULT
+						}
+				)
+		);
+
+		root.add(
+				buildAACheckBoxes(
+						imageInterpolation,
+						RenderingHints.KEY_INTERPOLATION,
+						new Object[] {
+								RenderingHints.VALUE_INTERPOLATION_BICUBIC,
+								RenderingHints.VALUE_INTERPOLATION_BILINEAR,
+								RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR
+						}
+				)
+		);
+
+		root.add(
+				buildAACheckBoxes(
+						renderingQuality,
+						RenderingHints.KEY_RENDERING,
+						new Object[]  {
+								RenderingHints.VALUE_RENDER_QUALITY,
+								RenderingHints.VALUE_RENDER_SPEED,
+								RenderingHints.VALUE_RENDER_DEFAULT
+						}
+				)
+		);
+		
+		root.add(
+				buildAACheckBoxes(
+						strokeNormalization, 
+						RenderingHints.KEY_STROKE_CONTROL, 
+						new Object[] {
+								RenderingHints.VALUE_STROKE_DEFAULT,
+								RenderingHints.VALUE_STROKE_NORMALIZE,
+								RenderingHints.VALUE_STROKE_PURE
+						}
+				)
+		);
+	}
+	
+	
+	/*
+	 * 
+	 */
+	private JMenu buildAACheckBoxes(JMenu root, Key key, Object[] values) {
+		ButtonGroup group = new ButtonGroup();
+		JCheckBoxMenuItem item = null;
+		for(int i = 0; i < values.length; i++) {
+			item = new JCheckBoxMenuItem(values[i].toString());
+			group.add(item);
+			item.addItemListener(new TextAliasingMenuItemListener(key, values[i]));
+			root.add(item);
+			
+			if (item.getText().matches(".*default.*|.*Default.*|.*DEFAULT.*"))
+				item.setSelected(true);
+		}
+
+		return root;	
+	}
+	
+	
+	/*
+	 * 
+	 */
+	private class TextAliasingMenuItemListener implements ItemListener {
+		private Object value;
+		private Key    key;
+		public TextAliasingMenuItemListener(Key key, Object v) {
+			this.value = v;
+			this.key   = key;
+		}
+		/* (non-Javadoc)
+		 * @see java.awt.event.ItemListener#itemStateChanged(java.awt.event.ItemEvent)
+		 */
+		@Override
+		public void itemStateChanged(ItemEvent e) {
+			RenderingHints rh = DrawingAreaView.getInstance().getRenderingHints();
+			if (e.getStateChange() == ItemEvent.DESELECTED) {
+				rh.remove(key);
+			} else {
+				rh.put(key, value);
+			}
+			DrawingAreaView.getInstance().setRenderingHints(rh);
+		}
+	}
+	
+	
+	/*
+	 * 
+	 */
 	private SingleCDockable wrapToDockable(JComponent view) {
 		return new DefaultSingleCDockable(view.getName(), view.getName(), view);
 	}
 	
+	
+	/*
+	 * 
+	 */
 	private class Painter implements ActionListener {
 		private JMenu parent;
 		

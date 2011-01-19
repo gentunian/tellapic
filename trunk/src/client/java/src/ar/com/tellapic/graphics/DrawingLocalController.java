@@ -61,8 +61,7 @@ public class DrawingLocalController extends MouseAdapter {
 	 */
 	@Override
 	public void mousePressed(MouseEvent event) {
-		Utils.printEventInfo(event);
-		//Utils.logMessage("Mouse pressed: "+event.getButton());
+		//Utils.printEventInfo(event);
 		
 		user = (event instanceof RemoteMouseEvent)? ((RemoteMouseEvent) event).getUser() : UserManager.getInstance().getLocalUser();
 		
@@ -102,8 +101,8 @@ public class DrawingLocalController extends MouseAdapter {
 	 */
 	@Override
 	public void mouseDragged(MouseEvent event) {
-		Utils.printEventInfo(event);
-//		Utils.logMessage("Mouse dragged: "+event.getButton());
+		//Utils.printEventInfo(event);
+
 		user = (event instanceof RemoteMouseEvent)? ((RemoteMouseEvent) event).getUser() : UserManager.getInstance().getLocalUser();
 		Tool usedTool = user.getToolBoxModel().getLastUsedTool();
 		
@@ -112,7 +111,7 @@ public class DrawingLocalController extends MouseAdapter {
 		
 		if (usedTool.isBeingUsed()) {
 			avoidLoopback();
-			usedTool.onDrag(event.getX(), event.getY(), event.isControlDown(), event.getButton());
+			usedTool.onDrag(event.getX(), event.getY(), event.getButton(), event.getModifiersEx());
 			
 			// This will trigger an update() to the DrawingAreaView
 			user.setTemporalDrawing(usedTool.getDrawing());
@@ -126,7 +125,7 @@ public class DrawingLocalController extends MouseAdapter {
 	 */
 	@Override
 	public void mouseReleased(MouseEvent event) {
-		Utils.printEventInfo(event);
+		//Utils.printEventInfo(event);
 		
 		user     = (event instanceof RemoteMouseEvent)? ((RemoteMouseEvent) event).getUser() : UserManager.getInstance().getLocalUser();
 		Tool         usedTool = user.getToolBoxModel().getLastUsedTool();
@@ -136,7 +135,7 @@ public class DrawingLocalController extends MouseAdapter {
 		
 		if (usedTool.isBeingUsed() && event.getButton() == MouseEvent.BUTTON1) {
 			avoidLoopback();
-			Drawing drawing = usedTool.onRelease(event.getX(), event.getY(), event.getButton());
+			Drawing drawing = usedTool.onRelease(event.getX(), event.getY(), event.getButton(), event.getModifiersEx());
 			
 			if (drawing == null) 
 				return;

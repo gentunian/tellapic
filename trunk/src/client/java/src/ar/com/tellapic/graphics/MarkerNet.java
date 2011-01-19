@@ -97,19 +97,20 @@ final public class MarkerNet extends Marker {
 	 * @see ar.com.tellapic.graphics.Tool#draw(double, double)
 	 */
 	@Override
-	public void onDrag(int x, int y, boolean symmetric, int button) {
-		super.onDrag(x, y, symmetric, button);
+	public void onDrag(int x, int y, int button, int mask) {
+		super.onDrag(x, y, button, mask);
 		if (isBeingUsed()) {
 			if (NetManager.getInstance().isConnected() && avoidLoopback) {
 				int eventExtMod  = 0;
 				int wrappedEvent = getToolId();
-				if (button == MouseEvent.BUTTON1)
+				if ((mask & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK)
 					wrappedEvent |= tellapicConstants.EVENT_DLEFT;
-				else if (button == MouseEvent.BUTTON2)
+				else if ((mask & MouseEvent.BUTTON2_DOWN_MASK) == MouseEvent.BUTTON2_DOWN_MASK)
 					wrappedEvent |= tellapicConstants.EVENT_DRIGHT;
-				else
+				else if ((mask & MouseEvent.BUTTON3_DOWN_MASK) == MouseEvent.BUTTON3_DOWN_MASK)
 					wrappedEvent |= tellapicConstants.EVENT_DMIDDLE;
-				if (symmetric)
+				
+				if ((mask & MouseEvent.CTRL_DOWN_MASK) == MouseEvent.CTRL_DOWN_MASK)
 					eventExtMod = tellapicConstants.EVENT_CTL_DOWN;
 
 					
@@ -139,8 +140,8 @@ final public class MarkerNet extends Marker {
 	 * @see ar.com.tellapic.graphics.Ellipse#onRelease(int)
 	 */
 	@Override
-	public Drawing onRelease(int x, int y, int button) {
-		Drawing drawing = super.onRelease(x, y, button);
+	public Drawing onRelease(int x, int y, int button, int mask) {
+		Drawing drawing = super.onRelease(x, y, button, mask);
 		if (drawing == null)
 			return drawing;
 		

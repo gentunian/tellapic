@@ -1,5 +1,6 @@
 package ar.com.tellapic.graphics;
 
+import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
@@ -69,8 +70,9 @@ public class Rectangle extends Tool {
 	 * @see ar.com.tellapic.graphics.Tool#draw(double, double)
 	 */
 	@Override
-	public void onDrag(int x, int y, boolean symmetric, int button) {
+	public void onDrag(int x, int y, int button, int mask) {
 		if (inUse) {
+			boolean symmetric = (mask & MouseEvent.CTRL_DOWN_MASK) == MouseEvent.CTRL_DOWN_MASK;
 			double initX  = firstPoint.getX();
 			double initY  = firstPoint.getY();
 			double width  = Math.abs(firstPoint.getX() - x);
@@ -104,7 +106,7 @@ public class Rectangle extends Tool {
 	 * @see ar.com.tellapic.graphics.Tool#onFinishDraw()
 	 */
 	@Override
-	public Drawing onRelease(int x, int y, int button) {
+	public Drawing onRelease(int x, int y, int button, int mask) {
 		if (inUse && !rectangle.isEmpty()) {
 			temporalDrawing.cloneProperties();
 			inUse = false;

@@ -97,7 +97,7 @@ public class DrawingAreaModel extends Observable implements IDrawingAreaState, I
 		Object[] pair = new Object[2];
 		pair[0] = user;
 		pair[1] = drawing;
-		Utils.logMessage("Drawing added. Notifyin observers.");
+		//Utils.logMessage("Drawing added. Notifyin observers.");
 		setChanged();
 		notifyObservers(pair);
 	}
