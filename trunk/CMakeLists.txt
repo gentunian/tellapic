@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 2.8)
 # CMake modules
 set(CMAKE_MODULE_PATH ${tellapic_SOURCE_DIR}/Modules ${CMAKE_MODULE_PATH})
 
-find_package(CURSES QUIET)
+find_package(Curses QUIET)
 
 # This is a bug workaround. Doing find_package(CDK QUIET) will not work if Curses aren't present on the system.
 # (IMHO it should, instead of quitting cmake).
