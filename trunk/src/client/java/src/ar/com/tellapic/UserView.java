@@ -30,6 +30,7 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.DefaultTreeSelectionModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
@@ -106,23 +107,26 @@ public class UserView extends JPanel implements Observer {
 		TreeSelectionModel treeSelectionModel = usersTree.getSelectionModel();
 		treeSelectionModel.setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 		treeSelectionModel.addTreeSelectionListener(new TreeSelectionListener() {
-
 			@Override
 			public void valueChanged(TreeSelectionEvent arg0) {
 				// TODO Auto-generated method stub
-				Utils.logMessage("VALUE CHANGED! "+arg0.getSource());
-			}});
+				DefaultTreeSelectionModel model = (DefaultTreeSelectionModel)arg0.getSource();
+				Utils.logMessage("VALUE CHANGED! "+model);
+			}
+		});
 		usersTree.expandRow(0);
 		usersTree.setShowsRootHandles(true);
 		usersTree.setRootVisible(true);
 		usersTree.setEditable(false);
-		
+
 		usersTree.addTreeSelectionListener(new TreeSelectionListener() {
 
 			@Override
 			public void valueChanged(TreeSelectionEvent arg0) {
 				// TODO Auto-generated method stub
-				Utils.logMessage("VALUE CHANGED! "+arg0.getSource());
+				JTree tree = (JTree) arg0.getSource();
+				Utils.logMessage("Tree selection VALUE CHANGED! "+tree);
+				
 			}});
 		
 		add(treeView);
@@ -163,7 +167,7 @@ public class UserView extends JPanel implements Observer {
 					if (data instanceof Integer) {
 						DefaultMutableTreeNode   drawingNode = new DefaultMutableTreeNode(user.getDrawings().get((Integer)data));
 						treeModel.insertNodeInto(drawingNode, userNode, userNode.getChildCount());
-						usersTree.scrollPathToVisible(new TreePath(drawingNode.getPath()));
+						//usersTree.scrollPathToVisible(new TreePath(drawingNode.getPath()));
 					}
 				}
 			} else {

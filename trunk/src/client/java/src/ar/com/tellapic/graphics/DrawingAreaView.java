@@ -1,5 +1,6 @@
 package ar.com.tellapic.graphics;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -35,6 +36,8 @@ public class DrawingAreaView extends JPanel implements Observer {
 
 	private Image                   background;
 	private Image                   foreground;
+	private Image                   grid;
+
 	//private Drawing                 temporalDrawing;
 	private ArrayList<Drawing>      temporalDrawings;
 	private ArrayList<AbstractUser> userList;
@@ -43,6 +46,10 @@ public class DrawingAreaView extends JPanel implements Observer {
 	private GraphicsDevice          gd;
 	private GraphicsConfiguration   gc;
 	private RenderingHints          rh;
+
+	private boolean gridEnabled = true;
+	private int     gridSize = 10;
+
 	
 	private static class Holder {
 		private final static DrawingAreaView INSTANCE = new DrawingAreaView();
@@ -60,15 +67,15 @@ public class DrawingAreaView extends JPanel implements Observer {
 		temporalDrawings = new ArrayList<Drawing>();
 		userList = new ArrayList<AbstractUser>();
 		backimage = null;
-		try {
-			backimage = ImageIO.read(getClass().getResource("/icons/backimage.jpg"));
-		} catch (IOException e) {
-		}
+//		try {
+//			backimage = ImageIO.read(getClass().getResource("/icons/backimage.jpg"));
+//		} catch (IOException e) {
+//		}
 		ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 		gd = ge.getDefaultScreenDevice();
 		gc = gd.getDefaultConfiguration();
 		rh = new RenderingHints(null);
-		setPreferredSize(new Dimension(backimage.getWidth(), backimage.getHeight()));
+		//setPreferredSize(new Dimension(backimage.getWidth(), backimage.getHeight()));
 	}
 	
 	
@@ -99,12 +106,12 @@ public class DrawingAreaView extends JPanel implements Observer {
 		gd = ge.getDefaultScreenDevice();
 		gc = gd.getDefaultConfiguration();
 		setPreferredSize(new Dimension(backimage.getWidth(), backimage.getHeight()));
+		foreground = null;
 		
-		background = gc.createCompatibleImage(backimage.getWidth(), backimage.getHeight(), Transparency.TRANSLUCENT);
-		foreground = gc.createCompatibleImage(backimage.getWidth(), backimage.getHeight(), Transparency.TRANSLUCENT);
-		Graphics2D frontArea     = (Graphics2D) foreground.getGraphics();
-		frontArea.drawImage(backimage, 0, 0, null);
-
+//		background = gc.createCompatibleImage(backimage.getWidth(), backimage.getHeight(), Transparency.TRANSLUCENT);
+//		foreground = gc.createCompatibleImage(backimage.getWidth(), backimage.getHeight(), Transparency.TRANSLUCENT);
+//		drawBackgroundOff();
+		
 		repaint();
 	}
 	
@@ -141,23 +148,21 @@ public class DrawingAreaView extends JPanel implements Observer {
 		
 		//TODO: this makes no sense to be put here. This should be used just once when
 		//a background image (backImage) is loaded and this panel is displayed. Remove this!
-		if (background == null)
+		if (background == null && backimage != null)
 			background = gc.createCompatibleImage(backimage.getWidth(), backimage.getHeight(), Transparency.TRANSLUCENT);
 
 		if (foreground == null)
-			foreground = gc.createCompatibleImage(backimage.getWidth(), backimage.getHeight(), Transparency.TRANSLUCENT);
-
+			return;
 		
 		Graphics2D permanentArea = (Graphics2D) background.getGraphics();
-		Graphics2D frontArea     = (Graphics2D) foreground.getGraphics();
-		
+		//Graphics2D frontArea     = (Graphics2D) foreground.getGraphics();
 		
 		/****************************************/
 		/*   The image will never be modified   */
 		/****************************************/
-		frontArea.drawImage(backimage, 0, 0, null);
+		drawBackgroundOff();
 		
-		
+
 		if (!user.isRemoved() && user.isVisible()) {
 			//Utils.logMessage("\tUser is visible: "+user);
 			Drawing firstNotDrawn   = (index == null)? null : user.getDrawings().get(index);
@@ -203,39 +208,18 @@ public class DrawingAreaView extends JPanel implements Observer {
 	//que se dibuje arriba de la imagen de fondo.
 	@Override
 	public void paint(Graphics g) {
+		if (backimage == null)
+			return;
+		
 		if (foreground == null) {
 			foreground = gc.createCompatibleImage(backimage.getWidth(), backimage.getHeight(), Transparency.TRANSLUCENT);
-			Graphics2D frontArea = (Graphics2D) foreground.getGraphics();
-			frontArea.drawImage(backimage, 0, 0, null);
-			
-			//Utils.logMessage("foreground was null");
+			drawBackgroundOff();
 		}
 		
-//		Graphics2D frontArea = (Graphics2D) foreground.getGraphics();
-//		
-//		//The image will never be modified
-//		frontArea.drawImage(backimage, 0, 0, null);
-//		
-//		//This layer is translucent and holds each drawing on it
-//		frontArea.drawImage(background, 0, 0, null);
-		
-		//Creates the sensation of drawing things while moving the mouse
-		//TODO: this is shared in the sense that adding or removing a painter
-		//is concurrent. While we are getting the size of the list a painter
-		//can be added concurrently. Take note on this, and if analize if could
-		//be a problem. Same happens when removing (do we really need to remove a painter?
-		//Seems that not removing a painter will not cause a leak, will it?)
-//		for(int i=0; i < temporalDrawings.size(); i++) {
-//			Drawing drawing = temporalDrawings.get(i);
-//			if (drawing != null)
-//				drawDrawing(frontArea, drawing);
-//				//temporalDrawings.set(i, null);
-//		}
-		
-		//Draws the temporal drawings creating the ilusion of drawing.
 		Graphics2D frontArea = (Graphics2D) foreground.getGraphics();
 		frontArea.setRenderingHints(rh);
 		frontArea.drawImage(background, 0, 0, null);
+		
 		for(AbstractUser user : UserManager.getInstance().getUsers().values()) {
 			if (!user.isRemoved() && user.isVisible()) {
 				Drawing d = user.getTemporalDrawing();
@@ -278,5 +262,63 @@ public class DrawingAreaView extends JPanel implements Observer {
 			g.draw(drawing.getShape());
 		else
 			g.drawString(drawing.getText(), drawing.getTextX(), drawing.getTextY());
+	}
+
+
+	/**
+	 * @param gridSize the gridSize to set
+	 */
+	public void setGridSize(int gridSize) {
+		this.gridSize = gridSize;
+		drawBackgroundOff();
+		repaint();
+	}
+
+
+	/**
+	 * @return the gridSize
+	 */
+	public int getGridSize() {
+		return gridSize;
+	}
+
+
+	/*
+	 * 
+	 */
+	private void drawBackgroundOff() {
+		Graphics2D frontArea = (Graphics2D) foreground.getGraphics();
+		frontArea.drawImage(backimage, 0, 0, null);
+		if(gridEnabled) {
+			frontArea.setColor(Color.gray);
+			for(int i = 0; i <= Math.round((getWidth() / gridSize)); i++) {
+				frontArea.drawLine(i * gridSize, 0, i * gridSize, getHeight());
+			}
+			for(int i = 0; i <= Math.round((getHeight() / gridSize)); i++) {
+				frontArea.drawLine(0, i * gridSize, getWidth(), i * gridSize);
+			}
+		}	
+	}
+	
+	
+	/**
+	 * @param gridEnabled the gridEnabled to set
+	 */
+	public void setGridEnabled(boolean gridEnabled) {
+		this.gridEnabled = gridEnabled;
+		
+		if (foreground == null)
+			return;
+		
+		drawBackgroundOff();
+		repaint();
+	}
+
+
+	/**
+	 * @return the gridEnabled
+	 */
+	public boolean isGridEnabled() {
+		return gridEnabled;
 	}
 }

@@ -1346,7 +1346,7 @@ void data_init_pipes(tdata_t *thread) {
 }
 
 
-#ifdef CDK_WARE
+#ifdef CDK_AWARE
 /**
  *
  */
