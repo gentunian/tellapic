@@ -3,6 +3,7 @@ package ar.com.tellapic.graphics;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -11,6 +12,8 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -19,6 +22,7 @@ import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
+import javax.swing.JColorChooser;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -136,6 +140,7 @@ public class PaintPropertyView extends JPanel implements Observer {
 	 */
 	public void setController(IPaintPropertyController c) {
 		controller = c;
+		controller.handleColorChange(Color.black);
 	}
 	
 	
@@ -275,6 +280,9 @@ public class PaintPropertyView extends JPanel implements Observer {
 		backgroundColor.setBorder(BorderFactory.createLoweredBevelBorder());
 		colorPanel.add(foregroundColor);
 		colorPanel.add(backgroundColor);
+		
+		foregroundColor.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		foregroundColor.addMouseListener(new ColorChangeListener());
 		
 		return minPanelSize;
 	}
@@ -629,6 +637,21 @@ public class PaintPropertyView extends JPanel implements Observer {
 		}
 	}
 	
+	
+	private class ColorChangeListener extends MouseAdapter {
+		/*
+		 * (non-Javadoc)
+		 * @see java.awt.event.MouseAdapter#mouseClicked(java.awt.event.MouseEvent)
+		 */
+		@Override
+		public void mouseClicked(MouseEvent e) {
+			Color c = JColorChooser.showDialog(PaintPropertyView.this, "Pick a Color", ((JLabel) e.getSource()).getBackground()); 
+			if (c != null) {
+				controller.handleColorChange(c);
+				((JLabel) e.getSource()).setBackground(c);
+			}
+		}
+	}
 	
 	private class SliderChangeListener implements ChangeListener {
 

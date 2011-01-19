@@ -1,5 +1,6 @@
 package ar.com.tellapic.graphics;
 
+import java.awt.Cursor;
 import java.awt.geom.Point2D;
 
 import ar.com.tellapic.utils.Utils;
@@ -17,7 +18,7 @@ public final class Zoom extends Tool {
 	*/
 	
 	public Zoom() {
-		super(99, Zoom.class.getSimpleName(), "/icons/zoom.png", Utils.msg.getString("zoomtooltip"));
+		super(99, Zoom.class.getSimpleName(), "/icons/zoom.png", Utils.msg.getString("zoomtooltip"), Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 	}
 
 

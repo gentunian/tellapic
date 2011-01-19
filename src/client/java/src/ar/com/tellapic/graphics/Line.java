@@ -1,5 +1,6 @@
  package ar.com.tellapic.graphics;
 
+import java.awt.Cursor;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
@@ -23,17 +24,14 @@ public class Line extends Tool {
 
 
 	public Line(String name) {
-		super(tellapicConstants.TOOL_LINE, name, "/icons/line.png", Utils.msg.getString("linetooltip"));
+		super(tellapicConstants.TOOL_LINE, name, "/icons/line.png", Utils.msg.getString("linetooltip"), Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 		firstPoint = new Point2D.Double();
 		inUse      = false;
 		temporalDrawing = new Drawing(getName());
 	}
 	
 	public Line() {
-		super(tellapicConstants.TOOL_LINE, "Line", "/icons/line.png", Utils.msg.getString("linetooltip"));
-		firstPoint = new Point2D.Double();
-		inUse      = false;
-		temporalDrawing = new Drawing(getName());
+		this("Line");
 	}
 
 

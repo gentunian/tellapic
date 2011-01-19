@@ -17,6 +17,7 @@
  */  
 package ar.com.tellapic;
 
+import java.awt.Color;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.io.ByteArrayInputStream;
@@ -33,9 +34,7 @@ import ar.com.tellapic.chat.ChatController;
 import ar.com.tellapic.chat.IChatController;
 import ar.com.tellapic.chat.Message;
 import ar.com.tellapic.graphics.Drawing;
-import ar.com.tellapic.graphics.DrawingAreaView;
 import ar.com.tellapic.graphics.IPaintPropertyController;
-import ar.com.tellapic.graphics.RemoteMouseEvent;
 import ar.com.tellapic.graphics.Tool;
 import ar.com.tellapic.graphics.ToolBoxModel;
 import ar.com.tellapic.graphics.ToolFactory;
@@ -344,19 +343,26 @@ public class NetManager extends Observable {
 			
 			remoteUser.getToolboxController().selectToolByName(toolClassName.split("[a-z].*\\.")[1]);
 			
+			/* Create a color instance upon the remote color used */
+			Color color = new Color(
+					drawingData.getColor().getRed(),
+					drawingData.getColor().getGreen(),
+					drawingData.getColor().getBlue()
+			);
+			
 			if ((remoteTool & tellapicConstants.TOOL_TEXT) == tellapicConstants.TOOL_TEXT) {
 				c.handleFontSizeChange((int)drawingData.getWidth());
 				c.handleFontStyleChange(drawingData.getType().getText().getStyle());
 				c.handleTextChange(drawingData.getType().getText().getInfo());
 				c.handleFontFaceChange(drawingData.getType().getText().getFace());
-				
+
 			} else {
 				c.handleEndCapsChange(drawingData.getType().getFigure().getEndcaps());
 				c.handleLineJoinsChange(drawingData.getType().getFigure().getLinejoin());
 				c.handleOpacityChange(drawingData.getOpacity());
 				c.handleWidthChange((int)drawingData.getWidth());
-				
 			}
+			c.handleColorChange(color);
 			
 			int swingButton = convertToSwingButtonValue(button);
 			int swingMask   = getSwingMask(swingButton, eventExt);
@@ -487,11 +493,16 @@ public class NetManager extends Observable {
 			switch(event) {
 
 			case tellapicConstants.EVENT_PRESS:
+				Color color = new Color(
+						drawingData.getColor().getRed(),
+						drawingData.getColor().getGreen(),
+						drawingData.getColor().getBlue()
+				);
 				c.handleEndCapsChange(drawingData.getType().getFigure().getEndcaps());
 				c.handleLineJoinsChange(drawingData.getType().getFigure().getLinejoin());
 				c.handleOpacityChange(drawingData.getOpacity());
 				c.handleWidthChange((int)drawingData.getWidth());
-
+				c.handleColorChange(color);
 				if (usedTool.hasAlphaProperties())
 					usedTool.setAlpha(toolBoxState.getOpacityProperty());
 
@@ -503,7 +514,10 @@ public class NetManager extends Observable {
 
 				if (usedTool.hasFontProperties())
 					usedTool.setFont(toolBoxState.getFontProperty());
-
+				
+				if (usedTool.hasColorProperties())
+					usedTool.setColor(toolBoxState.getColorProperty());
+				
 				usedTool.onPress(
 						(int)drawingData.getPoint1().getX(),
 						(int)drawingData.getPoint1().getY(),
@@ -760,9 +774,9 @@ public class NetManager extends Observable {
 				break;
 				
 			case tellapicConstants.CTL_CL_PMSG:
-				AbstractUser userTo = UserManager.getInstance().getUser(idTo);
 				idTo = chatmsg.getType().getPrivmsg().getIdto();
 				text = chatmsg.getType().getPrivmsg().getText();
+				AbstractUser userTo = UserManager.getInstance().getUser(idTo);
 				message = new Message(
 						userFrom.getName(),
 						userTo.getName(),

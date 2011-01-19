@@ -106,10 +106,10 @@ public class UserGUIBuilder {
 
 
 		// Instantiates all the GUIs.
-		userView = UserView.getInstance();
-		toolView = new ToolView(model);
+		userView     = UserView.getInstance();
+		toolView     = new ToolView(model);
 		propertyView = new PaintPropertyView();	
-		chatView = new ChatView(new ChatController());
+		chatView     = new ChatView(new ChatController());
 		
 		model.addObserver(propertyView);
 		model.addObserver(toolView);

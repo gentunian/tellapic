@@ -1,5 +1,6 @@
 package ar.com.tellapic.graphics;
 
+import java.awt.Cursor;
 import java.awt.geom.Point2D;
 
 /**
@@ -39,6 +40,7 @@ public abstract class Tool {
 	private String   iconPath;
 	private String   toolTipText;
 	private boolean  enabled;
+	private Cursor   toolCursor;
 
 	
 	/**
@@ -48,7 +50,7 @@ public abstract class Tool {
 	 * @param iconPath
 	 */
 	public Tool(int id, String name, String iconPath) {
-		this(id, name, iconPath, "No description provided.");
+		this(id, name, iconPath, "No description provided.", null);
 	}
 	
 	
@@ -57,7 +59,7 @@ public abstract class Tool {
 	 * @param type the tool type being created
 	 * @param name the tool name being created
 	 */
-	public Tool(int id, String name, String iconPath, String description) throws IllegalArgumentException {
+	public Tool(int id, String name, String iconPath, String description, Cursor cursor) throws IllegalArgumentException {
 		if (name == null || iconPath == null)
 			throw new IllegalArgumentException();
 		
@@ -66,6 +68,7 @@ public abstract class Tool {
 		this.iconPath    = iconPath;
 		this.name        = name;
 		this.id          = id;
+		this.toolCursor  = (cursor == null)? Cursor.getDefaultCursor() : cursor;
 	}
 	
 	
@@ -295,5 +298,24 @@ public abstract class Tool {
 	 */
 	public String getToolTipText() {
 		return toolTipText;
+	}
+	
+	
+	/**
+	 * 
+	 * @param cursor
+	 */
+	public void setCursor(Cursor cursor) {
+		toolCursor = cursor;
+	}
+	
+	
+	/**
+	 * 
+	 * @param cursor
+	 * @return
+	 */
+	public Cursor getCursor() {
+		return toolCursor;
 	}
 }

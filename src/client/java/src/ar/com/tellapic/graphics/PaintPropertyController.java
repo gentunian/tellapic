@@ -1,5 +1,7 @@
 package ar.com.tellapic.graphics;
 
+import java.awt.Color;
+
 public class PaintPropertyController implements IPaintPropertyController {
 	
 
@@ -110,5 +112,14 @@ public class PaintPropertyController implements IPaintPropertyController {
 	
 	public void setDrawingController(DrawingLocalController c) {
 		drawingController = c;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleColorChange(java.awt.Color)
+	 */
+	@Override
+	public void handleColorChange(Color color) {
+		model.setColorPropertyValue(color);
 	}
 }

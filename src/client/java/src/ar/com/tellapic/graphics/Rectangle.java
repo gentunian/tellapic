@@ -1,5 +1,6 @@
 package ar.com.tellapic.graphics;
 
+import java.awt.Cursor;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -16,7 +17,7 @@ public class Rectangle extends Tool {
 	
 	
 	public Rectangle(String name) {
-		super(tellapicConstants.TOOL_RECT, name, "/icons/rectangle.png", Utils.msg.getString("rectangletooltip"));
+		super(tellapicConstants.TOOL_RECT, name, "/icons/rectangle.png", Utils.msg.getString("rectangletooltip"), Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 		firstPoint = new Point2D.Double();
 		inUse = false;
 		temporalDrawing = new Drawing(getName());
@@ -24,10 +25,7 @@ public class Rectangle extends Tool {
 	
 	
 	public Rectangle() {
-		super(tellapicConstants.TOOL_RECT, "Rectangle", "/icons/rectangle.png", Utils.msg.getString("rectangletooltip"));
-		firstPoint = new Point2D.Double();
-		inUse = false;
-		temporalDrawing = new Drawing(getName());
+		this("Rectangle");
 	}
 
 

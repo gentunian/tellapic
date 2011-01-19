@@ -5,22 +5,19 @@ import java.awt.Color;
 
 public class PaintPropertyColor extends PaintProperty {
 	
+	private Color color;
 	public PaintPropertyColor() {
 		super(PaintPropertyType.COLOR);
 	}
 	
-	/*
-	private static class PaintPropertyColorHolder {
-		private static final PaintPropertyColor INSTANCE = new PaintPropertyColor();
+	public Color getColor() {
+		return color;
 	}
 
-	public static PaintPropertyColor getInstance() {
-		return PaintPropertyColorHolder.INSTANCE;
-	}
-	*/
-	
-	public Color getColor() {
-		//TODO: complete
-		return Color.black;
+	/**
+	 * @param color
+	 */
+	public void setColor(Color color) {
+		this.color = color;
 	}
 }

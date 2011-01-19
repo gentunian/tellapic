@@ -1,5 +1,6 @@
 package ar.com.tellapic.graphics;
 
+import java.awt.Cursor;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
@@ -16,7 +17,7 @@ public class Marker extends Tool {
 	
 	
 	public Marker(String name) {
-		super(tellapicConstants.TOOL_MARKER, name, "/icons/marker.png", Utils.msg.getString("markertooltip"));
+		super(tellapicConstants.TOOL_MARKER, name, "/icons/marker.png", Utils.msg.getString("markertooltip"), Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 		firstPoint = new Point2D.Double();
 		inUse = false;
 		temporalDrawing = new Drawing(getName());

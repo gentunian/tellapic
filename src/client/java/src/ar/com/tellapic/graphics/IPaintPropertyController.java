@@ -3,6 +3,8 @@
  */
 package ar.com.tellapic.graphics;
 
+import java.awt.Color;
+
 
 /**
  * 
@@ -60,5 +62,11 @@ public interface IPaintPropertyController {
 	 * @param text
 	 */
 	public void handleTextChange(String text);
+	
+	/**
+	 * 
+	 * @param color
+	 */
+	public void handleColorChange(Color color);
 	
 }

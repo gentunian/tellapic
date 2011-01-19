@@ -3,6 +3,8 @@
  */
 package ar.com.tellapic.graphics;
 
+import java.awt.Color;
+
 
 /**
  * The tool box interface to manage the tool box model. Most method
@@ -128,4 +130,10 @@ public interface IToolBoxManager {
 	 * @param toolId
 	 */
 	public void registerTool(int toolId);
+	
+	/**
+	 * 
+	 * @param color
+	 */
+	public void setColorPropertyValue(Color color);
 }

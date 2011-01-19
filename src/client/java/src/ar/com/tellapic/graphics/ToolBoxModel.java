@@ -4,6 +4,7 @@
 package ar.com.tellapic.graphics;
 
 import java.awt.BasicStroke;
+import java.awt.Color;
 import java.util.HashMap;
 import java.util.NoSuchElementException;
 import java.util.Observable;
@@ -92,8 +93,8 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	public synchronized void setCurrentTool(Tool tool) throws IllegalArgumentException {
 		if (tool == null)
 			throw new IllegalArgumentException("tool cannot be null");
-		
-		Utils.logMessage("Tool selected "+tool.getName());
+
+		DrawingAreaView.getInstance().setCursor(tool.getCursor());
 		lastUsedTool = tool;
 		setChanged();
 		notifyObservers(new ActionData(SHOW_TOOL, lastUsedTool));
@@ -337,7 +338,18 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 		lastUsedTool = tools.get(toolName);
 		if (lastUsedTool == null)
 			throw new NoSuchElementException("No tool with name "+toolName+" found.");
+		
+		DrawingAreaView.getInstance().setCursor(lastUsedTool.getCursor());
 		setChanged();
 		notifyObservers(new ActionData(SHOW_TOOL, lastUsedTool));
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.IToolBoxManager#setColorPropertyValue(java.awt.Color)
+	 */
+	@Override
+	public void setColorPropertyValue(Color color) {
+		colorProperty.setColor(color);
 	}
 }

@@ -1,5 +1,6 @@
 package ar.com.tellapic.graphics;
 
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;
@@ -18,7 +19,7 @@ public class Ellipse extends Tool {
 	
 	
 	public Ellipse(String name) {
-		super(tellapicConstants.TOOL_ELLIPSE, name, "/icons/ellipse.png", Utils.msg.getString("ellipsetooltip"));
+		super(tellapicConstants.TOOL_ELLIPSE, name, "/icons/ellipse.png", Utils.msg.getString("ellipsetooltip"), Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 		firstPoint = new Point2D.Double();
 		inUse      = false;
 		temporalDrawing = new Drawing(getName());
@@ -26,10 +27,7 @@ public class Ellipse extends Tool {
 	
 	
 	public Ellipse() {
-		super(tellapicConstants.TOOL_ELLIPSE, "Ellipse", "/icons/ellipse.png", Utils.msg.getString("ellipsetooltip"));
-		firstPoint = new Point2D.Double();
-		inUse      = false;
-		temporalDrawing = new Drawing(getName());
+		this("Ellipse");
 	}
 	
 
