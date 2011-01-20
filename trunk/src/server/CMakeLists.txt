@@ -2,12 +2,12 @@
 set(COMMON_FILES ${tellapic_SOURCE_DIR}/src/common/list.c ${tellapic_SOURCE_DIR}/src/common/common.c)
 
 if (CDK_FOUND MATCHES TRUE)
-  set(ALL_FILES ${COMMON_FILES} ${tellapic_SOURCE_DIR}/src/common/console.c)
+  set(CDK_FILES ${COMMON_FILES} ${tellapic_SOURCE_DIR}/src/common/console.c)
   set(CDK_COMPILE_FLAG "-DCDK_AWARE=1")
 endif()
 
 # Set the server.c file to compile.
-set(SERVER_FILE ${ALL_FILES} server.c)
+set(SERVER_FILE ${COMMON_FILES} ${CDK_FILES} server.c)
 
 #
 include_directories(${INCDIR})
