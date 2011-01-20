@@ -79,14 +79,16 @@ public class Main {
 					break;
 					
 				case MainDialog.JOIN_TAB:
+				case MainDialog.FAVOURITE_TAB:
 					System.out.println("Joining to server "+main.getRemoteHost()+":"+main.getRemotePort());
-					int r = NetManager.getInstance().connect(main.getRemoteHost(), main.getRemotePort(), main.getJoinUsername(), main.getJoinPassword());
+					int r = NetManager.getInstance().connect(main.getRemoteHost(), main.getRemotePort(), main.getUsername(), main.getPassword());
 					if (r > 0)
 						initiate(SessionUtils.getId(), SessionUtils.getUsername());
 					else
 						JOptionPane.showMessageDialog(null, Utils.msg.getString("errorconnect"), Utils.msg.getString("errorconnecttitle"), JOptionPane.ERROR_MESSAGE);
 					break;
 					
+				
 				default:
 					break;
 				}
