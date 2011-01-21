@@ -56,18 +56,18 @@ public class Main {
 	 */
 	public static void main(String[] args) {
 
-	  // UI theme
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (UnsupportedLookAndFeelException e) {
-            //fallback
-        } catch (ClassNotFoundException e) {
-            //fallback
-        } catch (InstantiationException e) {
-            //fallback
-        } catch (IllegalAccessException e) {
-            //fallback
-        }
+		// UI theme
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (UnsupportedLookAndFeelException e) {
+			//fallback
+		} catch (ClassNotFoundException e) {
+			//fallback
+		} catch (InstantiationException e) {
+			//fallback
+		} catch (IllegalAccessException e) {
+			//fallback
+		}
 		
 		if (args.length == 0) {
 			MainDialog main = new MainDialog();
@@ -95,8 +95,12 @@ public class Main {
 			} else {
 				//TODO
 			}
-		} else {
-			//TODO
+		} else if (args.length == 4){
+			int r = NetManager.getInstance().connect(args[0], Integer.parseInt(args[1]), args[2], args[3]);
+			if (r > 0)
+				initiate(SessionUtils.getId(), SessionUtils.getUsername());
+			else
+				JOptionPane.showMessageDialog(null, Utils.msg.getString("errorconnect"), Utils.msg.getString("errorconnecttitle"), JOptionPane.ERROR_MESSAGE);
 		}
 		System.out.println("HOLA");
 	}

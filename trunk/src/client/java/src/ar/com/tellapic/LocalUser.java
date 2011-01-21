@@ -52,11 +52,7 @@ public class LocalUser extends AbstractUser {
 //		propertyController = new PaintPropertyController(toolBox);
 //		toolController     = new ToolViewController(toolBox);
 		//UserGUIBuilder gui = 
-		SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-            	new UserGUIBuilder(Holder.INSTANCE);
-            }
-		});
+		
 	}
 	
 	public static LocalUser getInstance() {

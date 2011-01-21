@@ -19,7 +19,9 @@ package ar.com.tellapic;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Frame;
+import java.awt.Insets;
 import java.awt.RenderingHints;
 import java.awt.RenderingHints.Key;
 import java.awt.event.ActionEvent;
@@ -39,19 +41,23 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
 import ar.com.tellapic.chat.ChatController;
 import ar.com.tellapic.chat.ChatView;
+import ar.com.tellapic.graphics.Corner;
 import ar.com.tellapic.graphics.DrawingAreaView;
 import ar.com.tellapic.graphics.DrawingLocalController;
 import ar.com.tellapic.graphics.IToolBoxController;
 import ar.com.tellapic.graphics.PaintPropertyController;
 import ar.com.tellapic.graphics.PaintPropertyView;
 import ar.com.tellapic.graphics.RemoteMouseEvent;
+import ar.com.tellapic.graphics.RuleHeader;
 import ar.com.tellapic.graphics.ToolBoxController;
 import ar.com.tellapic.graphics.ToolBoxModel;
 import ar.com.tellapic.graphics.ToolView;
@@ -76,6 +82,11 @@ public class UserGUIBuilder {
 	private PaintPropertyView       propertyView;
 	private ChatView                chatView;
 	private JFrame                  mainWindow;
+	private JScrollPane             scrollPane;
+	private RuleHeader              topRule;
+	private RuleHeader              rightRule;
+	private JPanel buttonCorner;
+	private JToggleButton isMetric;
 	
 	public UserGUIBuilder(LocalUser user) {
 		
@@ -120,8 +131,23 @@ public class UserGUIBuilder {
 		toolView.setController(toolViewController);
 		propertyView.setController(propertyController);
 		
-		JScrollPane scrollPane = new JScrollPane(drawingAreaView);
-
+		scrollPane = new JScrollPane(drawingAreaView);
+		topRule   = new RuleHeader(RuleHeader.HORIZONTAL, true);
+		rightRule = new RuleHeader(RuleHeader.VERTICAL, true);
+//		scrollPane.setColumnHeaderView(topRule);
+//		scrollPane.setRowHeaderView(rightRule);
+		buttonCorner = new JPanel();
+		isMetric    = new JToggleButton("cm", true);
+		isMetric.setFont(new Font("SansSerif", Font.PLAIN, 8));
+		isMetric.addItemListener(new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				((RuleHeader)scrollPane.getColumnHeader().getView()).setIsMetric(e.getStateChange() == ItemEvent.SELECTED);
+				((RuleHeader)scrollPane.getRowHeader().getView()).setIsMetric(e.getStateChange() == ItemEvent.SELECTED);
+			}
+		});
+		buttonCorner.add(isMetric);
+		
 		scrollPane.setName(drawingAreaView.getName());
 		
 		
@@ -204,6 +230,7 @@ public class UserGUIBuilder {
 		JMenuItem gridSize = new JMenuItem("Grid Size...");
 		JCheckBoxMenuItem ruler = new JCheckBoxMenuItem("Show Ruler");
 		
+		
 		grid.addItemListener(new ItemListener(){
 			@Override
 			public void itemStateChanged(ItemEvent e) {
@@ -211,10 +238,27 @@ public class UserGUIBuilder {
 			}
 		});
 		
+		
+		ruler.addItemListener(new ItemListener(){
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				if (e.getStateChange() == ItemEvent.DESELECTED) {
+					scrollPane.setColumnHeader(null);
+					scrollPane.setRowHeader(null);
+				} else {
+					scrollPane.setColumnHeaderView(topRule);
+					scrollPane.setRowHeaderView(rightRule);
+					scrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER, buttonCorner);
+					scrollPane.setCorner(JScrollPane.LOWER_LEFT_CORNER, new Corner());
+					scrollPane.setCorner(JScrollPane.UPPER_RIGHT_CORNER, new Corner());
+				}
+			}
+		});
+		
 		gridSize.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Object[] possibilities = { 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60 };
+				Object[] possibilities = { 10, 20, 30, 40, 50, 60, 70, 80, 90, 100 };
 				Integer i = (Integer)JOptionPane.showInputDialog(
 						null,
 						"Grid size:",
@@ -230,6 +274,7 @@ public class UserGUIBuilder {
 			}
 		});
 		grid.setSelected(true);
+		ruler.setSelected(true);
 		root.add(grid);
 		root.add(ruler);
 		root.addSeparator();

@@ -61,6 +61,7 @@ public class UserManager implements IUserManager, IUserManagerState {
 		user.setName(name);
 		user.setUserId(id);
 		users.put(LocalUser.LOCAL_NAME, user);
+		new UserGUIBuilder((LocalUser)user);
 		//notifyObservers(new ActionData(ActionData.ACTION_ADD, user));
 	}
 	
