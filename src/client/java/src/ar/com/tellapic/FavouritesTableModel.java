@@ -115,7 +115,6 @@ public class FavouritesTableModel extends AbstractTableModel {
 	 */
 	@Override
 	public int getRowCount() {
-		Utils.logMessage("rowcount: "+rowCount);
 		return rowCount;
 	}
 
@@ -127,7 +126,6 @@ public class FavouritesTableModel extends AbstractTableModel {
 	public Object getValueAt(int rowIndex, int columnIndex) {
 		int i;
 		for (i = 0; i < rowCount && i != rowIndex; i++);
-		Utils.logMessage("getValue at row: "+rowIndex);
 		if (i < rowCount) {
 			Element server = (Element) servers.item(i);
 			return ((Element) server.getElementsByTagName(COLUMN_ELEMENTS[columnIndex]).item(0)).getTextContent();

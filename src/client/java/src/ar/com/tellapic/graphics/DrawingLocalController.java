@@ -17,6 +17,7 @@
  */  
 package ar.com.tellapic.graphics;
 
+import java.awt.Rectangle;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -36,22 +37,33 @@ import ar.com.tellapic.utils.Utils;
  */
 public class DrawingLocalController extends MouseAdapter {
 
-	//private IToolBoxState           toolBoxState;
-	//private final IDrawingAreaManager     drawingAreaModel = DrawingAreaModel.getInstance();
-	//private final DrawingAreaView         view = DrawingAreaView.getInstance();
 	private PaintPropertyController controller;
 	private AbstractUser            user;
-	//private Tool                    currentTool;
-	//private boolean                 isLocal;
-	//private int id;
+	private java.awt.Point      scrollingPoint;
 
 	
-	public DrawingLocalController() { //IToolBoxState toolBoxState) { //, IDrawingAreaManager drawingAreaModel, DrawingAreaView view) {
-		//this.toolBoxState     = toolBoxState;
-		//this.drawingAreaModel = drawingAreaModel;
-		//this.view  = view;
+	public DrawingLocalController() {
 		controller = null;
-		//id = view.addPainter();
+		user = UserManager.getInstance().getLocalUser();
+	}
+	
+	
+	/*
+	 * (non-Javadoc)
+	 * @see java.awt.event.MouseAdapter#mouseClicked(java.awt.event.MouseEvent)
+	 */
+	public void mouseClicked(MouseEvent event) {
+		Tool tool = user.getToolBoxModel().getLastUsedTool();
+		
+		if (tool == null)
+			return;
+		
+		if (tool.getName().equals("Zoom")) {
+			if (event.getButton() == MouseEvent.BUTTON1)
+				DrawingAreaView.getInstance().doZoomIn();
+			else
+				DrawingAreaView.getInstance().doZoomOut();
+		}
 	}
 	
 	
@@ -63,15 +75,25 @@ public class DrawingLocalController extends MouseAdapter {
 	public void mousePressed(MouseEvent event) {
 		//Utils.printEventInfo(event);
 		
-		user = (event instanceof RemoteMouseEvent)? ((RemoteMouseEvent) event).getUser() : UserManager.getInstance().getLocalUser();
+		/* Do nothing if some coordinate is negative */
+		if (event.getX() < 0 || event.getY() < 0)
+			return;
+
+		/* Do scroll with middle button. Take a point for future references */
+		if (event.getButton() == MouseEvent.BUTTON2) {
+			scrollingPoint = new java.awt.Point(event.getX(), event.getY());
+			return;
+		}
 		
-		//DrawingAreaView.getInstance();
+		
 		IToolBoxState toolBoxState = user.getToolBoxModel();
 		Tool usedTool = toolBoxState.getLastUsedTool();
 		
+		/* Do nothing with an empty tool */
 		if (usedTool == null)
 			return;
 		
+		/* If button is the left one, start using the tool */
 		if (event.getButton() == MouseEvent.BUTTON1) {
 			if (usedTool.hasAlphaProperties())
 				usedTool.setAlpha(toolBoxState.getOpacityProperty());
@@ -85,10 +107,10 @@ public class DrawingLocalController extends MouseAdapter {
 			if (usedTool.hasFontProperties())
 				usedTool.setFont(toolBoxState.getFontProperty());
 			
-			avoidLoopback();
 			usedTool.onPress(event.getX(), event.getY(), event.getButton(), event.getModifiers());
 
-		} else if (usedTool != null) {
+		} else {
+			/* If we press another button, just stop using the tool */
 			//TODO: The tool is actually paused. Rename the tool's method onCancel().
 			usedTool.onCancel();
 		}
@@ -101,16 +123,72 @@ public class DrawingLocalController extends MouseAdapter {
 	 */
 	@Override
 	public void mouseDragged(MouseEvent event) {
-		//Utils.printEventInfo(event);
+//		Utils.printEventInfo(event);
 
-		user = (event instanceof RemoteMouseEvent)? ((RemoteMouseEvent) event).getUser() : UserManager.getInstance().getLocalUser();
+		/* Do scroll if we are dragging with the middle button. */
+		/* Use the point taken as reference in MousePessed.     */
+		if ((event.getModifiersEx() & MouseEvent.BUTTON2_DOWN_MASK) == MouseEvent.BUTTON2_DOWN_MASK) {
+			/* Get the visible rectangle from the drawing areas */
+			java.awt.Rectangle clipRect = ((DrawingAreaView) event.getSource()).getVisibleRect();
+			
+			/* Initialize the upper left corner for the rectangle used */
+			/* for scrolling to that area.                             */
+			/*                                                         */
+			/*    scroll to  r            scroll to  r                 */
+			/*               ^                       ^                 */
+			/*             +--+                    +--+                */
+			/*             |  |                    |  |                */
+			/*             +--+--------------------+--+                */
+			/*                |                    |                   */
+			/*                |     visible        |                   */
+			/*                |    rectangle       |                   */
+			/*                |    (clipRect)      |                   */
+			/*                |                    |                   */
+			/*             +--+--------------------+--+                */
+			/*             |  |                    |  |                */
+			/*             +--+                    +--+                */
+			/*               ^                       ^                 */
+			/*    scroll to  r             scroll to r                 */
+			/*                                                         */
+			/*                                                         */
+			int x = 0;
+			int y = 0;
+			java.awt.Rectangle r = null;
+			
+			/* Accommodate r upper-left corner upon this event coordinates */
+			if (scrollingPoint.x >= event.getX())
+				x = clipRect.x + clipRect.width;
+			else
+				x = clipRect.x - Math.abs(scrollingPoint.x - event.getX());
+
+			if (scrollingPoint.y >= event.getY())
+				y = clipRect.y + clipRect.height;
+			else
+				y = clipRect.y - Math.abs(scrollingPoint.y - event.getY());
+			
+			r = new java.awt.Rectangle(
+					x,
+					y,
+					Math.abs(scrollingPoint.x - event.getX()),
+					Math.abs(scrollingPoint.y - event.getY())
+			);
+			
+			/* Scroll to r */
+			DrawingAreaView.getInstance().scrollRectToVisible(r);
+
+			return;
+		}
+		
+		
 		Tool usedTool = user.getToolBoxModel().getLastUsedTool();
 		
+		
+		/* Do nothing with an empty tool */
 		if (usedTool == null)
 			return;
 		
+		
 		if (usedTool.isBeingUsed()) {
-			avoidLoopback();
 			usedTool.onDrag(event.getX(), event.getY(), event.getButton(), event.getModifiersEx());
 			
 			// This will trigger an update() to the DrawingAreaView
@@ -127,14 +205,13 @@ public class DrawingLocalController extends MouseAdapter {
 	public void mouseReleased(MouseEvent event) {
 		//Utils.printEventInfo(event);
 		
-		user     = (event instanceof RemoteMouseEvent)? ((RemoteMouseEvent) event).getUser() : UserManager.getInstance().getLocalUser();
 		Tool         usedTool = user.getToolBoxModel().getLastUsedTool();
 
+		/* Do nothing with an empty tool */
 		if (usedTool == null)
 			return;
 		
 		if (usedTool.isBeingUsed() && event.getButton() == MouseEvent.BUTTON1) {
-			avoidLoopback();
 			Drawing drawing = usedTool.onRelease(event.getX(), event.getY(), event.getButton(), event.getModifiersEx());
 			
 			if (drawing == null) 
@@ -142,11 +219,19 @@ public class DrawingLocalController extends MouseAdapter {
 			
 			// This will trigger an update() to the DrawingAreaView
 			user.addDrawing(drawing);
+			
+			return;
 		}
 		
+
 		if (event.getButton() == MouseEvent.BUTTON3 && event.getModifiersEx() == InputEvent.BUTTON1_DOWN_MASK) {
 			usedTool.onRestore();
+			return;
 		}
+		
+		if (event.getButton() == MouseEvent.BUTTON3)
+			user.setTemporalDrawing(null);
+		
 	}
 	
 	
@@ -157,7 +242,6 @@ public class DrawingLocalController extends MouseAdapter {
 	//TODO: is it possible to think this mouse wheel event be "live" from remote users? Does it make sense?
 	@Override
 	public void mouseMoved(MouseEvent event) {
-		user = (event instanceof RemoteMouseEvent)? ((RemoteMouseEvent) event).getUser() : UserManager.getInstance().getLocalUser();
 		IToolBoxState toolBoxState = user.getToolBoxModel();
 		Tool usedTool = toolBoxState.getLastUsedTool();
 
@@ -194,7 +278,6 @@ public class DrawingLocalController extends MouseAdapter {
 	@Override
 	public void mouseWheelMoved(MouseWheelEvent event) {
 		int step = (event.getWheelRotation() < 0)? 1 : -1;
-		user = UserManager.getInstance().getLocalUser();
 		IToolBoxState toolBoxState = user.getToolBoxModel();
 		Tool usedTool = toolBoxState.getLastUsedTool();
 		
@@ -219,32 +302,6 @@ public class DrawingLocalController extends MouseAdapter {
 		}
 	}
 	
-	
-	/**
-	 * @param user
-	 */
-	private void avoidLoopback() {
-		Tool usedTool = user.getToolBoxModel().getLastUsedTool();
-		if (user.isRemote()) {
-			try {
-				Method avoidLoopback = usedTool.getClass().getMethod("setAvoidLoopback", boolean.class);
-				try {
-					avoidLoopback.invoke(usedTool, false);
-				} catch (IllegalArgumentException e) {
-					e.printStackTrace();
-				} catch (IllegalAccessException e) {
-					e.printStackTrace();
-				} catch (InvocationTargetException e) {
-					e.printStackTrace();
-				}
-			} catch (SecurityException e) {
-				e.printStackTrace();
-			} catch (NoSuchMethodException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
 	
 	/**
 	 * 

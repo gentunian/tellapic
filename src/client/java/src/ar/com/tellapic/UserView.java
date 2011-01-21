@@ -17,12 +17,17 @@
  */  
 package ar.com.tellapic;
 
+import java.awt.Component;
 import java.awt.GridLayout;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.Observable;
 import java.util.Observer;
 
 import javax.swing.BorderFactory;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.ToolTipManager;
@@ -61,6 +66,8 @@ public class UserView extends JPanel implements Observer {
 	private static class Holder {
 		private static final UserView INSTANCE = new UserView();
 	}
+
+	JPopupMenu popup;
 	
 	private UserView() {
 		super(new GridLayout(1,0));
@@ -69,7 +76,60 @@ public class UserView extends JPanel implements Observer {
 		treeModel = new DefaultTreeModel(rootNode);
 		usersTree = new JTree(treeModel);
 
-//		CheckTreeManager manager = new CheckTreeManager(usersTree, true, new TreePathSelectable() {
+		popup = new JPopupMenu();
+	    JMenuItem menuItem = new JMenuItem("A popup menu item");
+	    
+	    popup.add(menuItem);
+	    menuItem = new JMenuItem("Another popup menu item");
+	    
+	    popup.add(menuItem);
+
+	    usersTree.addMouseListener(new MouseListener() {
+
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void mouseEntered(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+
+			}
+
+			@Override
+			public void mousePressed(MouseEvent e) {
+				// TODO Auto-generated method stub
+//				JTree t = (JTree) e.getSource();
+//
+//				Utils.logMessage("gca: "+t.getComponentAt(e.getX(), e.getY()));
+//				Utils.logMessage("fca: "+t.findComponentAt(e.getX(), e.getY()));
+//				
+//				if (e.isPopupTrigger()) {
+//					popup.show(e.getComponent(), e.getX(), e.getY());
+//				}
+
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				// TODO Auto-generated method stub
+				if (e.isPopupTrigger()) {
+		            popup.show(e.getComponent(),
+		                       e.getX(), e.getY());
+		        }
+
+			}} );
+	    
+	    //		CheckTreeManager manager = new CheckTreeManager(usersTree, true, new TreePathSelectable() {
 //
 //			@Override
 //			public boolean isSelectable(TreePath path) {
@@ -112,6 +172,7 @@ public class UserView extends JPanel implements Observer {
 				// TODO Auto-generated method stub
 				DefaultTreeSelectionModel model = (DefaultTreeSelectionModel)arg0.getSource();
 				Utils.logMessage("VALUE CHANGED! "+model);
+				
 			}
 		});
 		usersTree.expandRow(0);
@@ -152,6 +213,7 @@ public class UserView extends JPanel implements Observer {
 		if (data != null) {
 			AbstractUser user = (AbstractUser) o;
 			DefaultMutableTreeNode userNode = null;
+			
 			boolean found = false;
 			for(int i = 0; i < rootNode.getChildCount() && !found; i++) {
 				userNode = (DefaultMutableTreeNode) rootNode.getChildAt(i);

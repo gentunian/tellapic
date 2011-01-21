@@ -8,17 +8,21 @@ import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Image;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Transparency;
-import java.awt.RenderingHints.Key;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Observable;
 import java.util.Observer;
 
-import javax.imageio.ImageIO;
-import javax.swing.JPanel;
+import javax.swing.JLabel;
+import javax.swing.JScrollPane;
+import javax.swing.JViewport;
+import javax.swing.Scrollable;
+import javax.swing.SwingConstants;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 
 import ar.com.tellapic.AbstractUser;
 import ar.com.tellapic.UserManager;
@@ -31,7 +35,7 @@ import ar.com.tellapic.utils.Utils;
  *          sebastian.treu(at)gmail.com
  *
  */
-public class DrawingAreaView extends JPanel implements Observer {
+public class DrawingAreaView extends JLabel implements Observer, Scrollable {
 	private static final long serialVersionUID = 1L;
 
 	private Image                   background;
@@ -50,6 +54,10 @@ public class DrawingAreaView extends JPanel implements Observer {
 	private boolean gridEnabled = true;
 	private int     gridSize = 10;
 
+	private int zoomX = 1;
+
+	private RuleHeader topRule;
+	private RuleHeader leftRule;
 	
 	private static class Holder {
 		private final static DrawingAreaView INSTANCE = new DrawingAreaView();
@@ -76,6 +84,32 @@ public class DrawingAreaView extends JPanel implements Observer {
 		gc = gd.getDefaultConfiguration();
 		rh = new RenderingHints(null);
 		//setPreferredSize(new Dimension(backimage.getWidth(), backimage.getHeight()));
+		this.setAutoscrolls(true);
+		this.addAncestorListener(new AncestorListener(){
+
+			@Override
+			public void ancestorAdded(AncestorEvent event) {
+				JScrollPane parent = (JScrollPane) ((JViewport) getParent()).getParent();
+				topRule = ((RuleHeader)parent.getColumnHeader().getView());
+				topRule.setPreferredHeight(25);
+				topRule.setPreferredWidth(backimage.getWidth());
+//				
+				leftRule = ((RuleHeader)parent.getRowHeader().getView());
+				leftRule.setPreferredHeight(backimage.getHeight());
+				leftRule.setPreferredWidth(25);
+			}
+
+			@Override
+			public void ancestorMoved(AncestorEvent event) {
+				// TODO Auto-generated method stub
+			
+			}
+
+			@Override
+			public void ancestorRemoved(AncestorEvent event) {
+				// TODO Auto-generated method stub
+				
+			}});
 	}
 	
 	
@@ -215,6 +249,8 @@ public class DrawingAreaView extends JPanel implements Observer {
 			foreground = gc.createCompatibleImage(backimage.getWidth(), backimage.getHeight(), Transparency.TRANSLUCENT);
 			drawBackgroundOff();
 		}
+//		double zoom = ((zoomX < 0)? ((double)1/(double)(-1*zoomX)) : zoomX);
+//		((Graphics2D)g).scale(zoom, zoom);
 		
 		Graphics2D frontArea = (Graphics2D) foreground.getGraphics();
 		frontArea.setRenderingHints(rh);
@@ -227,7 +263,8 @@ public class DrawingAreaView extends JPanel implements Observer {
 					drawDrawing(frontArea, d, null);
 				}
 			}
-		}
+		}		
+		
 		g.drawImage(foreground, 0, 0, null);
 	}
 	
@@ -260,7 +297,8 @@ public class DrawingAreaView extends JPanel implements Observer {
 		
 		if (drawing.hasShape())
 			g.draw(drawing.getShape());
-		else
+		
+		if (drawing.hasFontProperty())
 			g.drawString(drawing.getText(), drawing.getTextX(), drawing.getTextY());
 	}
 
@@ -291,11 +329,39 @@ public class DrawingAreaView extends JPanel implements Observer {
 		frontArea.drawImage(backimage, 0, 0, null);
 		if(gridEnabled) {
 			frontArea.setColor(Color.gray);
-			for(int i = 0; i <= Math.round((getWidth() / gridSize)); i++) {
-				frontArea.drawLine(i * gridSize, 0, i * gridSize, getHeight());
+			
+			/* How many dots (pixels) are in a cm? */
+			int dpcm = (int)((double) RuleHeader.INCH / (double)2.546);
+			
+			/* How many lines will be in a cm? */
+			int linesInCm =  gridSize/10;
+			
+			/* How long will be the space between lines */
+			double divisionSize =  (dpcm / (double)(gridSize/10));
+			
+			/* How many vertical lines do we need to draw? */
+			int vLines = (int) Math.round(getWidth() / divisionSize);
+
+			/* How many horizontal lines do we need to draw? */
+			int hLines = (int) Math.round(getHeight() / divisionSize);
+			
+			/* Take the problem as divide and conquer in the sense that */
+			/* treat it as drawing lines between a centimeter. Repeat it */
+			/* until we draw all centimeters. */
+			for(int i = 0; i < vLines; i++) {
+				int x = dpcm * i;;
+				for (int j = 0; j < linesInCm; j++) {
+					x += (int) ((j % 2 == 0)? Math.floor(divisionSize) : Math.ceil(divisionSize));
+					frontArea.drawLine(x, 0, x, getHeight());
+				}
 			}
-			for(int i = 0; i <= Math.round((getHeight() / gridSize)); i++) {
-				frontArea.drawLine(0, i * gridSize, getWidth(), i * gridSize);
+			
+			for(int i = 0; i < hLines; i++) {
+				int y = dpcm * i;;
+				for (int j = 0; j < linesInCm; j++) {
+					y += (int) ((j % 2 == 0)? Math.floor(divisionSize) : Math.ceil(divisionSize));
+					frontArea.drawLine(0, y, getWidth(), y);
+				}
 			}
 		}	
 	}
@@ -320,5 +386,91 @@ public class DrawingAreaView extends JPanel implements Observer {
 	 */
 	public boolean isGridEnabled() {
 		return gridEnabled;
+	}
+
+
+	/**
+	 * 
+	 */
+	public void doZoomIn() {
+		zoomX++;
+		if (zoomX == 0)
+			zoomX++;
+		repaint();
+	}
+
+
+	/**
+	 * 
+	 */
+	public void doZoomOut() {
+		zoomX--;
+		if (zoomX == 0)
+			zoomX--;
+		repaint();
+	}
+
+
+	/* (non-Javadoc)
+	 * @see javax.swing.Scrollable#getPreferredScrollableViewportSize()
+	 */
+	@Override
+	public Dimension getPreferredScrollableViewportSize() {
+		return getPreferredSize();
+	}
+
+
+	/* (non-Javadoc)
+	 * @see javax.swing.Scrollable#getScrollableBlockIncrement(java.awt.Rectangle, int, int)
+	 */
+	@Override
+	public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+		if (orientation == SwingConstants.HORIZONTAL) {
+			return visibleRect.width - 1;
+		} else {
+			return visibleRect.height - 1;
+		}
+	}
+
+
+	/* (non-Javadoc)
+	 * @see javax.swing.Scrollable#getScrollableTracksViewportHeight()
+	 */
+	@Override
+	public boolean getScrollableTracksViewportHeight() {
+		return false;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see javax.swing.Scrollable#getScrollableTracksViewportWidth()
+	 */
+	@Override
+	public boolean getScrollableTracksViewportWidth() {
+		return false;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see javax.swing.Scrollable#getScrollableUnitIncrement(java.awt.Rectangle, int, int)
+	 */
+	@Override
+	public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+		int currentPosition = 0;
+		if (orientation == SwingConstants.HORIZONTAL) {
+			currentPosition = visibleRect.x;
+		} else {
+			currentPosition = visibleRect.y;
+		}
+
+		//Return the number of pixels between currentPosition
+		//and the nearest tick mark in the indicated direction.
+		if (direction < 0) {
+			int newPosition = currentPosition -
+			(currentPosition / 1)* 1;
+			return (newPosition == 0) ? 1 : newPosition;
+		} else {
+			return ((currentPosition / 1) + 1) * 1 - currentPosition;
+		}
 	}
 }

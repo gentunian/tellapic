@@ -263,55 +263,53 @@ public class NetManager extends Observable {
 			while(running && isConnected()) {
 				stream = tellapic.tellapic_read_stream_b(fd);
 
-				if (stream.getHeader().getCbyte() != tellapicConstants.CTL_FAIL) {
-					
-					if (tellapic.tellapic_isfile(stream.getHeader()) == 1) {
-						System.out.println("Was file: "+stream.getHeader().getCbyte());
-						stream_t_data d = stream.getData();
-						System.out.println("Was file1: "+stream.getHeader().getSsize());
-						byte[] data = new byte[(int)stream.getHeader().getSsize()];
-						tellapic.custom_wrap(d.getFile(), data, stream.getHeader().getSsize());
-
-						ByteArrayInputStream in = new ByteArrayInputStream(data);
-						try {
-							SessionUtils.setSharedImage(ImageIO.read(in));
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-						tellapic.tellapic_free(stream);
-						
-					} else if (tellapic.tellapic_isctl(stream.getHeader()) == 1) {
-						System.out.println("Was ctl");
-						ManageCtlThread t = new ManageCtlThread(stream);
-						t.start();
-
-					} else if (tellapic.tellapic_isctle(stream.getHeader()) == 1) {
-						System.out.println("Was ctl extended");
-						ManageCtlExtendedThread t = new ManageCtlExtendedThread(stream);
-						t.start();
-
-					} else if ((tellapic.tellapic_ischatb(stream.getHeader()) == 1) || (tellapic.tellapic_ischatp(stream.getHeader()) == 1)) {
-						System.out.println("Was chat");
-						ManageChatThread t = new ManageChatThread(stream);
-						t.start();
-
-					} else if (tellapic.tellapic_isdrw(stream.getHeader()) == 1 ) {
-						ddata_t    drawing    = stream.getData().getDrawing();
-						createAndAddDrawing(drawing);
-						
-					} else if (tellapic.tellapic_isfig(stream.getHeader()) == 1) {
-						System.out.println("Was fig");
-						ddata_t    drawing    = stream.getData().getDrawing();
-						createAndAddFigure(drawing);
-						
-					} else if (tellapic.tellapic_isfigtxt(stream) == 1) {
-						System.out.println("Was text");
-
-					}
-				} else {
+				if (stream.getHeader().getCbyte() == tellapicConstants.CTL_FAIL || stream.getHeader().getCbyte() == tellapicConstants.CTL_NOPIPE) {
 					setConnected(false);
 					running = false;
+					
+				} else if (tellapic.tellapic_isfile(stream.getHeader()) == 1) {
+					System.out.println("Was file: "+stream.getHeader().getCbyte());
+					stream_t_data d = stream.getData();
+					System.out.println("Was file1: "+stream.getHeader().getSsize());
+					byte[] data = new byte[(int)stream.getHeader().getSsize()];
+					tellapic.custom_wrap(d.getFile(), data, stream.getHeader().getSsize());
+
+					ByteArrayInputStream in = new ByteArrayInputStream(data);
+					try {
+						SessionUtils.setSharedImage(ImageIO.read(in));
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					tellapic.tellapic_free(stream);
+
+				} else if (tellapic.tellapic_isctl(stream.getHeader()) == 1) {
+					System.out.println("Was ctl");
+					ManageCtlThread t = new ManageCtlThread(stream);
+					t.start();
+
+				} else if (tellapic.tellapic_isctle(stream.getHeader()) == 1) {
+					System.out.println("Was ctl extended");
+					ManageCtlExtendedThread t = new ManageCtlExtendedThread(stream);
+					t.start();
+
+				} else if ((tellapic.tellapic_ischatb(stream.getHeader()) == 1) || (tellapic.tellapic_ischatp(stream.getHeader()) == 1)) {
+					System.out.println("Was chat");
+					ManageChatThread t = new ManageChatThread(stream);
+					t.start();
+
+				} else if (tellapic.tellapic_isdrw(stream.getHeader()) == 1 ) {
+					ddata_t    drawing    = stream.getData().getDrawing();
+					createAndAddDrawing(drawing);
+
+				} else if (tellapic.tellapic_isfig(stream.getHeader()) == 1) {
+					System.out.println("Was fig");
+					ddata_t    drawing    = stream.getData().getDrawing();
+					createAndAddFigure(drawing);
+
+				} else if (tellapic.tellapic_isfigtxt(stream) == 1) {
+					System.out.println("Was text");
+
 				}
 			}
 		}

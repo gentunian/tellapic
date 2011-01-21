@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="lib" path="/home/seba/UNIVERSIDAD/TrabajoFinal/tellapic/build/src/swig/java/tellapicjava.jar">
+	<classpathentry kind="lib" path="/home/seba/UNIVERSIDAD/TrabajoFinal/tellapic/build/src/swig/java/tellapicjava.jar" sourcepath="/home/seba/UNIVERSIDAD/TrabajoFinal/tellapic/build/src/swig/java/tellapicjava.jar">
 		<attributes>
 			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="/home/seba/UNIVERSIDAD/TrabajoFinal/tellapic/build/src/swig/java"/>
 		</attributes>
