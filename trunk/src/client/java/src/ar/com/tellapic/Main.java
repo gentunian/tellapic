@@ -102,7 +102,6 @@ public class Main {
 			else
 				JOptionPane.showMessageDialog(null, Utils.msg.getString("errorconnect"), Utils.msg.getString("errorconnecttitle"), JOptionPane.ERROR_MESSAGE);
 		}
-		System.out.println("HOLA");
 	}
 	
 	public static int verifyDialogInput(MainDialog main) {
@@ -121,7 +120,8 @@ public class Main {
 		ToolFactory.registerToolClassName(tellapicConstants.TOOL_PATH, PenNet.class.getName());
 		
 		UserManager userManager = UserManager.getInstance();
-		userManager.createLocalUser(id, name);
+		LocalUser luser = userManager.createLocalUser(id, name);
+		new UserGUIBuilder(luser);
 	}
 	
 		//UserGUIBuilder gui = new UserGUIBuilder((LocalUser)userManager.getLocalUser());

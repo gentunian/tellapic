@@ -18,10 +18,10 @@
 package ar.com.tellapic;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Frame;
-import java.awt.Insets;
 import java.awt.RenderingHints;
 import java.awt.RenderingHints.Key;
 import java.awt.event.ActionEvent;
@@ -35,8 +35,10 @@ import java.util.Random;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JColorChooser;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -89,14 +91,6 @@ public class UserGUIBuilder {
 	private JToggleButton isMetric;
 	
 	public UserGUIBuilder(LocalUser user) {
-		
-		// Get the drawing area model instance. Its where all Drawing objects will live.
-//		DrawingAreaModel  drawingAreaModel = DrawingAreaModel.getInstance();
-		
-		// Get the area where all the living Drawing objects will be drawn.
-		DrawingAreaView   drawingAreaView  = DrawingAreaView.getInstance();
-//		user.addObserver(drawingAreaView);
-		
 		// Each user has it owns toolbox. This can be a memory overhead issue, but its the bes way to reuse code
 		// and allow concurrency easily.
 		ToolBoxModel                         model = user.getToolBoxModel();
@@ -106,14 +100,12 @@ public class UserGUIBuilder {
 		// - drawingController: Receives events for drawing upon the selected tool. Its the last worker
 		//                      where the Drawing object will be made.
 		// - toolViewController: Selects the appropiate tool upon user interaction with the ToolView view.
-        //                       For remote user, emulates the user selection on a tool with a received packet
+		//                       For remote user, emulates the user selection on a tool with a received packet
 		//                       from the net.
 		PaintPropertyController propertyController = new PaintPropertyController(model);
-		DrawingLocalController  drawingController  = new DrawingLocalController();
+		//DrawingLocalController  drawingController  = new DrawingLocalController();
 		IToolBoxController      toolViewController = new ToolBoxController(model);
 		
-
-
 		// Instantiates all the GUIs.
 		userView     = UserView.getInstance();
 		toolView     = new ToolView(model);
@@ -122,40 +114,53 @@ public class UserGUIBuilder {
 		
 		model.addObserver(propertyView);
 		model.addObserver(toolView);
+				
+		// Get the drawing area model instance. Its where all Drawing objects will live.
+//		DrawingAreaModel  drawingAreaModel = DrawingAreaModel.getInstance();
 		
-		propertyController.setDrawingController(drawingController);
-		drawingController.setController(propertyController);
-		drawingAreaView.addMouseMotionListener(drawingController);
-		drawingAreaView.addMouseListener(drawingController);
-		drawingAreaView.addMouseWheelListener(drawingController);
-		toolView.setController(toolViewController);
-		propertyView.setController(propertyController);
+		// Get the area where all the living Drawing objects will be drawn.
+		DrawingAreaView   drawingAreaView  = DrawingAreaView.getInstance();
+//		user.addObserver(drawingAreaView);
+		user.addObserver(drawingAreaView);
+		user.addObserver(userView);
 		
 		scrollPane = new JScrollPane(drawingAreaView);
 		topRule   = new RuleHeader(RuleHeader.HORIZONTAL, true);
 		rightRule = new RuleHeader(RuleHeader.VERTICAL, true);
-//		scrollPane.setColumnHeaderView(topRule);
+		scrollPane.setColumnHeaderView(topRule);
 //		scrollPane.setRowHeaderView(rightRule);
 		buttonCorner = new JPanel();
-		isMetric    = new JToggleButton("cm", true);
+		isMetric     = new JToggleButton("cm", true);
 		isMetric.setFont(new Font("SansSerif", Font.PLAIN, 8));
 		isMetric.addItemListener(new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
-				((RuleHeader)scrollPane.getColumnHeader().getView()).setIsMetric(e.getStateChange() == ItemEvent.SELECTED);
-				((RuleHeader)scrollPane.getRowHeader().getView()).setIsMetric(e.getStateChange() == ItemEvent.SELECTED);
+				boolean v = (e.getStateChange() == ItemEvent.SELECTED);
+				((RuleHeader)scrollPane.getColumnHeader().getView()).setIsMetric(v);
+				((RuleHeader)scrollPane.getRowHeader().getView()).setIsMetric(v);
+				if (v)
+					isMetric.setText("cm");
+				else
+					isMetric.setText("in");
 			}
 		});
 		buttonCorner.add(isMetric);
 		
 		scrollPane.setName(drawingAreaView.getName());
 		
+
+//		propertyController.setDrawingController(drawingController);
+		drawingAreaView.setPropertyController(propertyController);
+		
+		toolView.setController(toolViewController);
+		propertyView.setController(propertyController);
 		
 		/****************************************/
 		/* Creates the dockable station and gui */
 		/****************************************/
 		mainWindow = new JFrame("drawing window");
-		mainWindow.getContentPane().add(SimpleStatusBar.getInstance(), BorderLayout.SOUTH);
+		mainWindow.getContentPane().add(StatusBar.getInstance(), BorderLayout.SOUTH);
+		
 		CControl     control1 = new CControl(mainWindow);
 		CGrid            grid = new CGrid(control1);
 		CContentArea  content = control1.getContentArea();
@@ -176,10 +181,10 @@ public class UserGUIBuilder {
 		mainWindow.add(content, BorderLayout.CENTER);
 		mainWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		//mainWindow.setLayout(new GridLayout(2,1));
-		mainWindow.setExtendedState(Frame.MAXIMIZED_BOTH);
+
 		mainWindow.setJMenuBar(createMenuBar());
-		
 		mainWindow.pack();
+		mainWindow.setExtendedState(Frame.MAXIMIZED_BOTH);
 		mainWindow.setVisible(true);
 	}	
 	
@@ -228,6 +233,8 @@ public class UserGUIBuilder {
 		JMenu root = new JMenu("View");
 		JCheckBoxMenuItem grid  = new JCheckBoxMenuItem("Show Grid");
 		JMenuItem gridSize = new JMenuItem("Grid Size...");
+		JMenuItem gridColor = new JMenuItem("Grid Color...");
+		JMenuItem gridTransparency = new JMenuItem("Grid Transparency...");
 		JCheckBoxMenuItem ruler = new JCheckBoxMenuItem("Show Ruler");
 		
 		
@@ -258,10 +265,10 @@ public class UserGUIBuilder {
 		gridSize.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Object[] possibilities = { 10, 20, 30, 40, 50, 60, 70, 80, 90, 100 };
+				Object[] possibilities = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 				Integer i = (Integer)JOptionPane.showInputDialog(
 						null,
-						"Grid size:",
+						"Grid size (lines per centimeter):",
 						"Select Grid Size",
 						JOptionPane.PLAIN_MESSAGE,
 						null,
@@ -273,12 +280,44 @@ public class UserGUIBuilder {
 					DrawingAreaView.getInstance().setGridSize(i);
 			}
 		});
+		
+		gridColor.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Color c = JColorChooser.showDialog(DrawingAreaView.getInstance(), "Pick a Color", DrawingAreaView.getInstance().getGridColor());
+				if (c != null) {
+					DrawingAreaView.getInstance().setGridColor(c);
+				}
+			}
+		});
+		
+		gridTransparency.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Object[] possibilities = { 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f };
+				Float i = (Float)JOptionPane.showInputDialog(
+						null,
+						"Grid Transparency:",
+						"Select Grid Transparency",
+						JOptionPane.PLAIN_MESSAGE,
+						null,
+						possibilities,
+						DrawingAreaView.getInstance().getGridTransparency()
+				);
+
+				if (i != null)
+					DrawingAreaView.getInstance().setGridTransparency(i);
+			}
+		});
+		
 		grid.setSelected(true);
 		ruler.setSelected(true);
 		root.add(grid);
 		root.add(ruler);
 		root.addSeparator();
 		root.add(gridSize);
+		root.add(gridColor);
+		root.add(gridTransparency);
 		return root;
 	}
 

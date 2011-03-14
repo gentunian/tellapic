@@ -17,17 +17,14 @@
  */  
 package ar.com.tellapic.graphics;
 
-import java.awt.Rectangle;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 import ar.com.tellapic.AbstractUser;
+import ar.com.tellapic.StatusBar;
 import ar.com.tellapic.UserManager;
-import ar.com.tellapic.utils.Utils;
 
 /**
  * @author 
@@ -124,7 +121,7 @@ public class DrawingLocalController extends MouseAdapter {
 	@Override
 	public void mouseDragged(MouseEvent event) {
 //		Utils.printEventInfo(event);
-
+		StatusBar.getInstance().setMouseCoordinates(event.getX(), event.getY());
 		/* Do scroll if we are dragging with the middle button. */
 		/* Use the point taken as reference in MousePessed.     */
 		if ((event.getModifiersEx() & MouseEvent.BUTTON2_DOWN_MASK) == MouseEvent.BUTTON2_DOWN_MASK) {
@@ -244,9 +241,12 @@ public class DrawingLocalController extends MouseAdapter {
 	public void mouseMoved(MouseEvent event) {
 		IToolBoxState toolBoxState = user.getToolBoxModel();
 		Tool usedTool = toolBoxState.getLastUsedTool();
-
+		StatusBar.getInstance().setMouseCoordinates(event.getX(), event.getY());
+		
 		if (usedTool == null)
 			return;
+		
+		
 		
 		if (usedTool.isOnMoveSupported()) {
 			Drawing drawing = usedTool.getDrawing();
@@ -268,6 +268,32 @@ public class DrawingLocalController extends MouseAdapter {
 			//solution?
 			user.setTemporalDrawing(usedTool.onMove(event.getX(), event.getY()));
 		}
+	}
+	
+	
+	/*
+	 * (non-Javadoc)
+	 * @see java.awt.event.MouseAdapter#mouseExited(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mouseExited(MouseEvent event) {
+		StatusBar.getInstance().showMouseCoordinates(false);
+		StatusBar.getInstance().setToolInfo(false);
+	}
+	
+	
+	/*
+	 *
+	 */
+	@Override
+	public void mouseEntered(MouseEvent event) {
+		IToolBoxState toolBoxState = user.getToolBoxModel();
+		Tool usedTool = toolBoxState.getLastUsedTool();
+	
+		if (usedTool == null)
+			return;
+	
+		StatusBar.getInstance().setToolInfo(usedTool.getIconPath(), usedTool.getToolTipText());
 	}
 	
 	
