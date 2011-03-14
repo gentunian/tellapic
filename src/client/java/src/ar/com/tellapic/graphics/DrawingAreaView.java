@@ -11,6 +11,11 @@ import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Transparency;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Observable;
@@ -25,6 +30,7 @@ import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 
 import ar.com.tellapic.AbstractUser;
+import ar.com.tellapic.StatusBar;
 import ar.com.tellapic.UserManager;
 import ar.com.tellapic.utils.Utils;
 
@@ -35,13 +41,14 @@ import ar.com.tellapic.utils.Utils;
  *          sebastian.treu(at)gmail.com
  *
  */
-public class DrawingAreaView extends JLabel implements Observer, Scrollable {
+public class DrawingAreaView extends JLabel implements Observer, Scrollable, MouseListener, MouseMotionListener, MouseWheelListener {
 	private static final long serialVersionUID = 1L;
 
 	private Image                   background;
 	private Image                   foreground;
-	private Image                   grid;
-
+	private Grid                    grid;
+	private RuleHeader              topRule;
+	private RuleHeader              leftRule;
 	//private Drawing                 temporalDrawing;
 	private ArrayList<Drawing>      temporalDrawings;
 	private ArrayList<AbstractUser> userList;
@@ -50,17 +57,24 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable {
 	private GraphicsDevice          gd;
 	private GraphicsConfiguration   gc;
 	private RenderingHints          rh;
-
-	private boolean gridEnabled = true;
-	private int     gridSize = 10;
-
+	private PaintPropertyController propertyController;
+	private AbstractUser            user;
+	private java.awt.Point          scrollingPoint;
+	private StatusBar               statusBar;
 	private int zoomX = 1;
-
-	private RuleHeader topRule;
-	private RuleHeader leftRule;
+	
 	
 	private static class Holder {
 		private final static DrawingAreaView INSTANCE = new DrawingAreaView();
+	}
+	
+
+	/**
+	 * 
+	 * @return
+	 */
+	public static DrawingAreaView getInstance() {
+		return Holder.INSTANCE;
 	}
 	
 	
@@ -68,51 +82,44 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable {
 	 * 
 	 */
 	private DrawingAreaView() {
-		setName(Utils.msg.getString("drawingarea"));
-		setPreferredSize(new Dimension(800,600));
-		setLocation(400,100);
-		setVisible(true);
 		temporalDrawings = new ArrayList<Drawing>();
-		userList = new ArrayList<AbstractUser>();
-		backimage = null;
-//		try {
-//			backimage = ImageIO.read(getClass().getResource("/icons/backimage.jpg"));
-//		} catch (IOException e) {
-//		}
+		userList         = new ArrayList<AbstractUser>();
+		propertyController = null;
+		backimage        = null;
+		user             = UserManager.getInstance().getLocalUser();
+		statusBar        = StatusBar.getInstance();
+		
 		ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 		gd = ge.getDefaultScreenDevice();
 		gc = gd.getDefaultConfiguration();
 		rh = new RenderingHints(null);
-		//setPreferredSize(new Dimension(backimage.getWidth(), backimage.getHeight()));
-		this.setAutoscrolls(true);
-		this.addAncestorListener(new AncestorListener(){
-
+		
+		setName(Utils.msg.getString("drawingarea"));
+		setPreferredSize(new Dimension(800,600));
+		setVisible(true);
+		addMouseMotionListener(this);
+		addMouseListener(this);
+		addMouseWheelListener(this);
+		setAutoscrolls(true);
+		addAncestorListener(new AncestorListener(){
 			@Override
 			public void ancestorAdded(AncestorEvent event) {
 				JScrollPane parent = (JScrollPane) ((JViewport) getParent()).getParent();
 				topRule = ((RuleHeader)parent.getColumnHeader().getView());
 				topRule.setPreferredHeight(25);
 				topRule.setPreferredWidth(backimage.getWidth());
-//				
 				leftRule = ((RuleHeader)parent.getRowHeader().getView());
 				leftRule.setPreferredHeight(backimage.getHeight());
 				leftRule.setPreferredWidth(25);
 			}
-
 			@Override
-			public void ancestorMoved(AncestorEvent event) {
-				// TODO Auto-generated method stub
-			
-			}
-
+			public void ancestorMoved(AncestorEvent event) {}
 			@Override
-			public void ancestorRemoved(AncestorEvent event) {
-				// TODO Auto-generated method stub
-				
-			}});
+			public void ancestorRemoved(AncestorEvent event) {}
+		});
 	}
-	
-	
+
+
 	/**
 	 * 
 	 * @param rh
@@ -140,6 +147,7 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable {
 		gd = ge.getDefaultScreenDevice();
 		gc = gd.getDefaultConfiguration();
 		setPreferredSize(new Dimension(backimage.getWidth(), backimage.getHeight()));
+		grid = new Grid(backimage.getWidth(), backimage.getHeight());
 		foreground = null;
 		
 //		background = gc.createCompatibleImage(backimage.getWidth(), backimage.getHeight(), Transparency.TRANSLUCENT);
@@ -150,14 +158,7 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable {
 	}
 	
 	
-	/**
-	 * 
-	 * @return
-	 */
-	public static DrawingAreaView getInstance() {
-		return Holder.INSTANCE;
-	}
-	
+
 	
 	/**
 	 * 
@@ -229,6 +230,7 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable {
 	
 		repaint();
 	}
+	
 	
 	//TODO: tener una estructura de datos que contenga lo que se tiene que dibujar
 	//en lugar de dibujar todo todo el tiempo. Es decir, si no hubo ningún cambio
@@ -307,7 +309,7 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable {
 	 * @param gridSize the gridSize to set
 	 */
 	public void setGridSize(int gridSize) {
-		this.gridSize = gridSize;
+		grid.setGridSize(gridSize);
 		drawBackgroundOff();
 		repaint();
 	}
@@ -317,7 +319,7 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable {
 	 * @return the gridSize
 	 */
 	public int getGridSize() {
-		return gridSize;
+		return grid.getGridSize();
 	}
 
 
@@ -327,43 +329,66 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable {
 	private void drawBackgroundOff() {
 		Graphics2D frontArea = (Graphics2D) foreground.getGraphics();
 		frontArea.drawImage(backimage, 0, 0, null);
-		if(gridEnabled) {
-			frontArea.setColor(Color.gray);
-			
-			/* How many dots (pixels) are in a cm? */
-			int dpcm = (int)((double) RuleHeader.INCH / (double)2.546);
-			
-			/* How many lines will be in a cm? */
-			int linesInCm =  gridSize/10;
-			
-			/* How long will be the space between lines */
-			double divisionSize =  (dpcm / (double)(gridSize/10));
-			
-			/* How many vertical lines do we need to draw? */
-			int vLines = (int) Math.round(getWidth() / divisionSize);
-
-			/* How many horizontal lines do we need to draw? */
-			int hLines = (int) Math.round(getHeight() / divisionSize);
-			
-			/* Take the problem as divide and conquer in the sense that */
-			/* treat it as drawing lines between a centimeter. Repeat it */
-			/* until we draw all centimeters. */
-			for(int i = 0; i < vLines; i++) {
-				int x = dpcm * i;;
-				for (int j = 0; j < linesInCm; j++) {
-					x += (int) ((j % 2 == 0)? Math.floor(divisionSize) : Math.ceil(divisionSize));
-					frontArea.drawLine(x, 0, x, getHeight());
-				}
-			}
-			
-			for(int i = 0; i < hLines; i++) {
-				int y = dpcm * i;;
-				for (int j = 0; j < linesInCm; j++) {
-					y += (int) ((j % 2 == 0)? Math.floor(divisionSize) : Math.ceil(divisionSize));
-					frontArea.drawLine(0, y, getWidth(), y);
-				}
-			}
-		}	
+		if (grid.isGridEnabled())
+			frontArea.drawImage(grid, 0, 0, null);
+		
+//		if(gridEnabled) {
+//			frontArea.setColor(Color.gray);
+//			
+//			/* How many dots (pixels) are in a cm? */
+//			int dpcm = (int)((double) RuleHeader.INCH / (double)2.546);
+//			
+//			/* How many lines will be in a cm? */
+//			int linesInCm =  gridSize;
+//			
+//			/* How long will be the space between lines */
+//			double divisionSize =  ((double)dpcm / (double)(gridSize));
+//			
+//			/* How many vertical unit lines do we need to draw? */
+//			int vLines = (int) Math.round(getWidth() / dpcm);
+//
+//			/* How many horizontal unit lines do we need to draw? */
+//			int hLines = (int) Math.round(getHeight() / dpcm);
+//			
+//			/* Take the problem as divide and conquer in the sense that */
+//			/* treat it as drawing lines between a centimeter. Repeat it */
+//			/* until we draw all centimeters. */
+//			for(int i = 0; i < vLines; i++) {
+//				int x = dpcm * i;;
+//				for (int j = 0; j < linesInCm; j++) {
+//					x += (int) ((j % 2 == 0)? Math.floor(divisionSize) : Math.ceil(divisionSize));
+//					frontArea.drawLine(x, 0, x, getHeight());
+//				}
+//			}
+//			
+//			for(int i = 0; i < hLines; i++) {
+//				int y = dpcm * i;;
+//				for (int j = 0; j < linesInCm; j++) {
+//					y += (int) ((j % 2 == 0)? Math.floor(divisionSize) : Math.ceil(divisionSize));
+//					frontArea.drawLine(0, y, getWidth(), y);
+//				}
+//			}
+//		}	
+	}
+	
+	
+	/**
+	 * 
+	 * @param color
+	 */
+	public void setGridColor(Color color) {
+		grid.setGridColor(color);
+		drawBackgroundOff();
+		repaint();
+	}
+	
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public Color getGridColor() {
+		return grid.getGridColor();
 	}
 	
 	
@@ -371,7 +396,7 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable {
 	 * @param gridEnabled the gridEnabled to set
 	 */
 	public void setGridEnabled(boolean gridEnabled) {
-		this.gridEnabled = gridEnabled;
+		grid.setGridEnabled(gridEnabled);
 		
 		if (foreground == null)
 			return;
@@ -385,7 +410,7 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable {
 	 * @return the gridEnabled
 	 */
 	public boolean isGridEnabled() {
-		return gridEnabled;
+		return grid.isGridEnabled();
 	}
 
 
@@ -472,5 +497,324 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable {
 		} else {
 			return ((currentPosition / 1) + 1) * 1 - currentPosition;
 		}
+	}
+
+
+	/**
+	 * @return
+	 */
+	public Object getGridTransparency() {
+		return grid.getGridTransparency();
+	}
+
+
+	/**
+	 * 
+	 * @param alpha
+	 */
+	public void setGridTransparency(float alpha) {
+		grid.setGridTransparency(alpha);
+		
+		drawBackgroundOff();
+		repaint();
+	}
+
+
+		/*
+	 * (non-Javadoc)
+	 * @see java.awt.event.MouseAdapter#mouseClicked(java.awt.event.MouseEvent)
+	 */
+	public void mouseClicked(MouseEvent event) {
+		Tool tool = user.getToolBoxModel().getLastUsedTool();
+		
+		if (tool == null)
+			return;
+		
+		if (tool.getName().equals("Zoom")) {
+			if (event.getButton() == MouseEvent.BUTTON1)
+				DrawingAreaView.getInstance().doZoomIn();
+			else
+				DrawingAreaView.getInstance().doZoomOut();
+		}
+	}
+	
+	
+	/*
+	 * (non-Javadoc)
+	 * @see java.awt.event.MouseAdapter#mousePressed(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mousePressed(MouseEvent event) {
+		//Utils.printEventInfo(event);
+		
+		/* Do nothing if some coordinate is negative */
+		if (event.getX() < 0 || event.getY() < 0)
+			return;
+
+		/* Do scroll with middle button. Take a point for future references */
+		if (event.getButton() == MouseEvent.BUTTON2) {
+			scrollingPoint = new java.awt.Point(event.getX(), event.getY());
+			return;
+		}
+		
+		
+		IToolBoxState toolBoxState = user.getToolBoxModel();
+		Tool usedTool = toolBoxState.getLastUsedTool();
+		
+		/* Do nothing with an empty tool */
+		if (usedTool == null)
+			return;
+		
+		/* If button is the left one, start using the tool */
+		if (event.getButton() == MouseEvent.BUTTON1) {
+			if (usedTool.hasAlphaProperties())
+				usedTool.setAlpha(toolBoxState.getOpacityProperty());
+
+			if (usedTool.hasColorProperties())
+				usedTool.setColor(toolBoxState.getColorProperty());
+
+			if (usedTool.hasStrokeProperties())
+				usedTool.setStroke(toolBoxState.getStrokeProperty());
+
+			if (usedTool.hasFontProperties())
+				usedTool.setFont(toolBoxState.getFontProperty());
+			
+			usedTool.onPress(event.getX(), event.getY(), event.getButton(), event.getModifiers());
+
+		} else {
+			/* If we press another button, just stop using the tool */
+			//TODO: The tool is actually paused. Rename the tool's method onCancel().
+			usedTool.onCancel();
+		}
+	}
+	
+	
+	/*
+	 * (non-Javadoc)
+	 * @see java.awt.event.MouseAdapter#mouseDragged(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mouseDragged(MouseEvent event) {
+//		Utils.printEventInfo(event);
+		statusBar.setMouseCoordinates(event.getX(), event.getY());
+		topRule.update(event.getX(), event.getY());
+		leftRule.update(event.getX(), event.getY());
+		/* Do scroll if we are dragging with the middle button. */
+		/* Use the point taken as reference in MousePessed.     */
+		if ((event.getModifiersEx() & MouseEvent.BUTTON2_DOWN_MASK) == MouseEvent.BUTTON2_DOWN_MASK) {
+			/* Get the visible rectangle from the drawing areas */
+			java.awt.Rectangle clipRect = ((DrawingAreaView) event.getSource()).getVisibleRect();
+			
+			/* Initialize the upper left corner for the rectangle used */
+			/* for scrolling to that area.                             */
+			/*                                                         */
+			/*    scroll to  r            scroll to  r                 */
+			/*               ^                       ^                 */
+			/*             +--+                    +--+                */
+			/*             |  |                    |  |                */
+			/*             +--+--------------------+--+                */
+			/*                |                    |                   */
+			/*                |     visible        |                   */
+			/*                |    rectangle       |                   */
+			/*                |    (clipRect)      |                   */
+			/*                |                    |                   */
+			/*             +--+--------------------+--+                */
+			/*             |  |                    |  |                */
+			/*             +--+                    +--+                */
+			/*               ^                       ^                 */
+			/*    scroll to  r             scroll to r                 */
+			/*                                                         */
+			/*                                                         */
+			int x = 0;
+			int y = 0;
+			java.awt.Rectangle r = null;
+			
+			/* Accommodate r upper-left corner upon this event coordinates */
+			if (scrollingPoint.x >= event.getX())
+				x = clipRect.x + clipRect.width;
+			else
+				x = clipRect.x - Math.abs(scrollingPoint.x - event.getX());
+
+			if (scrollingPoint.y >= event.getY())
+				y = clipRect.y + clipRect.height;
+			else
+				y = clipRect.y - Math.abs(scrollingPoint.y - event.getY());
+			
+			r = new java.awt.Rectangle(
+					x,
+					y,
+					Math.abs(scrollingPoint.x - event.getX()),
+					Math.abs(scrollingPoint.y - event.getY())
+			);
+			
+			/* Scroll to r */
+			//DrawingAreaView.getInstance().scrollRectToVisible(r);
+			scrollRectToVisible(r);
+			return;
+		}
+		
+		
+		Tool usedTool = user.getToolBoxModel().getLastUsedTool();
+		
+		
+		/* Do nothing with an empty tool */
+		if (usedTool == null)
+			return;
+		
+		
+		if (usedTool.isBeingUsed()) {
+			usedTool.onDrag(event.getX(), event.getY(), event.getButton(), event.getModifiersEx());
+			
+			// This will trigger an update() to the DrawingAreaView
+			user.setTemporalDrawing(usedTool.getDrawing());
+		}
+	}
+	
+	
+	/*
+	 * (non-Javadoc)
+	 * @see java.awt.event.MouseAdapter#mouseReleased(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mouseReleased(MouseEvent event) {
+		//Utils.printEventInfo(event);
+		
+		Tool         usedTool = user.getToolBoxModel().getLastUsedTool();
+
+		/* Do nothing with an empty tool */
+		if (usedTool == null)
+			return;
+		
+		if (usedTool.isBeingUsed() && event.getButton() == MouseEvent.BUTTON1) {
+			Drawing drawing = usedTool.onRelease(event.getX(), event.getY(), event.getButton(), event.getModifiersEx());
+			
+			if (drawing == null) 
+				return;
+			
+			// This will trigger an update() to the DrawingAreaView
+			user.addDrawing(drawing);
+			
+			return;
+		}
+		
+		
+		if (event.getButton() == MouseEvent.BUTTON3 && event.getModifiersEx() == java.awt.event.InputEvent.BUTTON1_DOWN_MASK) {
+			usedTool.onRestore();
+			return;
+		}
+		
+		if (event.getButton() == MouseEvent.BUTTON3)
+			user.setTemporalDrawing(null);
+		
+	}
+	
+	
+	/*
+	 * (non-Javadoc)
+	 * @see java.awt.event.MouseAdapter#mouseMoved(java.awt.event.MouseEvent)
+	 */
+	//TODO: is it possible to think this mouse wheel event be "live" from remote users? Does it make sense?
+	@Override
+	public void mouseMoved(MouseEvent event) {
+		IToolBoxState toolBoxState = user.getToolBoxModel();
+		Tool usedTool = toolBoxState.getLastUsedTool();
+		statusBar.setMouseCoordinates(event.getX(), event.getY());
+		topRule.update(event.getX(), event.getY());
+		leftRule.update(event.getX(), event.getY());
+		
+		if (usedTool == null)
+			return;
+		
+		
+		
+		if (usedTool.isOnMoveSupported()) {
+			Drawing drawing = usedTool.getDrawing();
+			if (usedTool.hasAlphaProperties())
+				drawing.setAlpha(toolBoxState.getOpacityProperty());
+			if (usedTool.hasColorProperties())
+				drawing.setColor(toolBoxState.getColorProperty());
+			if (usedTool.hasStrokeProperties())
+				drawing.setStroke(toolBoxState.getStrokeProperty());
+			if (usedTool.hasFontProperties())
+				drawing.setFont(toolBoxState.getFontProperty());
+			if (usedTool.hasColorProperties())
+				drawing.setColor(toolBoxState.getColorProperty());
+			
+			// TODO: do we really need send every time the drawing? Its a reference, change the value
+			// and use it later on the view.
+			//view.update(usedTool.onMove(event.getX(), event.getY()), id);
+
+			//solution?
+			user.setTemporalDrawing(usedTool.onMove(event.getX(), event.getY()));
+		}
+	}
+	
+	
+	/*
+	 * (non-Javadoc)
+	 * @see java.awt.event.MouseAdapter#mouseExited(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mouseExited(MouseEvent event) {
+		statusBar.showMouseCoordinates(false);
+		statusBar.setToolInfo(false);
+	}
+	
+	
+	/*
+	 *
+	 */
+	@Override
+	public void mouseEntered(MouseEvent event) {
+		IToolBoxState toolBoxState = user.getToolBoxModel();
+		Tool usedTool = toolBoxState.getLastUsedTool();
+	
+		if (usedTool == null)
+			return;
+	
+		statusBar.setToolInfo(usedTool.getIconPath(), usedTool.getToolTipText());
+	}
+	
+	
+	/*
+	 * (non-Javadoc)
+	 * @see java.awt.event.MouseAdapter#mouseWheelMoved(java.awt.event.MouseWheelEvent)
+	 */
+	@Override
+	public void mouseWheelMoved(MouseWheelEvent event) {
+		int step = (event.getWheelRotation() < 0)? 1 : -1;
+		IToolBoxState toolBoxState = user.getToolBoxModel();
+		Tool usedTool = toolBoxState.getLastUsedTool();
+		
+		if (usedTool == null)
+			return;
+		
+		if (propertyController == null)
+			return;
+		
+		if (usedTool.isBeingUsed()) {
+			if (event.isShiftDown()) {
+				if (usedTool.hasAlphaProperties())
+					propertyController.handleOpacityChange(toolBoxState.getOpacityProperty().alpha + 0.1f * step);
+
+			} else {
+				if (usedTool.hasStrokeProperties())
+					propertyController.handleWidthChange((int)toolBoxState.getStrokeProperty().getWidth() + step);
+
+				else if (usedTool.hasFontProperties())
+					propertyController.handleFontSizeChange(toolBoxState.getFontProperty().getSize() + step);
+			}
+			if (usedTool.getDrawing() != null)
+				user.setTemporalDrawing(usedTool.getDrawing());
+		}
+	}
+	
+	
+	/**
+	 * 
+	 * @param c
+	 */
+	public void setPropertyController(PaintPropertyController c) {
+		propertyController = c;
 	}
 }

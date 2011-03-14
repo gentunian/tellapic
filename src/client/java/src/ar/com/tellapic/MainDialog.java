@@ -52,9 +52,9 @@ public class MainDialog extends javax.swing.JDialog {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	public static final int CREATE_TAB = 0;
+	public static final int CREATE_TAB    = 0;
 	public static final int FAVOURITE_TAB = 1;	
-	public static final int JOIN_TAB = 2;
+	public static final int JOIN_TAB      = 2;
 
 	private boolean userInput;
 	private boolean fileSet;

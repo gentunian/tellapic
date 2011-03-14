@@ -91,8 +91,8 @@ public abstract class AbstractUser extends Observable {
 		drawingList = new ArrayList<Drawing>();
 		//TODO: the idea was that local user can set how to paint all paintings of a user
 		customProperties = null;
-		addObserver(DrawingAreaView.getInstance());
-		addObserver(UserView.getInstance());
+//		addObserver(DrawingAreaView.getInstance());
+//		addObserver(UserView.getInstance());
 		setChanged();
 		notifyObservers(this);
 	}

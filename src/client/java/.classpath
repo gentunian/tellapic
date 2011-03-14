@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
+	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="/home/seba/UNIVERSIDAD/TrabajoFinal/tellapic/build/src/swig/java/tellapicjava.jar" sourcepath="/home/seba/UNIVERSIDAD/TrabajoFinal/tellapic/build/src/swig/java/tellapicjava.jar">
 		<attributes>
 			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="/home/seba/UNIVERSIDAD/TrabajoFinal/tellapic/build/src/swig/java"/>
@@ -7,10 +8,9 @@
 	</classpathentry>
 	<classpathentry kind="src" path="src">
 		<attributes>
-			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="/home/seba/UNIVERSIDAD/TrabajoFinal/tellapic/build/lib/java"/>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="/home/seba/UNIVERSIDAD/TrabajoFinal/tellapic/build/src/swig/java"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="/home/seba/utils/dock_1.0.8/dock\bin\dockingFramesCore.jar">
 		<attributes>
 			<attribute name="javadoc_location" value="file:/home/seba/utils/dock_1.0.8/dock/"/>

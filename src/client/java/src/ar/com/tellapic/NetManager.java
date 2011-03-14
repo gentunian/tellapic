@@ -63,7 +63,7 @@ public class NetManager extends Observable {
 	}
 	
 	private NetManager() {
-		this.addObserver(SimpleStatusBar.getInstance());
+		this.addObserver(StatusBar.getInstance());
 		connected = false;
 		setFd(0);
 	}
@@ -807,5 +807,12 @@ public class NetManager extends Observable {
 				break;
 			}
 		}
+	}
+
+	/**
+	 * @return
+	 */
+	public int getPing() {
+		return 0;
 	}
 }

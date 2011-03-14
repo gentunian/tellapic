@@ -54,14 +54,15 @@ public class UserManager implements IUserManager, IUserManagerState {
 	 * @see com.tellapic.IUserManager#createLocalUser(int)
 	 */
 	@Override
-	public void createLocalUser(int id, String name) {
+	public LocalUser createLocalUser(int id, String name) {
 		//AbstractUser user = new LocalUser(id, "local");
 		//TODO: use constant
 		AbstractUser user = LocalUser.getInstance();
 		user.setName(name);
 		user.setUserId(id);
 		users.put(LocalUser.LOCAL_NAME, user);
-		new UserGUIBuilder((LocalUser)user);
+		return (LocalUser) user;
+		//new UserGUIBuilder((LocalUser)user);
 		//notifyObservers(new ActionData(ActionData.ACTION_ADD, user));
 	}
 	

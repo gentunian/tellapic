@@ -30,6 +30,6 @@ public interface IUserManager {
 	public void delUser(int id);
 	public boolean requireDisconnection(String userName);
 	public void setUserVisible(String userName, boolean visible);
-	public void createLocalUser(int userId, String name);
+	public LocalUser createLocalUser(int userId, String name);
 	public void changeUserVisibility(String name);
 }
