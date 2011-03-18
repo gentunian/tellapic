@@ -119,6 +119,7 @@ public class Main {
 		ToolFactory.registerToolClassName(tellapicConstants.TOOL_MARKER, MarkerNet.class.getName());
 		ToolFactory.registerToolClassName(tellapicConstants.TOOL_PATH, PenNet.class.getName());
 		
+		
 		UserManager userManager = UserManager.getInstance();
 		LocalUser luser = userManager.createLocalUser(id, name);
 		new UserGUIBuilder(luser);

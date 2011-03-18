@@ -19,6 +19,8 @@ package ar.com.tellapic;
 
 import java.util.HashMap;
 
+import ar.com.tellapic.graphics.DrawingAreaView;
+
 
 /**
  * @author 
@@ -61,6 +63,9 @@ public class UserManager implements IUserManager, IUserManagerState {
 		user.setName(name);
 		user.setUserId(id);
 		users.put(LocalUser.LOCAL_NAME, user);
+		user.addObserver(DrawingAreaView.getInstance());
+		user.addObserver(UserView.getInstance());
+		user.notifyObservers(user);
 		return (LocalUser) user;
 		//new UserGUIBuilder((LocalUser)user);
 		//notifyObservers(new ActionData(ActionData.ACTION_ADD, user));
@@ -86,6 +91,10 @@ public class UserManager implements IUserManager, IUserManagerState {
 	public void addUser(int id, String name) {
 		AbstractUser user = new RemoteUser(id, name);
 		users.put(name, user);
+		user.addObserver(DrawingAreaView.getInstance());
+		user.addObserver(UserView.getInstance());
+		user.notifyObservers(user);
+		
 		//notifyObservers(new ActionData(ActionData.ACTION_ADD, user));
 	}
 

@@ -39,6 +39,7 @@ import ar.com.tellapic.graphics.Tool;
 import ar.com.tellapic.graphics.ToolBoxModel;
 import ar.com.tellapic.graphics.ToolFactory;
 import ar.com.tellapic.lib.ddata_t;
+import ar.com.tellapic.lib.header_t;
 import ar.com.tellapic.lib.message_t;
 import ar.com.tellapic.lib.stream_t;
 import ar.com.tellapic.lib.stream_t_data;
@@ -55,6 +56,7 @@ import ar.com.tellapic.utils.Utils;
  */
 public class NetManager extends Observable {
 	
+	private double    ping;
 	private boolean connected;
 	private int     fd;
 	
@@ -139,7 +141,7 @@ public class NetManager extends Observable {
 			return -1;
 		}
 		
-		System.out.println("Password was ok. Sending name: "+name);
+		System.out.println("Password was ok. Sending name: "+name+" length: "+name.length());
 		
 		tellapic.tellapic_send_ctle(fd, stream.getData().getControl().getIdfrom(), tellapicConstants.CTL_CL_NAME, name.length(), name);
 		stream = tellapic.tellapic_read_stream_b(fd);
@@ -148,15 +150,19 @@ public class NetManager extends Observable {
 		if (cbyte == tellapicConstants.CTL_FAIL)
 			return -1;
 		
-		while(cbyte == tellapicConstants.CTL_SV_NAMEINUSE) {
+		while(cbyte == tellapicConstants.CTL_SV_NAMEINUSE ) {
+			System.out.println("Name "+name+" is in use.");
 			//Retry name dialog here
 			String response = JOptionPane.showInputDialog(Utils.msg.getString("nameinuse"), null);
-			name = response;
-			System.out.println("Name in use: "+response);
+
 			if (response == null) {
 				tellapic.tellapic_close_fd(fd);
 				return -1;
 			}
+			
+			name = response;
+			
+			System.out.println("Trying new name: "+response+" with length: "+response.length());
 			
 			tellapic.tellapic_send_ctle(fd, id, tellapicConstants.CTL_CL_NAME, response.length(), response);
 			stream = tellapic.tellapic_read_stream_b(fd);
@@ -165,6 +171,8 @@ public class NetManager extends Observable {
 	
 		if (cbyte != tellapicConstants.CTL_SV_AUTHOK)
 			return -1;
+		
+		System.out.println("Name "+name+" accepted");
 		
 		tellapic.tellapic_send_ctl(fd, id, tellapicConstants.CTL_CL_FILEASK);
 		setConnected(true);
@@ -244,13 +252,17 @@ public class NetManager extends Observable {
 	}
 	
 	
+	
 	private class ReceiverThread extends Thread {
 		private boolean running;
 		private int     fd;
+		private double pingTime;
+		private boolean pongReceived;
 		
 		public ReceiverThread(int fd) {
 			running = false;
 			this.fd = fd;
+			pongReceived = true;
 		}
 
 		/* (non-Javadoc)
@@ -259,20 +271,24 @@ public class NetManager extends Observable {
 		@Override
 		public void run() {
 			stream_t stream = null;
+			header_t header = null;
 			running = true;
+			
 			while(running && isConnected()) {
-				stream = tellapic.tellapic_read_stream_b(fd);
-
-				if (stream.getHeader().getCbyte() == tellapicConstants.CTL_FAIL || stream.getHeader().getCbyte() == tellapicConstants.CTL_NOPIPE) {
+				stream = tellapic.tellapic_read_stream_nb(fd);
+				header = stream.getHeader();
+				//System.out.println("Something read");
+				
+				if (header.getCbyte() == tellapicConstants.CTL_FAIL || header.getCbyte() == tellapicConstants.CTL_NOPIPE) {
 					setConnected(false);
 					running = false;
-					
-				} else if (tellapic.tellapic_isfile(stream.getHeader()) == 1) {
-					System.out.println("Was file: "+stream.getHeader().getCbyte());
+
+				} else if (tellapic.tellapic_isfile(header) == 1) {
+					System.out.println("Was file: "+header.getCbyte());
 					stream_t_data d = stream.getData();
-					System.out.println("Was file1: "+stream.getHeader().getSsize());
-					byte[] data = new byte[(int)stream.getHeader().getSsize()];
-					tellapic.custom_wrap(d.getFile(), data, stream.getHeader().getSsize());
+					System.out.println("Was file1: "+header.getSsize());
+					byte[] data = new byte[(int)header.getSsize()];
+					tellapic.custom_wrap(d.getFile(), data, header.getSsize());
 
 					ByteArrayInputStream in = new ByteArrayInputStream(data);
 					try {
@@ -283,26 +299,26 @@ public class NetManager extends Observable {
 					}
 					tellapic.tellapic_free(stream);
 
-				} else if (tellapic.tellapic_isctl(stream.getHeader()) == 1) {
+				} else if (tellapic.tellapic_isctl(header) == 1) {
 					System.out.println("Was ctl");
 					ManageCtlThread t = new ManageCtlThread(stream);
 					t.start();
 
-				} else if (tellapic.tellapic_isctle(stream.getHeader()) == 1) {
+				} else if (tellapic.tellapic_isctle(header) == 1) {
 					System.out.println("Was ctl extended");
 					ManageCtlExtendedThread t = new ManageCtlExtendedThread(stream);
 					t.start();
 
-				} else if ((tellapic.tellapic_ischatb(stream.getHeader()) == 1) || (tellapic.tellapic_ischatp(stream.getHeader()) == 1)) {
+				} else if ((tellapic.tellapic_ischatb(header) == 1) || (tellapic.tellapic_ischatp(header) == 1)) {
 					System.out.println("Was chat");
 					ManageChatThread t = new ManageChatThread(stream);
 					t.start();
 
-				} else if (tellapic.tellapic_isdrw(stream.getHeader()) == 1 ) {
+				} else if (tellapic.tellapic_isdrw(header) == 1 ) {
 					ddata_t    drawing    = stream.getData().getDrawing();
 					createAndAddDrawing(drawing);
 
-				} else if (tellapic.tellapic_isfig(stream.getHeader()) == 1) {
+				} else if (tellapic.tellapic_isfig(header) == 1) {
 					System.out.println("Was fig");
 					ddata_t    drawing    = stream.getData().getDrawing();
 					createAndAddFigure(drawing);
@@ -310,6 +326,19 @@ public class NetManager extends Observable {
 				} else if (tellapic.tellapic_isfigtxt(stream) == 1) {
 					System.out.println("Was text");
 
+				} else if (tellapic.tellapic_istimeout(header) == 1) {
+					//System.out.println("Was timeout");
+					if (pongReceived) {
+						pongReceived = false;
+						tellapic.tellapic_send_ctl(fd, SessionUtils.getId(), tellapic.CTL_CL_PING);
+						pingTime = System.nanoTime();
+					}
+					
+				} else if (tellapic.tellapic_ispong(header) == 1) {
+					//System.out.println("Was pong");
+					pingTime = (double) ((System.nanoTime() - pingTime) / 1000000);
+					setPing(pingTime);
+					pongReceived = true;
 				}
 			}
 		}
@@ -716,43 +745,88 @@ public class NetManager extends Observable {
 		}
 	}
 	
+	
+	/**
+	 * 
+	 * @author 
+	 *          Sebastian Treu
+	 *          sebastian.treu(at)gmail.com
+	 *
+	 */
 	private class ManageCtlExtendedThread extends Thread {
 		private stream_t stream;
 		
+		/**
+		 * 
+		 * @param stream
+		 */
 		public ManageCtlExtendedThread(stream_t stream) {
 			this.stream = stream;
 		}
 		
+		
+		/**
+		 * 
+		 */
 		@Override
 		public void run() {
 			int cbyte = stream.getHeader().getCbyte();
+			
 			switch(cbyte) {
 				
 			case tellapicConstants.CTL_SV_CLADD:
-				svcontrol_t ctle = stream.getData().getControl();
-				int id = ctle.getIdfrom();
-				//String name = tellapic.tellapic_bytetp2charp(ctle.getInfo());
-				short[] s = ctle.getInfo();
-				String name = "";
-				for(int i =0 ; s[i] != 0; i++)
-					name += (char)s[i];
-				UserManager.getInstance().addUser(id, name);
+				addUser();
+				break;
 				
 			case tellapicConstants.CTL_SV_FILE:
 				break;
 			}
 		}
+		
+		/*
+		 * 
+		 */
+		private void addUser() {
+			svcontrol_t ctlExtended = stream.getData().getControl();
+			int         newUserId   = ctlExtended.getIdfrom();
+			short[]     userInfo    = ctlExtended.getInfo();
+			long        userNameLen = stream.getHeader().getSsize() - tellapicConstants.HEADER_SIZE - 1;
+			String      userName = "";
+			
+			
+			for(int i =0 ; i < userNameLen; i++)
+				userName += (char)userInfo[i];
+			System.out.println("LENGHT: "+ stream.getHeader().getSsize()+ "name: "+userName);
+			UserManager.getInstance().addUser(newUserId, userName);
+		}
 	}
 	
+	
+	/**
+	 * 
+	 * @author 
+	 *          Sebastian Treu
+	 *          sebastian.treu(at)gmail.com
+	 *
+	 */
 	private class ManageChatThread extends Thread {
 		private stream_t stream;
 		private IChatController chatController; 
 		
+		
+		/**
+		 * 
+		 * @param stream
+		 */
 		public ManageChatThread(stream_t stream) {
 			this.stream = stream;
 			chatController = new ChatController();
 		}
 
+		
+		/**
+		 * 
+		 */
 		@Override
 		public void run() {
 			Message   message = null;
@@ -767,7 +841,6 @@ public class NetManager extends Observable {
 			
 			case tellapicConstants.CTL_CL_BMSG:
 				text    = chatmsg.getType().getBroadmsg();
-				
 				message = new Message(userFrom.getName(), null, text);
 				break;
 				
@@ -784,15 +857,32 @@ public class NetManager extends Observable {
 			chatController.handleInput(message, false);
 		}
 	}
+
 	
+	/**
+	 * 
+	 * @author 
+	 *          Sebastian Treu
+	 *          sebastian.treu(at)gmail.com
+	 *
+	 */
 	@SuppressWarnings("unused")
 	private class ManageDrawingThread extends Thread {
 		private stream_t stream;
 		
+		
+		/**
+		 * 
+		 * @param stream
+		 */
 		public ManageDrawingThread(stream_t stream) {
 			this.stream = stream;
 		}
 		
+		
+		/**
+		 * 
+		 */
 		@Override
 		public void run() {
 			int cbyte = stream.getHeader().getCbyte();
@@ -812,7 +902,16 @@ public class NetManager extends Observable {
 	/**
 	 * @return
 	 */
-	public int getPing() {
-		return 0;
+	public double getPing() {
+		return ping;
+	}
+
+	/**
+	 * @param pingTime the ping to set
+	 */
+	public void setPing(double pingTime) {
+		this.ping = pingTime;
+		setChanged();
+		notifyObservers();
 	}
 }
