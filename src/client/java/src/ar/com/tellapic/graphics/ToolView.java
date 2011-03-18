@@ -67,7 +67,7 @@ public class ToolView extends JPanel implements Observer {
 			@Override
 			public void componentAdded(ContainerEvent arg0) {
 				//Dimension size = ((FlowLayout)getLayout()).minimumLayoutSize(ToolView.this);
-				setMinimumSize(new Dimension(ICON_SIZE + 20, ICON_SIZE * getComponentCount() + 20));
+//				setMinimumSize(new Dimension(ICON_SIZE + 20, ICON_SIZE * getComponentCount() + 20));
 				setPreferredSize(new Dimension(ICON_SIZE * (getComponentCount() / 2), ICON_SIZE * (getComponentCount() / 2) + 10));
 				repaint();
 			}
@@ -75,7 +75,7 @@ public class ToolView extends JPanel implements Observer {
 			@Override
 			public void componentRemoved(ContainerEvent arg0) {
 				Dimension size = ((FlowLayout)getLayout()).minimumLayoutSize(ToolView.this);
-				setMinimumSize(new Dimension(ICON_SIZE + 20, ICON_SIZE * getComponentCount() + 20));
+//				setMinimumSize(new Dimension(ICON_SIZE + 20, ICON_SIZE * getComponentCount() + 20));
 				setPreferredSize(size);
 				repaint();
 			}
