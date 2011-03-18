@@ -19,15 +19,19 @@
 
 typedef struct list_node
 {
-  struct list_node *prev, *next;
+  struct list_node *prev;
+  struct list_node *next;
   void *item;
 
 } list_node_t;
 
+
 typedef struct g_list 
 {
-  list_node_t *head, *tail;
+  list_node_t *head;
+  list_node_t *tail;
   int count;
+
 } list_t;
 
 

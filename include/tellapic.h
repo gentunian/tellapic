@@ -16,8 +16,23 @@
 #ifndef __TELLAPIC__H__
 #define __TELLAPIC__H__
 
+#include <stdarg.h>
+
 #include "types.h"
 
+
+
+/**
+ *
+ */
+byte_t *
+tellapic_build_rawstream(byte_t ctlbyte, ...);
+
+/**
+ *
+ */
+byte_t *
+tellapic_rawread_b(int fd);
 
 /**
  *
@@ -36,6 +51,18 @@ tellapic_read_data_b(int fd, header_t header);
  */
 header_t
 tellapic_read_header_b(int fd);
+
+/**
+ *
+ */
+stream_t
+tellapic_read_data_nb(int fd, header_t header);
+
+/**
+ *
+ */
+header_t
+tellapic_read_header_nb(int fd);
 
 /**
  *
@@ -60,6 +87,12 @@ tellapic_close_fd(int fd);
  */
 stream_t
 tellapic_read_stream_b(int fd);
+
+/**
+ *
+ */
+stream_t
+tellapic_read_stream_nb(int fd);
 
 /**
  *
@@ -128,6 +161,24 @@ tellapic_build_ctl(int ctl, int idfrom);
  */
 stream_t 
 tellapic_build_chat(int cbyte, int idfrom, int idto, int textsize, char *text);
+
+/**
+ *
+ */
+int
+tellapic_isping(header_t header);
+
+/**
+ *
+ */
+int
+tellapic_ispong(header_t header);
+
+/**
+ *
+ */
+int
+tellapic_istimeout(header_t header);
 
 /**
  *

@@ -41,7 +41,7 @@
 #define MIN_FIGTXT_STREAM_SIZE       HEADER_SIZE + DDATA_FONTFACE_INDEX + 2
 #define MIN_PMSG_STREAM_SIZE         HEADER_SIZE + 3
 #define MIN_BMSG_STREAM_SIZE         HEADER_SIZE + 2
-#define MIN_CTLEXT_STREAM_SIZE       HEADER_SIZE + 2
+#define MIN_CTLEXT_STREAM_SIZE       HEADER_SIZE + 1
 #define MAX_FIGTXT_STREAM_SIZE       MAX_TEXT_SIZE + MAX_FONTFACE_LEN + HEADER_SIZE + DDATA_FONTFACE_INDEX
 #define MAX_PMSG_STREAM_SIZE         MAX_TEXT_SIZE + HEADER_SIZE + 2
 #define MAX_BMSG_STREAM_SIZE         MAX_TEXT_SIZE + HEADER_SIZE + 1 
@@ -132,6 +132,9 @@
 #define CTL_CL_DISC     0x91   /* is ctl  */
 #define CTL_CL_NAME     0xa1   /* is ctle */
 #define CTL_NOPIPE      0xb1 
+#define CTL_NOSTREAM    0xc1
+#define CTL_CL_PING     0xd1
+#define CTL_CL_TIMEOUT  0xe1
 #define CTL_FAIL        0x00
 
 
@@ -146,6 +149,7 @@
 #define CTL_SV_ID        0x80   /* is ctl  */
 #define CTL_SV_NAMEINUSE 0x90   /* is ctl  */
 #define CTL_SV_AUTHOK    0xa0   /* is ctl  */
+#define CTL_SV_PONG      0xb0
 
 
 /* Face properties */
