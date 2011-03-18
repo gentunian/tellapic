@@ -2,6 +2,7 @@ package ar.com.tellapic.graphics;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
@@ -11,6 +12,8 @@ import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Transparency;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -22,7 +25,9 @@ import java.util.Observable;
 import java.util.Observer;
 
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JToggleButton;
 import javax.swing.JViewport;
 import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
@@ -62,7 +67,7 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 	private java.awt.Point          scrollingPoint;
 	private StatusBar               statusBar;
 	private int zoomX = 1;
-	
+	private JPanel buttonCorner;
 	
 	private static class Holder {
 		private final static DrawingAreaView INSTANCE = new DrawingAreaView();
@@ -94,7 +99,32 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 		gc = gd.getDefaultConfiguration();
 		rh = new RenderingHints(null);
 		
+//		scrollPane = new JScrollPane(this);
+		topRule   = new RuleHeader(RuleHeader.HORIZONTAL, true);
+		leftRule = new RuleHeader(RuleHeader.VERTICAL, true);
+		buttonCorner = new JPanel();
+		JToggleButton isMetric     = new JToggleButton("cm", true);
+		isMetric.setFont(new Font("SansSerif", Font.PLAIN, 8));
+		isMetric.addItemListener(new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				JToggleButton isMetric = (JToggleButton) e.getSource();
+				boolean v = (e.getStateChange() == ItemEvent.SELECTED);
+//				((RuleHeader)scrollPane.getColumnHeader().getView()).setIsMetric(v);
+//				((RuleHeader)scrollPane.getRowHeader().getView()).setIsMetric(v);
+				JScrollPane parent = (JScrollPane) ((JViewport) getParent()).getParent();
+				((RuleHeader)parent.getColumnHeader().getView()).setIsMetric(v);
+				((RuleHeader)parent.getRowHeader().getView()).setIsMetric(v);
+				if (v)
+					isMetric.setText("cm");
+				else
+					isMetric.setText("in");
+			}
+		});
+		buttonCorner.add(isMetric);
+		
 		setName(Utils.msg.getString("drawingarea"));
+//		scrollPane.setName(getName());
 		setPreferredSize(new Dimension(800,600));
 		setVisible(true);
 		addMouseMotionListener(this);
@@ -106,11 +136,9 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 			public void ancestorAdded(AncestorEvent event) {
 				JScrollPane parent = (JScrollPane) ((JViewport) getParent()).getParent();
 				topRule = ((RuleHeader)parent.getColumnHeader().getView());
-				topRule.setPreferredHeight(25);
 				topRule.setPreferredWidth(backimage.getWidth());
 				leftRule = ((RuleHeader)parent.getRowHeader().getView());
 				leftRule.setPreferredHeight(backimage.getHeight());
-				leftRule.setPreferredWidth(25);
 			}
 			@Override
 			public void ancestorMoved(AncestorEvent event) {}
@@ -120,6 +148,25 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 	}
 
 
+	/**
+	 * 
+	 * @param enabled
+	 */
+	public void setRulerEnabled(boolean enabled) {
+		JScrollPane scrollPane = (JScrollPane) ((JViewport) getParent()).getParent();
+		if (enabled) {
+			scrollPane.setColumnHeaderView(topRule);
+			scrollPane.setRowHeaderView(leftRule);
+			scrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER, buttonCorner);
+			scrollPane.setCorner(JScrollPane.LOWER_LEFT_CORNER, new Corner());
+			scrollPane.setCorner(JScrollPane.UPPER_RIGHT_CORNER, new Corner());
+		} else {
+			scrollPane.setColumnHeader(null);
+			scrollPane.setRowHeader(null);
+		}
+	}
+	
+	
 	/**
 	 * 
 	 * @param rh
@@ -396,6 +443,7 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 	 * @param gridEnabled the gridEnabled to set
 	 */
 	public void setGridEnabled(boolean gridEnabled) {
+
 		grid.setGridEnabled(gridEnabled);
 		
 		if (foreground == null)

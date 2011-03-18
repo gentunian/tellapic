@@ -94,7 +94,6 @@ public abstract class AbstractUser extends Observable {
 //		addObserver(DrawingAreaView.getInstance());
 //		addObserver(UserView.getInstance());
 		setChanged();
-		notifyObservers(this);
 	}
 	
 	

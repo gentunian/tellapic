@@ -86,7 +86,7 @@ public class UserGUIBuilder {
 	private JFrame                  mainWindow;
 	private JScrollPane             scrollPane;
 	private RuleHeader              topRule;
-	private RuleHeader              rightRule;
+	private RuleHeader              leftRule;
 	private JPanel buttonCorner;
 	private JToggleButton isMetric;
 	
@@ -116,40 +116,38 @@ public class UserGUIBuilder {
 		model.addObserver(toolView);
 				
 		// Get the drawing area model instance. Its where all Drawing objects will live.
-//		DrawingAreaModel  drawingAreaModel = DrawingAreaModel.getInstance();
+		//DrawingAreaModel  drawingAreaModel = DrawingAreaModel.getInstance();
 		
 		// Get the area where all the living Drawing objects will be drawn.
 		DrawingAreaView   drawingAreaView  = DrawingAreaView.getInstance();
 //		user.addObserver(drawingAreaView);
-		user.addObserver(drawingAreaView);
-		user.addObserver(userView);
-		
+		//user.addObserver(userView);
+		//user.notifyObservers(user);
 		scrollPane = new JScrollPane(drawingAreaView);
-		topRule   = new RuleHeader(RuleHeader.HORIZONTAL, true);
-		rightRule = new RuleHeader(RuleHeader.VERTICAL, true);
-		scrollPane.setColumnHeaderView(topRule);
-//		scrollPane.setRowHeaderView(rightRule);
-		buttonCorner = new JPanel();
-		isMetric     = new JToggleButton("cm", true);
-		isMetric.setFont(new Font("SansSerif", Font.PLAIN, 8));
-		isMetric.addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				boolean v = (e.getStateChange() == ItemEvent.SELECTED);
-				((RuleHeader)scrollPane.getColumnHeader().getView()).setIsMetric(v);
-				((RuleHeader)scrollPane.getRowHeader().getView()).setIsMetric(v);
-				if (v)
-					isMetric.setText("cm");
-				else
-					isMetric.setText("in");
-			}
-		});
-		buttonCorner.add(isMetric);
-		
+//		topRule   = new RuleHeader(RuleHeader.HORIZONTAL, true);
+//		leftRule = new RuleHeader(RuleHeader.VERTICAL, true);
+//		buttonCorner = new JPanel();
+//		JToggleButton isMetric     = new JToggleButton("cm", true);
+//		isMetric.setFont(new Font("SansSerif", Font.PLAIN, 8));
+//		isMetric.addItemListener(new ItemListener() {
+//			@Override
+//			public void itemStateChanged(ItemEvent e) {
+//				JToggleButton isMetric = (JToggleButton) e.getSource();
+//				boolean v = (e.getStateChange() == ItemEvent.SELECTED);
+//				((RuleHeader)scrollPane.getColumnHeader().getView()).setIsMetric(v);
+//				((RuleHeader)scrollPane.getRowHeader().getView()).setIsMetric(v);
+//				if (v)
+//					isMetric.setText("cm");
+//				else
+//					isMetric.setText("in");
+//			}
+//		});
+//		buttonCorner.add(isMetric);
+//		
 		scrollPane.setName(drawingAreaView.getName());
-		
 
 //		propertyController.setDrawingController(drawingController);
+		
 		drawingAreaView.setPropertyController(propertyController);
 		
 		toolView.setController(toolViewController);
@@ -249,16 +247,7 @@ public class UserGUIBuilder {
 		ruler.addItemListener(new ItemListener(){
 			@Override
 			public void itemStateChanged(ItemEvent e) {
-				if (e.getStateChange() == ItemEvent.DESELECTED) {
-					scrollPane.setColumnHeader(null);
-					scrollPane.setRowHeader(null);
-				} else {
-					scrollPane.setColumnHeaderView(topRule);
-					scrollPane.setRowHeaderView(rightRule);
-					scrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER, buttonCorner);
-					scrollPane.setCorner(JScrollPane.LOWER_LEFT_CORNER, new Corner());
-					scrollPane.setCorner(JScrollPane.UPPER_RIGHT_CORNER, new Corner());
-				}
+				DrawingAreaView.getInstance().setRulerEnabled((e.getStateChange() == ItemEvent.SELECTED));
 			}
 		});
 		
