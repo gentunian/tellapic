@@ -99,7 +99,7 @@ typedef struct args {
 
 
 typedef struct msgitem {
-  stream_t           stream;
+  byte_t             *stream;
   uint32_t           tothread;
   int                delivers;
   int                bsent[MAX_CLIENTS];
@@ -208,7 +208,7 @@ cancel_threads();
 /**
  *
  */
-void
+int
 fetch_stream(tdata_t *thread);
 
 /**

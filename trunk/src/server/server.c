@@ -54,8 +54,6 @@ args_t             args;
 
 #ifdef CDK_AWARE
 console_t          *console = NULL;
-#else
-char *console = NULL;
 #endif
 
 
@@ -106,7 +104,7 @@ int main(int argc, char *argv[]) {
   setnonblock(args.svfd);
 
 #ifdef CDK_AWARE
-  console = console_create("<C>Server output\0", "</B/24> >>> \0");
+  //console = console_create("<C>Server output\0", "</B/24> >>> \0");
   if (console == NULL)
     print_output("Could not start console: \n");
 #else
@@ -411,6 +409,7 @@ process_command(char *cmd, tdata_t *thread_data)
 }
 #endif
 
+
 /**
  *
  */
@@ -507,7 +506,7 @@ void
   int       fdmax   = thread->client->fd + 1;  /* max file descriptor number to be used by select */
   fd_set    readfdset;                         /* this will hold client->fd                       */
   fd_set    fdsetcopy;                         /* this is a required copy                         */
-
+  struct    timeval to;
 
   pthread_cleanup_push(manage_client_cleanup, thread);                                /* register cleanup function for this thread */
   set_tstate(thread, THREAD_STATE_INIT);                                              /* set the thread state to INIT */
@@ -544,6 +543,7 @@ void
   sprintf(buff, "[NFO]:\tWaiting for client %d to ask for file.", thread->client->fd);
   print_output(buff);
 #endif
+
   // Take note to change this behaviour so later releases can extend the server to hold
   // more than just 1 image per instance. It would be nice to have an arbitrary list of images
   // dinamically created by the owner of this session
@@ -597,7 +597,7 @@ void
       // abort?
     }
 
-  msg->stream   = tellapic_build_ctle(CTL_SV_CLADD, thread->client->fd, thread->client->namelen, thread->client->name);
+  msg->stream   = tellapic_build_rawstream(CTL_SV_CLADD, thread->client->fd, thread->client->name, thread->client->namelen);
   msg->tothread = -1; //TODO: #define or something here...
   msg->delivers = 0;
   pthread_mutex_init(&msg->mutex, NULL);
@@ -609,26 +609,35 @@ void
   print_output(buff);
 #endif
 
+
   while(thread->tstate != THREAD_STATE_END) 
     {
+      int fetchresult = 0;
+      to.tv_sec = 180;
       fdsetcopy = readfdset;   /* Maintain a copy of the file descriptor set */
-    
 #ifdef DEBUG
       memset(buff, '\0', 256);
       sprintf(buff, "[NFO]:\tEntering select() on thread %d", thread->tnum);
       print_output(buff);
 #endif
-  
-      int rv = select(fdmax, &fdsetcopy, NULL, NULL, NULL);
-
+      int rv = select(fdmax, &fdsetcopy, NULL, NULL, &to);
       if (rv < 0) 
 	{
-	  //printw("rv: %d errno: %d\n", rv, errno);
-	  //refresh();
 	} 
-      else
+      else if ( rv == 0)
 	{
 
+#ifdef DEBUG
+	  memset(buff, '\0', 256);
+	  sprintf(buff, "[NFO]:\tSelect timeout. Check error condition and/or continue for thread %d", thread->tnum);
+	  print_output(buff);
+#endif
+	  /* We got a timeout. Do we have an uncleared error on fetching streams? */
+	  if (fetchresult < 0)
+	    set_tstate(thread, THREAD_STATE_END);
+	}
+      else
+	{
 #ifdef DEBUG
 	  memset(buff, '\0', 256);
 	  sprintf(buff, "[NFO]:\tEXIT Select on thread %d", thread->tnum);
@@ -636,29 +645,27 @@ void
 #endif
 
 
-	  // Check if select() has set the socket ready for reading
+	  /* Check if select() has set the socket ready for reading. */
+	  /* If so, get the stream.                                  */
 	  if (FD_ISSET(thread->client->fd, &fdsetcopy))
-	    fetch_stream(thread);
+	    fetchresult = fetch_stream(thread);
 
 
-	  // Check if select() has set the pipe ready for reading. If so, forward to this 
-	  // client whatever is in the message queue.
+	  /* Check if select() has set the pipe ready for reading. If so, */
+	  /* forward to this  client whatever is in the message queue.    */
 	  if (FD_ISSET(thread->readpipe, &fdsetcopy))
 	    forward_stream(thread);
 	}
     } 
-
   pthread_mutex_lock(&ccbitsetmutex);    /* Lock the shared resource   */
   ccbitset &= ~(1 << thread->tnum);      /* Set the bit flag without this client flag */
   pthread_mutex_unlock(&ccbitsetmutex);  /* Unlock the shared resource */
   pthread_cleanup_pop(1);                /* pop the cleanup function */
-
 #ifdef DEBUG 
   memset(buff, '\0', 256);
   sprintf(buff, "[NFO]:\tThread %d exiting normally. Closing link with client.", thread->tnum);    /* this thread has no more reason to live */
   print_output(buff);
 #endif
-
   pthread_exit(NULL);
 }
 
@@ -703,26 +710,36 @@ authclient(tdata_t *thread)
 
 	      do
 		{
+		  if (thread->client->name != NULL)
+		    free(thread->client->name);
+
 		  stream_t stream = tellapic_read_stream_b(thread->client->fd); 	                                 /* Read client response        */
-#ifdef DEBUG 
-		  char buff[256]; 
-		  sprintf(buff, "[NFO]:\tResponse from client %d was cbyte %d with size: %d", thread->client->fd, stream.header.cbyte, CTL_SV_PWDOK, stream.header.ssize);
-		  print_output(buff);
-#endif
+
 		  if (stream.header.cbyte == CTL_CL_NAME && stream.data.control.idfrom == thread->client->fd) 
 		    {
-		      if (thread->client->name != NULL)
-			free(thread->client->name);
+		      /* if (thread->client->name != NULL) */
+		      /* 	free(thread->client->name); */
 
-		      thread->client->name = malloc(stream.header.ssize - HEADER_SIZE);	                              /* Allocate memory for client name  */
+		      thread->client->name = malloc(stream.header.ssize - HEADER_SIZE);	                    /* Allocate memory for client name  */
 		      thread->client->namelen = stream.header.ssize - HEADER_SIZE - 1;
-		      memcpy(thread->client->name, stream.data.control.info, stream.header.ssize - HEADER_SIZE - 1);  /* Copy the client name             */
-		      thread->client->name[stream.header.ssize - HEADER_SIZE - 1] = '\0';                             /* Add a trailing '\0' just in case */
+		      memcpy(thread->client->name, stream.data.control.info, thread->client->namelen);      /* Copy the client name             */
+		      thread->client->name[thread->client->namelen] = '\0';                                 /* Add a trailing '\0' just in case */
 		    }
 		  else 
 		    {
+#ifdef DEBUG 
+		  char buff[256]; 
+		  sprintf(buff, "[NFO]:\tBad Response from thread %d", thread->tnum);
+		  print_output(buff);
+#endif
 		      return 0;         /* If it isn't a CTL_CL_NAME packet is an invalid sequence */
 		    }
+
+#ifdef DEBUG 
+		  char buff[256]; 
+		  sprintf(buff, "[NFO]:\tResponse from was %s (len: %d) on thread %d", thread->client->name, thread->client->namelen, thread->tnum);
+		  print_output(buff);
+#endif	
 		}
 	      while(isnameinuse(thread) && tellapic_send_ctl(thread->client->fd, thread->client->fd, CTL_SV_NAMEINUSE));
 	    } 
@@ -782,13 +799,15 @@ forward_stream(tdata_t *thread)
 
 #ifdef DEBUG
   char buff[256];
-  sprintf(buff, "[NFO]:\tMessage address was %p. Cbyte is: %d and size is %d.", message, message->stream.header.cbyte, message->stream.header.ssize);
+  sprintf(buff, "[NFO]:\tMessage address was %p. Cbyte is: %d.", message, message->stream[CBYTE_INDEX]);
   print_output(buff);
 #endif
 
-  result  = tellapic_send(thread->client->fd, &(message->stream));      /* Forward data to this client */
+  //result = tellapic_send(thread->client->fd, &(message->stream));      /* Forward data to this client */
+  
+  result = tellapic_rawsend(thread->client->fd, message->stream);
 
-  if (result == message->stream.header.ssize) 
+  if (result)
     {
 
       pthread_mutex_lock(&message->mutex);
@@ -812,58 +831,83 @@ forward_stream(tdata_t *thread)
 /**
  *
  */
-void fetch_stream(tdata_t *thread) {
+int
+fetch_stream(tdata_t *thread)
+{
+  int          rc = 0;
   mitem_t      *item = NULL;
-  stream_t     stream;
+  //stream_t     stream;
+  //stream = tellapic_read_stream_b(thread->client->fd);
+  byte_t       *rawstream = tellapic_rawread_b(thread->client->fd);
 
-  stream = tellapic_read_stream_b(thread->client->fd);
+  if (rawstream == NULL)
+    return rc;
 
-  if (stream.header.cbyte != CTL_FAIL) {
+  item = malloc(sizeof(mitem_t));
+  if (item == NULL)
+    return rc;
 
-    item = malloc(sizeof(mitem_t));
-    if (item == NULL)
-      return;
+  pthread_mutex_init(&item->mutex, NULL);
+  item->delivers = 0;
+  item->stream   = rawstream;
+  item->tothread = -1;       /* Set -1 by default so we simplified the switch */
 
-    pthread_mutex_init(&item->mutex, NULL);
-    item->delivers = 0;
-    item->stream   = stream;
-    item->tothread = -1;       /* Set -1 by default so we simplified the switch */
-
-    switch(stream.header.cbyte) {
-
+  switch(rawstream[CBYTE_INDEX])
+    {
     case CTL_CL_PMSG:
-      item->tothread = stream.data.chat.type.privmsg.idto;
+      item->tothread = rawstream[HEADER_SIZE + DATA_PMSG_IDTO_INDEX];
     case CTL_CL_BMSG:
     case CTL_CL_DRW:
     case CTL_CL_FIG:
       queue_message(item, thread);
+      rc = 1;
       break;
 
     case CTL_CL_FILEASK:
       //send_file(thread->client->fd); as CTL_CL_DISC but with item->tothread = (1 << stream.data.type.control.idfrom);
+      rc = 1;
       break;
-
 
     case CTL_CL_DISC:
     case CTL_NOPIPE:
-      item->stream.header.endian = 1;
-      item->stream.header.cbyte = CTL_SV_CLRM;
-      item->stream.header.ssize = HEADER_SIZE + 1;
-      item->stream.data.control.idfrom = thread->client->fd;
-      queue_message(item, thread);
+      free(rawstream);
+      free(item);
+      //rawstream = tellapic_build_rawstream(CTL_SV_CLRM, thread->client->fd);
+      //queue_message(item, thread);
       set_tstate(thread, THREAD_STATE_END);
+      rc = 1;
       break;
 
-    default:
-      // it should be a valid header. Who check this? tellapic.so? we?
-      pthread_mutex_destroy(&item->mutex);
+    case CTL_CL_TIMEOUT:
+      free(rawstream);
       free(item);
+      rc = 1;
+      break;
+
+    case CTL_CL_PING:
+      free(rawstream);
+      free(item);
+      printf("Ping packet received\n");
+      tellapic_send_ctl(thread->client->fd, thread->client->fd, CTL_SV_PONG);
+      rc = 1;
+      break;
+
+    case CTL_NOSTREAM:
+      pthread_mutex_destroy(&item->mutex);
+      free(rawstream);
+      free(item);
+      rc = 1;
+      break;
+
+    case CTL_FAIL:
+      pthread_mutex_destroy(&item->mutex);
+      free(rawstream);
+      free(item);
+      rc = -1;
       break;
     }
-  } else {
-    //printw("<thread %d>[ERR]:\tStream read FAIL! (%d)\n", thread->tnum, stream.header.cbyte);
-    //refresh();
-  }
+
+  //  return rc;
 }
 
 
@@ -906,7 +950,11 @@ queue_message(mitem_t *msg, tdata_t *thread)
 
       // If thread[i] is connected with a client and this message is private, ensure that is for him. 
       // If it isn't for him, then do nothing. Else, if it isn't private, send it anyway.
-      if (ccbitset & (1 << thread[i].tnum) && (msg->tothread == -1 || msg->tothread == thread[i].client->fd) && current != thread[i].tnum) 
+
+      if ( (ccbitset & (1 << thread[i].tnum))  /* Check if thread[i].tnum is connected */
+	   &&
+	   (msg->tothread == -1 || msg->tothread == thread[i].client->fd)
+	   && current != thread[i].tnum)       /* Check if we aren't forwarding to the sender */
 	{
 
 	  // msg is sent to N threads. When msg->delivers reachs 0, means that all threads have processed the message msg. If
@@ -919,7 +967,7 @@ queue_message(mitem_t *msg, tdata_t *thread)
 
 #ifdef DEBUG 
 	  char   buf[256];
-	  sprintf(buf, "Sending msg address </B>%p<!B> to thread </B>%d<!B>. Stream cbyte is: %d", address, thread[i].tnum, msg->stream.header.cbyte);
+	  sprintf(buf, "Sending msg address </B>%p<!B> to thread </B>%d<!B>. Stream cbyte is: %d", address, thread[i].tnum, msg->stream[CBYTE_INDEX]);
 	  print_output(buf);
 #endif
       
@@ -942,6 +990,7 @@ void unqueue_message(mitem_t *msg){
   pthread_mutex_unlock(&queuemutex);
   
   pthread_mutex_destroy(&msg->mutex);
+  free(msg->stream);
   free(msg);
   free(node);
 }
@@ -952,21 +1001,29 @@ void unqueue_message(mitem_t *msg){
  */
 void manage_client_cleanup(void *arg) {
   tdata_t *thread = (tdata_t *) arg;
-  
+  char    buff[64];
+
   /* First thing to do set this state to free     */
   /* so no other thread can access thread->client */
   /* memmory. thread->client memmory is accesed   */
   /* or should be accesed only when thread state  */
   /* is ACTIVE or INIT.                           */
   set_tstate(thread, THREAD_STATE_FREE);
+  mitem_t *item = malloc(sizeof(mitem_t));
+  if (item != NULL)
+    {
+      pthread_mutex_init(&item->mutex, NULL);
+      byte_t *rawstream = tellapic_build_rawstream(CTL_SV_CLRM, thread->client->fd);
+      item->delivers = 0;
+      item->stream   = rawstream;
+      item->tothread = -1;       /* Set -1 by default so we simplified the switch */
+      queue_message(item, thread);
+    }
   tellapic_send_ctl(thread->client->fd, thread->client->fd, CTL_CL_DISC);
-
-  char  buff[128];
   sprintf(buff, "[</8>WRN<!8>]:\tThread %d is closing link now...", thread->tnum);
   print_output(buff);
   if (thread->client->name != NULL)
     free(thread->client->name);
-
   close(thread->client->fd);
   free(thread->client);
 }
