@@ -20,4 +20,25 @@ public class PaintPropertyColor extends PaintProperty {
 	public void setColor(Color color) {
 		this.color = color;
 	}
+
+	/**
+	 * @return
+	 */
+	public int getRed() {
+		return color.getRed();
+	}
+
+	/**
+	 * @return
+	 */
+	public int getGreen() {
+		return color.getGreen();
+	}
+
+	/**
+	 * @return
+	 */
+	public int getBlue() {
+		return color.getBlue();
+	}
 }

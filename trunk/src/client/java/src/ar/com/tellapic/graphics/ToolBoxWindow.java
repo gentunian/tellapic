@@ -78,7 +78,7 @@ public class ToolBoxWindow extends JFrame {
 			public void componentAdded(ContainerEvent arg0) {
 				int height = propertyView.getMinimumSize().height + boxView.getMinimumSize().height;
 				int width  = Math.max(propertyView.getMinimumSize().width, boxView.getMinimumSize().width);
-				setMinimumSize(new Dimension(width, height));
+				//setMinimumSize(new Dimension(width, height));
 				//System.out.println("added. w: "+arg0.getComponent().getSize().getWidth()+" h: "+arg0.getComponent().getSize().getHeight());
 				pack();
 			}
@@ -88,7 +88,7 @@ public class ToolBoxWindow extends JFrame {
 				int height = propertyView.getMinimumSize().height + boxView.getMinimumSize().height;
 				int width  = Math.max((propertyView.getComponentCount() > 0)? propertyView.getMinimumSize().width : 0, boxView.getMinimumSize().width);
 				System.out.println("box min width: "+boxView.getMinimumSize().width+" count: "+propertyView.getComponentCount()+"  w: "+width+" h: "+height);
-				setMinimumSize(new Dimension(width, height));
+				//setMinimumSize(new Dimension(width, height));
 				pack();
 			}
 		});	

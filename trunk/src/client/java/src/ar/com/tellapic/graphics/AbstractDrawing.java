@@ -17,11 +17,8 @@
  */  
 package ar.com.tellapic.graphics;
 
-import java.awt.Color;
-import java.awt.Composite;
 import java.awt.Font;
 import java.awt.Shape;
-import java.awt.Stroke;
 
 /**
  * @author 
@@ -50,22 +47,22 @@ public abstract class AbstractDrawing {
 	/**
 	 * @return the stroke
 	 */
-	public abstract Stroke getStroke();
+	public abstract PaintPropertyStroke getPaintPropertyStroke();
 	
 	/**
 	 * @return the color
 	 */
-	public abstract Color getColor();
+	public abstract PaintPropertyColor getPaintPropertyColor();
 
 	/**
 	 * @return the alpha
 	 */
-	public abstract Composite getComposite();
+	public abstract PaintPropertyAlpha getPaintPropertyAlpha();
 
 	/**
 	 * @return the font
 	 */
-	public abstract Font getFont();
+	public abstract PaintPropertyFont getPaintPropertyFont();
 	
 	public abstract boolean hasFontProperty();
 	

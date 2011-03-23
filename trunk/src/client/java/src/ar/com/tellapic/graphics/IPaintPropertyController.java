@@ -19,13 +19,19 @@ public interface IPaintPropertyController {
 	 * 
 	 * @param value
 	 */
-	public void handleWidthChange(int value);
+	public void handleDashChange(float[] dash, float dashphase);
 	
 	/**
 	 * 
 	 * @param value
 	 */
-	public void handleOpacityChange(float value);
+	public void handleWidthChange(double value);
+	
+	/**
+	 * 
+	 * @param value
+	 */
+	public void handleOpacityChange(double value);
 	
 	/**
 	 * 

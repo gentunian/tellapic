@@ -66,7 +66,7 @@ public interface IToolBoxManager {
 	 * Sets the stroke width
 	 * @param width the width to set
 	 */
-	public void setStrokePropertyWidth(float width);
+	public void setStrokePropertyWidth(double width);
 	
 	/**
 	 * Sets the end caps to use
@@ -123,7 +123,7 @@ public interface IToolBoxManager {
 	 * 
 	 * @param value
 	 */
-	public void setAlphaPropertyValue(float value);
+	public void setAlphaPropertyValue(double value);
 	
 	/**
 	 * Tools must be registered in the model

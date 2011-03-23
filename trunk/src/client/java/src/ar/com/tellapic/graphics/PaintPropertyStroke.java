@@ -4,7 +4,7 @@ import java.awt.BasicStroke;
 import java.awt.Stroke;
 
 public final class PaintPropertyStroke extends PaintProperty {
-	private float width;
+	private double width;
 	private int   endCaps;
 	private int   lineJoins;
 	private float miterLimit;
@@ -24,14 +24,14 @@ public final class PaintPropertyStroke extends PaintProperty {
 		 * The distance value is used to index into the dash array.
 		 * The pen is opaque when its current cumulative distance maps to an even element of
 		 * the dash array and transparent otherwise. */
-		dash = new float[]{ 1, 1}; 
+		dash = new float[]{ 0, 0}; 
 	}
 	
 	
 	/**
 	 * @param width the width to set
 	 */
-	public void setWidth(float width) {
+	public void setWidth(double width) {
 		this.width = width;
 	}
 	
@@ -39,7 +39,7 @@ public final class PaintPropertyStroke extends PaintProperty {
 	/**
 	 * @return the width
 	 */
-	public float getWidth() {
+	public double getWidth() {
 		return width;
 	}
 
@@ -129,6 +129,10 @@ public final class PaintPropertyStroke extends PaintProperty {
 	 * @return
 	 */
 	public Stroke getStroke() {
-		return new BasicStroke(width, endCaps, lineJoins, miterLimit, dash, dash_phase);
+		float[] newdash = null;
+		if (dash[0] != 0 && dash[1] != 0)
+			newdash = dash;
+		
+		return new BasicStroke((float) width, endCaps, lineJoins, miterLimit, newdash, dash_phase);
 	}
 }

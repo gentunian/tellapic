@@ -68,20 +68,20 @@ final public class EllipseNet extends Ellipse {
 					0,
 					SessionUtils.getId(), 
 					1,
-					((BasicStroke)drawing.getStroke()).getLineWidth(),
-					((AlphaComposite)drawing.getComposite()).getAlpha(),
-					drawing.getColor().getRed(),
-					drawing.getColor().getGreen(),
-					drawing.getColor().getBlue(),
+					(float) drawing.getPaintPropertyStroke().getWidth(),
+					drawing.getPaintPropertyAlpha().alpha,
+					drawing.getPaintPropertyColor().getRed(),
+					drawing.getPaintPropertyColor().getGreen(),
+					drawing.getPaintPropertyColor().getBlue(),
 					(int)bounds.getX(),
 					(int)bounds.getY(),
 					(int)(bounds.getX() + bounds.getWidth()),
 					(int)(bounds.getY() + bounds.getHeight()),
-					((BasicStroke)drawing.getStroke()).getLineJoin(),
-					((BasicStroke)drawing.getStroke()).getEndCap(),
-					((BasicStroke)drawing.getStroke()).getMiterLimit(),
-					((BasicStroke)drawing.getStroke()).getDashPhase(),
-					((BasicStroke)drawing.getStroke()).getDashArray()
+					drawing.getPaintPropertyStroke().getLineJoins(),
+					drawing.getPaintPropertyStroke().getEndCaps(),
+					drawing.getPaintPropertyStroke().getMiterLimit(),
+					drawing.getPaintPropertyStroke().getDash_phase(),
+					drawing.getPaintPropertyStroke().getDash()
 			);
 		}
 		avoidLoopback = true;
