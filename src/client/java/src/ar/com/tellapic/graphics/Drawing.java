@@ -86,44 +86,44 @@ public class Drawing extends AbstractDrawing {
 	 * @return the stroke or null
 	 */
 	@Override
-	public Stroke getStroke() {
+	public PaintPropertyStroke getPaintPropertyStroke() {
 		if (strokeProperty == null)
 			return null;
 		
-		return strokeProperty.getStroke();
+		return strokeProperty;
 	}
 	
 	/**
 	 * @return the color or null
 	 */
 	@Override
-	public Color getColor() {
+	public PaintPropertyColor getPaintPropertyColor() {
 		if (colorProperty == null)
 			return null;
 		
-		return colorProperty.getColor();
+		return colorProperty;
 	}
 
 	/**
 	 * @return the alpha or null
 	 */
 	@Override
-	public Composite getComposite() {
+	public PaintPropertyAlpha getPaintPropertyAlpha() {
 		if (alphaProperty == null)
 			return null;
 		
-		return alphaProperty.getComposite();
+		return alphaProperty;
 	}
 
 	/**
 	 * @return the font or null
 	 */
 	@Override
-	public Font getFont() {
+	public PaintPropertyFont getPaintPropertyFont() {
 		if (fontProperty == null)
 			return null;
 		
-		return fontProperty.getFont();
+		return fontProperty;
 	}
 	
 

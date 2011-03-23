@@ -388,6 +388,7 @@ public class NetManager extends Observable {
 				c.handleLineJoinsChange(drawingData.getType().getFigure().getLinejoin());
 				c.handleOpacityChange(drawingData.getOpacity());
 				c.handleWidthChange((int)drawingData.getWidth());
+				c.handleDashChange(drawingData.getType().getFigure().getDash_array(), drawingData.getType().getFigure().getDash_phase());
 			}
 			c.handleColorChange(color);
 			

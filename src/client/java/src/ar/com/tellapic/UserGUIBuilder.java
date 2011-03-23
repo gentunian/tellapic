@@ -20,7 +20,6 @@ package ar.com.tellapic;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.Frame;
 import java.awt.RenderingHints;
 import java.awt.RenderingHints.Key;
@@ -38,7 +37,6 @@ import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JColorChooser;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -52,9 +50,7 @@ import javax.swing.UnsupportedLookAndFeelException;
 
 import ar.com.tellapic.chat.ChatController;
 import ar.com.tellapic.chat.ChatView;
-import ar.com.tellapic.graphics.Corner;
 import ar.com.tellapic.graphics.DrawingAreaView;
-import ar.com.tellapic.graphics.DrawingLocalController;
 import ar.com.tellapic.graphics.IToolBoxController;
 import ar.com.tellapic.graphics.PaintPropertyController;
 import ar.com.tellapic.graphics.PaintPropertyView;
@@ -158,23 +154,24 @@ public class UserGUIBuilder {
 		/****************************************/
 		mainWindow = new JFrame("drawing window");
 		mainWindow.getContentPane().add(StatusBar.getInstance(), BorderLayout.SOUTH);
+		mainWindow.getContentPane().add(propertyView, BorderLayout.NORTH);
 		
 		CControl     control1 = new CControl(mainWindow);
 		CGrid            grid = new CGrid(control1);
 		CContentArea  content = control1.getContentArea();
 		SingleCDockable dock1 = wrapToDockable(toolView);
-		SingleCDockable dock2 = wrapToDockable(propertyView);
+		//SingleCDockable dock2 = wrapToDockable(propertyView);
 		SingleCDockable dock3 = wrapToDockable(scrollPane);
 		SingleCDockable dock4 = wrapToDockable(chatView);
 		SingleCDockable dock5 = wrapToDockable(userView);
 		ThemeMap t = control1.getThemes();
 		t.select(ThemeMap.KEY_BASIC_THEME);
 		mainWindow.setPreferredSize(new Dimension(400,400));
-		grid.add(0,   0, 50,   50, dock1);
-		grid.add(0,  50, 50,  100, dock2);
-		grid.add(50,  0, 300, 400, dock3);
-		grid.add(350, 0 , 50,  50, dock5);
-		grid.add(350,50,  50, 100, dock4);
+		grid.add(0, 0, 20, 20, dock1);
+		grid.add(2, 0, 200, 40, dock3);
+		grid.add(200, 1, 30, 50, dock5);
+		grid.add(200, 2, 30, 50, dock4);
+		
 		content.deploy(grid);
 		mainWindow.add(content, BorderLayout.CENTER);
 		mainWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

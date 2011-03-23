@@ -19,7 +19,7 @@ public class PaintPropertyController implements IPaintPropertyController {
 	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleOpacityChange(int)
 	 */
 	@Override
-	public void handleOpacityChange(float value) {
+	public void handleOpacityChange(double value) {
 		if (value < 0f || value > 1f)
 			return;
 		
@@ -34,7 +34,7 @@ public class PaintPropertyController implements IPaintPropertyController {
 	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleWidthChange(int)
 	 */
 	@Override
-	public void handleWidthChange(int value) {
+	public void handleWidthChange(double value) {
 		// ignore negative widths.
 		if (value < 0)
 			return;
@@ -51,8 +51,8 @@ public class PaintPropertyController implements IPaintPropertyController {
 	@Override
 	public void handleEndCapsChange(int value) {
 		model.setStrokePropertyCaps(value);
-		if (drawingController != null)
-			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
+//		if (drawingController != null)
+//			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
 	}
 	
 	
@@ -62,8 +62,8 @@ public class PaintPropertyController implements IPaintPropertyController {
 	@Override
 	public void handleLineJoinsChange(int value) {
 		model.setStrokePropertyJoins(value);
-		if (drawingController != null)
-			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
+//		if (drawingController != null)
+//			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
 	}
 
 
@@ -121,5 +121,14 @@ public class PaintPropertyController implements IPaintPropertyController {
 	@Override
 	public void handleColorChange(Color color) {
 		model.setColorPropertyValue(color);
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleDashChange(float[])
+	 */
+	@Override
+	public void handleDashChange(float[] dash, float dashphase) {
+		model.setStrokePropertyDash(dash, dashphase);
 	}
 }

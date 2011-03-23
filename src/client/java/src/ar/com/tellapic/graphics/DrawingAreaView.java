@@ -1,5 +1,6 @@
 package ar.com.tellapic.graphics;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -333,16 +334,16 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 	private void drawDrawing(Graphics2D g, Drawing drawing, PaintProperty[] overridedProperties) {
 		g.setRenderingHints(rh);
 		if (drawing.hasAlphaProperty())
-			g.setComposite(drawing.getComposite());
+			g.setComposite(drawing.getPaintPropertyAlpha().getComposite());
 		
 		if (drawing.hasColorProperty())
-			g.setColor(drawing.getColor());
+			g.setColor(drawing.getPaintPropertyColor().getColor());
 		
 		if (drawing.hasStrokeProperty())
-			g.setStroke(drawing.getStroke());
+			g.setStroke(drawing.getPaintPropertyStroke().getStroke());
 		
 		if (drawing.hasFontProperty())
-			g.setFont(drawing.getFont());
+			g.setFont(drawing.getPaintPropertyFont().getFont());
 		
 		if (drawing.hasShape())
 			g.draw(drawing.getShape());

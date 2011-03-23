@@ -55,28 +55,29 @@ public class ToolView extends JPanel implements Observer {
 	
 	
 	public ToolView(IToolBoxState modelState) {
-		setName("ToolView");
-		setLayout(new FlowLayout(FlowLayout.CENTER, ICON_GAP, ICON_GAP));
-		//
-		setMinimumSize(new Dimension(ICON_SIZE + 20, ICON_SIZE + 20));
+		setName("Tool");
+		//setLayout(new FlowLayout());//FlowLayout.CENTER, ICON_GAP, ICON_GAP));
+		setMinimumSize(new Dimension(ICON_SIZE, ICON_SIZE));
+		setMaximumSize(new Dimension(ICON_SIZE, ICON_SIZE));
+		setPreferredSize(new Dimension(ICON_SIZE, ICON_SIZE));
 		buttonGroup = new ButtonGroup();
 		listener    = new MyActionListener();
 		Utils.logMessage("ToolView instantiated");
-		
+
 		addContainerListener(new ContainerListener() {
 			@Override
 			public void componentAdded(ContainerEvent arg0) {
-				//Dimension size = ((FlowLayout)getLayout()).minimumLayoutSize(ToolView.this);
+//				Dimension size = ((FlowLayout)getLayout()).minimumLayoutSize(ToolView.this);
 //				setMinimumSize(new Dimension(ICON_SIZE + 20, ICON_SIZE * getComponentCount() + 20));
-				setPreferredSize(new Dimension(ICON_SIZE * (getComponentCount() / 2), ICON_SIZE * (getComponentCount() / 2) + 10));
+//				setPreferredSize(new Dimension(ICON_SIZE * (getComponentCount() / 2), ICON_SIZE * (getComponentCount() / 2) + 10));
 				repaint();
 			}
 
 			@Override
 			public void componentRemoved(ContainerEvent arg0) {
-				Dimension size = ((FlowLayout)getLayout()).minimumLayoutSize(ToolView.this);
+//				Dimension size = ((FlowLayout)getLayout()).minimumLayoutSize(ToolView.this);
 //				setMinimumSize(new Dimension(ICON_SIZE + 20, ICON_SIZE * getComponentCount() + 20));
-				setPreferredSize(size);
+//				setPreferredSize(size);
 				repaint();
 			}
 		});
@@ -109,19 +110,13 @@ public class ToolView extends JPanel implements Observer {
 	}
 	
 	
-	/**
-	 * 
-	 * @param c
-	 */
+
 	public void setController(IToolBoxController c) {
 		controller = c;
 	}
 	
 	
-	/*
-	 * (non-Javadoc)
-	 * @see java.util.Observer#update(java.util.Observable, java.lang.Object)
-	 */
+
 	@Override
 	public void update(Observable observable, Object arg) {
 		if (arg instanceof ToolBoxModel.ActionData) {
@@ -139,18 +134,10 @@ public class ToolView extends JPanel implements Observer {
 	
 
 	
-	/**
-	 * 
-	 * @author 
-	 *          Sebastian Treu
-	 *          sebastian.treu(at)gmail.com
-	 *
-	 */
+	
 	private class MyActionListener implements ActionListener {
 		
-		/* (non-Javadoc)
-		 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
-		 */
+	
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			if (controller != null) {

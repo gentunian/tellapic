@@ -163,7 +163,11 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 		if (dashPhase < 0)
 			throw new IllegalArgumentException("dashPhase must be a non-negative number.");
 		
-		strokeProperty.setDash(dash);
+		float[] newdash = null;
+		if (dash[0] != 0 && dash[1] != 0)
+			newdash = dash;
+		
+		strokeProperty.setDash(newdash);
 		strokeProperty.setDash_phase(dashPhase);
 	}
 
@@ -195,7 +199,7 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	 * @see ar.com.tellapic.graphics.IToolBoxManager#setStrokePropertyWidth(float)
 	 */
 	@Override
-	public void setStrokePropertyWidth(float width) {
+	public void setStrokePropertyWidth(double width) {
 		strokeProperty.setWidth(width);
 		setChanged();
 		notifyObservers(new ActionData(UPDATE_TOOL, lastUsedTool));
@@ -237,8 +241,8 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	 * @see ar.com.tellapic.graphics.IToolBoxManager#setAlphaPropertyValue(float)
 	 */
 	@Override
-	public void setAlphaPropertyValue(float value) {
-		alphaProperty.alpha = value;
+	public void setAlphaPropertyValue(double value) {
+		alphaProperty.alpha = (float) value;
 		Utils.logMessage("Alpha opacity has been set to "+value);
 	}
 
@@ -339,7 +343,7 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 		if (lastUsedTool == null)
 			throw new NoSuchElementException("No tool with name "+toolName+" found.");
 		
-		DrawingAreaView.getInstance().setCursor(lastUsedTool.getCursor());
+		//DrawingAreaView.getInstance().setCursor(lastUsedTool.getCursor());
 		setChanged();
 		notifyObservers(new ActionData(SHOW_TOOL, lastUsedTool));
 	}
