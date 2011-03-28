@@ -57,15 +57,16 @@ import ar.com.tellapic.utils.Utils;
 public class NetManager extends Observable {
 	
 	private double    ping;
-	private boolean connected;
-	private int     fd;
+	private boolean   connected;
+	private int       fd;
+	private boolean   connecting;
 	
 	private static class Holder {
 		private final static NetManager INSTANCE = new NetManager();
 	}
 	
 	private NetManager() {
-		this.addObserver(StatusBar.getInstance());
+		addObserver(StatusBar.getInstance());
 		connected = false;
 		setFd(0);
 	}
@@ -97,6 +98,8 @@ public class NetManager extends Observable {
 		 * Server <-----< CTL_CL_NAME   <------- Client
 		 * Server ------> CTL_SV_AUTHOK >------> Client
 		 */
+		setConnecting(true);
+		
 		System.out.println("Connecting to "+host+":"+port);
 		fd = tellapic.tellapic_connect_to(host, port);
 		if (fd <= 0)
@@ -188,12 +191,56 @@ public class NetManager extends Observable {
 		return fd;
 	}
 	
+/**
+	 * @return
+	 */
+	public double getPing() {
+		return ping;
+	}
 
-	private void setConnected(boolean value) {
-		if (value != connected) {
-			connected = value;
-			this.setChanged();
-			this.notifyObservers();
+	/**
+	 * @param pingTime the ping to set
+	 */
+	public void setPing(double pingTime) {
+		this.ping = pingTime;
+		setChanged();
+		notifyObservers();
+	}
+
+	/**
+	 * @return
+	 */
+	public boolean isConnecting() {
+		return connecting;
+	}
+	
+	/**
+	 * @param b
+	 */
+	private void setConnecting(boolean isConnecting) {
+		
+		if (isConnecting)
+			setConnected(false);
+		
+		if (isConnecting != connecting) {
+			connecting = isConnecting;
+			setChanged();
+			notifyObservers();
+		}
+	}
+
+	/**
+	 * 
+	 * @param value
+	 */
+	private void setConnected(boolean isConnected) {
+		if (isConnected)
+			setConnecting(false);
+		
+		if (isConnected != connected) {
+			connected = isConnected;
+			setChanged();
+			notifyObservers();
 		}
 	}
 	
@@ -237,8 +284,8 @@ public class NetManager extends Observable {
 	 * 
 	 */
 	public void reconnect() {
-		this.disconnect();
-		this.connect(SessionUtils.getServer(), SessionUtils.getPort(), SessionUtils.getUsername(), SessionUtils.getPassword());
+		disconnect();
+		connect(SessionUtils.getServer(), SessionUtils.getPort(), SessionUtils.getUsername(), SessionUtils.getPassword());
 	}
 	
 	
@@ -444,7 +491,6 @@ public class NetManager extends Observable {
 			int x2 = (int)drawingData.getType().getFigure().getPoint2().getX();
 			int y2 = (int)drawingData.getType().getFigure().getPoint2().getY();
 			System.out.println("RECEIVED COORDS: ("+x1+","+y1+") ("+x2+","+y2+")");
-			
 		}
 
 		/**
@@ -900,19 +946,5 @@ public class NetManager extends Observable {
 		}
 	}
 
-	/**
-	 * @return
-	 */
-	public double getPing() {
-		return ping;
-	}
-
-	/**
-	 * @param pingTime the ping to set
-	 */
-	public void setPing(double pingTime) {
-		this.ping = pingTime;
-		setChanged();
-		notifyObservers();
-	}
+	
 }

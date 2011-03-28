@@ -3,21 +3,24 @@
  */
 package ar.com.tellapic.graphics;
 
+import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ContainerEvent;
-import java.awt.event.ContainerListener;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
+import javax.swing.border.EmptyBorder;
 
 import ar.com.tellapic.utils.Utils;
 
@@ -30,7 +33,7 @@ public class ToolView extends JPanel implements Observer {
 //	private static final int WIDTH    = 100;
 //	private static final int HEIGHT   = 150;
 	private static final int ICON_GAP = 5;
-	private static final int ICON_SIZE = 32;
+	private static final int ICON_SIZE = 24;
 	private static final long serialVersionUID = 1L;
 	
 	public static final int NO_VALUE = -1;
@@ -55,48 +58,68 @@ public class ToolView extends JPanel implements Observer {
 	
 	
 	public ToolView(IToolBoxState modelState) {
-		setName("Tool");
+		Dimension iconDimension = new Dimension(ICON_SIZE, ICON_SIZE);
+		Dimension minPanelDimension = new Dimension(iconDimension.width + ICON_GAP, Short.MAX_VALUE);
+		setName("");
 		//setLayout(new FlowLayout());//FlowLayout.CENTER, ICON_GAP, ICON_GAP));
-		setMinimumSize(new Dimension(ICON_SIZE, ICON_SIZE));
-		setMaximumSize(new Dimension(ICON_SIZE, ICON_SIZE));
-		setPreferredSize(new Dimension(ICON_SIZE, ICON_SIZE));
+		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+		setMinimumSize(minPanelDimension);
+		setMaximumSize(minPanelDimension);
+		setPreferredSize(minPanelDimension);
+		setBorder(new EmptyBorder(ICON_GAP, ICON_GAP, ICON_GAP, ICON_GAP));
+		
 		buttonGroup = new ButtonGroup();
 		listener    = new MyActionListener();
 		Utils.logMessage("ToolView instantiated");
 
-		addContainerListener(new ContainerListener() {
-			@Override
-			public void componentAdded(ContainerEvent arg0) {
+//		addContainerListener(new ContainerListener() {
+//			@Override
+//			public void componentAdded(ContainerEvent arg0) {
 //				Dimension size = ((FlowLayout)getLayout()).minimumLayoutSize(ToolView.this);
 //				setMinimumSize(new Dimension(ICON_SIZE + 20, ICON_SIZE * getComponentCount() + 20));
 //				setPreferredSize(new Dimension(ICON_SIZE * (getComponentCount() / 2), ICON_SIZE * (getComponentCount() / 2) + 10));
-				repaint();
-			}
-
-			@Override
-			public void componentRemoved(ContainerEvent arg0) {
+//				repaint();
+//			}
+//
+//			@Override
+//			public void componentRemoved(ContainerEvent arg0) {
 //				Dimension size = ((FlowLayout)getLayout()).minimumLayoutSize(ToolView.this);
 //				setMinimumSize(new Dimension(ICON_SIZE + 20, ICON_SIZE * getComponentCount() + 20));
 //				setPreferredSize(size);
-				repaint();
-			}
-		});
+//				repaint();
+//			}
+//		});
 		
-		for(Map.Entry<String, Tool> tool : modelState.getTools().entrySet()) {
+		for(Map.Entry<String, Tool> tool : modelState.getTools().entrySet())
 			addButton(tool.getValue());
-		}
+		
+//		
+//		JLabel color = new JLabel();
+//		color.setMinimumSize(iconDimension);
+//		color.setMaximumSize(iconDimension);
+//		color.setPreferredSize(iconDimension);
+//		color.setOpaque(true);
+//		color.setBorder(javax.swing.BorderFactory.createCompoundBorder(new javax.swing.border.LineBorder(new java.awt.Color(209, 209, 209), 1, true), new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.LOWERED)));
+//		color.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+//		color.setToolTipText(Utils.msg.getString("colorfieldtooltip"));
+//		add(Box.createVerticalGlue());
+		//add(color);
 	}
 	
 
 	//TODO fix! reveer
 	private void addButton(Tool tool) {
-		JToggleButton  button = new JToggleButton(new ImageIcon(getClass().getResource(tool.getIconPath())));
+		JToggleButton  button = new JToggleButton(new ImageIcon(Utils.createIconImage(ICON_SIZE, ICON_SIZE, tool.getIconPath())));
+		//JToggleButton  button = new JToggleButton(new ImageIcon(getClass().getResource(tool.getIconPath())));
 		//button.setRolloverIcon(rolloverIcon);
 		button.setFocusPainted(true);
-		button.setPreferredSize(new Dimension(ICON_SIZE, ICON_SIZE));
+//		button.setPreferredSize(new Dimension(ICON_SIZE, ICON_SIZE));
+//		button.setMaximumSize(new Dimension(ICON_SIZE, ICON_SIZE));
+//		button.setMinimumSize(new Dimension(ICON_SIZE, ICON_SIZE));
 		button.setBorderPainted(false);
 		button.setRolloverEnabled(true);
-		button.setMargin(new Insets(3, 3, 3, 3));
+		//button.setMargin(new Insets(ICON_GAP, ICON_GAP, ICON_GAP, ICON_GAP));
+		//button.setBorder(new EmptyBorder(ICON_GAP, ICON_GAP, ICON_GAP, ICON_GAP));
 		button.setName(tool.getName());
 		button.addActionListener(listener);
 		button.setToolTipText(tool.getToolTipText());

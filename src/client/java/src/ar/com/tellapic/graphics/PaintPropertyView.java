@@ -3,6 +3,7 @@ package ar.com.tellapic.graphics;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -11,6 +12,8 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.net.URL;
 import java.util.Observable;
 import java.util.Observer;
@@ -18,6 +21,7 @@ import java.util.Observer;
 import javax.swing.GroupLayout;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JColorChooser;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -42,7 +46,7 @@ public class PaintPropertyView extends JPanel implements Observer {
 	private static final long serialVersionUID = 1L;
 	private static final int ICON_SIZE = 18;
 	private static final int SEPARATOR_HEIGHT = ICON_SIZE;
-	private static final int SEPARATOR_WIDTH  = 5;
+	private static final int SEPARATOR_WIDTH  = 3;
 	private static final String BEVEL_JOIN_ICON_PATH  = "/icons/joinbevel.png";
 	private static final String ROUND_JOIN_ICON_PATH  = "/icons/joinround.png";
 	private static final String MITER_JOIN_ICON_PATH  = "/icons/joinmiter.png";
@@ -91,6 +95,8 @@ public class PaintPropertyView extends JPanel implements Observer {
 	private JLabel fontSizeLabel;
 	private JLabel fontStyleLabel;
 	private JLabel textLabel;
+	private JLabel colorLabel;
+	private JLabel colorField;
 	private JSeparator jSeparator1;
 	private JSeparator jSeparator2;
 	private JSeparator jSeparator3;
@@ -125,6 +131,9 @@ public class PaintPropertyView extends JPanel implements Observer {
 		
 		/* Creates the options for customize text */
 		createFontOptions();
+		
+		/**/
+		createColorOptions();
 		
 		setPreferredSize(new Dimension(3200, ICON_SIZE*2));
 		setLayout(layout);
@@ -275,6 +284,60 @@ public class PaintPropertyView extends JPanel implements Observer {
 	/**
 	 * 
 	 */
+	private void createColorOptions(){
+		colorLabel = new JLabel(Utils.msg.getString("color")+":");
+		colorField = new JLabel();
+		
+		colorLabel.setLabelFor(colorField);
+		colorLabel.setFont(defaultFont);
+		colorField.setPreferredSize(new Dimension(ICON_SIZE, ICON_SIZE));
+		colorField.setOpaque(true);
+		colorField.setBorder(javax.swing.BorderFactory.createCompoundBorder(new javax.swing.border.LineBorder(new java.awt.Color(209, 209, 209), 1, true), new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.LOWERED)));
+		colorField.setBackground(Color.black);
+		colorField.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		colorField.setToolTipText(Utils.msg.getString("colorfieldtooltip"));
+		colorField.addMouseListener(new MouseListener() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				JLabel label = (JLabel)e.getSource();
+				Color c = JColorChooser.showDialog(PaintPropertyView.this, "Pick a Color", label.getBackground()); 
+				if (c != null) {
+					controller.handleColorChange(c);
+					label.setBackground(c);
+				}
+			}
+
+			@Override
+			public void mouseEntered(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void mousePressed(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+		
+	}
+	
+	
+	/**
+	 * 
+	 */
 	private void createSeparators() {
 		Dimension separatorDimension = new Dimension(SEPARATOR_WIDTH, SEPARATOR_HEIGHT);
 		jSeparator1 = new JSeparator();
@@ -335,6 +398,8 @@ public class PaintPropertyView extends JPanel implements Observer {
 		remove(fontSizeCombo);
 		remove(fontStyleCombo);
 		remove(textField);
+		remove(colorLabel);
+		remove(colorField);
 		
 //		GroupLayout.ParallelGroup   hParallelGroup = layout.createParallelGroup(GroupLayout.Alignment.BASELINE);
 		GroupLayout.ParallelGroup   vParallelGroup = layout.createParallelGroup(GroupLayout.Alignment.BASELINE);
@@ -345,63 +410,58 @@ public class PaintPropertyView extends JPanel implements Observer {
 		
 		hSequentialGroup.addContainerGap()
 		.addComponent(toolIcon, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-//		.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-		.addComponent(jSeparator1, GroupLayout.PREFERRED_SIZE, SEPARATOR_WIDTH, GroupLayout.PREFERRED_SIZE)
+		.addComponent(jSeparator1, SEPARATOR_WIDTH, SEPARATOR_WIDTH, SEPARATOR_WIDTH)
 		;
 		vParallelGroup
 		.addComponent(toolIcon, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-		.addComponent(jSeparator1, GroupLayout.PREFERRED_SIZE, SEPARATOR_WIDTH, GroupLayout.PREFERRED_SIZE)
+		.addComponent(jSeparator1, SEPARATOR_WIDTH, SEPARATOR_WIDTH, SEPARATOR_WIDTH)
 		;
 		
-		if (tool.hasAlphaProperties()) {
+		if (tool.hasColorProperties()) {
 			hSequentialGroup
-//			.addComponent(jSeparator1, GroupLayout.PREFERRED_SIZE, SEPARATOR_WIDTH, GroupLayout.PREFERRED_SIZE)
-//			.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-			.addComponent(opacityLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-//			.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-			.addComponent(opacitySpinner, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+			.addComponent(colorLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+			.addComponent(colorField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+			.addComponent(jSeparator2, SEPARATOR_WIDTH, SEPARATOR_WIDTH, SEPARATOR_WIDTH)
 			;
 			
 			vParallelGroup
-//			.addComponent(jSeparator1, GroupLayout.PREFERRED_SIZE, SEPARATOR_WIDTH, GroupLayout.PREFERRED_SIZE)
+			.addComponent(colorLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+			.addComponent(colorField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+			.addComponent(jSeparator2, SEPARATOR_WIDTH, SEPARATOR_WIDTH, SEPARATOR_WIDTH)
+			;
+		}
+		if (tool.hasAlphaProperties()) {
+			hSequentialGroup
 			.addComponent(opacityLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 			.addComponent(opacitySpinner, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+			.addComponent(jSeparator3, SEPARATOR_WIDTH, SEPARATOR_WIDTH, SEPARATOR_WIDTH)
+			;
+			
+			vParallelGroup
+			.addComponent(opacityLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+			.addComponent(opacitySpinner, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+			.addComponent(jSeparator3, SEPARATOR_WIDTH, SEPARATOR_WIDTH, SEPARATOR_WIDTH)
 			;
 		}
 
 		if (tool.hasStrokeProperties()) {
 			hSequentialGroup
-//			.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
 			.addComponent(widthLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-//			.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-//			.addComponent(widthCombo, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 			.addComponent(widthSpinner, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-//			.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
 			.addComponent(jSeparator2, GroupLayout.PREFERRED_SIZE, SEPARATOR_WIDTH, GroupLayout.PREFERRED_SIZE)
-//			.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
 			.addComponent(joinLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-//			.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
 			.addComponent(joinCombo, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-//			.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
 			.addComponent(jSeparator3, GroupLayout.PREFERRED_SIZE, SEPARATOR_WIDTH, GroupLayout.PREFERRED_SIZE)
-//			.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
 			.addComponent(capsLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-//			.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
 			.addComponent(capsCombo, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-//			.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
 			.addComponent(jSeparator4, GroupLayout.PREFERRED_SIZE, SEPARATOR_WIDTH, GroupLayout.PREFERRED_SIZE)
-//			.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
 			.addComponent(dashLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-//			.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
 			.addComponent(dashCombo, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-//			.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+			.addComponent(jSeparator4, SEPARATOR_WIDTH, SEPARATOR_WIDTH, SEPARATOR_WIDTH)
 			;
 			
 			vParallelGroup
-//			.addComponent(toolIcon, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-//			.addComponent(jSeparator1, GroupLayout.PREFERRED_SIZE, SEPARATOR_WIDTH, GroupLayout.PREFERRED_SIZE)
 			.addComponent(widthLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-//			.addComponent(widthCombo, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 			.addComponent(widthSpinner, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 			.addComponent(jSeparator2, GroupLayout.PREFERRED_SIZE, SEPARATOR_WIDTH, GroupLayout.PREFERRED_SIZE)
 			.addComponent(joinLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
@@ -412,35 +472,25 @@ public class PaintPropertyView extends JPanel implements Observer {
 			.addComponent(jSeparator4, GroupLayout.PREFERRED_SIZE, SEPARATOR_WIDTH, GroupLayout.PREFERRED_SIZE)
 			.addComponent(dashLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 			.addComponent(dashCombo, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+			.addComponent(jSeparator4, SEPARATOR_WIDTH, SEPARATOR_WIDTH, SEPARATOR_WIDTH)
 			;
 		}
 		
 		
 		if (tool.hasFontProperties()) {
 			hSequentialGroup
-			.addComponent(jSeparator1, GroupLayout.PREFERRED_SIZE, SEPARATOR_WIDTH, GroupLayout.PREFERRED_SIZE)
-//			.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
 			.addComponent(fontFaceLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-//			.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
 			.addComponent(fontFaceCombo, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-//			.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
 			.addComponent(fontSizeLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-//			.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
 			.addComponent(fontSizeCombo, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-//			.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
 			.addComponent(fontStyleLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-//			.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
 			.addComponent(fontStyleCombo, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-//			.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
 			.addComponent(textLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-//			.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
 			.addComponent(textField, GroupLayout.PREFERRED_SIZE, 157, Short.MAX_VALUE)
 			.addContainerGap()
 			;
 			
 			vParallelGroup
-//			.addComponent(toolIcon, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-//			.addComponent(jSeparator1, GroupLayout.PREFERRED_SIZE, SEPARATOR_WIDTH, GroupLayout.PREFERRED_SIZE)
 			.addComponent(fontFaceLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 			.addComponent(fontFaceCombo, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 			.addComponent(fontSizeLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)

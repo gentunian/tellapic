@@ -57,7 +57,7 @@ public class Rectangle extends Tool {
 	@Override
 	public void onPress(int x, int y, int button, int mask) {
 		firstPoint.setLocation(x, y);
-		rectangle       = new Rectangle2D.Double(x, y, 0, 0);
+		rectangle = new Rectangle2D.Double(x, y, 0, 0);
 		inUse = true;
 		temporalDrawing.setShape(rectangle);
 	}
@@ -237,7 +237,7 @@ public class Rectangle extends Tool {
 	 */
 	@Override
 	public void setFont(PaintPropertyFont font) {
-		
+		return;
 	}
 
 
