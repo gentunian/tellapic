@@ -23,6 +23,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JColorChooser;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -33,7 +34,6 @@ import javax.swing.ListCellRenderer;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.event.ChangeEvent;
@@ -162,13 +162,7 @@ public class PaintPropertyView extends JPanel implements Observer {
 		fontStyleLabel = new JLabel(Utils.msg.getString("fontstyle")+":");
 
 		
-		int max = 0;
-		FontMetrics  metrics = fontFaceCombo.getFontMetrics(defaultFont);
-		for(String item : GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames()) {
-			if (metrics.stringWidth(item) > max)
-				max = metrics.stringWidth(item);
-		}
-		Dimension faceComboDimension = new Dimension(max, ICON_SIZE);
+		Dimension faceComboDimension = new Dimension(getTextWidth(fontFaceCombo), ICON_SIZE);
 		
 		textField.setPreferredSize(new Dimension(Short.MAX_VALUE, ICON_SIZE));
 		textField.setFont(defaultFont);
@@ -238,16 +232,19 @@ public class PaintPropertyView extends JPanel implements Observer {
 						"Round",
 						"Bevel"
 				});
-
-		Dimension comboDimension = new Dimension(100, ICON_SIZE);
+		Dimension capsComboDimension = new Dimension(getTextWidth(capsCombo), ICON_SIZE);
+		Dimension joinComboDimension = new Dimension(getTextWidth(joinCombo), ICON_SIZE);
+		Dimension dashComboDimension = new Dimension(100, ICON_SIZE);
 		
 		capsCombo.setRenderer(capsRenderer);
 		joinCombo.setRenderer(joinRenderer);
 		capsCombo.setEditable(false);
 		joinCombo.setEditable(false);
+		capsCombo.setPreferredSize(capsComboDimension);
+		joinCombo.setPreferredSize(joinComboDimension);
 		widthSpinner.setPreferredSize(new Dimension(50, ICON_SIZE));
 		opacitySpinner.setPreferredSize(new Dimension(50, ICON_SIZE));
-		dashCombo.setPreferredSize(comboDimension);
+		dashCombo.setPreferredSize(dashComboDimension);
 		opacitySpinner.setFont(defaultFont);
 		widthSpinner.setFont(defaultFont);
 		widthLabel.setFont(defaultFont);
@@ -370,6 +367,22 @@ public class PaintPropertyView extends JPanel implements Observer {
 
 
 	/**
+	 * 
+	 * @param c
+	 * @return
+	 */
+	private int getTextWidth(JComponent c) {
+		int max = 0;
+		FontMetrics  metrics = c.getFontMetrics(defaultFont);
+		for(String item : GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames()) {
+			if (metrics.stringWidth(item) > max)
+				max = metrics.stringWidth(item);
+		}
+		return max;
+	}
+	
+	
+	/**
 	 * Show panel for tool tool.
 	 * @param tool
 	 */
@@ -402,7 +415,7 @@ public class PaintPropertyView extends JPanel implements Observer {
 		remove(colorField);
 		
 //		GroupLayout.ParallelGroup   hParallelGroup = layout.createParallelGroup(GroupLayout.Alignment.BASELINE);
-		GroupLayout.ParallelGroup   vParallelGroup = layout.createParallelGroup(GroupLayout.Alignment.BASELINE);
+		GroupLayout.ParallelGroup   vParallelGroup = layout.createParallelGroup(GroupLayout.Alignment.CENTER);
 		GroupLayout.SequentialGroup hSequentialGroup = layout.createSequentialGroup();
 //		GroupLayout.SequentialGroup vSequentialGroup = layout.createSequentialGroup();
 		createIconImage(ICON_SIZE, ICON_SIZE, tool.getIconPath());
@@ -968,10 +981,10 @@ public class PaintPropertyView extends JPanel implements Observer {
 		public LabelComboBoxRenderer(Border b, String[] iconPaths, String[] descriptions) {
 			super();
 			setOpaque(true);
+			setFont(defaultFont);
 			setVerticalAlignment(CENTER);
 			setHorizontalAlignment(SwingConstants.LEFT);
-			setIconTextGap(5);
-			setBorder(new EmptyBorder(2,2,2,2));
+			setIconTextGap(3);
 			
 			icons = new Icon[iconPaths.length];
 			
@@ -1004,12 +1017,12 @@ public class PaintPropertyView extends JPanel implements Observer {
 			} else {
 				setBackground(list.getBackground());
 				setForeground(list.getForeground());
-				this.setBackground(Color.white);
+				setBackground(Color.white);
 			}
 			
 			setIcon(icons[selectedIndex]);
 			setText(descriptions[selectedIndex]);
-			setFont(list.getFont());
+//			setFont(defaultFont);
 			
 			return this;
 		}
