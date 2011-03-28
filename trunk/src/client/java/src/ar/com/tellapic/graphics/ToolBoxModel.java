@@ -163,11 +163,7 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 		if (dashPhase < 0)
 			throw new IllegalArgumentException("dashPhase must be a non-negative number.");
 		
-		float[] newdash = null;
-		if (dash[0] != 0 && dash[1] != 0)
-			newdash = dash;
-		
-		strokeProperty.setDash(newdash);
+		strokeProperty.setDash(dash);
 		strokeProperty.setDash_phase(dashPhase);
 	}
 

@@ -83,8 +83,8 @@ public class UserGUIBuilder {
 	private JScrollPane             scrollPane;
 	private RuleHeader              topRule;
 	private RuleHeader              leftRule;
-	private JPanel buttonCorner;
-	private JToggleButton isMetric;
+	private JPanel                  buttonCorner;
+	private JToggleButton           isMetric;
 	
 	public UserGUIBuilder(LocalUser user) {
 		// Each user has it owns toolbox. This can be a memory overhead issue, but its the bes way to reuse code
@@ -166,7 +166,8 @@ public class UserGUIBuilder {
 		SingleCDockable dock5 = wrapToDockable(userView);
 		ThemeMap t = control1.getThemes();
 		t.select(ThemeMap.KEY_BASIC_THEME);
-		mainWindow.setPreferredSize(new Dimension(400,400));
+
+		//mainWindow.setPreferredSize(new Dimension(400,400));
 		grid.add(0, 0, 20, 20, dock1);
 		grid.add(2, 0, 200, 40, dock3);
 		grid.add(200, 1, 30, 50, dock5);

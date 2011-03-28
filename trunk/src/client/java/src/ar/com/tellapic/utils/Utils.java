@@ -17,7 +17,10 @@
  */
 package ar.com.tellapic.utils;
 
+import java.awt.Image;
+import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
+import java.net.URL;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
@@ -41,6 +44,22 @@ public final class Utils {
 	
 	public static void changeLocale() {
 		//TODO: fucking work to do
+	}
+	
+	
+	/**
+	 * 
+	 * @param w
+	 * @param h
+	 * @param path
+	 * @return
+	 */
+	public static Image createIconImage(int w, int h, String path) {
+		URL url = Utils.class.getResource(path);
+		if (url == null)
+			return null;
+		Image image = Toolkit.getDefaultToolkit().createImage(url);
+		return image.getScaledInstance(w, h, Image.SCALE_SMOOTH);
 	}
 	
 	/**

@@ -33,16 +33,20 @@ import javax.swing.GroupLayout;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.JTextPane;
 import javax.swing.JViewport;
 import javax.swing.KeyStroke;
-import javax.swing.LayoutStyle;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultCaret;
 import javax.swing.text.Keymap;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyleContext;
+import javax.swing.text.StyledDocument;
 
 import ar.com.tellapic.UserManager;
 import ar.com.tellapic.utils.Utils;
@@ -62,7 +66,7 @@ public class ChatView extends JPanel implements Observer {
 	private JTabbedPane              tabbedPane;
 	private JTextField               inputText;
 	private IChatController          controller;
-	private ArrayList<JTextArea>     chatTabs;
+	private ArrayList<JTextPane>     chatTabs;
 	
 	
 	public ChatView(IChatController c) {
@@ -70,10 +74,10 @@ public class ChatView extends JPanel implements Observer {
 		ChatClientModel.getInstance().addObserver(this);
 		
 		controller = c;
-		chatTabs   = new ArrayList<JTextArea>();
+		chatTabs   = new ArrayList<JTextPane>();
 		inputText  = new JTextField();
 		tabbedPane = new JTabbedPane();
-		inputText.setPreferredSize(new Dimension(100,20));
+		//inputText.setPreferredSize(new Dimension(100,20));
 
 		Keymap map = inputText.getKeymap();
 		map.addActionForKeyStroke(
@@ -105,20 +109,22 @@ public class ChatView extends JPanel implements Observer {
 		layout.setHorizontalGroup(
 				layout.createParallelGroup(GroupLayout.Alignment.LEADING)
 				.addGroup(layout.createSequentialGroup()
-						.addContainerGap()
+//						.addContainerGap()
 						.addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-								.addComponent(tabbedPane, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 376, Short.MAX_VALUE)
-								.addComponent(inputText, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 376, Short.MAX_VALUE))
-								.addContainerGap())
+								.addComponent(tabbedPane, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+								.addComponent(inputText, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+//								.addContainerGap()
+				)
 		);
 		
 		layout.setVerticalGroup(
 				layout.createParallelGroup(GroupLayout.Alignment.LEADING)
 				.addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-						.addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE, 257, Short.MAX_VALUE)
-						.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+						.addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+//						.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
 						.addComponent(inputText, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-						.addContainerGap())
+						.addContainerGap()
+				)
 		);
 
 		inputText.addActionListener(new ActionListener() {
@@ -148,7 +154,7 @@ public class ChatView extends JPanel implements Observer {
 					Map.Entry<String, Message> mapEntry = Message.build(UserManager.getInstance().getLocalUser().getName(), pvt? currentTabTitle : null, text);
 					Message message = mapEntry.getValue();
 					if (message == null) {
-						updateTab(currentTabIndex, mapEntry.getKey());
+						updateTab(currentTabIndex, new String[]{mapEntry.getKey(), ""});
 					} else {
 						controller.handleInput(message, true);
 					}
@@ -174,10 +180,10 @@ public class ChatView extends JPanel implements Observer {
 	
 	private int createNewTab(String title) {
 		// Create and set properties for the tab text area
-		final JTextArea content = new JTextArea();
+		final JTextPane content = new JTextPane();
 		content.setEditable(false);
 		content.setAutoscrolls(true);
-		content.setLineWrap(true);
+		//content.setLineWrap(true);
 		content.setFocusable(true);
 
 		// Set a scroll bar to the tab text area and set scrollbar's properties
@@ -201,11 +207,31 @@ public class ChatView extends JPanel implements Observer {
 	}
 	
 
-	private void updateTab(int tabIndex, String message) {
+	private void updateTab(int tabIndex, String[] message) {
 		JScrollPane scrollPane = (JScrollPane) tabbedPane.getComponentAt(tabIndex);
 		JViewport   viewPort   = scrollPane.getViewport();
-		JTextArea   textArea   = (JTextArea) viewPort.getView();
-		textArea.append(message);
+		JTextPane   textArea   = (JTextPane) viewPort.getView();
+//		textArea.append(message);
+		
+		StyledDocument doc = textArea.getStyledDocument();
+		Style def = StyleContext.getDefaultStyleContext().getStyle(StyleContext.DEFAULT_STYLE);
+		Style user = doc.addStyle("user", def);
+		Style text = doc.addStyle("text", def);
+		StyleConstants.setBold(user, true);
+		if (message[0].equals(UserManager.getInstance().getLocalUser().getName())) {
+			StyleConstants.setItalic(user, true);
+			StyleConstants.setItalic(text, true);
+		}
+		StyleConstants.setFontFamily(def, "Droid");
+		doc.addStyle("text", def);
+		doc.addStyle("user", def);
+		try {
+			doc.insertString(doc.getLength(), message[0]+": ", user);
+			doc.insertString(doc.getLength(), message[1]+"\n", text);
+		} catch (BadLocationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		if (tabIndex != currentTabIndex)
 			((ChatViewTabComponent)tabbedPane.getTabComponentAt(tabIndex)).setTitleColor(Color.red);
 		DefaultCaret caret = (DefaultCaret)textArea.getCaret();
@@ -222,17 +248,21 @@ public class ChatView extends JPanel implements Observer {
 		if (data != null) {
 			if (data instanceof Message) {
 				Message message = (Message) data;
-				String   sender = message.getSender();
-				String   text   = "<"+sender+"> "+message.getText()+"\n";
+				String[] str = new String[] {
+						message.getSender(),
+						message.getText()
+				};
+
+				
 				
 				if (message.isPrivate()){
 					String tabTitle = null;
 					
 					// Ensure that we aren't being loopbacked with our own messages.
-					if (sender.equals(UserManager.getInstance().getLocalUser().getName()))
+					if (str[0].equals(UserManager.getInstance().getLocalUser().getName()))
 						tabTitle = message.getReceiver();
 					else
-						tabTitle = sender;
+						tabTitle = str[0];
 					// Check if the tab already exists
 					int tabIndex = tabbedPane.indexOfTab(tabTitle);
 					
@@ -240,14 +270,14 @@ public class ChatView extends JPanel implements Observer {
 						// Create a new tab
 						int newTab = createNewTab(tabTitle);
 						// Set the message
-						updateTab(newTab, text);
+						updateTab(newTab, str);
 					}
 					else
 						// Set the message
-						updateTab(tabIndex, text);
+						updateTab(tabIndex, str);
 				} else {
 					int mainTabIndex = tabbedPane.indexOfTab(Utils.msg.getString("main"));
-					updateTab(mainTabIndex, text);
+					updateTab(mainTabIndex, str);
 				}
 			}
 		}

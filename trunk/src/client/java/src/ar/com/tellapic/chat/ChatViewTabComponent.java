@@ -74,12 +74,12 @@ public class ChatViewTabComponent extends JPanel {
 
 		add(label);
 		//add more space between the label and the button
-		label.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
+		label.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 1));
 		//tab button
 		JButton button = new TabButton();
 		add(button);
 		//add more space to the top of the component
-		setBorder(BorderFactory.createEmptyBorder(2, 0, 0, 0));
+		setBorder(BorderFactory.createEmptyBorder(1, 0, 0, 0));
 	}
 
 	public void setTitleColor(Color color){
