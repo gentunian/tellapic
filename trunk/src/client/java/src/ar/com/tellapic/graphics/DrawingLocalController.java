@@ -333,11 +333,11 @@ public class DrawingLocalController extends MouseAdapter {
 	 * 
 	 * @param drawing
 	 */
-	public void updateFromOutside(Drawing drawing) {
-		if (drawing != null)
-			//view.update(drawing, id);
-			user.setTemporalDrawing(drawing);
-	}
+//	public void updateFromOutside(Drawing drawing) {
+//		if (drawing != null)
+//			//view.update(drawing, id);
+//			user.setTemporalDrawing(drawing);
+//	}
 	
 	
 	/**

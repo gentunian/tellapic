@@ -167,17 +167,18 @@ public class UserGUIBuilder {
 		ThemeMap t = control1.getThemes();
 		t.select(ThemeMap.KEY_BASIC_THEME);
 
-		//mainWindow.setPreferredSize(new Dimension(400,400));
+//		mainWindow.setPreferredSize(new Dimension(400,400));
+		
 		grid.add(0, 0, 20, 20, dock1);
 		grid.add(2, 0, 200, 40, dock3);
 		grid.add(200, 1, 30, 50, dock5);
 		grid.add(200, 2, 30, 50, dock4);
 		
 		content.deploy(grid);
-		mainWindow.add(content, BorderLayout.CENTER);
+		
+		mainWindow.getContentPane().add(content, BorderLayout.CENTER);
 		mainWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		//mainWindow.setLayout(new GridLayout(2,1));
-
 		mainWindow.setJMenuBar(createMenuBar());
 		mainWindow.pack();
 		mainWindow.setExtendedState(Frame.MAXIMIZED_BOTH);
@@ -187,37 +188,41 @@ public class UserGUIBuilder {
 	
 	
 	private JMenuBar createMenuBar() {
-		JMenuBar menuBar  = new JMenuBar();
-		JMenu fileMenu    = new JMenu(Utils.msg.getString("file"));
-		JMenu optionsMenu = new JMenu(Utils.msg.getString("options"));
-		JMenu testMenu    = new JMenu("testing");
+		
+//		/* Adds the reconnect option */
+//		fileMenu.add(buildFileMenu());
+//		
+//		/* Adds the Quality menu */
+//		optionsMenu.add(buildQualityMenu());
+//		
+//		/* Adds the Theme menu */
+//		viewMenu.add(buildThemeMenu());
+//
+//		/* Adds the View Menu */
+//		viewMenu.add(buildViewMenu());
+		
+//		menuBar.add(fileMenu);
+//		menuBar.add(viewMenu);
+//		menuBar.add(optionsMenu);
+//		menuBar.add(helpMenu);
+		//		JMenu optionsMenu = new JMenu(Utils.msg.getString("options"));
+//		JMenu helpMenu    = new JMenu("help");
 
-		JMenuItem reconnect = new JMenuItem("Reconnect");
-		reconnect.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				NetManager.getInstance().reconnect();
-			}
-		});
 		
-		/* Adds the reconnect option */
-		optionsMenu.add(reconnect);
+		JMenuBar menuBar  = new JMenuBar();
 		
-		/* Adds the Quality menu */
-		optionsMenu.add(buildQualityMenu());
-		
-		/* Adds the Theme menu */
-		optionsMenu.add(buildThemeMenu());
+		/* Adds the File option */
+		menuBar.add(buildFileMenu());
 
 		/* Adds the View Menu */
-		optionsMenu.add(buildViewMenu());
+		menuBar.add(buildViewMenu());
 		
-		fileMenu.setMnemonic(KeyEvent.VK_F);
-		optionsMenu.setMnemonic(KeyEvent.VK_O);
+		/* Adds the Quality menu */
+		menuBar.add(buildOptionsMenu());
 		
-		menuBar.add(fileMenu);
-		menuBar.add(optionsMenu);
-		menuBar.add(testMenu);
+		/* Adds the Help menu */
+		menuBar.add(buildHelpMenu());
+		
 		return menuBar;
 	}
 
@@ -225,12 +230,76 @@ public class UserGUIBuilder {
 	/**
 	 * @return
 	 */
-	private JMenuItem buildViewMenu() {
-		JMenu root = new JMenu("View");
-		JCheckBoxMenuItem grid  = new JCheckBoxMenuItem("Show Grid");
+	private JMenu buildHelpMenu() {
+		JMenu helpMenu = new JMenu(Utils.msg.getString("help"));
+		
+		
+		return helpMenu;
+	}
+
+
+
+	/**
+	 * @return
+	 */
+	private JMenu buildOptionsMenu() {
+		JMenu optionsMenu = new JMenu("Options");
+		
+		optionsMenu.setMnemonic(KeyEvent.VK_O);
+		
+		optionsMenu.add(buildQualityMenu());
+		
+		return optionsMenu;
+	}
+
+
+
+	/**
+	 * @return
+	 */
+	private JMenu buildFileMenu() {
+		JMenu     fileMenu  = new JMenu(Utils.msg.getString("file"));
+		JMenuItem reconnect = new JMenuItem(Utils.msg.getString("reconnect"));
+		JMenuItem exit      = new JMenuItem(Utils.msg.getString("exit"));
+
+		fileMenu.setMnemonic(KeyEvent.VK_F);
+		
+		reconnect.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				NetManager.getInstance().reconnect();
+			}
+		});
+
+		exit.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				mainWindow.dispose();
+				// TODO: make a shutdown routine.
+				System.exit(0);
+			}
+		});
+		
+		fileMenu.add(reconnect);
+		fileMenu.addSeparator();
+		fileMenu.add(exit);
+		
+		return fileMenu;
+	}
+
+
+
+	/**
+	 * @return
+	 */
+	private JMenu buildViewMenu() {
+		JMenu viewMenu = new JMenu("view");
+		
 		JMenuItem gridSize = new JMenuItem("Grid Size...");
 		JMenuItem gridColor = new JMenuItem("Grid Color...");
 		JMenuItem gridTransparency = new JMenuItem("Grid Transparency...");
+		
+		JCheckBoxMenuItem grid  = new JCheckBoxMenuItem("Show Grid");
 		JCheckBoxMenuItem ruler = new JCheckBoxMenuItem("Show Ruler");
 		
 		
@@ -299,13 +368,17 @@ public class UserGUIBuilder {
 		
 		grid.setSelected(true);
 		ruler.setSelected(true);
-		root.add(grid);
-		root.add(ruler);
-		root.addSeparator();
-		root.add(gridSize);
-		root.add(gridColor);
-		root.add(gridTransparency);
-		return root;
+		
+		viewMenu.add(buildThemeMenu());
+		viewMenu.addSeparator();
+		viewMenu.add(grid);
+		viewMenu.add(ruler);
+		viewMenu.addSeparator();
+		viewMenu.add(gridSize);
+		viewMenu.add(gridColor);
+		viewMenu.add(gridTransparency);
+		
+		return viewMenu;
 	}
 
 
@@ -313,11 +386,14 @@ public class UserGUIBuilder {
 	/**
 	 * @return
 	 */
-	private JMenuItem buildThemeMenu() {
+	private JMenu buildThemeMenu() {
 		JMenu root = new JMenu(Utils.msg.getString("theme"));
+		
 		JCheckBoxMenuItem themeJava = new JCheckBoxMenuItem("JAVA");
 		JCheckBoxMenuItem themeGTK  = new JCheckBoxMenuItem("GTK");
+		
 		ButtonGroup group = new ButtonGroup();
+		
 		themeJava.addItemListener(new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent arg0) {
@@ -335,6 +411,7 @@ public class UserGUIBuilder {
 				}	
 			}
 		});
+		
 		themeGTK.addItemListener(new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent arg0) {
@@ -352,6 +429,7 @@ public class UserGUIBuilder {
 				}	
 			}
 		});
+		
 		themeGTK.setSelected(true);
 		group.add(themeGTK);
 		group.add(themeJava);

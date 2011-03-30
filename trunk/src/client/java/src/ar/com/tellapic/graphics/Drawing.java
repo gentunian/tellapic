@@ -1,10 +1,6 @@
 package ar.com.tellapic.graphics;
 
-import java.awt.Color;
-import java.awt.Composite;
-import java.awt.Font;
 import java.awt.Shape;
-import java.awt.Stroke;
 
 public class Drawing extends AbstractDrawing {
 	private PaintPropertyStroke strokeProperty;
