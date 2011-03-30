@@ -239,6 +239,8 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	@Override
 	public void setAlphaPropertyValue(double value) {
 		alphaProperty.alpha = (float) value;
+		setChanged();
+		notifyObservers(new ActionData(UPDATE_TOOL, lastUsedTool));
 		Utils.logMessage("Alpha opacity has been set to "+value);
 	}
 

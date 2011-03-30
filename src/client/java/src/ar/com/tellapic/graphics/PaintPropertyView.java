@@ -34,6 +34,7 @@ import javax.swing.ListCellRenderer;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.event.ChangeEvent;
@@ -43,10 +44,10 @@ import ar.com.tellapic.utils.Utils;
 
 public class PaintPropertyView extends JPanel implements Observer {
 	
-	private static final long serialVersionUID = 1L;
-	private static final int ICON_SIZE = 18;
-	private static final int SEPARATOR_HEIGHT = ICON_SIZE;
-	private static final int SEPARATOR_WIDTH  = 3;
+	private static final long   serialVersionUID = 1L;
+	private static final int    ICON_SIZE        = 18;
+	private static final int    SEPARATOR_HEIGHT = ICON_SIZE;
+	private static final int    SEPARATOR_WIDTH  = 24;
 	private static final String BEVEL_JOIN_ICON_PATH  = "/icons/joinbevel.png";
 	private static final String ROUND_JOIN_ICON_PATH  = "/icons/joinround.png";
 	private static final String MITER_JOIN_ICON_PATH  = "/icons/joinmiter.png";
@@ -56,16 +57,30 @@ public class PaintPropertyView extends JPanel implements Observer {
 	private static final String SET_CAP_ROUND_ACTION  = "capround";
 	private static final String SET_CAP_SQUARE_ACTION = "capsquare";
 	private static final String SET_CAP_BUTT_ACTION   = "capbutt";
-	private static final String SET_CAPS_ACTION   = "setcap";
-	private static final String SET_JOINS_ACTION = "setjoin";
+	private static final String SET_CAPS_ACTION       = "setcap";
+	private static final String SET_JOINS_ACTION      = "setjoin";
 	private static final String SET_JOIN_BEVEL_ACTION = "joinbevel";
 	private static final String SET_JOIN_ROUND_ACTION = "joinround";
 	private static final String SET_JOIN_MITER_ACTION = "joinmiter";
 	private static final String SET_FONT_FACE_ACTION  = "face";
 	private static final String SET_FONT_SIZE_ACTION  = "size";
 	private static final String SET_FONT_STYLE_ACTION = "style";
-	private static final String[] FONT_STYLES = new String[] { "normal", "<html><b>bold</b></html>", "<html><i>italic</i></html>", "<html><b><i>italic+bold</b></i></html>" };
-	
+	private static final String[] FONT_STYLES    = new String[] { 
+		"normal",
+		"<html><b>bold</b></html>",
+		"<html><i>italic</i></html>",
+		"<html><b><i>italic+bold</b></i></html>"
+	};
+	private static final String[] END_CAPS_TYPES  = new String[] {
+		"Miter",
+		"Round",
+		"Bevel"
+	};
+	private static final String[] LINE_JOIN_TYPES = new String[] {
+			"Butt",
+			"Round",
+			"Square"
+	};
 	private static final Color    DEFAULT_COLOR = Color.black;
 	private static final int      DEFAULT_END_CAPS = BasicStroke.CAP_SQUARE;
 	private static final String   DEFAULT_FONT_FACE = "Serif";
@@ -109,6 +124,8 @@ public class PaintPropertyView extends JPanel implements Observer {
 	private JTextField textField;
 	private IPaintPropertyController controller;
 	private ComboListener comboListener;
+	private JSeparator jSeparator6;
+	private JSeparator jSeparator7;
 
 	
 	/** Creates new form ToolView */
@@ -135,10 +152,12 @@ public class PaintPropertyView extends JPanel implements Observer {
 		/**/
 		createColorOptions();
 		
-		setPreferredSize(new Dimension(3200, ICON_SIZE*2));
+		setMinimumSize(new Dimension(3200, ICON_SIZE));
+		setMaximumSize(new Dimension(3200, ICON_SIZE + 10));
+		setPreferredSize(new Dimension(3200, ICON_SIZE + 5));
 		setLayout(layout);
-		layout.setAutoCreateContainerGaps(true);
-		layout.setAutoCreateGaps(true);
+		//layout.setAutoCreateContainerGaps(true);
+		//layout.setAutoCreateGaps(true);
 	}
 
 
@@ -160,9 +179,8 @@ public class PaintPropertyView extends JPanel implements Observer {
 		fontFaceLabel  = new JLabel(Utils.msg.getString("fontface")+":");
 		fontSizeLabel  = new JLabel(Utils.msg.getString("fontsize")+":");
 		fontStyleLabel = new JLabel(Utils.msg.getString("fontstyle")+":");
-
 		
-		Dimension faceComboDimension = new Dimension(getTextWidth(fontFaceCombo), ICON_SIZE);
+		Dimension faceComboDimension = new Dimension(getMaxTextWidth(fontFaceCombo, GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames()), ICON_SIZE);
 		
 		textField.setPreferredSize(new Dimension(Short.MAX_VALUE, ICON_SIZE));
 		textField.setFont(defaultFont);
@@ -215,11 +233,9 @@ public class PaintPropertyView extends JPanel implements Observer {
 						ROUND_END_ICON_PATH,
 						SQUARE_END_ICON_PATH
 				},
-				new String[] {
-						"Butt",
-						"Round",
-						"Square"
-				});
+				LINE_JOIN_TYPES
+		);
+		
 		LabelComboBoxRenderer joinRenderer = new LabelComboBoxRenderer(
 				joinCombo.getBorder(),
 				new String[] {
@@ -227,24 +243,10 @@ public class PaintPropertyView extends JPanel implements Observer {
 						ROUND_JOIN_ICON_PATH,
 						BEVEL_JOIN_ICON_PATH
 				},
-				new String[] {
-						"Miter",
-						"Round",
-						"Bevel"
-				});
-		Dimension capsComboDimension = new Dimension(getTextWidth(capsCombo), ICON_SIZE);
-		Dimension joinComboDimension = new Dimension(getTextWidth(joinCombo), ICON_SIZE);
-		Dimension dashComboDimension = new Dimension(100, ICON_SIZE);
-		
+				END_CAPS_TYPES
+		);
 		capsCombo.setRenderer(capsRenderer);
 		joinCombo.setRenderer(joinRenderer);
-		capsCombo.setEditable(false);
-		joinCombo.setEditable(false);
-		capsCombo.setPreferredSize(capsComboDimension);
-		joinCombo.setPreferredSize(joinComboDimension);
-		widthSpinner.setPreferredSize(new Dimension(50, ICON_SIZE));
-		opacitySpinner.setPreferredSize(new Dimension(50, ICON_SIZE));
-		dashCombo.setPreferredSize(dashComboDimension);
 		opacitySpinner.setFont(defaultFont);
 		widthSpinner.setFont(defaultFont);
 		widthLabel.setFont(defaultFont);
@@ -252,7 +254,21 @@ public class PaintPropertyView extends JPanel implements Observer {
 		joinLabel.setFont(defaultFont);
 		capsLabel.setFont(defaultFont);
 		dashLabel.setFont(defaultFont);
+		capsCombo.setFont(defaultFont);
+		joinCombo.setFont(defaultFont);
 		
+		int gap = + LabelComboBoxRenderer.ICON_GAP*3 + LabelComboBoxRenderer.ICON_SIZE*2;
+		Dimension capsComboDimension = new Dimension(getMaxTextWidth(capsCombo, END_CAPS_TYPES) + gap, ICON_SIZE);
+		Dimension joinComboDimension = new Dimension(getMaxTextWidth(joinCombo, LINE_JOIN_TYPES)+ gap, ICON_SIZE);
+		Dimension dashComboDimension = new Dimension(100, ICON_SIZE);
+		
+		capsCombo.setEditable(false);
+		joinCombo.setEditable(false);
+		capsCombo.setPreferredSize(capsComboDimension);
+		joinCombo.setPreferredSize(joinComboDimension);
+		widthSpinner.setPreferredSize(new Dimension(50, ICON_SIZE));
+		opacitySpinner.setPreferredSize(new Dimension(50, ICON_SIZE));
+		dashCombo.setPreferredSize(dashComboDimension);
 		capsCombo.setActionCommand(SET_CAPS_ACTION);
 		joinCombo.setActionCommand(SET_JOINS_ACTION);
 		joinCombo.addActionListener(comboListener);
@@ -342,6 +358,8 @@ public class PaintPropertyView extends JPanel implements Observer {
 		jSeparator3 = new JSeparator();
 		jSeparator4 = new JSeparator();
 		jSeparator5 = new JSeparator();
+		jSeparator6 = new JSeparator();
+		jSeparator7 = new JSeparator();
 		
 		jSeparator1.setOrientation(javax.swing.SwingConstants.VERTICAL);
 		jSeparator1.setMaximumSize(separatorDimension);
@@ -363,6 +381,14 @@ public class PaintPropertyView extends JPanel implements Observer {
 		jSeparator5.setMaximumSize(separatorDimension);
 		jSeparator5.setMinimumSize(separatorDimension);
 		jSeparator5.setPreferredSize(separatorDimension);
+		jSeparator6.setOrientation(javax.swing.SwingConstants.VERTICAL);
+		jSeparator6.setMaximumSize(separatorDimension);
+		jSeparator6.setMinimumSize(separatorDimension);
+		jSeparator6.setPreferredSize(separatorDimension);
+		jSeparator7.setOrientation(javax.swing.SwingConstants.VERTICAL);
+		jSeparator7.setMaximumSize(separatorDimension);
+		jSeparator7.setMinimumSize(separatorDimension);
+		jSeparator7.setPreferredSize(separatorDimension);
 	}
 
 
@@ -371,13 +397,13 @@ public class PaintPropertyView extends JPanel implements Observer {
 	 * @param c
 	 * @return
 	 */
-	private int getTextWidth(JComponent c) {
+	private int getMaxTextWidth(JComponent c, String[] items) {
 		int max = 0;
 		FontMetrics  metrics = c.getFontMetrics(defaultFont);
-		for(String item : GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames()) {
+		for(String item : items)
 			if (metrics.stringWidth(item) > max)
 				max = metrics.stringWidth(item);
-		}
+		
 		return max;
 	}
 	
@@ -393,6 +419,8 @@ public class PaintPropertyView extends JPanel implements Observer {
 		remove(jSeparator3);
 		remove(jSeparator4);
 		remove(jSeparator5);
+		remove(jSeparator6);
+		remove(jSeparator7);
 		remove(widthLabel);
 		remove(opacityLabel);
 		remove(capsLabel);
@@ -423,7 +451,8 @@ public class PaintPropertyView extends JPanel implements Observer {
 		
 		hSequentialGroup.addContainerGap()
 		.addComponent(toolIcon, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-		.addComponent(jSeparator1, SEPARATOR_WIDTH, SEPARATOR_WIDTH, SEPARATOR_WIDTH)
+		.addGap(5,5,5)
+		.addComponent(jSeparator1, 5,5,5)
 		;
 		vParallelGroup
 		.addComponent(toolIcon, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
@@ -432,9 +461,12 @@ public class PaintPropertyView extends JPanel implements Observer {
 		
 		if (tool.hasColorProperties()) {
 			hSequentialGroup
+			.addGap(5,5,5)
 			.addComponent(colorLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+			.addGap(5,5,5)
 			.addComponent(colorField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-			.addComponent(jSeparator2, SEPARATOR_WIDTH, SEPARATOR_WIDTH, SEPARATOR_WIDTH)
+			.addGap(5,5,5)
+			.addComponent(jSeparator2, 5,5,5)
 			;
 			
 			vParallelGroup
@@ -445,9 +477,12 @@ public class PaintPropertyView extends JPanel implements Observer {
 		}
 		if (tool.hasAlphaProperties()) {
 			hSequentialGroup
+			.addGap(5,5,5)
 			.addComponent(opacityLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+			.addGap(5,5,5)
 			.addComponent(opacitySpinner, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-			.addComponent(jSeparator3, SEPARATOR_WIDTH, SEPARATOR_WIDTH, SEPARATOR_WIDTH)
+			.addGap(5,5,5)
+			.addComponent(jSeparator3, 5,5,5)
 			;
 			
 			vParallelGroup
@@ -459,46 +494,66 @@ public class PaintPropertyView extends JPanel implements Observer {
 
 		if (tool.hasStrokeProperties()) {
 			hSequentialGroup
+			.addGap(5,5,5)
 			.addComponent(widthLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+			.addGap(5,5,5)
 			.addComponent(widthSpinner, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-			.addComponent(jSeparator2, GroupLayout.PREFERRED_SIZE, SEPARATOR_WIDTH, GroupLayout.PREFERRED_SIZE)
+			.addGap(5,5,5)
+			.addComponent(jSeparator4, 5,5,5)
+			.addGap(5,5,5)
 			.addComponent(joinLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+			.addGap(5,5,5)
 			.addComponent(joinCombo, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-			.addComponent(jSeparator3, GroupLayout.PREFERRED_SIZE, SEPARATOR_WIDTH, GroupLayout.PREFERRED_SIZE)
+			.addGap(5,5,5)
+			.addComponent(jSeparator5, 5,5,5)
+			.addGap(5,5,5)
 			.addComponent(capsLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+			.addGap(5,5,5)
 			.addComponent(capsCombo, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-			.addComponent(jSeparator4, GroupLayout.PREFERRED_SIZE, SEPARATOR_WIDTH, GroupLayout.PREFERRED_SIZE)
+			.addGap(5,5,5)
+			.addComponent(jSeparator6, 5,5,5)
+			.addGap(5,5,5)
 			.addComponent(dashLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+			.addGap(5,5,5)
 			.addComponent(dashCombo, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-			.addComponent(jSeparator4, SEPARATOR_WIDTH, SEPARATOR_WIDTH, SEPARATOR_WIDTH)
+			.addGap(5,5,5)
+			.addComponent(jSeparator7, 5,5,5)
 			;
 			
 			vParallelGroup
 			.addComponent(widthLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 			.addComponent(widthSpinner, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-			.addComponent(jSeparator2, GroupLayout.PREFERRED_SIZE, SEPARATOR_WIDTH, GroupLayout.PREFERRED_SIZE)
+			.addComponent(jSeparator4, GroupLayout.PREFERRED_SIZE, SEPARATOR_WIDTH, GroupLayout.PREFERRED_SIZE)
 			.addComponent(joinLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 			.addComponent(joinCombo, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-			.addComponent(jSeparator3, GroupLayout.PREFERRED_SIZE, SEPARATOR_WIDTH, GroupLayout.PREFERRED_SIZE)
+			.addComponent(jSeparator5, GroupLayout.PREFERRED_SIZE, SEPARATOR_WIDTH, GroupLayout.PREFERRED_SIZE)
 			.addComponent(capsLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 			.addComponent(capsCombo, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-			.addComponent(jSeparator4, GroupLayout.PREFERRED_SIZE, SEPARATOR_WIDTH, GroupLayout.PREFERRED_SIZE)
+			.addComponent(jSeparator6, GroupLayout.PREFERRED_SIZE, SEPARATOR_WIDTH, GroupLayout.PREFERRED_SIZE)
 			.addComponent(dashLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 			.addComponent(dashCombo, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-			.addComponent(jSeparator4, SEPARATOR_WIDTH, SEPARATOR_WIDTH, SEPARATOR_WIDTH)
+			.addComponent(jSeparator7, SEPARATOR_WIDTH, SEPARATOR_WIDTH, SEPARATOR_WIDTH)
 			;
 		}
 		
 		
 		if (tool.hasFontProperties()) {
 			hSequentialGroup
+			.addGap(5,5,5)
 			.addComponent(fontFaceLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+			.addGap(5,5,5)
 			.addComponent(fontFaceCombo, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+			.addGap(5,5,5)
 			.addComponent(fontSizeLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+			.addGap(5,5,5)
 			.addComponent(fontSizeCombo, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+			.addGap(5,5,5)
 			.addComponent(fontStyleLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+			.addGap(5,5,5)
 			.addComponent(fontStyleCombo, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+			.addGap(5,5,5)
 			.addComponent(textLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+			.addGap(5,5,5)
 			.addComponent(textField, GroupLayout.PREFERRED_SIZE, 157, Short.MAX_VALUE)
 			.addContainerGap()
 			;
@@ -519,11 +574,15 @@ public class PaintPropertyView extends JPanel implements Observer {
 		layout.setVerticalGroup(vParallelGroup);
 	}
 	
-//	
-//	private void setStrokeProperties(PaintPropertyStroke strokeProperty) {
-//		int capsValue  = strokeProperty.getEndCaps();
-//		int joinValue  = strokeProperty.getLineJoins();
-//		int widthValue = (int) strokeProperty.getWidth();
+	
+	private void setStrokeProperties(PaintPropertyStroke strokeProperty) {
+		int    caps  = strokeProperty.getEndCaps();
+		int    join  = strokeProperty.getLineJoins();
+		double width = strokeProperty.getWidth();
+		
+		capsCombo.setSelectedItem(caps);
+		joinCombo.setSelectedItem(join);
+		widthSpinner.setValue(width);
 //		for(Component item : strokePanel.getComponents()) {
 //			if (item instanceof JSlider) {
 //				JSlider slider = ((JSlider) item);
@@ -546,19 +605,20 @@ public class PaintPropertyView extends JPanel implements Observer {
 //					button.doClick();
 //			}
 //		}
-//	}
-//	
-//	private void setFontProperties(PaintPropertyFont fontProperty) {
-//		
-//	}
-//	
-//	private void setColorProperties(PaintPropertyColor colorProperty) {
-//	
-//	}
-//	
-//	private void setAlphaProperties(PaintPropertyAlpha opacityProperty) {
-//	
-//	}
+	}
+	
+	private void setFontProperties(PaintPropertyFont fontProperty) {
+		
+	}
+	
+	private void setColorProperties(PaintPropertyColor colorProperty) {
+		
+	}
+	
+	private void setAlphaProperties(PaintPropertyAlpha opacityProperty) {
+		double opacity = opacityProperty.alpha*100;
+		opacitySpinner.setValue(opacity);
+	}
 	
 	/**
 	 * 
@@ -937,12 +997,12 @@ public class PaintPropertyView extends JPanel implements Observer {
 		
 	@Override	
 	public void update(Observable o, Object arg) {
-//		ToolBoxModel box = (ToolBoxModel) o;
+		ToolBoxModel box = (ToolBoxModel) o;
 		if (arg instanceof ToolBoxModel.ActionData) {
 			ToolBoxModel.ActionData data = (ToolBoxModel.ActionData) arg;
 			int action = data.getAction();
 			Tool  tool = data.getData();
-			if (action == ToolBoxModel.SHOW_TOOL) {
+			if (action == ToolBoxModel.SHOW_TOOL && tool != null) {
 				
 				showPanel(tool);
 //				setStrokePanelEnabled(tool.hasStrokeProperties());
@@ -951,16 +1011,19 @@ public class PaintPropertyView extends JPanel implements Observer {
 //				setColorPanelEnabled(tool.hasColorProperties());
 //				((TitledBorder) getBorder()).setTitle(tool.getName());
 //				
-			} else if (action == ToolBoxModel.UPDATE_TOOL) {
+			} else if (action == ToolBoxModel.UPDATE_TOOL && tool != null) {
 //				
-//				if (tool.hasStrokeProperties())
-//					setStrokeProperties(box.getStrokeProperty());
-//				else if (tool.hasFontProperties())
-//					setFontProperties(box.getFontProperty());
-//				else if (tool.hasAlphaProperties())
-//					setAlphaProperties(box.getOpacityProperty());
-//				else if (tool.hasColorProperties())
-//					setColorProperties(box.getColorProperty());
+				if (tool.hasStrokeProperties())
+					setStrokeProperties(box.getStrokeProperty());
+				
+				if (tool.hasFontProperties())
+					setFontProperties(box.getFontProperty());
+				
+				if (tool.hasAlphaProperties())
+					setAlphaProperties(box.getOpacityProperty());
+				
+				if (tool.hasColorProperties())
+					setColorProperties(box.getColorProperty());
 			}
 //		}
 		repaint();
@@ -977,6 +1040,8 @@ public class PaintPropertyView extends JPanel implements Observer {
 		private static final long serialVersionUID = 1L;
 		private Icon[]   icons;
 		private String[] descriptions;
+		public static final int ICON_SIZE = 16;
+		public static final int ICON_GAP  = 3;
 		
 		public LabelComboBoxRenderer(Border b, String[] iconPaths, String[] descriptions) {
 			super();
@@ -984,12 +1049,12 @@ public class PaintPropertyView extends JPanel implements Observer {
 			setFont(defaultFont);
 			setVerticalAlignment(CENTER);
 			setHorizontalAlignment(SwingConstants.LEFT);
-			setIconTextGap(3);
+			setIconTextGap(ICON_GAP);
 			
 			icons = new Icon[iconPaths.length];
 			
 			for(int i = 0; i < iconPaths.length; i++) {
-				Image image = createIconImage(16, 16, iconPaths[i]);
+				Image image = createIconImage(ICON_SIZE, ICON_SIZE, iconPaths[i]);
 				if (image != null)
 					icons[i] = new ImageIcon(image);
 			}
@@ -998,7 +1063,8 @@ public class PaintPropertyView extends JPanel implements Observer {
 			this.descriptions = descriptions;
 //			setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.LOWERED, null, null, java.awt.Color.darkGray, java.awt.Color.lightGray));
 			//setBorder(javax.swing.BorderFactory.createCompoundBorder(new javax.swing.border.LineBorder(new java.awt.Color(209, 209, 209), 1, true), new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.LOWERED)));
-			setBorder(b);
+			setBorder(new EmptyBorder(ICON_GAP, 0, ICON_GAP, 0));
+			//setBorder(b);
 		}
 
 		/*

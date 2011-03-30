@@ -7,7 +7,7 @@ public class PaintPropertyController implements IPaintPropertyController {
 
 	private IToolBoxManager        model;
 	//private PaintPropertyView      view;
-	private DrawingLocalController drawingController; 
+//	private DrawingLocalController drawingController; 
 	
 	public PaintPropertyController(IToolBoxManager model) {
 		this.model = model;
@@ -20,13 +20,13 @@ public class PaintPropertyController implements IPaintPropertyController {
 	 */
 	@Override
 	public void handleOpacityChange(double value) {
-		if (value < 0f || value > 1f)
+		if (value <= 0 || value > 1)
 			return;
 		
 		model.setAlphaPropertyValue(value);
 		
-		if (drawingController != null)
-			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
+//		if (drawingController != null)
+//			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
 	}
 
 	
@@ -40,8 +40,8 @@ public class PaintPropertyController implements IPaintPropertyController {
 			return;
 		
 		model.setStrokePropertyWidth(value);
-		if (drawingController != null)
-			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
+//		if (drawingController != null)
+//			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
 	}
 	
 	
@@ -73,8 +73,8 @@ public class PaintPropertyController implements IPaintPropertyController {
 	@Override
 	public void handleFontFaceChange(String face) {
 		model.setFontPropertyFace(face);
-		if (drawingController != null)
-			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
+//		if (drawingController != null)
+//			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
 	}
 
 
@@ -84,8 +84,8 @@ public class PaintPropertyController implements IPaintPropertyController {
 	@Override
 	public void handleFontSizeChange(int size) {
 		model.setFontPropertySize(size);
-		if (drawingController != null)
-			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
+//		if (drawingController != null)
+//			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
 	}
 
 
@@ -95,8 +95,8 @@ public class PaintPropertyController implements IPaintPropertyController {
 	@Override
 	public void handleFontStyleChange(int style) {
 		model.setFontPropertyStyle(style);
-		if (drawingController != null)
-			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
+//		if (drawingController != null)
+//			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
 	}
 
 
@@ -106,13 +106,13 @@ public class PaintPropertyController implements IPaintPropertyController {
 	@Override
 	public void handleTextChange(String text) {
 		model.setFontPropertyText(text);
-		if (drawingController != null)
-			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
+//		if (drawingController != null)
+//			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
 	}
 	
-	public void setDrawingController(DrawingLocalController c) {
-		drawingController = c;
-	}
+//	public void setDrawingController(DrawingLocalController c) {
+//		drawingController = c;
+//	}
 
 
 	/* (non-Javadoc)
