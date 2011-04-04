@@ -29,6 +29,7 @@ import java.util.Observable;
 
 import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
+import javax.swing.JProgressBar;
 
 import ar.com.tellapic.chat.ChatController;
 import ar.com.tellapic.chat.IChatController;
@@ -55,11 +56,22 @@ import ar.com.tellapic.utils.Utils;
  *
  */
 public class NetManager extends Observable {
+	private static final int CONNECTION_STEPS = 3;
+	private static final int USER_CANCELLED_ERROR = -1;
+	private static final int AUTHENTICATION_ERROR = -2;
+	private static final int FILE_ERROR = -3;
+	private static final int CONNECTION_ERROR = -4; 
+	private static final int AUTHENTICATION_OK = 0;
+	private static final int FILE_OK = 1;
 	
+	
+	private int       monitorStep;
 	private double    ping;
 	private boolean   connected;
 	private int       fd;
+	private int       id;
 	private boolean   connecting;
+	private ProgressMonitor monitor;
 	
 	private static class Holder {
 		private final static NetManager INSTANCE = new NetManager();
@@ -67,6 +79,8 @@ public class NetManager extends Observable {
 	
 	private NetManager() {
 		addObserver(StatusBar.getInstance());
+		monitor = ProgressUtil.createModalProgressMonitor(null, CONNECTION_STEPS, true, 300);
+		monitorStep = 0;
 		connected = false;
 		setFd(0);
 	}
@@ -82,13 +96,213 @@ public class NetManager extends Observable {
 	
 	/**
 	 * 
+	 * @param password
+	 * @param step
+	 * @return
+	 * @throws WrongPacketException
+	 */
+	private int authenticate(String password, String name) throws WrongPacketException {
+		stream_t stream;
+		short    cbyte;
+		
+		/* Set the current progress */
+		monitor.setCurrent("Authenticating...", monitorStep++);
+		
+		do {
+			/* Send the password to the server */
+			tellapic.tellapic_send_ctle(fd, id, tellapicConstants.CTL_CL_PWD, password.length(), password);
+
+			/* Read server response */
+			stream = tellapic.tellapic_read_stream_b(fd);
+			cbyte  = stream.getHeader().getCbyte();
+
+			/* Check for an invalid sequence/packet */
+			if (cbyte == tellapicConstants.CTL_FAIL) {
+				/* Dispose the monitor */
+				monitor.setCurrent(null, CONNECTION_STEPS);
+
+				/* Close the connection */
+				tellapic.tellapic_close_fd(fd);
+
+				throw new WrongPacketException("Response fail by server. Packet shouln't be CTL_FAIL.");
+			}
+
+			/* If we failed the password, re-send it */
+			if (cbyte == tellapicConstants.CTL_SV_PWDFAIL) {
+
+				/* Show a retry dialog for the password */ 
+				String dialogInput = JOptionPane.showInputDialog(Utils.msg.getString("wrongpassword"), null);
+
+				System.out.println("Password was wrong. New pwd: "+dialogInput);
+
+				/* If response was null, user has canceled the Dialog */
+				if (dialogInput == null) {
+					/* Dispose the monitor */
+					monitor.setCurrent(null, CONNECTION_STEPS);
+
+					/* Close the connection */
+					tellapic.tellapic_close_fd(fd);
+
+					/* Return the error */
+					return USER_CANCELLED_ERROR;
+				}
+				
+				password = dialogInput;
+			}
+		} while (cbyte == tellapicConstants.CTL_SV_PWDFAIL);
+		
+		/* Check for a correct password */
+		if (cbyte != tellapicConstants.CTL_SV_PWDOK) {
+			/* Dispose the monitor as we failed the required times to login */
+			monitor.setCurrent(null, CONNECTION_STEPS);
+			
+			/* Close the connection */
+			tellapic.tellapic_close_fd(fd);
+			
+			/* Inform the error */
+			return AUTHENTICATION_ERROR;
+		}
+		
+		System.out.println("Password was ok.");
+
+		do {
+			/* Send the user name packet to the server */
+			tellapic.tellapic_send_ctle(fd, stream.getData().getControl().getIdfrom(), tellapicConstants.CTL_CL_NAME, name.length(), name);
+
+			/* Read server response */
+			stream = tellapic.tellapic_read_stream_b(fd);
+			cbyte = stream.getHeader().getCbyte();
+
+			/* Check for an invalid sequence/packet */
+			if (cbyte == tellapicConstants.CTL_FAIL) {
+				/* Dispose the monitor */
+				monitor.setCurrent(null, CONNECTION_STEPS);
+
+				/* Close the connection */
+				tellapic.tellapic_close_fd(fd);
+				throw new WrongPacketException("Wrong packet sequence. Shouldn't be CTL_FAIL.");
+			}
+			
+			/* If the name is in use, show a dialog to choose a different user name */
+			if(cbyte == tellapicConstants.CTL_SV_NAMEINUSE ) {
+				System.out.println("Name "+name+" is in use.");
+				String dialogInput = JOptionPane.showInputDialog(Utils.msg.getString("nameinuse"), null);
+
+				/* If the user has cancelled the dialog... */
+				if (dialogInput == null) {
+					/* Dispose the monitor */
+					monitor.setCurrent(null, CONNECTION_STEPS);
+
+					/* and close the connection */
+					tellapic.tellapic_close_fd(fd);
+
+					/* Inform the error. */
+					return USER_CANCELLED_ERROR;
+				}
+
+				name = dialogInput;
+				System.out.println("Trying new name: "+dialogInput+" with length: "+dialogInput.length());
+			}
+		} while(cbyte == tellapicConstants.CTL_SV_NAMEINUSE);
+		
+		/* Do we auth ok? */
+		if (cbyte != tellapicConstants.CTL_SV_AUTHOK) {
+			/* Dispose the monitor */
+			monitor.setCurrent(null, CONNECTION_STEPS);
+			
+			/* Close the connection */
+			tellapic.tellapic_close_fd(fd);
+			
+			/* Inform the error */
+			return AUTHENTICATION_ERROR;
+		}
+		
+		return AUTHENTICATION_OK;
+	}
+	
+	
+	/**
+	 * 
+	 * @return
+	 * @throws WrongPacketException
+	 */
+	private int askForFile() throws WrongPacketException{
+		header_t header;
+		short    cbyte;
+		
+		monitor.setCurrent("Asking image file...", monitorStep++);
+		
+		/* Send the packet */
+		tellapic.tellapic_send_ctl(fd, id, tellapicConstants.CTL_CL_FILEASK);
+		
+		/* Read server response */
+		header = tellapic.tellapic_read_header_b(fd);
+		cbyte  = header.getCbyte();
+		
+		/* Check for an invalid sequence/packet */
+		if (cbyte != tellapicConstants.CTL_SV_FILE) {
+			/* Dispose the dialog */
+			monitor.setCurrent(null, CONNECTION_STEPS);
+			
+			/* Close the connection */
+			tellapic.tellapic_close_fd(fd);
+			throw new WrongPacketException("Wrong sequence while asking file.");
+		}
+		
+		int dataSize = (int) header.getSsize() - tellapicConstants.HEADER_SIZE;
+		byte[]  temp = new byte[1024];
+		byte[]  data = new byte[(int) dataSize];
+		int     read = 0;
+		int     i = 0;
+		int     j = 0;
+		int completed = 0;
+		
+		monitor.changeTotal((int) (Math.ceil((double)dataSize/1024) + CONNECTION_STEPS));
+		
+		while(read < dataSize) {
+			System.out.println("read: "+read+" i: "+i);
+			tellapic.custom_wrap(tellapic.tellapic_read_bytes_b(fd, 1024), temp, 1024);
+			for(j = 0; j < 1024 && i * 1024 + j < dataSize; j++) {
+				data[i * 1024 + j] = temp[j];
+			}
+			read += j;
+			i++;
+			completed = (int) (((float)read/(float)dataSize) * 100);
+			
+			monitor.setCurrent("Downloading file: "+completed+"%", monitorStep++);
+		}
+		
+		ByteArrayInputStream in = new ByteArrayInputStream(data);
+		
+		try {
+			SessionUtils.setSharedImage(ImageIO.read(in));
+			in.close();
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+			/* Dispose the monitor */
+			monitor.setCurrent(null, CONNECTION_STEPS);
+			
+			/* Close the connection */
+			tellapic.tellapic_close_fd(fd);
+			
+			return FILE_ERROR;
+		}
+		
+		return FILE_OK;
+//		tellapic.tellapic_free(stream);
+	}
+	
+	/**
+	 * 
 	 * @param host
 	 * @param port
 	 * @param name
 	 * @param password
 	 * @return
+	 * @throws WrongPacketException 
 	 */
-	public int connect(String host, int port, String name, String password) {
+	public int connect(String host, int port, String name, String password) throws WrongPacketException {
 		/*
 		 * A successful connection sequence is:
 		 * 
@@ -98,93 +312,55 @@ public class NetManager extends Observable {
 		 * Server <-----< CTL_CL_NAME   <------- Client
 		 * Server ------> CTL_SV_AUTHOK >------> Client
 		 */
+		
+		int cbyte;
+		int error;
+		stream_t stream;
+		
+		/* We are connecting, set this state */
 		setConnecting(true);
 		
-		System.out.println("Connecting to "+host+":"+port);
-		fd = tellapic.tellapic_connect_to(host, port);
-		if (fd <= 0)
-			return fd;
+		monitor.start("Connecting to '"+host+":"+port);
 		
-		stream_t stream = tellapic.tellapic_read_stream_b(fd);
-		int cbyte = stream.getHeader().getCbyte();
+		fd = tellapic.tellapic_connect_to(host, port);
+		if (fd <= 0) {
+			/* Dispose the Dialog */
+			monitor.setCurrent(null, CONNECTION_STEPS);
+			
+			return CONNECTION_ERROR;
+		}
+			
+		
+		stream = tellapic.tellapic_read_stream_b(fd);
+		cbyte  = stream.getHeader().getCbyte();
 		
 		if (cbyte == tellapicConstants.CTL_FAIL || cbyte != tellapicConstants.CTL_SV_ID) {
-			System.out.println("Something went wrong. Closing link.");
+			/* Dispose the Dialog */
+			monitor.setCurrent(null, CONNECTION_STEPS);
+			
+			/* Close the connection */
 			tellapic.tellapic_close_fd(fd);
-			return -1;
+			
+			throw new WrongPacketException("Wrong response by server upon connection packet.");
 		}
 		
-		int id = stream.getData().getControl().getIdfrom();
+		/* Set the session id */
+		id = stream.getData().getControl().getIdfrom();
 
-		System.out.println("Sending password: "+password);
-		tellapic.tellapic_send_ctle(fd, id, tellapicConstants.CTL_CL_PWD, password.length(), password);
+		/* Authenticate with the server */
+		if ((error = authenticate(password, name)) < 0)
+			return error;
+		
+		/* Ask for file */
+		if ((error = askForFile()) < 0)
+			return error;
 
-		stream = tellapic.tellapic_read_stream_b(fd);
-		cbyte = stream.getHeader().getCbyte();
-		
-		if (cbyte == tellapicConstants.CTL_FAIL)
-			return -1;
-		
-		while(cbyte == tellapicConstants.CTL_SV_PWDFAIL) {
-			//Retry password dialog here
-			String response = JOptionPane.showInputDialog(Utils.msg.getString("wrongpassword"), null);
-			System.out.println("Password was wrong. New pwd: "+response);
-			if (response == null) {
-				tellapic.tellapic_close_fd(fd);
-				return -1;
-			}
-			
-			tellapic.tellapic_send_ctle(fd, id, tellapicConstants.CTL_CL_PWD, response.length(), response);
-			stream = tellapic.tellapic_read_stream_b(fd);
-			cbyte = stream.getHeader().getCbyte();
-		}
-
-		if (cbyte != tellapicConstants.CTL_SV_PWDOK) {
-			tellapic.tellapic_close_fd(fd);
-			return -1;
-		}
-		
-		System.out.println("Password was ok. Sending name: "+name+" length: "+name.length());
-		
-		tellapic.tellapic_send_ctle(fd, stream.getData().getControl().getIdfrom(), tellapicConstants.CTL_CL_NAME, name.length(), name);
-		stream = tellapic.tellapic_read_stream_b(fd);
-		cbyte = stream.getHeader().getCbyte();
-		
-		if (cbyte == tellapicConstants.CTL_FAIL)
-			return -1;
-		
-		while(cbyte == tellapicConstants.CTL_SV_NAMEINUSE ) {
-			System.out.println("Name "+name+" is in use.");
-			//Retry name dialog here
-			String response = JOptionPane.showInputDialog(Utils.msg.getString("nameinuse"), null);
-
-			if (response == null) {
-				tellapic.tellapic_close_fd(fd);
-				return -1;
-			}
-			
-			name = response;
-			
-			System.out.println("Trying new name: "+response+" with length: "+response.length());
-			
-			tellapic.tellapic_send_ctle(fd, id, tellapicConstants.CTL_CL_NAME, response.length(), response);
-			stream = tellapic.tellapic_read_stream_b(fd);
-			cbyte = stream.getHeader().getCbyte();
-		}
-	
-		if (cbyte != tellapicConstants.CTL_SV_AUTHOK)
-			return -1;
-		
-		System.out.println("Name "+name+" accepted");
-		
-		tellapic.tellapic_send_ctl(fd, id, tellapicConstants.CTL_CL_FILEASK);
-		setConnected(true);
-		
 		SessionUtils.setUsername(name);
 		SessionUtils.setId(id);
 		SessionUtils.setServer(host);
 		SessionUtils.setPort(port);
 		SessionUtils.setPassword(password);
+		setConnected(true);
 		ReceiverThread r = new ReceiverThread(fd);
 		r.start();
 		
@@ -285,7 +461,12 @@ public class NetManager extends Observable {
 	 */
 	public void reconnect() {
 		disconnect();
-		connect(SessionUtils.getServer(), SessionUtils.getPort(), SessionUtils.getUsername(), SessionUtils.getPassword());
+		try {
+			connect(SessionUtils.getServer(), SessionUtils.getPort(), SessionUtils.getUsername(), SessionUtils.getPassword());
+		} catch (WrongPacketException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	
@@ -946,5 +1127,14 @@ public class NetManager extends Observable {
 		}
 	}
 
-	
+	public class WrongPacketException extends Exception {
+		/**
+		 * @param string
+		 */
+		public WrongPacketException(String string) {
+			super(string);
+		}
+
+		private static final long serialVersionUID = 1L;
+	}
 }

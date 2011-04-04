@@ -18,9 +18,11 @@
 package ar.com.tellapic;
 
 import javax.swing.JOptionPane;
+import javax.swing.JProgressBar;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
+import ar.com.tellapic.NetManager.WrongPacketException;
 import ar.com.tellapic.graphics.DrawingAreaModel;
 import ar.com.tellapic.graphics.DrawingAreaView;
 import ar.com.tellapic.graphics.EllipseNet;
@@ -81,7 +83,12 @@ public class Main {
 				case MainDialog.JOIN_TAB:
 				case MainDialog.FAVOURITE_TAB:
 					System.out.println("Joining to server "+main.getRemoteHost()+":"+main.getRemotePort());
-					int r = NetManager.getInstance().connect(main.getRemoteHost(), main.getRemotePort(), main.getUsername(), main.getPassword());
+					int r = -1;
+					try {
+						r = NetManager.getInstance().connect(main.getRemoteHost(), main.getRemotePort(), main.getUsername(), main.getPassword());
+					} catch (WrongPacketException e) {
+						e.printStackTrace();
+					}
 					if (r > 0)
 						initiate(SessionUtils.getId(), SessionUtils.getUsername());
 					else
@@ -96,7 +103,16 @@ public class Main {
 				//TODO
 			}
 		} else if (args.length == 4){
-			int r = NetManager.getInstance().connect(args[0], Integer.parseInt(args[1]), args[2], args[3]);
+			int r=-1;
+			try {
+				r = NetManager.getInstance().connect(args[0], Integer.parseInt(args[1]), args[2], args[3]);
+			} catch (NumberFormatException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (WrongPacketException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			if (r > 0)
 				initiate(SessionUtils.getId(), SessionUtils.getUsername());
 			else

@@ -18,8 +18,7 @@
 package ar.com.tellapic;
 
 import java.awt.image.BufferedImage;
-
-import ar.com.tellapic.graphics.DrawingAreaView;
+import java.util.Observable;
 
 /**
  * @author 
@@ -41,7 +40,7 @@ public class SessionUtils {
 	 */
 	public static void setSharedImage(BufferedImage sharedImage) {
 		SessionUtils.sharedImage = sharedImage;
-		DrawingAreaView.getInstance().setImage(sharedImage);
+//		DrawingAreaView.getInstance().setImage(sharedImage);
 	}
 
 	/**

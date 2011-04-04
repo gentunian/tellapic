@@ -49,6 +49,12 @@ tellapic_read_data_b(int fd, header_t header);
 /**
  *
  */
+byte_t *
+tellapic_read_bytes_b(int fd, size_t chunk);
+
+/**
+ *
+ */
 header_t
 tellapic_read_header_b(int fd);
 

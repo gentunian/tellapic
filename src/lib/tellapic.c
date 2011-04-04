@@ -1087,6 +1087,23 @@ tellapic_read_header_b(int fd)
 
 
 /**
+ *
+ */
+byte_t *
+tellapic_read_bytes_b(int fd, size_t chunk)
+{
+  if (chunk <= 0)
+    return NULL;
+
+  byte_t *data = malloc(chunk);
+  int p = 0;
+  _read_nb(fd, chunk, data, &p);
+
+  return data;
+}
+
+
+/**
  * Reads the data section upon the header passed as argument.
  * _b means blocking. For now, we just implement blocking mode.
  *

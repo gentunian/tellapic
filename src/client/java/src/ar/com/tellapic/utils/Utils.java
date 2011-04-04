@@ -17,6 +17,7 @@
  */
 package ar.com.tellapic.utils;
 
+import java.awt.Font;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
@@ -33,6 +34,7 @@ import ar.com.tellapic.graphics.RemoteMouseEvent;
  *
  */
 public final class Utils {
+	public static final Font MAIN_FONT = Font.decode("Droid-10");
 	public static boolean debug = true;
 	public static Locale currentLocale = Locale.getDefault();
 	public static ResourceBundle msg = ResourceBundle.getBundle("Words");

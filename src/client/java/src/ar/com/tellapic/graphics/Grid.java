@@ -33,11 +33,13 @@ import java.awt.image.BufferedImage;
  */
 public class Grid extends BufferedImage {
 
+	public static Color DEFAULT_COLOR = Color.gray;
 	private boolean gridEnabled;
 	private int     gridSize = 1;
 	private Color   gridColor;
 	private float   gridTransparency;
 	private Dimension dimension;
+	
 	
 	/**
 	 * 
@@ -56,6 +58,7 @@ public class Grid extends BufferedImage {
 	 */
 	public Grid(int w, int h, boolean enabled, int size, Color color, float alpha) {
 		super(w, h, BufferedImage.TYPE_INT_ARGB);
+		
 		gridEnabled = enabled;
 		gridSize = size;
 		gridColor = color;
