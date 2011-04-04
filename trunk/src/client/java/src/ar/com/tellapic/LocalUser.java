@@ -17,7 +17,6 @@
  */  
 package ar.com.tellapic;
 
-import javax.swing.SwingUtilities;
 
 
 

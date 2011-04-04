@@ -1,6 +1,5 @@
 package ar.com.tellapic.graphics;
 
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -36,6 +35,7 @@ import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 
 import ar.com.tellapic.AbstractUser;
+import ar.com.tellapic.SessionUtils;
 import ar.com.tellapic.StatusBar;
 import ar.com.tellapic.UserManager;
 import ar.com.tellapic.utils.Utils;
@@ -56,8 +56,8 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 	private RuleHeader              topRule;
 	private RuleHeader              leftRule;
 	//private Drawing                 temporalDrawing;
-	private ArrayList<Drawing>      temporalDrawings;
-	private ArrayList<AbstractUser> userList;
+//	private ArrayList<Drawing>      temporalDrawings;
+//	private ArrayList<AbstractUser> userList;
 	private BufferedImage           backimage;
 	private GraphicsEnvironment     ge;
 	private GraphicsDevice          gd;
@@ -87,24 +87,42 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 	/*
 	 * 
 	 */
-	private DrawingAreaView() {
-		temporalDrawings = new ArrayList<Drawing>();
-		userList         = new ArrayList<AbstractUser>();
+	private DrawingAreaView() throws NullPointerException {
+//		temporalDrawings = new ArrayList<Drawing>();
+//		userList         = new ArrayList<AbstractUser>();
 		propertyController = null;
+		
+		/* This is the image to talk about. It should go to background */
 		backimage        = null;
+		
+		/* The local user drawing over this area view */
 		user             = UserManager.getInstance().getLocalUser();
+		
+		if (user == null)
+			throw new NullPointerException("DrawingAreaView cannot be fetched before a local user creation.");
+		
+		setImage(SessionUtils.getSharedImage());
+		
+		//TODO: can't we notify the status bar our changes and avoid a reference to it?
 		statusBar        = StatusBar.getInstance();
 		
+		/* Get the graphic environment settings */
 		ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 		gd = ge.getDefaultScreenDevice();
 		gc = gd.getDefaultConfiguration();
+		
+		/* Instantiate a default rendering quality for later use or change */
 		rh = new RenderingHints(null);
 		
 //		scrollPane = new JScrollPane(this);
+		
+		/* Instantiate the top and botom ruler for measure screen size in 'real life' */
 		topRule   = new RuleHeader(RuleHeader.HORIZONTAL, true);
-		leftRule = new RuleHeader(RuleHeader.VERTICAL, true);
+		leftRule  = new RuleHeader(RuleHeader.VERTICAL, true);
+		
+		/* Create a button for switching between inches and centimeters */
+		JToggleButton isMetric = new JToggleButton("cm", true);
 		buttonCorner = new JPanel();
-		JToggleButton isMetric     = new JToggleButton("cm", true);
 		isMetric.setFont(new Font("SansSerif", Font.PLAIN, 8));
 		isMetric.addItemListener(new ItemListener() {
 			@Override
@@ -123,11 +141,23 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 			}
 		});
 		buttonCorner.add(isMetric);
+
+//		scrollPane.setName(getName());
+		
+		int screenWidth  = gd.getDisplayMode().getWidth();
+		int screenHeight = gd.getDisplayMode().getHeight();
+		int startingWidth  = (int) (screenWidth  * .7f);
+		int startingHeight = (int) (screenHeight * .9f);
 		
 		setName(Utils.msg.getString("drawingarea"));
-//		scrollPane.setName(getName());
-		setPreferredSize(new Dimension(800,600));
+		setPreferredSize(new Dimension(startingWidth, startingHeight));
+		setMaximumSize(new Dimension(screenWidth, screenHeight));
 		setVisible(true);
+		
+//		topRule.setPreferredWidth(startingWidth);
+//		leftRule.setPreferredHeight(startingHeight);
+		
+		/* This same class will implement mouse event listeners */
 		addMouseMotionListener(this);
 		addMouseListener(this);
 		addMouseWheelListener(this);
@@ -135,11 +165,14 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 		addAncestorListener(new AncestorListener(){
 			@Override
 			public void ancestorAdded(AncestorEvent event) {
-				JScrollPane parent = (JScrollPane) ((JViewport) getParent()).getParent();
-				topRule = ((RuleHeader)parent.getColumnHeader().getView());
-				topRule.setPreferredWidth(backimage.getWidth());
-				leftRule = ((RuleHeader)parent.getRowHeader().getView());
-				leftRule.setPreferredHeight(backimage.getHeight());
+				
+//				if (backimage != null) {
+//					JScrollPane parent = (JScrollPane) ((JViewport) getParent()).getParent();
+//					topRule = ((RuleHeader)parent.getColumnHeader().getView());
+//					topRule.setPreferredWidth(backimage.getWidth());
+//					leftRule = ((RuleHeader)parent.getRowHeader().getView());
+//					leftRule.setPreferredHeight(backimage.getHeight());
+//				}
 			}
 			@Override
 			public void ancestorMoved(AncestorEvent event) {}
@@ -192,8 +225,8 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 	 */
 	public void setImage(BufferedImage img) {
 		backimage = img;
-		gd = ge.getDefaultScreenDevice();
-		gc = gd.getDefaultConfiguration();
+//		gd = ge.getDefaultScreenDevice();
+//		gc = gd.getDefaultConfiguration();
 		setPreferredSize(new Dimension(backimage.getWidth(), backimage.getHeight()));
 		grid = new Grid(backimage.getWidth(), backimage.getHeight());
 		foreground = null;
@@ -212,9 +245,9 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 	 * 
 	 * @param user
 	 */
-	public void addPainter(AbstractUser user) {
-		userList.add(user);
-	}
+//	public void addPainter(AbstractUser user) {
+//		userList.add(user);
+//	}
 
 
 	//TODO: REFACTOR THIS THINKING ON MULTIPLE ACCESS TO THE DRAWING AREA VIEW (A.K.A. MULTI-THREADED)
@@ -299,6 +332,7 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 			foreground = gc.createCompatibleImage(backimage.getWidth(), backimage.getHeight(), Transparency.TRANSLUCENT);
 			drawBackgroundOff();
 		}
+		
 //		double zoom = ((zoomX < 0)? ((double)1/(double)(-1*zoomX)) : zoomX);
 //		((Graphics2D)g).scale(zoom, zoom);
 		
@@ -324,11 +358,11 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 	 * @param drawing
 	 * @param i
 	 */
-	public void update(Drawing drawing, int i) {
-		//temporalDrawing = drawing;
-		temporalDrawings.set(i, drawing);
-		repaint();
-	}
+//	public void update(Drawing drawing, int i) {
+//		//temporalDrawing = drawing;
+//		temporalDrawings.set(i, drawing);
+//		repaint();
+//	}
 	
 	
 	private void drawDrawing(Graphics2D g, Drawing drawing, PaintProperty[] overridedProperties) {
@@ -376,8 +410,10 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 	 */
 	private void drawBackgroundOff() {
 		Graphics2D frontArea = (Graphics2D) foreground.getGraphics();
+		
 		frontArea.drawImage(backimage, 0, 0, null);
-		if (grid.isGridEnabled())
+		
+		if (grid != null && grid.isGridEnabled())
 			frontArea.drawImage(grid, 0, 0, null);
 		
 //		if(gridEnabled) {
@@ -425,9 +461,11 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 	 * @param color
 	 */
 	public void setGridColor(Color color) {
-		grid.setGridColor(color);
-		drawBackgroundOff();
-		repaint();
+		if (grid != null) {
+			grid.setGridColor(color);
+			drawBackgroundOff();
+			repaint();
+		}
 	}
 	
 	
@@ -436,7 +474,7 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 	 * @return
 	 */
 	public Color getGridColor() {
-		return grid.getGridColor();
+		return (grid != null)? grid.getGridColor():Grid.DEFAULT_COLOR;
 	}
 	
 	
@@ -444,8 +482,8 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 	 * @param gridEnabled the gridEnabled to set
 	 */
 	public void setGridEnabled(boolean gridEnabled) {
-
-		grid.setGridEnabled(gridEnabled);
+		if (grid != null)
+			grid.setGridEnabled(gridEnabled);
 		
 		if (foreground == null)
 			return;
@@ -459,7 +497,7 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 	 * @return the gridEnabled
 	 */
 	public boolean isGridEnabled() {
-		return grid.isGridEnabled();
+		return (grid != null)? grid.isGridEnabled(): false;
 	}
 
 

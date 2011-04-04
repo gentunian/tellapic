@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
+import javax.swing.JProgressBar;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
@@ -33,9 +34,6 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.xml.sax.SAXException;
 
 import ar.com.tellapic.utils.Utils;
 
@@ -66,10 +64,10 @@ public class MainDialog extends javax.swing.JDialog {
 	private String name;
 	private String password;
 	private int port;
-	
+		
 	/** Creates new form NewJFrame */
 	public MainDialog() {
-
+		
 		initComponents();
 
 		this.setLocationRelativeTo(null);
