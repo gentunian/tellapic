@@ -1097,7 +1097,7 @@ tellapic_read_bytes_b(int fd, size_t chunk)
 
   byte_t *data = malloc(chunk);
   int p = 0;
-  _read_nb(fd, chunk, data, &p);
+  _read_b(fd, chunk, data);
 
   return data;
 }

@@ -8,7 +8,7 @@ import java.awt.geom.Rectangle2D;
 import ar.com.tellapic.lib.tellapicConstants;
 import ar.com.tellapic.utils.Utils;
 
-public class Rectangle extends Tool {
+public class Rectangle extends DrawingTool {
 	private Point2D             firstPoint;
 	private Rectangle2D         rectangle;
 	private Drawing             temporalDrawing;
@@ -34,11 +34,8 @@ public class Rectangle extends Tool {
 	 */
 	@Override
 	public Drawing getDrawing() {
-		if (inUse) {
-			temporalDrawing.setShape(rectangle);
-			return temporalDrawing;
-		}
-		return null;
+		temporalDrawing.setShape(rectangle);
+		return (Drawing) temporalDrawing.clone();
 	}
 
 
@@ -60,6 +57,8 @@ public class Rectangle extends Tool {
 		rectangle = new Rectangle2D.Double(x, y, 0, 0);
 		inUse = true;
 		temporalDrawing.setShape(rectangle);
+		setChanged();
+		notifyObservers(temporalDrawing);
 	}
 
 
@@ -86,31 +85,23 @@ public class Rectangle extends Tool {
 				initY  = (initY < y)? initY : y;
 			}
 			rectangle.setRect(initX, initY, width, height);
+			setChanged();
+			notifyObservers(temporalDrawing);
 		}
 	}
-
-
-		/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onMove(double, double)
-	 */
-	@Override
-	public Drawing onMove(int x, int y) {
-		return null;
-	}
-
 
 
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.Tool#onFinishDraw()
 	 */
 	@Override
-	public Drawing onRelease(int x, int y, int button, int mask) {
+	public void onRelease(int x, int y, int button, int mask) {
 		if (inUse && !rectangle.isEmpty()) {
-			temporalDrawing.cloneProperties();
+//			temporalDrawing.cloneProperties();
 			inUse = false;
-			return temporalDrawing;	
+			setChanged();
+			notifyObservers(temporalDrawing);
 		}
-		return null;
 	}
 
 
@@ -118,7 +109,7 @@ public class Rectangle extends Tool {
 	 * @see ar.com.tellapic.graphics.Tool#onCancel()
 	 */
 	@Override
-	public void onCancel() {
+	public void onPause() {
 		inUse = false;		
 	}
 
@@ -133,16 +124,6 @@ public class Rectangle extends Tool {
 	
 	
 	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#moveTo(double, double)
-	 */
-	@Override
-	public void moveTo(double x, double y) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	
-	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.Tool#isFilleable()
 	 */
 	@Override
@@ -152,37 +133,37 @@ public class Rectangle extends Tool {
 
 
 	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#hasAlphaProperties()
+	 * @see ar.com.tellapic.graphics.Tool#hasAlphaCapability()
 	 */
 	@Override
-	public boolean hasAlphaProperties() {
+	public boolean hasAlphaCapability() {
 		return true;
 	}
 
 
 	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#hasColorProperties()
+	 * @see ar.com.tellapic.graphics.Tool#hasColorCapability()
 	 */
 	@Override
-	public boolean hasColorProperties() {
+	public boolean hasColorCapability() {
 		return true;
 	}
 
 
 	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#hasFontProperties()
+	 * @see ar.com.tellapic.graphics.Tool#hasFontCapability()
 	 */
 	@Override
-	public boolean hasFontProperties() {
+	public boolean hasFontCapability() {
 		return false;
 	}
 
 
 	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#hasStrokeProperties()
+	 * @see ar.com.tellapic.graphics.Tool#hasStrokeCapability()
 	 */
 	@Override
-	public boolean hasStrokeProperties() {
+	public boolean hasStrokeCapability() {
 		return true;
 	}
 
@@ -220,6 +201,8 @@ public class Rectangle extends Tool {
 	@Override
 	public void setAlpha(PaintPropertyAlpha alpha) {
 		temporalDrawing.setAlpha(alpha);
+		setChanged();
+		notifyObservers(temporalDrawing);
 	}
 
 
@@ -229,6 +212,8 @@ public class Rectangle extends Tool {
 	@Override
 	public void setColor(PaintPropertyColor color) {
 		temporalDrawing.setColor(color);
+		setChanged();
+		notifyObservers(temporalDrawing);
 	}
 
 
@@ -247,5 +232,44 @@ public class Rectangle extends Tool {
 	@Override
 	public void setStroke(PaintPropertyStroke stroke) {
 		temporalDrawing.setStroke(stroke);
+		setChanged();
+		notifyObservers(temporalDrawing);
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#isOnDragSupported()
+	 */
+	@Override
+	public boolean isOnDragSupported() {
+		return true;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#isOnPressSupported()
+	 */
+	@Override
+	public boolean isOnPressSupported() {
+		return true;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#isOnReleaseSupported()
+	 */
+	@Override
+	public boolean isOnReleaseSupported() {
+		return true;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#onMove(int, int)
+	 */
+	@Override
+	public void onMove(int x, int y) {
+		// TODO Auto-generated method stub
+		
 	}
 }

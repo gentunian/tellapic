@@ -1,154 +1,97 @@
 package ar.com.tellapic.graphics;
 
 import java.awt.Cursor;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Toolkit;
 import java.awt.geom.Point2D;
+
+import javax.swing.ComboBoxModel;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 
 import ar.com.tellapic.utils.Utils;
 
-public final class Zoom extends Tool {
-	/*TODO: remove singleton for use 1 toolbox per client. 12/10/2010
-	private static class ZoomHolder {
-		private static final Zoom ZOOM_INSTANCE = new Zoom();
+public final class Zoom extends ControlTool implements ComboBoxModel{
+	
+	private Point2D firstPoint;
+	private boolean inUse;
+	private boolean zoomIn;
+	private float zoomFactor;
+	private final float zoomStep = 0.25f; 
+	public static final String ZOOM_ICON_PATH = "/icons/zoom.png";
+	public static final String ZOOMIN_CURSOR_PATH = "/icons/zoomInCursor.png";
+	public static final String ZOOMOUT_CURSOR_PATH = "/icons/zoomOutCursor.png";
+	public static final String ZOOMIN_ICON_PATH = "/icons/zoomin.png";
+	public static final String ZOOMOUT_ICON_PATH = "/icons/zoomout.png";
+	public static final float MAX_ZOOM_FACTOR = 3.0f;
+	public static final float MIN_ZOOM_FACTOR = 0.25f;
+	
+	private static final String[] values = new String[] { "25%", "50%", "75%", "100%", "125%", "150%", "175%", "200%", "225%", "250%", "275%", "300%"};
+	private int current = 3;
+	
+	private static class Holder {
+		private static Zoom INSTANCE = new Zoom();
+	}
+	
+	private Cursor zoomOutCursor;
+	private Cursor zoomInCursor;
+	private ListDataListener dataListener;
+	
+	private Zoom() {
+		super(99, Zoom.class.getSimpleName(), ZOOM_ICON_PATH, Utils.msg.getString("zoomtooltip"), Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+		firstPoint = new Point2D.Double();
+		zoomFactor = 1;
+		Toolkit toolkit = Toolkit.getDefaultToolkit();
+//		Image image = toolkit.getImage(ZOOMOUT_ICON_PATH);
+		Image image = Utils.createIconImage(24,24, ZOOMOUT_CURSOR_PATH);
+		zoomOutCursor = toolkit.createCustomCursor(image, new Point(10,10), getName()+"Out");
+		image = Utils.createIconImage(24,24, ZOOMIN_CURSOR_PATH);
+		zoomInCursor = toolkit.createCustomCursor(image, new Point(10,10), getName()+"In");
+		setZoomIn(true);
 	}
 	
 	
-	public static Zoom getInstance() {
-		return ZoomHolder.ZOOM_INSTANCE;
-	}
-	*/
-	
-	public Zoom() {
-		super(99, Zoom.class.getSimpleName(), "/icons/zoom.png", Utils.msg.getString("zoomtooltip"), Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
-	}
-
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#getDrawing()
+	/**
+	 * 
+	 * @return
 	 */
-	@Override
-	public Drawing getDrawing() {
-		// TODO Auto-generated method stub
-		return null;
+	public static Zoom getInstance() {
+		return Holder.INSTANCE;
 	}
-
-
+	
+	
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.Tool#getInit()
 	 */
 	@Override
 	public Point2D getInit() {
-		// TODO Auto-generated method stub
-		return null;
+		return firstPoint;
 	}
 
-
 	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#init(double, double)
+	 * @see ar.com.tellapic.graphics.ControlTool#hasZoomCapability()
 	 */
 	@Override
-	public void onPress(int x, int y, int button, int mask) {
-		// TODO Auto-generated method stub
-		
-	}
-	
-	
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#draw(double, double)
-	 */
-	@Override
-	public void onDrag(int x, int y, int button, int mask) {
-	}
-	
-	
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#moveTo(double, double)
-	 */
-	@Override
-	public void moveTo(double x, double y) {
+	public boolean hasZoomCapability() {
+		return true;
 	}
 
-
 	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onMove(double, double)
+	 * @see ar.com.tellapic.graphics.Tool#isBeingUsed()
 	 */
 	@Override
-	public Drawing onMove(int x, int y) {
-		return null;
-	}
-	
-	
-	/*
-	 * non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onFinishDraw()
-	 */
-	@Override
-	public Drawing onRelease(int x, int y, int button, int mask) {
-		// TODO Auto-generated method stub
-		return null;
+	public boolean isBeingUsed() {
+		return inUse;
 	}
 
-
 	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onCancel()
+	 * @see ar.com.tellapic.graphics.Tool#isOnDragSupported()
 	 */
 	@Override
-	public void onCancel() {
-	}
-	
-	
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onRestore()
-	 */
-	@Override
-	public void onRestore() {
-	}
-	
-	
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#isFilleable()
-	 */
-	@Override
-	public boolean isFilleable() {
-		// TODO Auto-generated method stub
+	public boolean isOnDragSupported() {
 		return false;
 	}
-
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#hasAlphaProperties()
-	 */
-	@Override
-	public boolean hasAlphaProperties() {
-		return false;
-	}
-
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#hasColorProperties()
-	 */
-	@Override
-	public boolean hasColorProperties() {
-		return false;
-	}
-
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#hasFontProperties()
-	 */
-	@Override
-	public boolean hasFontProperties() {
-		return false;
-	}
-
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#hasStrokeProperties()
-	 */
-	@Override
-	public boolean hasStrokeProperties() {
-		return false;
-	}
-
 
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.Tool#isOnMoveSupported()
@@ -158,61 +101,187 @@ public final class Zoom extends Tool {
 		return false;
 	}
 
-
 	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#isBeingUsed()
+	 * @see ar.com.tellapic.graphics.Tool#isOnPressSupported()
 	 */
 	@Override
-	public boolean isBeingUsed() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-	
-	
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#isLiveModeSupported()
-	 */
-	@Override
-	public boolean isLiveModeSupported() {
-		return false;
+	public boolean isOnPressSupported() {
+		return true;
 	}
 
-
 	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#setAlpha(ar.com.tellapic.graphics.PaintPropertyAlpha)
+	 * @see ar.com.tellapic.graphics.Tool#isOnReleaseSupported()
 	 */
 	@Override
-	public void setAlpha(PaintPropertyAlpha alpha) {
-		// TODO Auto-generated method stub
+	public boolean isOnReleaseSupported() {
+		return true;
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#onDrag(int, int, int, int)
+	 */
+	@Override
+	public void onDrag(int x, int y, int button, int mask) {
+
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#onMove(int, int)
+	 */
+	@Override
+	public void onMove(int x, int y) {
+
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#onPause()
+	 */
+	@Override
+	public void onPause() {
+		inUse = false;
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#onPress(int, int, int, int)
+	 */
+	@Override
+	public void onPress(int x, int y, int button, int mask) {
+		inUse = true;
+		firstPoint.setLocation(x, y);
+//		zoomFactor += ((zoomIn)? zoomStep : -1*zoomStep);
 		
+		if (zoomIn) {
+			zoomFactor += zoomStep;
+			if (zoomFactor > MAX_ZOOM_FACTOR) {
+				zoomFactor = MAX_ZOOM_FACTOR;
+				current = values.length - 1;
+			} else {
+				current++;
+			}
+		} else {
+			zoomFactor -= zoomStep;
+			if (zoomFactor < MIN_ZOOM_FACTOR) {
+				zoomFactor = MIN_ZOOM_FACTOR;
+				current = 0;
+			} else {
+				current --;
+			}
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#onRelease(int, int, int, int)
+	 */
+	@Override
+	public void onRelease(int x, int y, int button, int mask) {
+		inUse = false;
+		dataListener.contentsChanged(new ListDataEvent(values, ListDataEvent.CONTENTS_CHANGED, 0, values.length));
+		setChanged();
+		notifyObservers(zoomFactor);
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#onRestore()
+	 */
+	@Override
+	public void onRestore() {
+		if (!inUse)
+			inUse = true;
 	}
 
 
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#setColor(ar.com.tellapic.graphics.PaintPropertyColor)
+	/**
+	 * @param value
 	 */
-	@Override
-	public void setColor(PaintPropertyColor color) {
-		// TODO Auto-generated method stub
+	public void setZoomIn(boolean value) {
+		zoomIn = value;
+		if (zoomIn)
+			setCursor(zoomInCursor);
+		else
+			setCursor(zoomOutCursor);
+	}
+
+
+	/**
+	 * @param value
+	 */
+	public void setZoom(float value) {
+		zoomFactor = value;
 		
-	}
-
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#setFont(ar.com.tellapic.graphics.PaintPropertyFont)
-	 */
-	@Override
-	public void setFont(PaintPropertyFont font) {
-		// TODO Auto-generated method stub
+		if (zoomFactor > MAX_ZOOM_FACTOR)
+			zoomFactor = MAX_ZOOM_FACTOR;
 		
+		if (zoomFactor < MIN_ZOOM_FACTOR)
+			zoomFactor = MIN_ZOOM_FACTOR;
+		
+		setChanged();
+		notifyObservers(zoomFactor);
 	}
 
 
 	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#setStroke(ar.com.tellapic.graphics.PaintPropertyStroke)
+	 * @see javax.swing.ComboBoxModel#getSelectedItem()
 	 */
 	@Override
-	public void setStroke(PaintPropertyStroke stroke) {
+	public Object getSelectedItem() {
+		return values[current];
+	}
+
+
+	/* (non-Javadoc)
+	 * @see javax.swing.ComboBoxModel#setSelectedItem(java.lang.Object)
+	 */
+	@Override
+	public void setSelectedItem(Object anItem) {
+		zoomFactor = Float.valueOf(((String)anItem).substring(0, ((String)anItem).length() - 1)) / 100;
+		
+		if (zoomFactor > MAX_ZOOM_FACTOR)
+			zoomFactor = MAX_ZOOM_FACTOR;
+		
+		if (zoomFactor < MIN_ZOOM_FACTOR)
+			zoomFactor = MIN_ZOOM_FACTOR;
+		
+		for(int i = 0; i < values.length; i++) {
+			if (values[i].equals(anItem))
+				current = i;
+		}
+		setChanged();
+		notifyObservers(zoomFactor);
+	}
+
+
+	/* (non-Javadoc)
+	 * @see javax.swing.ListModel#addListDataListener(javax.swing.event.ListDataListener)
+	 */
+	@Override
+	public void addListDataListener(ListDataListener l) {
+		dataListener = l;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see javax.swing.ListModel#getElementAt(int)
+	 */
+	@Override
+	public Object getElementAt(int index) {
+		return values[index];
+	}
+
+
+	/* (non-Javadoc)
+	 * @see javax.swing.ListModel#getSize()
+	 */
+	@Override
+	public int getSize() {
+		return values.length;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see javax.swing.ListModel#removeListDataListener(javax.swing.event.ListDataListener)
+	 */
+	@Override
+	public void removeListDataListener(ListDataListener l) {
 		// TODO Auto-generated method stub
 		
 	}

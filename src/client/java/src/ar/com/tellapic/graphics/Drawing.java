@@ -2,11 +2,12 @@ package ar.com.tellapic.graphics;
 
 import java.awt.Shape;
 
-public class Drawing extends AbstractDrawing {
+public class Drawing extends AbstractDrawing implements Cloneable {
 	private PaintPropertyStroke strokeProperty;
 	private PaintPropertyColor  colorProperty;
 	private PaintPropertyAlpha  alphaProperty;
 	private PaintPropertyFont   fontProperty;
+	private PaintPropertyZoom   zoomProperty;
 	private Shape               shape;
 	
 	//private boolean   notDrawnYet;
@@ -140,7 +141,7 @@ public class Drawing extends AbstractDrawing {
 		fontProperty = property;
 	}
 	
-	public void cloneProperties() {
+	private void cloneProperties() {
 		if (hasAlphaProperty())
 			alphaProperty  = (PaintPropertyAlpha) alphaProperty.clone();
 		
@@ -152,8 +153,17 @@ public class Drawing extends AbstractDrawing {
 		
 		if (hasColorProperty())
 			colorProperty  = (PaintPropertyColor) colorProperty.clone();
+		
+		if (hasZoomProperty())
+			zoomProperty = (PaintPropertyZoom) zoomProperty.clone();
 	}
 	
+	
+	@Override
+	public boolean hasZoomProperty() {
+		return zoomProperty != null;
+	}
+
 	@Override
 	public boolean hasAlphaProperty() {
 		return alphaProperty != null;
@@ -183,6 +193,33 @@ public class Drawing extends AbstractDrawing {
 		return name;
 	}
 
+	/**
+	 * @param zoomProperty the zoomProperty to set
+	 */
+	public void setPaintPropertyZoom(PaintPropertyZoom zoomProperty) {
+		this.zoomProperty = zoomProperty;
+	}
+
+	/**
+	 * @return the zoomProperty
+	 */
+	public PaintPropertyZoom getPaintPropertyZoom() {
+		return zoomProperty;
+	}
+
+	
+	@Override
+	public Object clone() {
+		try {
+			cloneProperties();
+			return super.clone();
+		}
+		catch (CloneNotSupportedException e) {
+			// This should never happen
+			throw new InternalError(e.toString());
+		}
+	}
+	
 	/**
 	 * @param notDrawnYet the notDrawnYet to set
 	 */

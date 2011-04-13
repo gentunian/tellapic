@@ -3,24 +3,18 @@
  */
 package ar.com.tellapic.graphics;
 
-import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
-import javax.swing.border.EmptyBorder;
 
 import ar.com.tellapic.utils.Utils;
 
@@ -33,7 +27,7 @@ public class ToolView extends JPanel implements Observer {
 //	private static final int WIDTH    = 100;
 //	private static final int HEIGHT   = 150;
 	private static final int ICON_GAP = 5;
-	private static final int ICON_SIZE = 24;
+	private static final int ICON_SIZE = 18;
 	private static final long serialVersionUID = 1L;
 	
 	public static final int NO_VALUE = -1;
@@ -41,12 +35,12 @@ public class ToolView extends JPanel implements Observer {
 	
 	// icon path
 	//TODO: use getResource()
-	public static final String ELLIPSE_ICON_PATH   = "/icons/ellipse.png";
-	public static final String LINE_ICON_PATH      = "/icons/line.png";
-	public static final String MARKER_ICON_PATH    = "/icons/pencil.png";
-	public static final String RECTANGLE_ICON_PATH = "/icons/rectangle.png";
-	public static final String TEXT_ICON_PATH      = "/icons/text.png";
-	public static final String ZOOM_ICON_PATH      = "/icons/zoom.png";
+//	public static final String ELLIPSE_ICON_PATH   = "/icons/ellipse.png";
+//	public static final String LINE_ICON_PATH      = "/icons/line.png";
+//	public static final String MARKER_ICON_PATH    = "/icons/pencil.png";
+//	public static final String RECTANGLE_ICON_PATH = "/icons/rectangle.png";
+//	public static final String TEXT_ICON_PATH      = "/icons/text.png";
+//	public static final String ZOOM_ICON_PATH      = "/icons/zoom.png";
 	
 	
 	// The toolbox controller interface
@@ -66,7 +60,8 @@ public class ToolView extends JPanel implements Observer {
 		setMinimumSize(minPanelDimension);
 		setMaximumSize(minPanelDimension);
 		setPreferredSize(minPanelDimension);
-		setBorder(new EmptyBorder(ICON_GAP, ICON_GAP, ICON_GAP, ICON_GAP));
+		setBorder(new javax.swing.border.EmptyBorder(ICON_GAP, ICON_GAP, ICON_GAP, ICON_GAP));
+//		setBorder(BorderFactory.createLineBorder(java.awt.Color.DARK_GRAY, 5));
 		
 		buttonGroup = new ButtonGroup();
 		listener    = new MyActionListener();

@@ -97,12 +97,17 @@ public abstract class AbstractUser extends Observable {
 	}
 	
 	
-	public void addDrawing(Drawing drawing) {
+	public void addDrawing(Drawing drawing) throws NullPointerException {
+		if (drawing == null)
+			throw new NullPointerException("Drawing should not be null");
+		
 		// If the drawing we are added is a temporal, then, it should no more be one.
-		if (temporalDrawing!= null && temporalDrawing.equals(drawing))
+		if (temporalDrawing != null && temporalDrawing.equals(drawing))
 			temporalDrawing = null;
 		
 		drawingList.add(drawing);
+		
+		/* Report the view only if we are visible */
 		setChanged();
 		notifyObservers(drawingList.indexOf(drawing));
 	}
@@ -230,19 +235,19 @@ public abstract class AbstractUser extends Observable {
 	/**
 	 * @param temporalDrawing the temporalDrawing to set
 	 */
-	public void setTemporalDrawing(Drawing temporalDrawing) {
-		this.temporalDrawing = temporalDrawing;
-		setChanged();
-		notifyObservers();
-	}
+//	public void setTemporalDrawing(Drawing temporalDrawing) {
+//		this.temporalDrawing = temporalDrawing;
+//		setChanged();
+//		notifyObservers();
+//	}
 
 
 	/**
 	 * @return the temporalDrawing
 	 */
-	public Drawing getTemporalDrawing() {
-		return temporalDrawing;
-	}
+//	public Drawing getTemporalDrawing() {
+//		return temporalDrawing;
+//	}
 
 
 	/**

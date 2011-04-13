@@ -131,4 +131,22 @@ public class PaintPropertyController implements IPaintPropertyController {
 	public void handleDashChange(float[] dash, float dashphase) {
 		model.setStrokePropertyDash(dash, dashphase);
 	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleZoomChange(boolean)
+	 */
+	@Override
+	public void handleZoomChange(boolean b) {
+		model.setZoomIn(b);
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleZoomChange(double)
+	 */
+	@Override
+	public void handleZoomChange(float zoom) {
+		model.setZoomValue(zoom);
+	}
 }

@@ -21,21 +21,23 @@ import java.awt.Color;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Map;
 import java.util.Observable;
 
 import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
-import javax.swing.JProgressBar;
 
 import ar.com.tellapic.chat.ChatController;
 import ar.com.tellapic.chat.IChatController;
 import ar.com.tellapic.chat.Message;
 import ar.com.tellapic.graphics.Drawing;
+import ar.com.tellapic.graphics.DrawingTool;
 import ar.com.tellapic.graphics.IPaintPropertyController;
+import ar.com.tellapic.graphics.IToolBoxController;
 import ar.com.tellapic.graphics.Tool;
 import ar.com.tellapic.graphics.ToolBoxModel;
 import ar.com.tellapic.graphics.ToolFactory;
@@ -79,7 +81,7 @@ public class NetManager extends Observable {
 	
 	private NetManager() {
 		addObserver(StatusBar.getInstance());
-		monitor = ProgressUtil.createModalProgressMonitor(null, CONNECTION_STEPS, true, 300);
+		monitor = ProgressUtil.createModalProgressMonitor(null, CONNECTION_STEPS, true, 200);
 		monitorStep = 0;
 		connected = false;
 		setFd(0);
@@ -119,7 +121,7 @@ public class NetManager extends Observable {
 			/* Check for an invalid sequence/packet */
 			if (cbyte == tellapicConstants.CTL_FAIL) {
 				/* Dispose the monitor */
-				monitor.setCurrent(null, CONNECTION_STEPS);
+				monitor.setCurrent(null,  monitor.getTotal());
 
 				/* Close the connection */
 				tellapic.tellapic_close_fd(fd);
@@ -138,7 +140,7 @@ public class NetManager extends Observable {
 				/* If response was null, user has canceled the Dialog */
 				if (dialogInput == null) {
 					/* Dispose the monitor */
-					monitor.setCurrent(null, CONNECTION_STEPS);
+					monitor.setCurrent(null,  monitor.getTotal());
 
 					/* Close the connection */
 					tellapic.tellapic_close_fd(fd);
@@ -154,7 +156,7 @@ public class NetManager extends Observable {
 		/* Check for a correct password */
 		if (cbyte != tellapicConstants.CTL_SV_PWDOK) {
 			/* Dispose the monitor as we failed the required times to login */
-			monitor.setCurrent(null, CONNECTION_STEPS);
+			monitor.setCurrent(null, monitor.getTotal());
 			
 			/* Close the connection */
 			tellapic.tellapic_close_fd(fd);
@@ -176,7 +178,7 @@ public class NetManager extends Observable {
 			/* Check for an invalid sequence/packet */
 			if (cbyte == tellapicConstants.CTL_FAIL) {
 				/* Dispose the monitor */
-				monitor.setCurrent(null, CONNECTION_STEPS);
+				monitor.setCurrent(null, monitor.getTotal());
 
 				/* Close the connection */
 				tellapic.tellapic_close_fd(fd);
@@ -191,7 +193,7 @@ public class NetManager extends Observable {
 				/* If the user has cancelled the dialog... */
 				if (dialogInput == null) {
 					/* Dispose the monitor */
-					monitor.setCurrent(null, CONNECTION_STEPS);
+					monitor.setCurrent(null, monitor.getTotal());
 
 					/* and close the connection */
 					tellapic.tellapic_close_fd(fd);
@@ -208,7 +210,7 @@ public class NetManager extends Observable {
 		/* Do we auth ok? */
 		if (cbyte != tellapicConstants.CTL_SV_AUTHOK) {
 			/* Dispose the monitor */
-			monitor.setCurrent(null, CONNECTION_STEPS);
+			monitor.setCurrent(null, monitor.getTotal());
 			
 			/* Close the connection */
 			tellapic.tellapic_close_fd(fd);
@@ -242,7 +244,7 @@ public class NetManager extends Observable {
 		/* Check for an invalid sequence/packet */
 		if (cbyte != tellapicConstants.CTL_SV_FILE) {
 			/* Dispose the dialog */
-			monitor.setCurrent(null, CONNECTION_STEPS);
+			monitor.setCurrent(null, monitor.getTotal());
 			
 			/* Close the connection */
 			tellapic.tellapic_close_fd(fd);
@@ -250,28 +252,43 @@ public class NetManager extends Observable {
 		}
 		
 		int dataSize = (int) header.getSsize() - tellapicConstants.HEADER_SIZE;
-		byte[]  temp = new byte[1024];
+		int chunkSize =  2048;
+		
 		byte[]  data = new byte[(int) dataSize];
 		int     read = 0;
 		int     i = 0;
 		int     j = 0;
 		int completed = 0;
 		
-		monitor.changeTotal((int) (Math.ceil((double)dataSize/1024) + CONNECTION_STEPS));
+		monitor.changeTotal((int) (Math.ceil((double)dataSize/chunkSize) + CONNECTION_STEPS));
 		
-		while(read < dataSize) {
-			System.out.println("read: "+read+" i: "+i);
-			tellapic.custom_wrap(tellapic.tellapic_read_bytes_b(fd, 1024), temp, 1024);
-			for(j = 0; j < 1024 && i * 1024 + j < dataSize; j++) {
-				data[i * 1024 + j] = temp[j];
+		PrintWriter pm = null;
+		try {
+			pm = new PrintWriter("/home/seba/debug2.txt");
+//			
+			while(read < dataSize) {
+				
+				int    size = (read + chunkSize < dataSize) ? chunkSize : dataSize - read;
+				byte[] temp = new byte[size];
+				
+				tellapic.custom_wrap(tellapic.tellapic_read_bytes_b(fd, size), temp, size);
+
+				for(j = 0; j < size; j++) {
+					data[i * chunkSize + j] = temp[j];
+					//System.out.println("data["+(i * chunkSize + j)+"]: "+data[i * chunkSize + j]);
+					pm.println(data[i * chunkSize + j]);
+				}
+				read += j;
+				i++;
+				completed = (int) (((float)read/(float)dataSize) * 100);
+
+				monitor.setCurrent("Downloading file: "+completed+"%", monitorStep++);
 			}
-			read += j;
-			i++;
-			completed = (int) (((float)read/(float)dataSize) * 100);
-			
-			monitor.setCurrent("Downloading file: "+completed+"%", monitorStep++);
-		}
 		
+		} catch (FileNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		ByteArrayInputStream in = new ByteArrayInputStream(data);
 		
 		try {
@@ -281,7 +298,7 @@ public class NetManager extends Observable {
 		} catch (IOException e) {
 			e.printStackTrace();
 			/* Dispose the monitor */
-			monitor.setCurrent(null, CONNECTION_STEPS);
+			monitor.setCurrent(null, monitor.getTotal());
 			
 			/* Close the connection */
 			tellapic.tellapic_close_fd(fd);
@@ -325,7 +342,7 @@ public class NetManager extends Observable {
 		fd = tellapic.tellapic_connect_to(host, port);
 		if (fd <= 0) {
 			/* Dispose the Dialog */
-			monitor.setCurrent(null, CONNECTION_STEPS);
+			monitor.setCurrent(null, monitor.getTotal());
 			
 			return CONNECTION_ERROR;
 		}
@@ -336,7 +353,7 @@ public class NetManager extends Observable {
 		
 		if (cbyte == tellapicConstants.CTL_FAIL || cbyte != tellapicConstants.CTL_SV_ID) {
 			/* Dispose the Dialog */
-			monitor.setCurrent(null, CONNECTION_STEPS);
+			monitor.setCurrent(null, monitor.getTotal());
 			
 			/* Close the connection */
 			tellapic.tellapic_close_fd(fd);
@@ -354,7 +371,9 @@ public class NetManager extends Observable {
 		/* Ask for file */
 		if ((error = askForFile()) < 0)
 			return error;
-
+		
+		monitor.setCurrent("Downloading done!", monitorStep++);
+		
 		SessionUtils.setUsername(name);
 		SessionUtils.setId(id);
 		SessionUtils.setServer(host);
@@ -363,6 +382,8 @@ public class NetManager extends Observable {
 		setConnected(true);
 		ReceiverThread r = new ReceiverThread(fd);
 		r.start();
+		
+		monitor.setCurrent("Starting network thread", monitorStep++);
 		
 		return fd;
 	}
@@ -589,14 +610,19 @@ public class NetManager extends Observable {
 			int button   = dcbyte & tellapicConstants.EVENT_MASK;
 			int eventExt = drawingData.getDcbyte_ext();
 			
+			/* Convert protocol button values to swing button and mask values */
+			int swingButton = convertToSwingButtonValue(button);
+			int swingMask   = getSwingMask(swingButton, eventExt);
+			
 			/* Get the tool class name for this local user */
 			String toolClassName = ToolFactory.getRegisteredToolsClassNames().get(remoteTool);
 			
-			/* Get the remote user paint controller */
-			IPaintPropertyController c = remoteUser.getPaintController();
-			ToolBoxModel toolBoxState  = remoteUser.getToolBoxModel();
+			/* Get the remote user paint controller and tool box model */
+			IPaintPropertyController    c = remoteUser.getPaintController();
+			ToolBoxModel    toolBoxState  = remoteUser.getToolBoxModel();
+			IToolBoxController toolControl = remoteUser.getToolboxController();
 			
-			remoteUser.getToolboxController().selectToolByName(toolClassName.split("[a-z].*\\.")[1]);
+			toolControl.selectToolByName(toolClassName.split("[a-z].*\\.")[1]);
 			
 			/* Create a color instance upon the remote color used */
 			Color color = new Color(
@@ -605,6 +631,11 @@ public class NetManager extends Observable {
 					drawingData.getColor().getBlue()
 			);
 			
+			/* Get an instance of the used tool */
+			DrawingTool usedTool = (DrawingTool) toolBoxState.getLastUsedTool();
+			avoidLoopback(usedTool);
+			
+			/* Handle text properties if the used tool was TEXT. Otherwise, handle stroke properties */
 			if ((remoteTool & tellapicConstants.TOOL_TEXT) == tellapicConstants.TOOL_TEXT) {
 				c.handleFontSizeChange((int)drawingData.getWidth());
 				c.handleFontStyleChange(drawingData.getType().getText().getStyle());
@@ -618,45 +649,50 @@ public class NetManager extends Observable {
 				c.handleWidthChange((int)drawingData.getWidth());
 				c.handleDashChange(drawingData.getType().getFigure().getDash_array(), drawingData.getType().getFigure().getDash_phase());
 			}
+			
+			/* Both text and stroke has color properties */
 			c.handleColorChange(color);
 			
-			int swingButton = convertToSwingButtonValue(button);
-			int swingMask   = getSwingMask(swingButton, eventExt);
 			
-			Tool usedTool = toolBoxState.getLastUsedTool();
-			avoidLoopback(usedTool);
-			if (usedTool.hasAlphaProperties())
+			if (usedTool.hasAlphaCapability())
 				usedTool.setAlpha(toolBoxState.getOpacityProperty());
 
-			if (usedTool.hasColorProperties())
+			if (usedTool.hasColorCapability())
 				usedTool.setColor(toolBoxState.getColorProperty());
 
-			if (usedTool.hasStrokeProperties())
+			if (usedTool.hasStrokeCapability())
 				usedTool.setStroke(toolBoxState.getStrokeProperty());
 
-			if (usedTool.hasFontProperties())
+			if (usedTool.hasFontCapability())
 				usedTool.setFont(toolBoxState.getFontProperty());
+			
+			if (usedTool.isOnPressSupported())
+				usedTool.onPress(
+						(int)drawingData.getPoint1().getX(),
+						(int)drawingData.getPoint1().getY(),
+						swingButton,
+						swingMask
+				);
+			
+			if (usedTool.isOnDragSupported())
+				usedTool.onDrag(
+						(int)drawingData.getType().getFigure().getPoint2().getX(),
+						(int)drawingData.getType().getFigure().getPoint2().getY(),
+						swingButton,
+						swingMask
+				);
+			
+//			remoteUser.setTemporalDrawing(usedTool.getDrawing());
 
-			usedTool.onPress(
-					(int)drawingData.getPoint1().getX(),
-					(int)drawingData.getPoint1().getY(),
-					swingButton,
-					swingMask
-			);
-			usedTool.onDrag(
-					(int)drawingData.getType().getFigure().getPoint2().getX(),
-					(int)drawingData.getType().getFigure().getPoint2().getY(),
-					swingButton,
-					swingMask
-			);
-			remoteUser.setTemporalDrawing(usedTool.getDrawing());
-
-			Drawing drawing = usedTool.onRelease(
-					(int)drawingData.getType().getFigure().getPoint2().getX(),
-					(int)drawingData.getType().getFigure().getPoint2().getY(),
-					swingButton,
-					swingMask
-			);
+			if (usedTool.isOnReleaseSupported())
+				usedTool.onRelease(
+						(int)drawingData.getType().getFigure().getPoint2().getX(),
+						(int)drawingData.getType().getFigure().getPoint2().getY(),
+						swingButton,
+						swingMask
+				);
+			
+			Drawing drawing = usedTool.getDrawing();
 			
 			if (drawing == null) 
 				return;
@@ -667,6 +703,7 @@ public class NetManager extends Observable {
 //			createAndDispatchDragEvent(remoteUser, drawing, eventAndButton, eventExt);
 //			createAndDispatchReleaseEvent(remoteUser, drawing, eventAndButton, eventExt);
 			
+			/* TODO: JUST FOR DEBUG */
 			int x1 = (int)drawingData.getPoint1().getX();
 			int y1 = (int)drawingData.getPoint1().getY();
 			int x2 = (int)drawingData.getType().getFigure().getPoint2().getX();
@@ -720,10 +757,10 @@ public class NetManager extends Observable {
 			int extDcbyte = drawingData.getDcbyte_ext();
 			
 			/* Get all the registered tools in this local user */
-			Map<Integer, String> toolsClassNames = ToolFactory.getRegisteredToolsClassNames();
+//			Map<Integer, String> toolsClassNames = ToolFactory.getRegisteredToolsClassNames();
 			
 			/* With the tool used from the remote user, get the same tool in this local user */
-			String     toolClassName   = toolsClassNames.get(remoteTool);
+			String     toolClassName   = ToolFactory.getRegisteredToolsClassNames().get(remoteTool);
 
 			/* Convert protocol mouse data to swing mouse data */
 			int swingButton = convertToSwingButtonValue(button);
@@ -739,7 +776,7 @@ public class NetManager extends Observable {
 			remoteUser.getToolboxController().selectToolByName(toolClassName.split("[a-z].*\\.")[1]);
 						
 			/* Get an instance of the used tool */
-			Tool usedTool = toolBoxState.getLastUsedTool();
+			DrawingTool usedTool = (DrawingTool) toolBoxState.getLastUsedTool();
 			
 			/* Avoid loopback information through the network. Each time a net tool is used */
 			/* it sends data through the network if loopback is set to true.                */
@@ -753,24 +790,26 @@ public class NetManager extends Observable {
 						drawingData.getColor().getGreen(),
 						drawingData.getColor().getBlue()
 				);
+				
 				c.handleEndCapsChange(drawingData.getType().getFigure().getEndcaps());
 				c.handleLineJoinsChange(drawingData.getType().getFigure().getLinejoin());
 				c.handleOpacityChange(drawingData.getOpacity());
-				c.handleWidthChange((int)drawingData.getWidth());
+				c.handleWidthChange(drawingData.getWidth());
 				c.handleColorChange(color);
-				if (usedTool.hasAlphaProperties())
+				
+				if (usedTool.hasAlphaCapability())
 					usedTool.setAlpha(toolBoxState.getOpacityProperty());
 
-				if (usedTool.hasColorProperties())
+				if (usedTool.hasColorCapability())
 					usedTool.setColor(toolBoxState.getColorProperty());
 
-				if (usedTool.hasStrokeProperties())
+				if (usedTool.hasStrokeCapability())
 					usedTool.setStroke(toolBoxState.getStrokeProperty());
 
-				if (usedTool.hasFontProperties())
+				if (usedTool.hasFontCapability())
 					usedTool.setFont(toolBoxState.getFontProperty());
 				
-				if (usedTool.hasColorProperties())
+				if (usedTool.hasColorCapability())
 					usedTool.setColor(toolBoxState.getColorProperty());
 				
 				usedTool.onPress(
@@ -790,17 +829,18 @@ public class NetManager extends Observable {
 						swingButton,
 						swingMask
 				);
-				remoteUser.setTemporalDrawing(usedTool.getDrawing());
+//				remoteUser.setTemporalDrawing(usedTool.getDrawing());
 				//createAndDispatchDragEvent(remoteUser, drawingData, eventAndButton, eventExtMod);
 				break;
 
 			case tellapicConstants.EVENT_RELEASE:
-				Drawing drawing = usedTool.onRelease(
+				usedTool.onRelease(
 						(int)drawingData.getPoint1().getX(),
 						(int)drawingData.getPoint1().getY(),
 						swingButton,
 						swingMask
 				);
+				Drawing drawing = usedTool.getDrawing();
 				
 				if (drawing == null) 
 					return;

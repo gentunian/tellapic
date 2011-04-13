@@ -17,9 +17,6 @@
  */  
 package ar.com.tellapic.graphics;
 
-import java.awt.AlphaComposite;
-import java.awt.BasicStroke;
-
 import ar.com.tellapic.NetManager;
 import ar.com.tellapic.SessionUtils;
 import ar.com.tellapic.lib.tellapic;
@@ -55,10 +52,12 @@ final public class RectangleNet extends Rectangle {
 	 * @see ar.com.tellapic.graphics.Ellipse#onRelease(int)
 	 */
 	@Override
-	public Drawing onRelease(int x, int y, int button, int mask) {
-		Drawing drawing = super.onRelease(x, y, button, mask);
+	public void onRelease(int x, int y, int button, int mask) {
+		super.onRelease(x, y, button, mask);
+		
+		Drawing drawing = getDrawing();
 		if (drawing == null)
-			return drawing;
+			return ;
 		
 		if (NetManager.getInstance().isConnected() && avoidLoopback) {
 			java.awt.Rectangle bounds = drawing.getShape().getBounds();
@@ -90,6 +89,5 @@ final public class RectangleNet extends Rectangle {
 			);
 		}
 		avoidLoopback = true;
-		return drawing;
 	}
 }

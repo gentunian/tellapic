@@ -125,6 +125,10 @@ public interface IToolBoxManager {
 	 */
 	public void setAlphaPropertyValue(double value);
 	
+	public void setZoomValue(float value);
+	
+	public void setZoomIn(boolean value);
+	
 	/**
 	 * Tools must be registered in the model
 	 * @param toolId

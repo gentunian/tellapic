@@ -40,6 +40,7 @@ public class SessionUtils {
 	 */
 	public static void setSharedImage(BufferedImage sharedImage) {
 		SessionUtils.sharedImage = sharedImage;
+		System.out.println("w: "+sharedImage.getWidth()+" h:"+sharedImage.getHeight());
 //		DrawingAreaView.getInstance().setImage(sharedImage);
 	}
 
