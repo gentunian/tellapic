@@ -34,6 +34,7 @@ package ar.com.tellapic.graphics;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Toolkit;
@@ -50,15 +51,18 @@ public class RuleHeader extends JComponent {
 	public static final int HORIZONTAL = 0;
 	public static final int VERTICAL = 1;
 	public static final int SIZE = 24;
+	private static final double TEXT_GAP = 4;
 
-	public int orientation;
+	public int     orientation;
 	public boolean isMetric;
-	private int increment;
-	private int units;
-	private int x;
-	private int y;
+	private int    increment;
+	private int    units;
+	private int    x;
+	private int    y;
+	private float  zoom;
 	private GeneralPath mark;
-	
+	private FontMetrics metrics;
+	private Font font;
 	
 	public RuleHeader(int o, boolean m) {
 		orientation = o;
@@ -66,6 +70,9 @@ public class RuleHeader extends JComponent {
 		setIncrementAndUnits();
 		x = 0;
 		y = 0;
+		zoom = 1;
+		font = new Font("SansSerif", Font.PLAIN, 9);
+		metrics = getFontMetrics(font);
 	}
 
 	public void setIsMetric(boolean isMetric) {
@@ -108,7 +115,7 @@ public class RuleHeader extends JComponent {
 		g2.fillRect(drawHere.x, drawHere.y, drawHere.width, drawHere.height);
 		
 		// Do the ruler labels in a small font that's black.
-		g2.setFont(new Font("SansSerif", Font.PLAIN, 9));
+		g2.setFont(font);
 		g2.setColor(Color.black);
 
 		// Some vars we need.
@@ -139,28 +146,37 @@ public class RuleHeader extends JComponent {
 				g2.drawString(text, 1, 10);
 			}
 			text = null;
-			start = increment;
+			start = (int) (increment*zoom);
 		}
 
+		int textDistance = 0;
 		// ticks and labels
-		for (int i = start; i < end; i += increment) {
-			if (i % units == 0)  {
+		double textWidth = 0;
+		
+		for (int i = start; i < end; i += (increment*zoom)) {
+			textDistance += (increment*zoom);
+			if (i % (int)(units*(float)zoom) == 0)  {
 				tickLength = (int) (SIZE * 0.2);
-				text = Integer.toString(i/units);
+				text = Integer.toString((int) (i/(int)(units*(float)zoom)));
+				textWidth = metrics.getStringBounds(text, g2).getWidth();
 			} else {
 				tickLength = (int) (SIZE * 0.2);
 				text = null;
 			}
-
+			
 			if (tickLength != 0) {
 				if (orientation == HORIZONTAL) {
 					g2.drawLine(i, SIZE-1, i, SIZE-tickLength-1);
-					if (text != null)
-						g2.drawString(text, i-3, 10);
+					if (text != null && textDistance - (textWidth + TEXT_GAP) > 0) {
+//						g2.drawString(text, i-3, 10);
+						textDistance = 0;
+					}
 				} else {
 					g2.drawLine(SIZE-1, i, SIZE-tickLength-1, i);
-					if (text != null)
-						g2.drawString(text, 1, i+3);
+					if (text != null && textDistance > textWidth - TEXT_GAP) {
+//						g2.drawString(text, 1, i+3);
+						textDistance = 0;
+					}
 				}
 			}
 		}
@@ -190,9 +206,10 @@ public class RuleHeader extends JComponent {
 	}
 	
 	
-	public void update(int x, int y) {
+	public void update(int x, int y, float z) {
 		this.x = x;
 		this.y = y;
+		zoom = z;
 		repaint();
 	}
 }

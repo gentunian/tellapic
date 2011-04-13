@@ -74,5 +74,15 @@ public interface IPaintPropertyController {
 	 * @param color
 	 */
 	public void handleColorChange(Color color);
+
+	/**
+	 * @param b
+	 */
+	public void handleZoomChange(boolean b);
+
+	/**
+	 * @param zoom
+	 */
+	public void handleZoomChange(float zoom);
 	
 }

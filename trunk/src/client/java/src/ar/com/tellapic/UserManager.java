@@ -63,7 +63,7 @@ public class UserManager implements IUserManager, IUserManagerState {
 		user.setName(name);
 		user.setUserId(id);
 		users.put(LocalUser.LOCAL_NAME, user);
-		user.addObserver(DrawingAreaView.getInstance());
+//		user.addObserver(DrawingAreaView.getInstance());
 		user.addObserver(UserView.getInstance());
 		user.notifyObservers(user);
 		return (LocalUser) user;

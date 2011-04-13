@@ -24,10 +24,10 @@ public class ToolBoxController implements IToolBoxController {
 	 * @param model
 	 * @param view
 	 */
-	public ToolBoxController(IToolBoxManager model) {		
+	public ToolBoxController(IToolBoxManager model) {
 		this.model = model;
 		
-		for(String toolName : ToolFactory.getRegisteredToolsClassNames().values()) 
+		for(String toolName : ToolFactory.getRegisteredToolsClassNames().values())
 			model.addTool(ToolFactory.createTool(toolName));
 	}
 

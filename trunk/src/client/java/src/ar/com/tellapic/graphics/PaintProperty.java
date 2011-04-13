@@ -23,7 +23,8 @@ public abstract class PaintProperty implements Cloneable {
 		STROKE,
 		COLOR,
 		ALPHA,
-		FONT
+		FONT,
+		ZOOM
 	}
 
 	public PaintProperty(PaintPropertyType type) throws IllegalArgumentException {

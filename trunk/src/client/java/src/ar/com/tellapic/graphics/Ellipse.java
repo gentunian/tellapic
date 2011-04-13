@@ -9,7 +9,7 @@ import java.awt.geom.Point2D;
 import ar.com.tellapic.lib.tellapicConstants;
 import ar.com.tellapic.utils.Utils;
 
-public class Ellipse extends Tool {
+public class Ellipse extends DrawingTool {
 	private Ellipse2D           ellipse;
 	private Point2D             firstPoint;
 	private Dimension           size;
@@ -42,12 +42,8 @@ public class Ellipse extends Tool {
 	
 	@Override
 	public Drawing getDrawing() {
-		if (inUse) {
-			temporalDrawing.setShape(ellipse);
-			return temporalDrawing;
-		}
-		
-		return null;
+		temporalDrawing.setShape(ellipse);
+		return (Drawing) temporalDrawing.clone();
 	}
 	
 	
@@ -61,6 +57,8 @@ public class Ellipse extends Tool {
 		size    = new Dimension(0, 0);
 		inUse   = true;
 		temporalDrawing.setShape(ellipse);
+		setChanged();
+		notifyObservers(temporalDrawing);
 	}
 	
 	
@@ -84,6 +82,8 @@ public class Ellipse extends Tool {
 				point = new Point2D.Double( ((initX < x)? initX : x), ((initY < y)? initY : y));
 
 			ellipse.setFrame(point, size);
+			setChanged();
+			notifyObservers(temporalDrawing);
 		}
 	}
 	
@@ -92,25 +92,25 @@ public class Ellipse extends Tool {
 	 * @see ar.com.tellapic.graphics.Tool#onFinishDraw()
 	 */
 	@Override
-	public Drawing onRelease(int x, int y, int button, int mask) {
+	public void onRelease(int x, int y, int button, int mask) {
 		if (inUse && !ellipse.isEmpty()) {
-			temporalDrawing.cloneProperties();
+//			temporalDrawing.cloneProperties();
 			inUse = false;
-			return temporalDrawing;
+			setChanged();
+			notifyObservers(temporalDrawing);
 		}
-		return null;
 	}
 	
 	
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.Tool#moveTo(double, double)
 	 */
-	@Override
-	public void moveTo(double x, double y) {
-		//TODO: check arguments
-		firstPoint.setLocation(x, y);
-		ellipse.setFrame(firstPoint, size);
-	}
+//	@Override
+//	public void moveTo(double x, double y) {
+//		
+//		firstPoint.setLocation(x, y);
+//		ellipse.setFrame(firstPoint, size);
+//	}
 	
 	
 	/* (non-Javadoc)
@@ -131,51 +131,12 @@ public class Ellipse extends Tool {
 	}
 	
 	
-
-	
-	
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#hasColorProperties()
-	 */
-	@Override
-	public boolean hasColorProperties() {
-		return true;
-	}
-	
-	
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#hasFontProperties()
-	 */
-	@Override
-	public boolean hasFontProperties() {
-		return false;
-	}
-	
-	
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#hasStrokeProperties()
-	 */
-	@Override
-	public boolean hasStrokeProperties() {
-		return true;
-	}
-	
-	
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#hasAlphaProperties()
-	 */
-	@Override
-	public boolean hasAlphaProperties() {
-		return true;
-	}
-	
-	
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.Tool#onMove(double, double)
 	 */
 	@Override
-	public Drawing onMove(int x, int y) {
-		return null;
+	public void onMove(int x, int y) {
+
 	}
 	
 	
@@ -201,7 +162,7 @@ public class Ellipse extends Tool {
 	 * @see ar.com.tellapic.graphics.Tool#onCancel()
 	 */
 	@Override
-	public void onCancel() {
+	public void onPause() {
 		inUse = false;
 	}
 	
@@ -230,6 +191,8 @@ public class Ellipse extends Tool {
 	@Override
 	public void setAlpha(PaintPropertyAlpha alpha) {
 		temporalDrawing.setAlpha(alpha);
+		setChanged();
+		notifyObservers(temporalDrawing);
 	}
 
 
@@ -239,6 +202,8 @@ public class Ellipse extends Tool {
 	@Override
 	public void setColor(PaintPropertyColor color) {
 		temporalDrawing.setColor(color);
+		setChanged();
+		notifyObservers(temporalDrawing);
 		
 	}
 
@@ -258,5 +223,69 @@ public class Ellipse extends Tool {
 	@Override
 	public void setStroke(PaintPropertyStroke stroke) {
 		temporalDrawing.setStroke(stroke);
+		setChanged();
+		notifyObservers(temporalDrawing);
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#isOnDragSupported()
+	 */
+	@Override
+	public boolean isOnDragSupported() {
+		return true;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#isOnPressSupported()
+	 */
+	@Override
+	public boolean isOnPressSupported() {
+		return true;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#isOnReleaseSupported()
+	 */
+	@Override
+	public boolean isOnReleaseSupported() {
+		return true;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#hasAlphaCapability()
+	 */
+	@Override
+	public boolean hasAlphaCapability() {
+		return true;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#hasColorCapability()
+	 */
+	@Override
+	public boolean hasColorCapability() {
+		return true;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#hasFontCapability()
+	 */
+	@Override
+	public boolean hasFontCapability() {
+		return false;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#hasStrokeCapability()
+	 */
+	@Override
+	public boolean hasStrokeCapability() {
+		return true;
 	}
 }

@@ -19,7 +19,6 @@ package ar.com.tellapic;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.RenderingHints;
 import java.awt.RenderingHints.Key;
@@ -47,6 +46,7 @@ import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.border.EmptyBorder;
 
 import ar.com.tellapic.chat.ChatController;
 import ar.com.tellapic.chat.ChatView;
@@ -81,10 +81,10 @@ public class UserGUIBuilder {
 	private ChatView                chatView;
 	private JFrame                  mainWindow;
 	private JScrollPane             scrollPane;
-	private RuleHeader              topRule;
-	private RuleHeader              leftRule;
-	private JPanel                  buttonCorner;
-	private JToggleButton           isMetric;
+//	private RuleHeader              topRule;
+//	private RuleHeader              leftRule;
+//	private JPanel                  buttonCorner;
+//	private JToggleButton           isMetric;
 	
 	public UserGUIBuilder(LocalUser user) {
 		// Each user has it owns toolbox. This can be a memory overhead issue, but its the bes way to reuse code
@@ -120,6 +120,7 @@ public class UserGUIBuilder {
 		//user.addObserver(userView);
 		//user.notifyObservers(user);
 		scrollPane = new JScrollPane(drawingAreaView);
+		
 //		topRule   = new RuleHeader(RuleHeader.HORIZONTAL, true);
 //		leftRule = new RuleHeader(RuleHeader.VERTICAL, true);
 //		buttonCorner = new JPanel();
@@ -301,7 +302,14 @@ public class UserGUIBuilder {
 		
 		JCheckBoxMenuItem grid  = new JCheckBoxMenuItem("Show Grid");
 		JCheckBoxMenuItem ruler = new JCheckBoxMenuItem("Show Ruler");
+		JCheckBoxMenuItem status = new JCheckBoxMenuItem("Show Status Bar");
 		
+		status.addItemListener(new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				StatusBar.getInstance().setVisible((e.getStateChange() == ItemEvent.SELECTED));
+			}
+		});
 		
 		grid.addItemListener(new ItemListener(){
 			@Override
@@ -368,11 +376,13 @@ public class UserGUIBuilder {
 		
 		grid.setSelected(true);
 		ruler.setSelected(true);
+		status.setSelected(true);
 		
 		viewMenu.add(buildThemeMenu());
 		viewMenu.addSeparator();
 		viewMenu.add(grid);
 		viewMenu.add(ruler);
+		viewMenu.add(status);
 		viewMenu.addSeparator();
 		viewMenu.add(gridSize);
 		viewMenu.add(gridColor);

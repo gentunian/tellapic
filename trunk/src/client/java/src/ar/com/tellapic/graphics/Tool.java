@@ -2,6 +2,7 @@ package ar.com.tellapic.graphics;
 
 import java.awt.Cursor;
 import java.awt.geom.Point2D;
+import java.util.Observable;
 
 /**
  * Abstract class Tool.
@@ -34,13 +35,14 @@ import java.awt.geom.Point2D;
  * @author Sebastián Treu, mailTo: sebastian.treu (at) gmail.com
  *
  */
-public abstract class Tool {
-	private int      id;
-	private String   name;
-	private String   iconPath;
-	private String   toolTipText;
-	private boolean  enabled;
-	private Cursor   toolCursor;
+public abstract class Tool extends Observable {
+	
+	private int              id;
+	private String           name;
+	private String           iconPath;
+	private String           toolTipText;
+	private boolean          visible;
+	private Cursor           toolCursor;
 
 	
 	/**
@@ -63,7 +65,7 @@ public abstract class Tool {
 		if (name == null || iconPath == null)
 			throw new IllegalArgumentException();
 		
-		this.enabled     = true;
+		this.visible     = true;
 		this.toolTipText = description;
 		this.iconPath    = iconPath;
 		this.name        = name;
@@ -79,15 +81,12 @@ public abstract class Tool {
 	
 	
 	/**
-	 * After a concrete Tool has being created, init() will
-	 * set the first point where the concrete tool has been
-	 * Initiated on the screen.
 	 * @param x the x coordinate
 	 * @param y the y coordinate
 	 */
 	public abstract void onPress(int x, int y, int button, int mask);
 
-		/**
+	/**
 	 * Call this when dragging the tool on the drawing area so it can update itself.
 	 * @param x the x coordinate.
 	 * @param y the y coordinate.
@@ -102,30 +101,30 @@ public abstract class Tool {
 	 * @param x the x coordinate.
 	 * @param y the y coordinate.
 	 */
-	public abstract Drawing onMove(int x, int y);
+	public abstract void onMove(int x, int y);
 	
 	
 	/**
 	 * Event that represents ending the use of the tool. If its called, future
-	 * calls to {@link ar.com.tellapic.graphics.Tool#isBeingUsed()} will return false
+	 * calls to {@link ar.com.tellapic.graphics.Tool#isBeingUsed()} should return false
 	 * until someone calls {@link ar.com.tellapic.graphics.Tool#init(double, double)}.
 	 * @return The last drawing object state of this tool.
 	 */
-	public abstract Drawing onRelease(int x, int y, int button, int mask);
+	public abstract void onRelease(int x, int y, int button, int mask);
 	
 	
 	/**
 	 * 
 	 */
 	//TODO: rename to: onPause();
-	public abstract void onCancel();
+	public abstract void onPause();
 	
 	
 	/**
 	 * Returns the *current state* of this drawing tool.
 	 * @return the drawing object that represents the current state of this tool.
 	 */
-	public abstract Drawing getDrawing();
+//	public abstract Drawing getDrawing();
 	
 	
 	/**
@@ -149,9 +148,9 @@ public abstract class Tool {
 	/**
 	 * Inform whether or not live mode is supported. Live mode is a way or feature
 	 * of the tool that tells if the tool can report each motion to the tool user.
-	 * @return true if live mode is supporte, false otherwise.
+	 * @return true if live mode is support, false otherwise.
 	 */
-	public abstract boolean isLiveModeSupported();
+//	public abstract boolean isLiveModeSupported();
 	
 	
 	/**
@@ -161,6 +160,10 @@ public abstract class Tool {
 	 * @return true if the move feature is supported.
 	 */
 	public abstract boolean isOnMoveSupported();
+	public abstract boolean isOnPressSupported();
+	public abstract boolean isOnDragSupported();
+	public abstract boolean isOnReleaseSupported();
+	
 	
 	
 	/**
@@ -169,7 +172,7 @@ public abstract class Tool {
 	 * @param x the x coordinate.
 	 * @param y the y coordinate.
 	 */
-	public abstract void moveTo(double x, double y);
+//	public abstract void moveTo(double x, double y);
 	
 	
 	/**
@@ -190,63 +193,70 @@ public abstract class Tool {
 	 * 
 	 * @return True if the Drawing object can be filled with colors, false otherwise (e.g. a line).
 	 */
-	public abstract boolean isFilleable();
+//	public abstract boolean isFilleable();
 	
 	
 	/**
 	 * This method tells if the generated Drawing object will have stroke properties.
 	 * @return True if the Tool generates a Drawing object with stroke properties, false otherwise.
 	 */
-	public abstract boolean hasStrokeProperties();
+//	public abstract boolean hasStroke();
 	
 	
 	/**
 	 * This method tells if the generated Drawing object will have color properties.
 	 * @return
 	 */
-	public abstract boolean hasColorProperties();
+//	public abstract boolean hasColor();
 	
 	
 	/**
 	 * This method tells if the generated Drawing object will have font properties.
 	 * @return
 	 */
-	public abstract boolean hasFontProperties();
+//	public abstract boolean hasFont();
 	
 	
 	/**
 	 * This method tells if the generated Drawing object will have composite properties.
 	 * @return
 	 */
-	public abstract boolean hasAlphaProperties();
+//	public abstract boolean hasAlpha();
+	
+	
+	/**
+	 * 
+	 * @return
+	 */
+//	public abstract boolean hasZoomProperties();
 	
 	
 	/**
 	 * 
 	 * @param alpha
 	 */
-	public abstract void setAlpha(PaintPropertyAlpha alpha);
+//	public abstract void setAlpha(PaintPropertyAlpha alpha);
 	
 	
 	/**
 	 * 
 	 * @param color
 	 */
-	public abstract void setColor(PaintPropertyColor color);
+//	public abstract void setColor(PaintPropertyColor color);
 	
 	
 	/**
 	 * 
 	 * @param stroke
 	 */
-	public abstract void setStroke(PaintPropertyStroke stroke);
+//	public abstract void setStroke(PaintPropertyStroke stroke);
 	
 	
 	/**
 	 * 
 	 * @param font
 	 */
-	public abstract void setFont(PaintPropertyFont font);
+//	public abstract void setFont(PaintPropertyFont font);
 	
 	
 	/**
@@ -271,8 +281,8 @@ public abstract class Tool {
 	 * 
 	 * @param value
 	 */
-	public void setEnabled(boolean value) {
-		enabled = value;
+	public void setVisible(boolean value) {
+		visible = value;
 	}
 	
 	
@@ -281,7 +291,7 @@ public abstract class Tool {
 	 * @return
 	 */
 	public boolean isEnabled() {
-		return enabled;	
+		return visible;	
 	}
 	
 	

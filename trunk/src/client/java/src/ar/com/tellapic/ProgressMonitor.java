@@ -70,6 +70,7 @@ public class ProgressMonitor{
 	} 
 
 	public void setCurrent(String status, int current){ 
+		Utils.logMessage(status+" . Current: "+current);
 		if(current==-1) 
 			throw new IllegalStateException("not started yet"); 
 		this.current = current; 
@@ -79,6 +80,7 @@ public class ProgressMonitor{
 	} 
 	
 	public void changeTotal(int newTotal) {
+		Utils.logMessage("Changing total to: "+newTotal);
 		this.total = newTotal;
 	}
 	

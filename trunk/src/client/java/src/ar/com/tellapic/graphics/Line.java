@@ -13,7 +13,7 @@ import ar.com.tellapic.utils.Utils;
  * @author seba
  *
  */
-public class Line extends Tool {
+public class Line extends DrawingTool {
 	private static final double ANGLE = 15;
 	private static final double STEP = (ANGLE * Math.PI) / 180;
 	
@@ -40,11 +40,8 @@ public class Line extends Tool {
 	 */
 	@Override
 	public Drawing getDrawing() {
-		if (inUse) {
-			temporalDrawing.setShape(line);
-			return temporalDrawing;
-		}
-		return null;
+		temporalDrawing.setShape(line);
+		return (Drawing) temporalDrawing.clone();
 	}
 
 
@@ -69,6 +66,8 @@ public class Line extends Tool {
 		line            = new Line2D.Double(firstPoint, firstPoint);
 		inUse = true;
 		temporalDrawing.setShape(line);
+		setChanged();
+		notifyObservers(temporalDrawing);
 	}
 
 	
@@ -94,6 +93,8 @@ public class Line extends Tool {
 			} 
 
 			line.setLine(firstPoint.getX(), firstPoint.getY(), newX, newY);
+			setChanged();
+			notifyObservers(temporalDrawing);
 		}
 	}
 
@@ -102,13 +103,13 @@ public class Line extends Tool {
 	 * @see ar.com.tellapic.graphics.Tool#onFinishDraw()
 	 */
 	@Override
-	public Drawing onRelease(int x, int y, int button, int mask) {
+	public void onRelease(int x, int y, int button, int mask) {
 		if (inUse && line.getP1().distance(line.getP2()) > 0.0) {
-			temporalDrawing.cloneProperties();
+//			temporalDrawing.cloneProperties();
 			inUse = false;
-			return temporalDrawing;
+			setChanged();
+			notifyObservers(temporalDrawing);
 		}
-		return null;
 	}
 	
 	
@@ -116,7 +117,7 @@ public class Line extends Tool {
 	 * @see ar.com.tellapic.graphics.Tool#onCancel()
 	 */
 	@Override
-	public void onCancel() {
+	public void onPause() {
 		inUse = false;
 	}
 	
@@ -131,16 +132,6 @@ public class Line extends Tool {
 	
 	
 	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#moveTo(double, double)
-	 */
-	@Override
-	public void moveTo(double x, double y) {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.Tool#isFilleable()
 	 */
 	@Override
@@ -154,7 +145,7 @@ public class Line extends Tool {
 	 * @see ar.com.tellapic.graphics.Tool#hasAlphaProperties()
 	 */
 	@Override
-	public boolean hasAlphaProperties() {
+	public boolean hasAlphaCapability() {
 		return true;
 	}
 
@@ -163,7 +154,7 @@ public class Line extends Tool {
 	 * @see ar.com.tellapic.graphics.Tool#hasColorProperties()
 	 */
 	@Override
-	public boolean hasColorProperties() {
+	public boolean hasColorCapability() {
 		return true;
 	}
 
@@ -172,7 +163,7 @@ public class Line extends Tool {
 	 * @see ar.com.tellapic.graphics.Tool#hasFontProperties()
 	 */
 	@Override
-	public boolean hasFontProperties() {
+	public boolean hasFontCapability() {
 		return false;
 	}
 
@@ -181,17 +172,8 @@ public class Line extends Tool {
 	 * @see ar.com.tellapic.graphics.Tool#hasStrokeProperties()
 	 */
 	@Override
-	public boolean hasStrokeProperties() {
+	public boolean hasStrokeCapability() {
 		return true;
-	}
-
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onMove(double, double)
-	 */
-	@Override
-	public Drawing onMove(int x, int y) {
-		return null;		
 	}
 
 
@@ -227,6 +209,8 @@ public class Line extends Tool {
 	@Override
 	public void setAlpha(PaintPropertyAlpha alpha) {
 		temporalDrawing.setAlpha(alpha);
+		setChanged();
+		notifyObservers(temporalDrawing);
 	}
 
 	/* (non-Javadoc)
@@ -235,6 +219,8 @@ public class Line extends Tool {
 	@Override
 	public void setColor(PaintPropertyColor color) {
 		temporalDrawing.setColor(color);
+		setChanged();
+		notifyObservers(temporalDrawing);
 	}
 
 	/* (non-Javadoc)
@@ -250,5 +236,41 @@ public class Line extends Tool {
 	@Override
 	public void setStroke(PaintPropertyStroke stroke) {
 		temporalDrawing.setStroke(stroke);
+		setChanged();
+		notifyObservers(temporalDrawing);
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#isOnDragSupported()
+	 */
+	@Override
+	public boolean isOnDragSupported() {
+		return true;
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#isOnPressSupported()
+	 */
+	@Override
+	public boolean isOnPressSupported() {
+		return true;
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#isOnReleaseSupported()
+	 */
+	@Override
+	public boolean isOnReleaseSupported() {
+		return true;
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#onMove(int, int)
+	 */
+	@Override
+	public void onMove(int x, int y) {
+		// TODO Auto-generated method stub
+		
 	}
 }

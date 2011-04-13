@@ -31,6 +31,7 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	private PaintPropertyFont     fontProperty;
 	private PaintPropertyAlpha    alphaProperty;
 	
+	
 	public class ActionData {
 		private int action;
 		private Tool data;
@@ -132,7 +133,8 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 			throw new IllegalArgumentException("tool cannot be null");
 		
 		tools.put(tool.getName(), tool);
-		Utils.logMessage("Tool added: "+tool.getName()+". Notifying observers...");
+//		Utils.logMessage("Tool added: "+tool.getName()+". Notifying observers...");
+		tool.addObserver(DrawingAreaView.getInstance());
 		setChanged();
 		notifyObservers(new ActionData(ADD_TOOL, tool));
 	}
@@ -147,7 +149,10 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 			throw new IllegalArgumentException("cap value must be one of CAP_SQUARE, CAP_ROUND or CAP_BUTT");
 		
 		strokeProperty.setEndCaps(cap);
-		Utils.logMessage("stroke end caps property set to: "+strokeProperty.getEndCaps());
+//		Utils.logMessage("stroke end caps property set to: "+strokeProperty.getEndCaps());
+		if (lastUsedTool instanceof DrawingTool) {
+			((DrawingTool) lastUsedTool).setStroke(strokeProperty);
+		}
 	}
 
 
@@ -165,6 +170,9 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 		
 		strokeProperty.setDash(dash);
 		strokeProperty.setDash_phase(dashPhase);
+		if (lastUsedTool instanceof DrawingTool) {
+			((DrawingTool) lastUsedTool).setStroke(strokeProperty);
+		}
 	}
 
 
@@ -177,7 +185,10 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 			throw new IllegalArgumentException("join value must be one of JOIN_MITER, JOIN_BEVEL or JOIN_ROUND");
 		
 		strokeProperty.setLineJoins(join);
-		Utils.logMessage("stroke line joins property set to: "+strokeProperty.getLineJoins());
+		if (lastUsedTool instanceof DrawingTool) {
+			((DrawingTool) lastUsedTool).setStroke(strokeProperty);
+		}
+//		Utils.logMessage("stroke line joins property set to: "+strokeProperty.getLineJoins());
 	}
 
 
@@ -187,7 +198,10 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	@Override
 	public void setStrokePropertyMiterLimit(float width) {
 		strokeProperty.setMiterLimit(width);
-		Utils.logMessage("stroke mitter limit property set to: "+strokeProperty.getMiterLimit());
+//		Utils.logMessage("stroke mitter limit property set to: "+strokeProperty.getMiterLimit());
+		if (lastUsedTool instanceof DrawingTool) {
+			((DrawingTool) lastUsedTool).setStroke(strokeProperty);
+		}
 	}
 
 
@@ -197,9 +211,12 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	@Override
 	public void setStrokePropertyWidth(double width) {
 		strokeProperty.setWidth(width);
+		if (lastUsedTool instanceof DrawingTool) {
+			((DrawingTool) lastUsedTool).setStroke(strokeProperty);
+		}
 		setChanged();
 		notifyObservers(new ActionData(UPDATE_TOOL, lastUsedTool));
-		Utils.logMessage("stroke width property set to: "+strokeProperty.getWidth());
+//		Utils.logMessage("stroke width property set to: "+strokeProperty.getWidth());
 	}
 
 
@@ -209,7 +226,10 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	@Override
 	public void setFontPropertyFace(String face) {
 		fontProperty.setFace(face);
-		Utils.logMessage("Font face has been set to "+face);
+//		Utils.logMessage("Font face has been set to "+face);
+		if (lastUsedTool instanceof DrawingTool) {
+			((DrawingTool) lastUsedTool).setFont(fontProperty);
+		}
 	}
 
 
@@ -219,7 +239,10 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	@Override
 	public void setFontPropertySize(int size) {
 		fontProperty.setSize(size);
-		Utils.logMessage("Font size has been set to "+size);
+//		Utils.logMessage("Font size has been set to "+size);
+		if (lastUsedTool instanceof DrawingTool) {
+			((DrawingTool) lastUsedTool).setFont(fontProperty);
+		}
 	}
 
 
@@ -229,7 +252,10 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	@Override
 	public void setFontPropertyStyle(int style) {
 		fontProperty.setStyle(style);
-		Utils.logMessage("Font style has been set to "+style);
+//		Utils.logMessage("Font style has been set to "+style);
+		if (lastUsedTool instanceof DrawingTool) {
+			((DrawingTool) lastUsedTool).setFont(fontProperty);
+		}
 	}
 
 
@@ -239,9 +265,12 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	@Override
 	public void setAlphaPropertyValue(double value) {
 		alphaProperty.alpha = (float) value;
+		if (lastUsedTool instanceof DrawingTool) {
+			((DrawingTool) lastUsedTool).setAlpha(alphaProperty);
+		}
 		setChanged();
 		notifyObservers(new ActionData(UPDATE_TOOL, lastUsedTool));
-		Utils.logMessage("Alpha opacity has been set to "+value);
+//		Utils.logMessage("Alpha opacity has been set to "+value);
 	}
 
 
@@ -298,7 +327,7 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	public void disableTool(Tool tool) {
 		// don't notify if it was already disabled
 		if (tool.isEnabled()) {
-			tool.setEnabled(false);
+			tool.setVisible(false);
 			setChanged();
 			notifyObservers(tool);
 		}
@@ -312,7 +341,7 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	public void enableTool(Tool tool) {
 		// Don't notify if it was already enabled
 		if (!tool.isEnabled()) {
-			tool.setEnabled(true);
+			tool.setVisible(true);
 			setChanged();
 			notifyObservers(tool);
 		}
@@ -325,7 +354,11 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	@Override
 	public void setFontPropertyText(String text) {
 		fontProperty.setText(text);
-		Utils.logMessage("Font text has been set to "+text);
+//		Utils.logMessage("Font text has been set to "+text);
+
+		if (lastUsedTool instanceof DrawingTool) {
+			((DrawingTool) lastUsedTool).setFont(fontProperty);
+		}
 	}
 
 
@@ -353,5 +386,30 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	@Override
 	public void setColorPropertyValue(Color color) {
 		colorProperty.setColor(color);
+		if (lastUsedTool instanceof DrawingTool) {
+			((DrawingTool) lastUsedTool).setColor(colorProperty);
+		}
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.IToolBoxManager#incrementZoom()
+	 */
+	@Override
+	public void setZoomIn(boolean value) {
+		Zoom zoom = (Zoom) tools.get("Zoom"); //TODO: use constant.
+		
+		zoom.setZoomIn(value);
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.IToolBoxManager#setZoomValue(double)
+	 */
+	@Override
+	public void setZoomValue(float value) {
+		Zoom zoom = (Zoom) tools.get("Zoom"); //TODO: use constant.
+		
+		zoom.setZoom(value);
 	}
 }

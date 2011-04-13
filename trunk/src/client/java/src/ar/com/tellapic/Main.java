@@ -91,14 +91,16 @@ public class Main {
 					}
 					if (r > 0)
 						initiate(SessionUtils.getId(), SessionUtils.getUsername());
-					else
+					else {
 						JOptionPane.showMessageDialog(null, Utils.msg.getString("errorconnect"), Utils.msg.getString("errorconnecttitle"), JOptionPane.ERROR_MESSAGE);
+						System.exit(1);
+					}
 					break;
 					
-				
 				default:
 					break;
 				}
+				
 			} else {
 				//TODO
 			}

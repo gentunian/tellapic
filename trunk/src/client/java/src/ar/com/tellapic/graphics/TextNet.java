@@ -17,8 +17,6 @@
  */  
 package ar.com.tellapic.graphics;
 
-import java.awt.AlphaComposite;
-
 import ar.com.tellapic.NetManager;
 import ar.com.tellapic.SessionUtils;
 import ar.com.tellapic.lib.tellapic;
@@ -49,10 +47,12 @@ final public class TextNet extends Text {
 	 * @see ar.com.tellapic.graphics.Ellipse#onRelease(int)
 	 */
 	@Override
-	public Drawing onRelease(int x, int y, int button, int mask) {
-		Drawing drawing = super.onRelease(x, y, button, mask);
+	public void onRelease(int x, int y, int button, int mask) {
+		super.onRelease(x, y, button, mask);
+		 
+		Drawing drawing = getDrawing();
 		if (drawing == null)
-			return drawing;
+			return ;
 		
 		if (NetManager.getInstance().isConnected() && avoidLoopback) {
 			
@@ -75,6 +75,5 @@ final public class TextNet extends Text {
 			);
 		}
 		avoidLoopback = true;
-		return drawing;
 	}
 }

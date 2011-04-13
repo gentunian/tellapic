@@ -64,6 +64,12 @@ public abstract class AbstractDrawing {
 	 */
 	public abstract PaintPropertyFont getPaintPropertyFont();
 	
+	/**
+	 * 
+	 * @return
+	 */
+	public abstract PaintPropertyZoom getPaintPropertyZoom();
+	
 	public abstract boolean hasFontProperty();
 	
 	public abstract boolean hasColorProperty();
@@ -71,4 +77,8 @@ public abstract class AbstractDrawing {
 	public abstract boolean hasStrokeProperty();
 	
 	public abstract boolean hasAlphaProperty();
+	
+	public abstract boolean hasZoomProperty();
+	
+	
 }
