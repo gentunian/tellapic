@@ -6,6 +6,12 @@ import java.awt.Color;
 public class PaintPropertyColor extends PaintProperty {
 	
 	private Color color;
+	
+	public PaintPropertyColor(Color color) {
+		super(PaintPropertyType.COLOR);
+		this.color = color;
+	}
+	
 	public PaintPropertyColor() {
 		super(PaintPropertyType.COLOR);
 	}

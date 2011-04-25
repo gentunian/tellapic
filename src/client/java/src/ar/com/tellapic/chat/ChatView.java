@@ -167,6 +167,8 @@ public class ChatView extends JPanel implements Observer {
 		tabbedPane.addChangeListener(new ChangeListener(){
 			@Override
 			public void stateChanged(ChangeEvent e) {
+				if (((JTabbedPane)e.getSource()).getSelectedIndex() == -1)
+					return;
 				System.out.println("selected tab: "+((JTabbedPane)e.getSource()).getSelectedIndex());
 				currentTabIndex = ((JTabbedPane)e.getSource()).getSelectedIndex();
 				currentTabTitle = ((JTabbedPane)e.getSource()).getTitleAt(currentTabIndex);
@@ -179,6 +181,10 @@ public class ChatView extends JPanel implements Observer {
 	
 	
 	private int createNewTab(String title) {
+		int exist = tabbedPane.indexOfTab(title);
+		if (exist != -1)
+			return exist;
+		
 		// Create and set properties for the tab text area
 		final JTextPane content = new JTextPane();
 		content.setEditable(false);
@@ -252,8 +258,6 @@ public class ChatView extends JPanel implements Observer {
 						message.getSender(),
 						message.getText()
 				};
-
-				
 				
 				if (message.isPrivate()){
 					String tabTitle = null;
@@ -281,5 +285,14 @@ public class ChatView extends JPanel implements Observer {
 				}
 			}
 		}
+	}
+
+
+	/**
+	 * @param name
+	 */
+	public void createNewChatTab(String name) {
+		int index = createNewTab(name);
+		tabbedPane.setSelectedIndex(index);
 	}
 }

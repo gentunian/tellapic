@@ -21,9 +21,7 @@ import java.awt.Color;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.io.ByteArrayInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Observable;
@@ -168,6 +166,7 @@ public class NetManager extends Observable {
 		System.out.println("Password was ok.");
 
 		do {
+			System.out.println("Trying new name: "+name+" with length: "+name.length());
 			/* Send the user name packet to the server */
 			tellapic.tellapic_send_ctle(fd, stream.getData().getControl().getIdfrom(), tellapicConstants.CTL_CL_NAME, name.length(), name);
 
@@ -203,7 +202,6 @@ public class NetManager extends Observable {
 				}
 
 				name = dialogInput;
-				System.out.println("Trying new name: "+dialogInput+" with length: "+dialogInput.length());
 			}
 		} while(cbyte == tellapicConstants.CTL_SV_NAMEINUSE);
 		
@@ -218,7 +216,8 @@ public class NetManager extends Observable {
 			/* Inform the error */
 			return AUTHENTICATION_ERROR;
 		}
-		
+		SessionUtils.setUsername(name);
+		SessionUtils.setPassword(password);
 		return AUTHENTICATION_OK;
 	}
 	
@@ -262,32 +261,26 @@ public class NetManager extends Observable {
 		
 		monitor.changeTotal((int) (Math.ceil((double)dataSize/chunkSize) + CONNECTION_STEPS));
 		
-		PrintWriter pm = null;
-		try {
-			pm = new PrintWriter("/home/seba/debug2.txt");
+//		PrintWriter pm = null;
+		//			pm = new PrintWriter("/home/seba/debug2.txt");
 //			
-			while(read < dataSize) {
-				
-				int    size = (read + chunkSize < dataSize) ? chunkSize : dataSize - read;
-				byte[] temp = new byte[size];
-				
-				tellapic.custom_wrap(tellapic.tellapic_read_bytes_b(fd, size), temp, size);
+		while(read < dataSize) {
+			
+			int    size = (read + chunkSize < dataSize) ? chunkSize : dataSize - read;
+			byte[] temp = new byte[size];
+			
+			tellapic.custom_wrap(tellapic.tellapic_read_bytes_b(fd, size), temp, size);
 
-				for(j = 0; j < size; j++) {
-					data[i * chunkSize + j] = temp[j];
-					//System.out.println("data["+(i * chunkSize + j)+"]: "+data[i * chunkSize + j]);
-					pm.println(data[i * chunkSize + j]);
-				}
-				read += j;
-				i++;
-				completed = (int) (((float)read/(float)dataSize) * 100);
-
-				monitor.setCurrent("Downloading file: "+completed+"%", monitorStep++);
+			for(j = 0; j < size; j++) {
+				data[i * chunkSize + j] = temp[j];
+				//System.out.println("data["+(i * chunkSize + j)+"]: "+data[i * chunkSize + j]);
+//					pm.println(data[i * chunkSize + j]);
 			}
-		
-		} catch (FileNotFoundException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+			read += j;
+			i++;
+			completed = (int) (((float)read/(float)dataSize) * 100);
+
+			monitor.setCurrent("Downloading file: "+completed+"%", monitorStep++);
 		}
 		ByteArrayInputStream in = new ByteArrayInputStream(data);
 		
@@ -363,7 +356,10 @@ public class NetManager extends Observable {
 		
 		/* Set the session id */
 		id = stream.getData().getControl().getIdfrom();
-
+		SessionUtils.setId(id);
+		SessionUtils.setServer(host);
+		SessionUtils.setPort(port);
+		
 		/* Authenticate with the server */
 		if ((error = authenticate(password, name)) < 0)
 			return error;
@@ -374,11 +370,6 @@ public class NetManager extends Observable {
 		
 		monitor.setCurrent("Downloading done!", monitorStep++);
 		
-		SessionUtils.setUsername(name);
-		SessionUtils.setId(id);
-		SessionUtils.setServer(host);
-		SessionUtils.setPort(port);
-		SessionUtils.setPassword(password);
 		setConnected(true);
 		ReceiverThread r = new ReceiverThread(fd);
 		r.start();
@@ -633,6 +624,7 @@ public class NetManager extends Observable {
 			
 			/* Get an instance of the used tool */
 			DrawingTool usedTool = (DrawingTool) toolBoxState.getLastUsedTool();
+			usedTool.getTemporalDrawing().setUser(remoteUser);
 			avoidLoopback(usedTool);
 			
 			/* Handle text properties if the used tool was TEXT. Otherwise, handle stroke properties */
@@ -692,7 +684,7 @@ public class NetManager extends Observable {
 						swingMask
 				);
 			
-			Drawing drawing = usedTool.getDrawing();
+			Drawing drawing = usedTool.finishDrawing();
 			
 			if (drawing == null) 
 				return;
@@ -777,6 +769,7 @@ public class NetManager extends Observable {
 						
 			/* Get an instance of the used tool */
 			DrawingTool usedTool = (DrawingTool) toolBoxState.getLastUsedTool();
+			usedTool.getTemporalDrawing().setUser(remoteUser);
 			
 			/* Avoid loopback information through the network. Each time a net tool is used */
 			/* it sends data through the network if loopback is set to true.                */
@@ -812,6 +805,8 @@ public class NetManager extends Observable {
 				if (usedTool.hasColorCapability())
 					usedTool.setColor(toolBoxState.getColorProperty());
 				
+//				usedTool.getTemporalDrawing().setUser(remoteUser);
+				
 				usedTool.onPress(
 						(int)drawingData.getPoint1().getX(),
 						(int)drawingData.getPoint1().getY(),
@@ -829,8 +824,7 @@ public class NetManager extends Observable {
 						swingButton,
 						swingMask
 				);
-//				remoteUser.setTemporalDrawing(usedTool.getDrawing());
-				//createAndDispatchDragEvent(remoteUser, drawingData, eventAndButton, eventExtMod);
+				
 				break;
 
 			case tellapicConstants.EVENT_RELEASE:
@@ -840,7 +834,7 @@ public class NetManager extends Observable {
 						swingButton,
 						swingMask
 				);
-				Drawing drawing = usedTool.getDrawing();
+				Drawing drawing = usedTool.finishDrawing();
 				
 				if (drawing == null) 
 					return;
@@ -1064,8 +1058,8 @@ public class NetManager extends Observable {
 			
 			for(int i =0 ; i < userNameLen; i++)
 				userName += (char)userInfo[i];
-			System.out.println("LENGHT: "+ stream.getHeader().getSsize()+ "name: "+userName);
-			UserManager.getInstance().addUser(newUserId, userName);
+			System.out.println("LENGHT: "+ stream.getHeader().getSsize()+ " NAME: "+userName);
+			UserManager.getInstance().createUser(newUserId, userName, true);
 		}
 	}
 	

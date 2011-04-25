@@ -95,7 +95,7 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 		if (tool == null)
 			throw new IllegalArgumentException("tool cannot be null");
 
-		DrawingAreaView.getInstance().setCursor(tool.getCursor());
+//		DrawingAreaView.getInstance().setCursor(tool.getCursor());
 		lastUsedTool = tool;
 		setChanged();
 		notifyObservers(new ActionData(SHOW_TOOL, lastUsedTool));

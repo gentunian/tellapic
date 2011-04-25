@@ -10,16 +10,19 @@ import ar.com.tellapic.lib.tellapicConstants;
 import ar.com.tellapic.utils.Utils;
 
 public class Ellipse extends DrawingTool {
+	private static final String ELLIPSE_ICON_PATH = "/icons/tools/ellipse.png";
+	private static final String ELLIPSE_CURSOR_PATH = "/icons/tools/ellipse-cursor.png";
+	
 	private Ellipse2D           ellipse;
 	private Point2D             firstPoint;
 	private Dimension           size;
-	private Drawing             temporalDrawing;
+//	private Drawing             temporalDrawing;
 	private boolean             inUse;
 	
 	
 	
 	public Ellipse(String name) {
-		super(tellapicConstants.TOOL_ELLIPSE, name, "/icons/ellipse.png", Utils.msg.getString("ellipsetooltip"), Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+		super(tellapicConstants.TOOL_ELLIPSE, name, ELLIPSE_ICON_PATH, Utils.msg.getString("ellipsetooltip"), Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 		firstPoint = new Point2D.Double();
 		inUse      = false;
 		temporalDrawing = new Drawing(getName());
@@ -40,11 +43,11 @@ public class Ellipse extends DrawingTool {
 	}
 	
 	
-	@Override
-	public Drawing getDrawing() {
-		temporalDrawing.setShape(ellipse);
-		return (Drawing) temporalDrawing.clone();
-	}
+//	@Override
+//	public Drawing getDrawing() {
+//		temporalDrawing.setShape(ellipse);
+//		return (Drawing) temporalDrawing.clone();
+//	}
 	
 	
 	/* (non-Javadoc)

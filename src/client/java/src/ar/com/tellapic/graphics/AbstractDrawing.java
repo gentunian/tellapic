@@ -17,8 +17,9 @@
  */  
 package ar.com.tellapic.graphics;
 
-import java.awt.Font;
 import java.awt.Shape;
+
+import ar.com.tellapic.AbstractUser;
 
 /**
  * @author 
@@ -28,6 +29,9 @@ import java.awt.Shape;
  */
 public abstract class AbstractDrawing {
 
+	
+	private boolean             isVisible;
+	private AbstractUser        user;
 	
 	/**
 	 * @return the text
@@ -64,6 +68,13 @@ public abstract class AbstractDrawing {
 	 */
 	public abstract PaintPropertyFont getPaintPropertyFont();
 	
+	public boolean isVisible() {
+		return isVisible;
+	}
+	
+	public void setVisible(boolean visible) {
+		isVisible = visible;
+	}
 	/**
 	 * 
 	 * @return
@@ -79,6 +90,20 @@ public abstract class AbstractDrawing {
 	public abstract boolean hasAlphaProperty();
 	
 	public abstract boolean hasZoomProperty();
+
+	/**
+	 * @param user the user to set
+	 */
+	public void setUser(AbstractUser user) {
+		this.user = user;
+	}
+
+	/**
+	 * @return the user
+	 */
+	public AbstractUser getUser() {
+		return user;
+	}
 	
 	
 }

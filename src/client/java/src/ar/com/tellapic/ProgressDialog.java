@@ -44,11 +44,13 @@ public class ProgressDialog extends JDialog implements ChangeListener{
 
 	public ProgressDialog(Frame owner, ProgressMonitor monitor) throws HeadlessException{ 
 		super(owner, "Progress", true); 
+		setIconImage(Utils.createIconImage(112, 75, "/icons/logo_small.png"));
 		init(monitor); 
 	} 
 
 	public ProgressDialog(Dialog owner, ProgressMonitor monitor) throws HeadlessException{ 
-		super(owner); 
+		super(owner);
+		setIconImage(Utils.createIconImage(112, 75, "/icons/logo_small.png"));
 		init(monitor); 
 	} 
 
@@ -65,7 +67,7 @@ public class ProgressDialog extends JDialog implements ChangeListener{
 		setPreferredSize(new Dimension(320, 120));
 		
 		statusLabel.setText(monitor.getStatus()); 
-		statusLabel.setIcon(new ImageIcon(Utils.createIconImage(32, 32, "/icons/activity_monitor.png")));
+		statusLabel.setIcon(new ImageIcon(Utils.createIconImage(32, 32, "/icons/system/activity_monitor.png")));
 		statusLabel.setIconTextGap(10);
 		statusLabel.setFont(Font.decode("Droid 12"));
 		JPanel contents = (JPanel)getContentPane(); 

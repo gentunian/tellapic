@@ -32,6 +32,13 @@ public class RemoteUser extends AbstractUser {
 
 	private IToolBoxController       toolboxController;
 	private IPaintPropertyController paintController;
+	
+	public RemoteUser() {
+		super();
+		setToolboxController(new ToolBoxController(getToolBoxModel()));
+		setPaintController(new PaintPropertyController(getToolBoxModel()));
+	}
+	
 	/**
 	 * @param id
 	 */

@@ -23,21 +23,14 @@ package ar.com.tellapic;
  *          sebastian.treu(at)gmail.com
  *
  */
-public interface IUserManager {
-	
-	public boolean addUser(AbstractUser user);
-	
-	public AbstractUser delUser(String userName);
-	
-	public AbstractUser delUser(int id);
-	
-//	public AbstractUser delUser(AbstractUser user);
-	
-	public boolean requireDisconnection(String userName);
-	
-//	public void setUserVisible(String userName, boolean visible);
-	
-	public AbstractUser createUser(int userId, String userName, boolean remote);
-	
-//	public void toggleUserVisibility(String name);
+public class NoSuchPropertyTypeException extends Exception {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public NoSuchPropertyTypeException(String msg) {
+		super(msg);
+	}
 }

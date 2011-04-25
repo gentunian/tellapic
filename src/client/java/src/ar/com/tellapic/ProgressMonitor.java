@@ -1,7 +1,6 @@
 
 package ar.com.tellapic;
 
-import java.util.Iterator;
 import java.util.Vector;
 
 import javax.swing.event.ChangeEvent;
@@ -86,7 +85,7 @@ public class ProgressMonitor{
 	
 	/*--------------------------------[ ListenerSupport ]--------------------------------*/ 
 
-	private Vector listeners = new Vector(); 
+	private Vector<ChangeListener> listeners = new Vector<ChangeListener>(); 
 	private ChangeEvent ce = new ChangeEvent(this); 
 
 	public void addChangeListener(ChangeListener listener){ 

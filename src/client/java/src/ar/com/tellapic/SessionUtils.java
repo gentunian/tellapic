@@ -18,7 +18,6 @@
 package ar.com.tellapic;
 
 import java.awt.image.BufferedImage;
-import java.util.Observable;
 
 /**
  * @author 

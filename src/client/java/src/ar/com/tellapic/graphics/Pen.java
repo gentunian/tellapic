@@ -30,10 +30,12 @@ import ar.com.tellapic.utils.Utils;
  *
  */
 public class Pen extends DrawingTool {
+	private static final String PEN_ICON_PATH = "/icons/tools/pencil.png";
+	private static final String PEN_CURSOR_PATH = "/icons/tools/pencil-cursor.png";
 	private Point2D             firstPoint;
 	private boolean             inUse;
 	private GeneralPath         pen;
-	private Drawing             temporalDrawing;
+//	private Drawing             temporalDrawing;
 
 	/**
 	 * 
@@ -48,20 +50,13 @@ public class Pen extends DrawingTool {
 	 * @param name
 	 */
 	public Pen(String name) {
-		super(tellapicConstants.TOOL_PATH, name, "/icons/marker.png", Utils.msg.getString("pentooltip"), null);
+		super(tellapicConstants.TOOL_PATH, name, PEN_ICON_PATH, Utils.msg.getString("pentooltip"));
 		firstPoint = new Point2D.Double();
 		inUse = false;
 		temporalDrawing = new Drawing(getName());
+		setToolCursor(PEN_ICON_PATH, 0, 15);
 	}
 	
-	
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#getDrawing()
-	 */
-	@Override
-	public Drawing getDrawing() {
-		return (Drawing) temporalDrawing.clone();
-	}
 
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.Tool#getInit()

@@ -9,31 +9,25 @@ import ar.com.tellapic.lib.tellapicConstants;
 import ar.com.tellapic.utils.Utils;
 
 public class Marker extends DrawingTool {
+	private static final String MARKER_ICON_PATH = "/icons/tools/marker.png";
+	private static final String MARKER_CURSOR_PATH = "/icons/tools/marker-cursor.png";
 	private Line2D              line;
 	private Point2D             firstPoint;
-	private Drawing             temporalDrawing;
+//	private Drawing             temporalDrawing;
 	private boolean             inUse;
 
 	
 	
 	public Marker(String name) {
-		super(tellapicConstants.TOOL_MARKER, name, "/icons/marker.png", Utils.msg.getString("markertooltip"), Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+		super(tellapicConstants.TOOL_MARKER, name, MARKER_ICON_PATH , Utils.msg.getString("markertooltip"), Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 		firstPoint = new Point2D.Double();
 		inUse = false;
 		temporalDrawing = new Drawing(getName());
+		setToolCursor(MARKER_ICON_PATH, 2, 14);
 	}
 	
 	public Marker() {
 		this("Marker");
-	}
-
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#getDrawing()
-	 */
-	@Override
-	public Drawing getDrawing() {
-		return (Drawing) temporalDrawing.clone();
 	}
 
 

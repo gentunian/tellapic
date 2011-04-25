@@ -30,10 +30,12 @@ import ar.com.tellapic.lib.tellapic;
  */
 public class ChatController implements IChatController {
 	private IChatModelManager model;
+	private NetManager netManager;
 	//private IChatConnection   connection;
 
 	public ChatController() {
-		this.model = ChatClientModel.getInstance();
+		model = ChatClientModel.getInstance();
+		netManager = NetManager.getInstance();
 	}
 
 
@@ -41,11 +43,12 @@ public class ChatController implements IChatController {
 	 * @see com.tellapic.chat.IChatController#handleInput(java.lang.String, boolean)
 	 */
 	@Override
-	public void handleInput(Message message, boolean fromView) {
+	public void handleInput(Message message, boolean fromView) {//TODO: REVIEW!
+		
 		model.addMessage(message);
 		if (fromView) {
 			//connection.sendMessage(message);
-			int fd = NetManager.getInstance().getFd();
+			int fd = netManager.getFd();
 			int idFrom = UserManager.getInstance().getLocalUser().getUserId();
 			String text = message.getText();
 			if (message.isPrivate()) {

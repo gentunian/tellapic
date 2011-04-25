@@ -10,6 +10,7 @@ public class Drawing extends AbstractDrawing implements Cloneable {
 	private PaintPropertyZoom   zoomProperty;
 	private Shape               shape;
 	
+	
 	//private boolean   notDrawnYet;
 	private String    name;
 	private int       textX;
@@ -23,7 +24,7 @@ public class Drawing extends AbstractDrawing implements Cloneable {
 		colorProperty  = null;
 		alphaProperty  = null;
 		fontProperty   = null;
-		//notDrawnYet    = true;
+		setVisible(true);
 	}
 	
 	/**
