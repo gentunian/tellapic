@@ -17,10 +17,20 @@
  */  
 package ar.com.tellapic;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Observable;
+import java.util.Observer;
 
+import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeModelListener;
+import javax.swing.tree.TreePath;
+
+import org.jdesktop.swingx.tree.TreeModelSupport;
+import org.jdesktop.swingx.treetable.TreeTableModel;
+
+import ar.com.tellapic.graphics.Drawing;
 import ar.com.tellapic.graphics.DrawingAreaView;
-
+import ar.com.tellapic.utils.Utils;
 
 /**
  * @author 
@@ -28,17 +38,34 @@ import ar.com.tellapic.graphics.DrawingAreaView;
  *          sebastian.treu(at)gmail.com
  *
  */
-public class UserManager implements IUserManager, IUserManagerState {
+public class UserManager implements IUserManager, IUserManagerState, TreeTableModel, Observer, TreeModelListener {
 
-	private HashMap<String, AbstractUser> users;
+	private static final int COLUMN_COUNT = 4;
+	private static final String[] COLUMN_NAME = new String[] {
+		"User" ,
+		"Visibility",
+		"Chat",
+		"Custom Properties"
+	};
+	private static final Class<?>[] COLUMN_CLASS = new Class<?>[] { 
+		String.class,
+		MyEyeCheckBox.class,
+		String.class,
+		String.class
+	};
+	
+
+	private ArrayList<AbstractUser> users;
+	
+	private TreeModelSupport tms;
 	
 	private static class Holder {
 		private final static UserManager INSTANCE = new UserManager();
 	}
 	
 	private UserManager() {
-		//userList = new ArrayList<AbstractUser>();
-		users = new HashMap<String, AbstractUser>();
+		users = new ArrayList<AbstractUser>();
+		tms = new TreeModelSupport(this);
 	}
 	
 
@@ -53,22 +80,44 @@ public class UserManager implements IUserManager, IUserManagerState {
 	
 	/*
 	 * (non-Javadoc)
-	 * @see com.tellapic.IUserManager#createLocalUser(int)
+	 * @see ar.com.tellapic.IUserManager#createUser(int, java.lang.String, boolean)
 	 */
 	@Override
-	public LocalUser createLocalUser(int id, String name) {
-		//AbstractUser user = new LocalUser(id, "local");
-		//TODO: use constant
-		AbstractUser user = LocalUser.getInstance();
+	public AbstractUser createUser(int id, String name, boolean remote) {
+		AbstractUser user = null;
+		if (remote)
+			user = new RemoteUser();
+		else
+			user = LocalUser.getInstance();
+		
 		user.setName(name);
 		user.setUserId(id);
-		users.put(LocalUser.LOCAL_NAME, user);
-//		user.addObserver(DrawingAreaView.getInstance());
-		user.addObserver(UserView.getInstance());
-		user.notifyObservers(user);
-		return (LocalUser) user;
-		//new UserGUIBuilder((LocalUser)user);
-		//notifyObservers(new ActionData(ActionData.ACTION_ADD, user));
+		
+		if (addUser(user))
+			return user;
+		else
+			return null; //TODO: Throw an exception?
+	}
+	
+	
+		
+	
+	/*
+	 * (non-Javadoc)
+	 * @see ar.com.tellapic.IUserManager#addUser(ar.com.tellapic.AbstractUser)
+	 */
+	@Override
+	public boolean addUser(final AbstractUser user) {
+		boolean userWasAdded = users.add(user);
+		
+		if (userWasAdded) {
+			user.addObserver(this);
+//			tms.fireChildrenAdded(new TreePath(new Object[] {users}), indices, children);
+//			tms.fireChildAdded(new TreePath(new Object[]{getRoot()}), users.indexOf(user), user);
+			tms.fireTreeStructureChanged(new TreePath(users));
+		}
+		
+		return userWasAdded;
 	}
 	
 	
@@ -78,35 +127,79 @@ public class UserManager implements IUserManager, IUserManagerState {
 	 */
 	@Override
 	public LocalUser getLocalUser() {
-		//TODO: use constant
-		return (LocalUser)users.get(LocalUser.LOCAL_NAME);
+		for(int i = 0 ; i < users.size(); i++)
+			if (users.get(i) instanceof LocalUser)
+				return (LocalUser) users.get(i);
+		return null;
+	}
+
+	
+	/*
+	 * 
+	 */
+	private AbstractUser findUser(String userName) {
+		AbstractUser user = null;
+		boolean found = false;
+		int i;
+		for(i = 0; i < users.size() && !found; i++) {
+			user = users.get(i);
+			found = user.getName().equals(userName);
+		}
+
+		return user;
 	}
 	
 	
 	/*
-	 * (non-Javadoc)
-	 * @see com.tellapic.IUserManager#addUser(int, java.lang.String)
+	 * 
 	 */
-	@Override
-	public void addUser(int id, String name) {
-		AbstractUser user = new RemoteUser(id, name);
-		users.put(name, user);
-		user.addObserver(DrawingAreaView.getInstance());
-		user.addObserver(UserView.getInstance());
-		user.notifyObservers(user);
-		
-		//notifyObservers(new ActionData(ActionData.ACTION_ADD, user));
+	private AbstractUser findUser(int id) {
+		AbstractUser user = null;
+		boolean found = false;
+		int i;
+		for(i = 0; i < users.size() && !found; i++) {
+			user = users.get(i);
+			found = (user.getUserId() == id);
+		}
+
+		return user;
 	}
+	
+	
+	/*
+	 * 
+	 */
+	private void removeUser(AbstractUser user) {
+		if (users.remove(user))
+			user.cleanUp();
+		tms.fireTreeStructureChanged(new TreePath(users));
+	}
+
 
 	/*
 	 * (non-Javadoc)
-	 * @see com.tellapic.IUserManager#delUser(java.lang.String)
+	 * @see ar.com.tellapic.IUserManager#delUser(java.lang.String)
 	 */
 	@Override
-	public void delUser(String name) {
-		AbstractUser userRemoved = users.remove(name);
-		userRemoved.cleanUp();
-		//TODO: A USER HAS A LOT OF MEMORY LOADED. FREE IT. E.G: TOOLBOX, DRAWINGCONTROLLERS, ETC
+	public AbstractUser delUser(String name) {
+		AbstractUser user = findUser(name);
+	
+		removeUser(user);
+		
+		return user;
+	}
+	
+	
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.IUserManager#delUser(int)
+	 */
+	@Override
+	public AbstractUser delUser(int id) {
+		AbstractUser user = findUser(id);
+
+		removeUser(user);
+		
+		return user;
 	}
 	
 	
@@ -115,7 +208,7 @@ public class UserManager implements IUserManager, IUserManagerState {
 	 * @see com.tellapic.IUserManagerState#getUsers()
 	 */
 	@Override
-	public HashMap<String, AbstractUser> getUsers() {
+	public ArrayList<AbstractUser> getUsers() {
 		return users;
 	}
 	
@@ -132,143 +225,347 @@ public class UserManager implements IUserManager, IUserManagerState {
 
 
 	/* (non-Javadoc)
-	 * @see com.tellapic.IUserManager#setUserVisible(int, boolean)
-	 */
-	@Override
-	public void setUserVisible(String name, boolean visible) {
-		users.get(name).setVisible(visible);
-	}
-
-
-	/* (non-Javadoc)
-	 * @see com.tellapic.IUserManagerState#getRemoteUser(int)
-	 */
-	@Override
-	public RemoteUser getRemoteUser(String name) {
-		AbstractUser user = users.get(name); 
-		if (user instanceof RemoteUser)
-			return (RemoteUser) user;
-		else
-			return null;
-	}
-
-
-	/* (non-Javadoc)
-	 * @see com.tellapic.IUserManagerState#getRemoteUsers()
-	 */
-	@Override
-	public HashMap<String, RemoteUser> getRemoteUsers() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-
-	/* (non-Javadoc)
 	 * @see com.tellapic.IUserManagerState#getUser(int)
 	 */
 	@Override
 	public AbstractUser getUser(String name) {
-		return users.get(name);
+		return findUser(name);
 	}
 
 	
-	/*
-	 * (non-Javadoc)
-	 * @see com.tellapic.IUserManager#changeUserVisibility(java.lang.String)
-	 */
-	@Override
-	public void changeUserVisibility(String name) {
-		AbstractUser user = users.get(name);
-		if (user != null)
-			user.setVisible(!user.isVisible());
-	}
-	
-	
-	
-	/**
-	 * 
-	 * @author 
-	 *          Sebastian Treu
-	 *          sebastian.treu(at)gmail.com
-	 *
-	 */
-	public class ActionData {
-		public static final int ACTION_REMOVE = 0;
-		public static final int ACTION_ADD    = 1;
-
-		private int action;
-		private AbstractUser user;
-
-		public ActionData(int action, AbstractUser user) {
-			this.action = action;
-			this.user = user;
-		}
-
-		/**
-		 * @param user the user to set
-		 */
-		public void setUser(AbstractUser user) {
-			this.user = user;
-		}
-
-		/**
-		 * @return the user
-		 */
-		public AbstractUser getUser() {
-			return user;
-		}
-
-		/**
-		 * @param action the action to set
-		 */
-		public void setAction(int action) {
-			this.action = action;
-		}
-
-		/**
-		 * @return the action
-		 */
-		public int getAction() {
-			return action;
-		}
-	}
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.IUserManagerState#getUserName(int)
-	
-	@Override
-	public String getUserName(int id) {
-		for(AbstractUser user : users.values()) {
-			if (user.getUserId() == id)
-				return user.getName();
-		}
-		return null;
-	}
-	*/
-
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.IUserManagerState#getUserName(int)
 	 */
 	@Override
 	public AbstractUser getUser(int id) {
-		for(AbstractUser user : users.values()) {
-			if (user.getUserId() == id)
-				return user;
-		}
-		return null;
+		return findUser(id);
 	}
 	
 	
 	/* (non-Javadoc)
-	 * @see ar.com.tellapic.IUserManager#delUser(int)
+	 * @see org.jdesktop.swingx.treetable.TreeTableModel#getColumnClass(int)
 	 */
 	@Override
-	public void delUser(int id) {
-		for(AbstractUser user : users.values()) {
-			if (user.getUserId() == id) {
-				this.delUser(user.getName());
-				return;
+	public Class<?> getColumnClass(int columnIndex) {
+		return COLUMN_CLASS[columnIndex];
+	}
+
+
+	/* (non-Javadoc)
+	 * @see org.jdesktop.swingx.treetable.TreeTableModel#getColumnCount()
+	 */
+	@Override
+	public int getColumnCount() {
+		return COLUMN_COUNT;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see org.jdesktop.swingx.treetable.TreeTableModel#getColumnName(int)
+	 */
+	@Override
+	public String getColumnName(int column) {
+		return COLUMN_NAME[column];
+	}
+
+
+	/* (non-Javadoc)
+	 * @see org.jdesktop.swingx.treetable.TreeTableModel#getHierarchicalColumn()
+	 */
+	@Override
+	public int getHierarchicalColumn() {
+		return 0;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see org.jdesktop.swingx.treetable.TreeTableModel#getValueAt(java.lang.Object, int)
+	 */
+	@Override
+	public Object getValueAt(Object node, int column) {
+		
+		Object value = "DEFAULT";
+		if (node instanceof ArrayList<?>) {
+			switch(column) {
+			case 0:
+				value = Utils.msg.getString("userlist") + ((ArrayList<?>)node).size();
+				break;
+			default:
+				value = false;
+			}
+		} else if (node instanceof AbstractUser) {
+			switch(column) {
+			case 0:
+				value = node;
+				break;
+			case 1:
+				value = ((AbstractUser)node).isVisible();
+				break;
+			case 2:
+				value = "[properties]";
+				break;
+			case 3:
+				value = "[chat]";
+				break;
+			}
+		} else if( node instanceof Drawing) {
+			switch(column) {
+			case 0:
+				value = node;
+				break;
+			case 1:
+				value = ((Drawing)node).isVisible();
+				break;
+			default:
+				value = false;
+				break;
+			}
+		}
+//		
+//		Object value = null;
+//		if (column == 0) {
+//			if (node instanceof Collection<?> || node instanceof HashMap<?,?>)
+//				value = "Users";
+//			else
+//				value = node;
+//		} else if (column == 1) {
+//			if (node instanceof AbstractUser)
+//				value = ((AbstractUser)node).isVisible();
+//			else if (node instanceof Drawing)
+//				value = ((Drawing)node).isVisible();
+//			else
+//				value = false;
+//		} else if (column == 2) {
+//			value = (node instanceof AbstractUser);
+//		}
+//		Utils.logMessage("getValueAt("+node+" , "+column+") = "+value);
+		return value;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see org.jdesktop.swingx.treetable.TreeTableModel#isCellEditable(java.lang.Object, int)
+	 */
+	@Override
+	public boolean isCellEditable(Object node, int column) {
+		return false;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see org.jdesktop.swingx.treetable.TreeTableModel#setValueAt(java.lang.Object, java.lang.Object, int)
+	 */
+	@Override
+	public void setValueAt(Object value, Object node, int column) {
+		Utils.logMessage("set value "+value+" at node " +node+" for column "+column);
+		if (node instanceof AbstractUser) {
+			switch(column) {
+			case 1:
+				((AbstractUser)node).setVisible((Boolean)value);
+				break;
+			case 2:
+				break;
+			}
+		}
+		else if (node instanceof Drawing) {
+			switch(column) {
+			case 1: 
+				((Drawing)node).setVisible((Boolean)value);
+				break;
+			case 2:
+				break;
 			}
 		}
 	}
+
+
+	/* (non-Javadoc)
+	 * @see javax.swing.tree.TreeModel#addTreeModelListener(javax.swing.event.TreeModelListener)
+	 */
+	@Override
+	public void addTreeModelListener(TreeModelListener l) {
+		tms.addTreeModelListener(l);
+	}
+
+
+	/* (non-Javadoc)
+	 * @see javax.swing.tree.TreeModel#getChild(java.lang.Object, int)
+	 */
+	@Override
+	public Object getChild(Object parent, int index) {
+		Object child = null;
+		
+		if (index >= 0 && index < getChildCount(parent))
+
+			if (parent instanceof ArrayList<?> )
+				child = ((ArrayList<?>)parent).get(index);
+
+			else if (parent instanceof AbstractUser && index >= 0)
+				child = ((AbstractUser)parent).getDrawings().get(index);
+
+			else 
+				child = parent;
+
+//		Utils.logMessage("getChild: "+parent+ " at: "+index+ " is: "+child);
+		return child;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see javax.swing.tree.TreeModel#getChildCount(java.lang.Object)
+	 */
+	@Override
+	public int getChildCount(Object parent) {
+		int count = 0;
+		if (parent instanceof ArrayList<?>) {
+			count = ((ArrayList<?>)parent).size();
+//			Utils.logMessage("getchildCount HASHMAP: "+count);
+		} else if (parent instanceof AbstractUser) {
+			AbstractUser user = (AbstractUser) parent;
+			count = user.getDrawings().size();
+//			Utils.logMessage("getchildCount USER: "+count);
+			
+		} else if (parent instanceof Drawing) {
+//			Utils.logMessage("getchildCount DRAWING: "+count);
+			count = 0;
+		} else {
+//			System.out.println("wadafak? "+parent);
+		}
+//		Utils.logMessage("getchildCount from "+parent+" was: "+count);
+		return count;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see javax.swing.tree.TreeModel#getIndexOfChild(java.lang.Object, java.lang.Object)
+	 */
+	@Override
+	public int getIndexOfChild(Object parent, Object child) {
+
+		int index = 0;
+		
+		if (parent instanceof AbstractUser) {
+			index = ((AbstractUser)parent).getDrawings().indexOf(child);
+		} else if (parent instanceof ArrayList<?>) {
+			index = ((ArrayList<?>)parent).indexOf(child);
+		}
+//		Utils.logMessage("getIndexOf: "+parent+ " child: "+child+" was: "+index);
+		return index;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see javax.swing.tree.TreeModel#getRoot()
+	 */
+	@Override
+	public Object getRoot() {
+//		System.out.println("GETROOT: "+users);
+		return users;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see javax.swing.tree.TreeModel#isLeaf(java.lang.Object)
+	 */
+	@Override
+	public boolean isLeaf(Object node) {
+		boolean value = true;
+		if (node instanceof AbstractUser) {
+			value = (((AbstractUser)node).getDrawings().size() == 0);
+		} else 
+			value = !(node instanceof ArrayList<?>);
+		
+		return value;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see javax.swing.tree.TreeModel#removeTreeModelListener(javax.swing.event.TreeModelListener)
+	 */
+	@Override
+	public void removeTreeModelListener(TreeModelListener l) {
+		// TODO Auto-generated method stub
+		tms.removeTreeModelListener(l);
+	}
+
+
+	/* (non-Javadoc)
+	 * @see javax.swing.tree.TreeModel#valueForPathChanged(javax.swing.tree.TreePath, java.lang.Object)
+	 */
+	@Override
+	public void valueForPathChanged(TreePath path, Object newValue) {
+		// TODO Auto-generated method stub
+		System.out.println("WAFASDFASJFKSAFJASLKFJAS");
+
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.util.Observer#update(java.util.Observable, java.lang.Object)
+	 */
+	@Override
+	public void update(Observable o, Object arg) {
+		AbstractUser user = (AbstractUser) o;
+		ArrayList<Drawing> childs = user.getDrawings();
+		if (arg instanceof Drawing) {
+			tms.fireChildAdded(new TreePath(new Object[]{ getRoot(), user }), childs.indexOf(arg), arg);
+		} else if (arg instanceof Boolean){
+			tms.fireChildChanged(new TreePath(new Object[]{ getRoot() }), users.indexOf(user), user);
+		} else if (arg instanceof Integer) {
+			int index = (Integer) arg;
+			tms.fireChildChanged(new TreePath(new Object[]{getRoot(), user}), index, childs.get(index));
+		}
+		DrawingAreaView.getInstance().update(null, null);
+	}
+
+	
+
+//	private class MyTreeListener implements TreeModelListener {
+		
+		/* (non-Javadoc)
+		 * @see javax.swing.event.TreeModelListener#treeNodesChanged(javax.swing.event.TreeModelEvent)
+		 */
+		@Override
+		public void treeNodesChanged(TreeModelEvent e) {
+			// TODO Auto-generated method stub
+//			System.out.println("TreeNodesChanged");
+		}
+
+
+		/* (non-Javadoc)
+		 * @see javax.swing.event.TreeModelListener#treeNodesInserted(javax.swing.event.TreeModelEvent)
+		 */
+		@Override
+		public void treeNodesInserted(TreeModelEvent e) {
+			// TODO Auto-generated method stub
+//			System.out.println("TreeNodesInserted "+e.getSource());
+			
+			for(Object o : e.getChildren()) {
+				System.out.println("child: "+o);
+				
+			}
+		}
+
+
+		/* (non-Javadoc)
+		 * @see javax.swing.event.TreeModelListener#treeNodesRemoved(javax.swing.event.TreeModelEvent)
+		 */
+		@Override
+		public void treeNodesRemoved(TreeModelEvent e) {
+			// TODO Auto-generated method stub
+//			System.out.println("TreeNodesRemoved");
+		}
+
+
+		/* (non-Javadoc)
+		 * @see javax.swing.event.TreeModelListener#treeStructureChanged(javax.swing.event.TreeModelEvent)
+		 */
+		@Override
+		public void treeStructureChanged(TreeModelEvent e) {
+			// TODO Auto-generated method stub
+//			System.out.println("TreeStructureChange "+e.getSource());
+			
+			
+		}
+//	}
 }

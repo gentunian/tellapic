@@ -19,17 +19,15 @@ package ar.com.tellapic;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.RenderingHints;
 import java.awt.RenderingHints.Key;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.util.Random;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBoxMenuItem;
@@ -40,13 +38,10 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.border.EmptyBorder;
 
 import ar.com.tellapic.chat.ChatController;
 import ar.com.tellapic.chat.ChatView;
@@ -54,8 +49,6 @@ import ar.com.tellapic.graphics.DrawingAreaView;
 import ar.com.tellapic.graphics.IToolBoxController;
 import ar.com.tellapic.graphics.PaintPropertyController;
 import ar.com.tellapic.graphics.PaintPropertyView;
-import ar.com.tellapic.graphics.RemoteMouseEvent;
-import ar.com.tellapic.graphics.RuleHeader;
 import ar.com.tellapic.graphics.ToolBoxController;
 import ar.com.tellapic.graphics.ToolBoxModel;
 import ar.com.tellapic.graphics.ToolView;
@@ -110,7 +103,10 @@ public class UserGUIBuilder {
 		
 		model.addObserver(propertyView);
 		model.addObserver(toolView);
-				
+		UserOptionsController c = new UserOptionsController(chatView);
+		userView.setUserOptionsController(c);
+		
+		
 		// Get the drawing area model instance. Its where all Drawing objects will live.
 		//DrawingAreaModel  drawingAreaModel = DrawingAreaModel.getInstance();
 		
@@ -153,7 +149,8 @@ public class UserGUIBuilder {
 		/****************************************/
 		/* Creates the dockable station and gui */
 		/****************************************/
-		mainWindow = new JFrame("drawing window");
+		mainWindow = new JFrame(user.getName());
+		mainWindow.setIconImage(Utils.createIconImage(112, 75, "/icons/system/logo_small.png"));
 		mainWindow.getContentPane().add(StatusBar.getInstance(), BorderLayout.SOUTH);
 		mainWindow.getContentPane().add(propertyView, BorderLayout.NORTH);
 		
@@ -168,7 +165,7 @@ public class UserGUIBuilder {
 		ThemeMap t = control1.getThemes();
 		t.select(ThemeMap.KEY_BASIC_THEME);
 
-//		mainWindow.setPreferredSize(new Dimension(400,400));
+		mainWindow.setPreferredSize(new Dimension(400,400));
 		
 		grid.add(0, 0, 20, 20, dock1);
 		grid.add(2, 0, 200, 40, dock3);
@@ -645,45 +642,43 @@ public class UserGUIBuilder {
 	/*
 	 * 
 	 */
-	private class Painter implements ActionListener {
-		private JMenu parent;
-		
-		public Painter(JMenu parent) {
-			this.parent = parent;
-		}
-		
-		/* (non-Javadoc)
-		 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
-		 */
-		@Override
-		public void actionPerformed(ActionEvent e) {
-			final JMenuItem  source = (JMenuItem) e.getSource();
-			final String userName = parent.getText();
-			Utils.logMessage("Drawing for: "+userName);
-			Thread t = new Thread(new Runnable() {
-				public void run() {
-					RemoteUser user = UserManager.getInstance().getRemoteUser(userName);
-					java.util.Random r = new Random();
-					r.setSeed(System.currentTimeMillis());
-					
-//					user.getToolBoxModel().setCurrentTool(source.getName());
-					user.getToolboxController().selectToolByName(source.getName());
-					RemoteMouseEvent event = new RemoteMouseEvent(user, DrawingAreaView.getInstance(), 501, System.currentTimeMillis(), InputEvent.BUTTON1_DOWN_MASK, r.nextInt(DrawingAreaView.getInstance().getWidth()), r.nextInt(DrawingAreaView.getInstance().getHeight()), 1, false, MouseEvent.BUTTON1);
-//					MouseEvent event = new MouseEvent(DrawingAreaView.getInstance(), 501, System.currentTimeMillis(), MouseEvent.BUTTON1_DOWN_MASK, 10, 10, 1, false, MouseEvent.BUTTON1);
-					DrawingAreaView.getInstance().dispatchEvent(event);
-					int i = 1;
-					for(i = 0; i < 300; i++) {
-						event = new RemoteMouseEvent(user, DrawingAreaView.getInstance(), 506, System.currentTimeMillis(), InputEvent.BUTTON1_DOWN_MASK, i, i, 0, false, MouseEvent.NOBUTTON);
-						try {
-							Thread.sleep(100);
-							DrawingAreaView.getInstance().dispatchEvent(event);
-						} catch(InterruptedException e1) {}
-					}
-					event = new RemoteMouseEvent(user, DrawingAreaView.getInstance(), 502, System.currentTimeMillis(), MouseEvent.NOBUTTON, i, i, 0, false, MouseEvent.BUTTON1);
-					DrawingAreaView.getInstance().dispatchEvent(event);
-				}
-			});
-			t.start();
-		}
-	}
+//	private class Painter implements ActionListener {
+//		private JMenu parent;
+//		
+//		public Painter(JMenu parent) {
+//			this.parent = parent;
+//		}
+//		
+//		/* (non-Javadoc)
+//		 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+//		 */
+//		@Override
+//		public void actionPerformed(ActionEvent e) {
+//			final JMenuItem  source = (JMenuItem) e.getSource();
+//			final String userName = parent.getText();
+//			Utils.logMessage("Drawing for: "+userName);
+//			Thread t = new Thread(new Runnable() {
+//				public void run() {
+//					RemoteUser user = UserManager.getInstance().getRemoteUser(userName);
+//					java.util.Random r = new Random();
+//					r.setSeed(System.currentTimeMillis());
+//					
+//					user.getToolboxController().selectToolByName(source.getName());
+//					RemoteMouseEvent event = new RemoteMouseEvent(user, DrawingAreaView.getInstance(), 501, System.currentTimeMillis(), InputEvent.BUTTON1_DOWN_MASK, r.nextInt(DrawingAreaView.getInstance().getWidth()), r.nextInt(DrawingAreaView.getInstance().getHeight()), 1, false, MouseEvent.BUTTON1);
+//					DrawingAreaView.getInstance().dispatchEvent(event);
+//					int i = 1;
+//					for(i = 0; i < 300; i++) {
+//						event = new RemoteMouseEvent(user, DrawingAreaView.getInstance(), 506, System.currentTimeMillis(), InputEvent.BUTTON1_DOWN_MASK, i, i, 0, false, MouseEvent.NOBUTTON);
+//						try {
+//							Thread.sleep(100);
+//							DrawingAreaView.getInstance().dispatchEvent(event);
+//						} catch(InterruptedException e1) {}
+//					}
+//					event = new RemoteMouseEvent(user, DrawingAreaView.getInstance(), 502, System.currentTimeMillis(), MouseEvent.NOBUTTON, i, i, 0, false, MouseEvent.BUTTON1);
+//					DrawingAreaView.getInstance().dispatchEvent(event);
+//				}
+//			});
+//			t.start();
+//		}
+//	}
 }

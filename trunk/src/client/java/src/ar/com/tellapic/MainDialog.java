@@ -26,7 +26,6 @@ import java.util.regex.Pattern;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
-import javax.swing.JProgressBar;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
@@ -69,8 +68,8 @@ public class MainDialog extends javax.swing.JDialog {
 	public MainDialog() {
 		
 		initComponents();
-
-		this.setLocationRelativeTo(null);
+		setIconImage(Utils.createIconImage(112, 75, "/icons/logo_small.png"));
+		setLocationRelativeTo(null);
 
 		userInput = false;
 		hostSet = false;

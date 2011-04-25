@@ -19,11 +19,11 @@ public final class Zoom extends ControlTool implements ComboBoxModel{
 	private boolean zoomIn;
 	private float zoomFactor;
 	private final float zoomStep = 0.25f; 
-	public static final String ZOOM_ICON_PATH = "/icons/zoom.png";
-	public static final String ZOOMIN_CURSOR_PATH = "/icons/zoomInCursor.png";
-	public static final String ZOOMOUT_CURSOR_PATH = "/icons/zoomOutCursor.png";
-	public static final String ZOOMIN_ICON_PATH = "/icons/zoomin.png";
-	public static final String ZOOMOUT_ICON_PATH = "/icons/zoomout.png";
+	public static final String ZOOM_ICON_PATH = "/icons/tools/zoom.png";
+	public static final String ZOOMIN_CURSOR_PATH = "/icons/tools/zoomInCursor.png";
+	public static final String ZOOMOUT_CURSOR_PATH = "/icons/tools/zoomOutCursor.png";
+	public static final String ZOOMIN_ICON_PATH = "/icons/tools/zoomin.png";
+	public static final String ZOOMOUT_ICON_PATH = "/icons/tools/zoomout.png";
 	public static final float MAX_ZOOM_FACTOR = 3.0f;
 	public static final float MIN_ZOOM_FACTOR = 0.25f;
 	

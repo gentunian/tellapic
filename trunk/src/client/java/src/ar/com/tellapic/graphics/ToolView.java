@@ -27,7 +27,7 @@ public class ToolView extends JPanel implements Observer {
 //	private static final int WIDTH    = 100;
 //	private static final int HEIGHT   = 150;
 	private static final int ICON_GAP = 5;
-	private static final int ICON_SIZE = 18;
+//	private static final int ICON_SIZE = 18;
 	private static final long serialVersionUID = 1L;
 	
 	public static final int NO_VALUE = -1;
@@ -52,7 +52,7 @@ public class ToolView extends JPanel implements Observer {
 	
 	
 	public ToolView(IToolBoxState modelState) {
-		Dimension iconDimension = new Dimension(ICON_SIZE, ICON_SIZE);
+		Dimension iconDimension = new Dimension(Tool.ICON_SIZE, Tool.ICON_SIZE);
 		Dimension minPanelDimension = new Dimension(iconDimension.width + ICON_GAP, Short.MAX_VALUE);
 		setName("");
 		//setLayout(new FlowLayout());//FlowLayout.CENTER, ICON_GAP, ICON_GAP));
@@ -104,7 +104,7 @@ public class ToolView extends JPanel implements Observer {
 
 	//TODO fix! reveer
 	private void addButton(Tool tool) {
-		JToggleButton  button = new JToggleButton(new ImageIcon(Utils.createIconImage(ICON_SIZE, ICON_SIZE, tool.getIconPath())));
+		JToggleButton  button = new JToggleButton(new ImageIcon(Utils.createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, tool.getIconPath())));
 		//JToggleButton  button = new JToggleButton(new ImageIcon(getClass().getResource(tool.getIconPath())));
 		//button.setRolloverIcon(rolloverIcon);
 		button.setFocusPainted(true);

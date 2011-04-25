@@ -8,12 +8,15 @@ import ar.com.tellapic.utils.Utils;
 
 public class Text extends DrawingTool {
 	private Point2D            firstPoint;
-	private Drawing            temporalDrawing;
+	private static final String TEXT_ICON_PATH = "/icons/tools/text.png";
+	private static final String TEXT_CURSOR_PATH = "/icons/tools/text-cursor.png";
+	
+//	private Drawing            temporalDrawing;
 	
 	
 	
 	public Text(String name) {
-		super(tellapicConstants.TOOL_TEXT, name, "/icons/text.png", Utils.msg.getString("texttooltip"), Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
+		super(tellapicConstants.TOOL_TEXT, name, TEXT_ICON_PATH, Utils.msg.getString("texttooltip"), Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
 		firstPoint = new Point2D.Double();
 		temporalDrawing = new Drawing(getName());
 		temporalDrawing.setShape(null);
@@ -25,15 +28,15 @@ public class Text extends DrawingTool {
 	}
 
 
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#getDrawing()
-	 */
-	@Override
-	public Drawing getDrawing() {
-		temporalDrawing.setTextX((int) firstPoint.getX());
-		temporalDrawing.setTextY((int) firstPoint.getY());
-		return (Drawing) temporalDrawing.clone();
-	}
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#getDrawing()
+//	 */
+//	@Override
+//	public Drawing getDrawing() {
+//		temporalDrawing.setTextX((int) firstPoint.getX());
+//		temporalDrawing.setTextY((int) firstPoint.getY());
+//		return (Drawing) temporalDrawing.clone();
+//	}
 
 
 	/* (non-Javadoc)

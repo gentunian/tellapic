@@ -36,14 +36,14 @@ import java.util.Observable;
  *
  */
 public abstract class Tool extends Observable {
-	
+	public static final int ICON_SIZE = 16;
 	private int              id;
 	private String           name;
 	private String           iconPath;
 	private String           toolTipText;
 	private boolean          visible;
 	private Cursor           toolCursor;
-
+	
 	
 	/**
 	 * Public Constructor. Subclasses must call this constructor.

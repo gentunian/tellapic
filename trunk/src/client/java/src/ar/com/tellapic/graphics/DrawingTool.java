@@ -18,6 +18,11 @@
 package ar.com.tellapic.graphics;
 
 import java.awt.Cursor;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Toolkit;
+
+import ar.com.tellapic.utils.Utils;
 /**
  * @author 
  *          Sebastian Treu
@@ -25,7 +30,9 @@ import java.awt.Cursor;
  *
  */
 public abstract class DrawingTool extends Tool {
-
+	
+	protected Drawing             temporalDrawing;
+	
 	
 	/**
 	 * @param id
@@ -33,11 +40,21 @@ public abstract class DrawingTool extends Tool {
 	 * @param iconPath
 	 */
 	public DrawingTool(int id, String name, String iconPath) {
-		super(id, name, iconPath);
+		this(id, name, iconPath, null);
 
 	}
 
-	
+
+	/**
+	 * @param id
+	 * @param name
+	 * @param iconPath
+	 */
+	public DrawingTool(int id, String name, String iconPath, String description) {
+		this(id, name, iconPath, description, null);
+	}
+
+
 	/**
 	 * 
 	 * @param id
@@ -48,8 +65,39 @@ public abstract class DrawingTool extends Tool {
 		super(id, name, iconPath, description, cursor);
 	}
 	
-	public abstract Drawing getDrawing();
 	
+	/**
+	 * 
+	 * @return
+	 */
+	public Drawing finishDrawing() {
+		return (Drawing) temporalDrawing.clone();
+	}
+	
+
+	/**
+	 * 
+	 * @return
+	 */
+	public Drawing getTemporalDrawing() {
+		return temporalDrawing;
+	}
+	
+	
+	/**
+	 * 
+	 * @param cursorPath
+	 * @param xOffset
+	 * @param yOffset
+	 */
+	public void setToolCursor(String cursorPath, int xOffset, int yOffset) {
+		Image image = Utils.createIconImage(ICON_SIZE, ICON_SIZE, cursorPath);
+		setCursor(Toolkit.getDefaultToolkit().createCustomCursor(image, new Point(xOffset, yOffset), getName()));
+	}
+	
+//	public abstract Drawing getTemporalDrawing();
+//	public abstract Drawing finishDrawing();
+
 	public abstract boolean hasAlphaCapability();
 	public abstract boolean hasColorCapability();
 	public abstract boolean hasFontCapability();

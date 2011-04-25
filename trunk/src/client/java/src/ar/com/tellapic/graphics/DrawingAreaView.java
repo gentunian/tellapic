@@ -180,9 +180,9 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 		addAncestorListener(new AncestorListener(){
 			@Override
 			public void ancestorAdded(AncestorEvent event) {
-				System.out.println("ancestor: "+event.getAncestor());
-				System.out.println("ancestor: "+event.getAncestorParent());
-				System.out.println("ancestor: "+event.getComponent());
+//				System.out.println("ancestor: "+event.getAncestor());
+//				System.out.println("ancestor: "+event.getAncestorParent());
+//				System.out.println("ancestor: "+event.getComponent());
 				if (backimage != null) {
 					scrollPane = (JScrollPane) ((JViewport) getParent()).getParent();
 					viewPort = (JViewport) getParent();
@@ -349,19 +349,22 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 		drawingArea.drawImage(backimage, 0, 0, null);
 		drawingArea.setRenderingHints(rh);
 		
-		for(AbstractUser user : UserManager.getInstance().getUsers().values()) {
+		for(AbstractUser user : UserManager.getInstance().getUsers()) {
 			if (!user.isRemoved() && user.isVisible()) {
 				for(Drawing drawing : user.getDrawings()) {
-					drawDrawing(drawingArea, drawing, null);
+					drawDrawing(drawingArea, drawing, user.getCustomProperties());
 				}
 			}
 		}
 		
 		if (observable instanceof DrawingTool) {
 			DrawingTool drawingTool = (DrawingTool) observable;
-			Drawing         drawing = drawingTool.getDrawing();
+			Drawing         drawing = drawingTool.getTemporalDrawing();
+			AbstractUser user = drawing.getUser();
 			
-			drawDrawing(drawingArea, drawing, null);
+			if (user != null && user.isVisible())
+				drawDrawing(drawingArea, drawing, user.getCustomProperties());
+			
 		} else if (observable instanceof Zoom) {
 			float newZoom = (Float) data;
 			setZoom(
@@ -482,26 +485,42 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 	
 	
 	private void drawDrawing(Graphics2D g, Drawing drawing, PaintProperty[] overridedProperties) {
-		
-		g.setRenderingHints(rh);
-		if (drawing.hasAlphaProperty())
-			g.setComposite(drawing.getPaintPropertyAlpha().getComposite());
-		
-		if (drawing.hasColorProperty())
-			g.setColor(drawing.getPaintPropertyColor().getColor());
-		
-		if (drawing.hasStrokeProperty())
-			g.setStroke(drawing.getPaintPropertyStroke().getStroke());
-		
-		if (drawing.hasFontProperty())
-			g.setFont(drawing.getPaintPropertyFont().getFont());
-		
-		if (drawing.hasShape())
-			g.draw(drawing.getShape());
-		
-		if (drawing.hasFontProperty())
-			g.drawString(drawing.getText(), drawing.getTextX(), drawing.getTextY());
-		
+		if (drawing.isVisible()) {
+			g.setRenderingHints(rh);
+			
+			if (drawing.hasAlphaProperty()) {
+				if (overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_ALPHA] != null)
+					g.setComposite(((PaintPropertyAlpha)overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_ALPHA]).getComposite());
+				else
+					g.setComposite(drawing.getPaintPropertyAlpha().getComposite());
+			}
+			
+			if (drawing.hasColorProperty()) {
+				if (overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR] != null)
+					g.setColor(((PaintPropertyColor)overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR]).getColor());
+				else
+					g.setColor(drawing.getPaintPropertyColor().getColor());
+			}
+			
+			if (drawing.hasStrokeProperty()) {
+				if (overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_STROKE] != null)
+					g.setStroke(((PaintPropertyStroke)overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_STROKE]).getStroke());
+				else
+					g.setStroke(drawing.getPaintPropertyStroke().getStroke());
+			}
+			
+			if (drawing.hasShape())
+				g.draw(drawing.getShape());
+			
+			if (drawing.hasFontProperty()) {
+					if (overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_FONT] != null) 
+						g.setFont(((PaintPropertyFont)overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_FONT]).getFont());
+					else
+						g.setFont(drawing.getPaintPropertyFont().getFont());
+					
+				g.drawString(drawing.getText(), drawing.getTextX(), drawing.getTextY());
+			}
+		}
 	}
 
 
@@ -769,6 +788,8 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 		if (event.getButton() == MouseEvent.BUTTON1) {
 			if (usedTool instanceof DrawingTool) {
 				DrawingTool drawingTool = (DrawingTool) usedTool;
+				drawingTool.getTemporalDrawing().setUser(user);
+				
 				if (drawingTool.hasAlphaCapability())
 					drawingTool.setAlpha(toolBoxState.getOpacityProperty());
 
@@ -903,7 +924,7 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 			
 			if (usedTool instanceof DrawingTool) {
 			
-				Drawing drawing = ((DrawingTool)usedTool).getDrawing();
+				Drawing drawing = ((DrawingTool)usedTool).finishDrawing();
 				if (drawing == null) 
 					return;
 			
@@ -949,8 +970,8 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 		if (usedTool.isOnMoveSupported()) {
 			if (usedTool instanceof DrawingTool) {
 				DrawingTool drawingTool = (DrawingTool) usedTool;
-				Drawing     drawing = drawingTool.getDrawing();
-
+				Drawing     drawing = drawingTool.getTemporalDrawing();
+				drawing.setUser(user);
 				if (drawingTool.hasAlphaCapability())
 					drawing.setAlpha(toolBoxState.getOpacityProperty());
 				

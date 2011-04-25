@@ -16,15 +16,17 @@ import ar.com.tellapic.utils.Utils;
 public class Line extends DrawingTool {
 	private static final double ANGLE = 15;
 	private static final double STEP = (ANGLE * Math.PI) / 180;
+	private static final String LINE_ICON_PATH = "/icons/tools/line.png";
+	private static final String LINE_CURSOR_PATH = "/icons/tools/line-cursor.png";
 	
 	private Point2D             firstPoint;
 	private Line2D              line;
-	private Drawing             temporalDrawing;
+//	private Drawing             temporalDrawing;
 	private boolean             inUse;
 
 
 	public Line(String name) {
-		super(tellapicConstants.TOOL_LINE, name, "/icons/line.png", Utils.msg.getString("linetooltip"), Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+		super(tellapicConstants.TOOL_LINE, name, LINE_ICON_PATH, Utils.msg.getString("linetooltip"), Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 		firstPoint = new Point2D.Double();
 		inUse      = false;
 		temporalDrawing = new Drawing(getName());
@@ -32,16 +34,6 @@ public class Line extends DrawingTool {
 	
 	public Line() {
 		this("Line");
-	}
-
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#getDrawing()
-	 */
-	@Override
-	public Drawing getDrawing() {
-		temporalDrawing.setShape(line);
-		return (Drawing) temporalDrawing.clone();
 	}
 
 

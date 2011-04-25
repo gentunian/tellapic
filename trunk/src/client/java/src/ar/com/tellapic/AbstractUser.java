@@ -18,11 +18,15 @@
 package ar.com.tellapic;
 
 import java.util.ArrayList;
+import java.util.NoSuchElementException;
 import java.util.Observable;
 
 import ar.com.tellapic.graphics.Drawing;
-import ar.com.tellapic.graphics.DrawingAreaView;
 import ar.com.tellapic.graphics.PaintProperty;
+import ar.com.tellapic.graphics.PaintPropertyAlpha;
+import ar.com.tellapic.graphics.PaintPropertyColor;
+import ar.com.tellapic.graphics.PaintPropertyFont;
+import ar.com.tellapic.graphics.PaintPropertyStroke;
 import ar.com.tellapic.graphics.ToolBoxModel;
 
 /**
@@ -31,7 +35,13 @@ import ar.com.tellapic.graphics.ToolBoxModel;
  *          sebastian.treu(at)gmail.com
  *
  */
-public abstract class AbstractUser extends Observable {
+public abstract class AbstractUser extends Observable  {
+	
+	public static final int CUSTOM_PAINT_PROPERTY_COLOR  = 0;
+	public static final int CUSTOM_PAINT_PROPERTY_STROKE = 1;
+	public static final int CUSTOM_PAINT_PROPERTY_FONT   = 2;
+	public static final int CUSTOM_PAINT_PROPERTY_ALPHA  = 3;
+
 	//Each user will have control over its own tool box. The tool box model, for remote users
 	//will be updated from wrapped remote events dispatched to the actual model controller.
 	//Local user will update its model from mouse events.
@@ -82,18 +92,31 @@ public abstract class AbstractUser extends Observable {
 	private boolean          removed;
 	private PaintProperty[]  customProperties;
 	
-	public AbstractUser(int id, String name) {
+	
+	/**
+	 * 
+	 */
+	public AbstractUser() {
 		visible = true;
 		removed = false;
-		this.name = name;
-		userId    = id;
 		toolBox   = new ToolBoxModel();
 		drawingList = new ArrayList<Drawing>();
 		//TODO: the idea was that local user can set how to paint all paintings of a user
-		customProperties = null;
+		customProperties = new PaintProperty[4];
 //		addObserver(DrawingAreaView.getInstance());
-//		addObserver(UserView.getInstance());
-		setChanged();
+//		addObserver(UserManager.getInstance());
+	}
+	
+	
+	/**
+	 * 
+	 * @param id
+	 * @param name
+	 */
+	public AbstractUser(int id, String name) {
+		this();
+		this.name = name;
+		userId    = id;
 	}
 	
 	
@@ -107,9 +130,12 @@ public abstract class AbstractUser extends Observable {
 		
 		drawingList.add(drawing);
 		
+		/* Should we set this line outside this object??? */
+		drawing.setUser(this);
+		
 		/* Report the view only if we are visible */
 		setChanged();
-		notifyObservers(drawingList.indexOf(drawing));
+		notifyObservers(drawing);
 	}
 	
 	
@@ -156,7 +182,7 @@ public abstract class AbstractUser extends Observable {
 	public void setVisible(boolean visible) {
 		this.visible = visible;
 		setChanged();
-		notifyObservers(this);
+		notifyObservers(visible);
 	}
 	
 	
@@ -198,10 +224,14 @@ public abstract class AbstractUser extends Observable {
 
 	public void setName(String name) {
 		this.name = name;
+		setChanged();
+		notifyObservers();
 	}
 	
 	public void setUserId(int id) {
 		this.userId = id;
+		setChanged();
+		notifyObservers();
 	}
 	
 	/**
@@ -215,11 +245,26 @@ public abstract class AbstractUser extends Observable {
 	
 	/**
 	 * 
+	 * @param drawing
+	 */
+	public void changeDrawingVisibility(Drawing drawing) {
+		if (!drawingList.contains(drawing))
+			throw new NoSuchElementException("Drawing is not a member of this user drawing list");
+		
+		boolean oldValue = drawing.isVisible();
+		drawing.setVisible(!oldValue);
+		setChanged();
+		notifyObservers(drawingList.indexOf(drawing));
+	}
+	
+	
+	/**
+	 * 
 	 */
 	public void cleanUp() {
 		removed = true;
 		setChanged();
-		notifyObservers(this);
+		notifyObservers();
 		deleteObservers();
 	}
 	
@@ -233,35 +278,126 @@ public abstract class AbstractUser extends Observable {
 
 
 	/**
-	 * @param temporalDrawing the temporalDrawing to set
+	 * 
+	 * @param property
+	 * @param type
+	 * @throws NoSuchPropertyType
+	 * @throws WrongPropertyType
 	 */
-//	public void setTemporalDrawing(Drawing temporalDrawing) {
-//		this.temporalDrawing = temporalDrawing;
-//		setChanged();
-//		notifyObservers();
-//	}
-
-
+	public void setCustomProperty(PaintProperty property, int type) throws NoSuchPropertyTypeException, WrongPropertyTypeException {
+		if (type != CUSTOM_PAINT_PROPERTY_COLOR && type != CUSTOM_PAINT_PROPERTY_STROKE && type != CUSTOM_PAINT_PROPERTY_FONT && type != CUSTOM_PAINT_PROPERTY_ALPHA )
+			throw new NoSuchPropertyTypeException("Cannot find type "+type);
+		
+		
+		if ( property != null &&
+				(type == CUSTOM_PAINT_PROPERTY_COLOR && !(property instanceof PaintPropertyColor)) ||
+				(type == CUSTOM_PAINT_PROPERTY_STROKE &&  !(property instanceof PaintPropertyStroke)) ||
+				(type == CUSTOM_PAINT_PROPERTY_FONT && !(property instanceof PaintPropertyFont)) ||
+				(type == CUSTOM_PAINT_PROPERTY_ALPHA &&!(property instanceof PaintPropertyAlpha)))
+			throw new WrongPropertyTypeException("type and property does not match.");
+	
+		
+		customProperties[type] = property;
+		setChanged();
+		notifyObservers(property);
+	
+	}
+	
+	
 	/**
-	 * @return the temporalDrawing
+	 * 
+	 * @param type
+	 * @return
+	 * @throws NoSuchPropertyType
 	 */
-//	public Drawing getTemporalDrawing() {
-//		return temporalDrawing;
-//	}
-
-
-	/**
-	 * @param customProperties the customProperties to set
-	 */
-	public void setCustomProperties(PaintProperty[] customProperties) {
-		this.customProperties = customProperties;
+	public PaintProperty getCustomProperty(int type) throws NoSuchPropertyTypeException {
+		if (type != CUSTOM_PAINT_PROPERTY_COLOR && type != CUSTOM_PAINT_PROPERTY_STROKE && type != CUSTOM_PAINT_PROPERTY_FONT && type != CUSTOM_PAINT_PROPERTY_ALPHA )
+			throw new NoSuchPropertyTypeException("Cannot find type "+type);
+		
+		return customProperties[type];
 	}
 
-
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public PaintProperty getCustomColor() {
+		return customProperties[CUSTOM_PAINT_PROPERTY_COLOR];
+	}
+	
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public PaintProperty getCustomStroke() {
+		return customProperties[CUSTOM_PAINT_PROPERTY_STROKE];
+	}
+	
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public PaintProperty getCustomFont() {
+		return customProperties[CUSTOM_PAINT_PROPERTY_FONT];
+	}
+	
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public PaintProperty getCustomAlpha() {
+		return customProperties[CUSTOM_PAINT_PROPERTY_ALPHA];
+	}
+	
+	
 	/**
 	 * @return the customProperties
 	 */
 	public PaintProperty[] getCustomProperties() {
 		return customProperties;
+	}
+
+
+	/**
+	 * 
+	 */
+	public void removeCustomColor() {
+		customProperties[CUSTOM_PAINT_PROPERTY_COLOR] = null;
+		setChanged();
+		notifyObservers();
+	}	
+
+
+	/**
+	 * 
+	 */
+	public void removeCustomAlpha() {
+		customProperties[CUSTOM_PAINT_PROPERTY_ALPHA] = null;
+		setChanged();
+		notifyObservers();
+	}	
+
+
+	/**
+	 * 
+	 */
+	public void removeCustomFont() {
+		customProperties[CUSTOM_PAINT_PROPERTY_FONT] = null;
+		setChanged();
+		notifyObservers();
+	}	
+
+
+	/**
+	 * 
+	 */
+	public void removeCustomStroke() {
+		customProperties[CUSTOM_PAINT_PROPERTY_STROKE] = null;
+		setChanged();
+		notifyObservers();
 	}
 }

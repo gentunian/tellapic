@@ -51,15 +51,16 @@ import ar.com.tellapic.utils.Utils;
 public class PaintPropertyView extends JPanel implements Observer {
 	
 	private static final long   serialVersionUID      = 1L;
-	private static final int    ICON_SIZE             = 18;
-	private static final int    SEPARATOR_HEIGHT      = ICON_SIZE;
+	private static final int    ICON_SIZE             = Tool.ICON_SIZE; //TODO: WADAFAK?
+	private static final int    GAP                   = 8;
+	private static final int    SEPARATOR_HEIGHT      = Tool.ICON_SIZE;
 	private static final int    SEPARATOR_WIDTH       = 24;
-	private static final String BEVEL_JOIN_ICON_PATH  = "/icons/joinbevel.png";
-	private static final String ROUND_JOIN_ICON_PATH  = "/icons/joinround.png";
-	private static final String MITER_JOIN_ICON_PATH  = "/icons/joinmiter.png";
-	private static final String ROUND_END_ICON_PATH   = "/icons/capround.png";
-	private static final String BUTT_END_ICON_PATH    = "/icons/capbutt.png";
-	private static final String SQUARE_END_ICON_PATH  = "/icons/capsquare.png";
+	private static final String BEVEL_JOIN_ICON_PATH  = "/icons/tools/joinbevel.png";
+	private static final String ROUND_JOIN_ICON_PATH  = "/icons/tools/joinround.png";
+	private static final String MITER_JOIN_ICON_PATH  = "/icons/tools/joinmiter.png";
+	private static final String ROUND_END_ICON_PATH   = "/icons/tools/capround.png";
+	private static final String BUTT_END_ICON_PATH    = "/icons/tools/capbutt.png";
+	private static final String SQUARE_END_ICON_PATH  = "/icons/tools/capsquare.png";
 //	private static final String ZOOM_IN_ICON_PATH     = "/icons/zoomin.png";
 //	private static final String ZOOM_OUT_ICON_PATH    = "/icons/zoomout.png";
 //	private static final String SET_CAP_ROUND_ACTION  = "capround";
@@ -154,7 +155,7 @@ public class PaintPropertyView extends JPanel implements Observer {
 
 		createSeparators();
 		
-		Dimension iconDimension = new Dimension(ICON_SIZE, ICON_SIZE);
+		Dimension iconDimension = new Dimension(Tool.ICON_SIZE, Tool.ICON_SIZE);
 		toolIcon = new JLabel();
 		toolIcon.setMaximumSize(iconDimension);
 		toolIcon.setMinimumSize(iconDimension);
@@ -172,12 +173,10 @@ public class PaintPropertyView extends JPanel implements Observer {
 		/**/
 		createZoomOptions();
 		
-		setMinimumSize(new Dimension(3200, ICON_SIZE));
-		setMaximumSize(new Dimension(3200, ICON_SIZE + 10));
-		setPreferredSize(new Dimension(3200, ICON_SIZE + 5));
+		setMinimumSize(new Dimension(3200, Tool.ICON_SIZE));
+		setMaximumSize(new Dimension(3200, Tool.ICON_SIZE + 10));
+		setPreferredSize(new Dimension(3200, Tool.ICON_SIZE + GAP));
 		setLayout(layout);
-		//layout.setAutoCreateContainerGaps(true);
-		//layout.setAutoCreateGaps(true);
 	}
 
 
@@ -193,8 +192,8 @@ public class PaintPropertyView extends JPanel implements Observer {
 		group.add(zoomInButton);
 		group.add(zoomOutButton);
 		
-		zoomInButton.setIcon(new ImageIcon(Utils.createIconImage(ICON_SIZE, ICON_SIZE, Zoom.ZOOMIN_ICON_PATH)));
-		zoomOutButton.setIcon(new ImageIcon(Utils.createIconImage(ICON_SIZE, ICON_SIZE, Zoom.ZOOMOUT_ICON_PATH)));
+		zoomInButton.setIcon(new ImageIcon(Utils.createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, Zoom.ZOOMIN_ICON_PATH)));
+		zoomOutButton.setIcon(new ImageIcon(Utils.createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, Zoom.ZOOMOUT_ICON_PATH)));
 		
 		zoomCombo.setFont(defaultValueFont);
 		zoomCombo.setActionCommand(SET_ZOOM_ACTION);
@@ -212,7 +211,7 @@ public class PaintPropertyView extends JPanel implements Observer {
 	 * 
 	 */
 	private void createFontOptions() {
-		Dimension comboDimension = new Dimension(100, ICON_SIZE);
+		Dimension comboDimension = new Dimension(100, Tool.ICON_SIZE + GAP);
 		Integer[]    fontSizes = new Integer[140 - 8];
 		
 		for(int i = 8; i < 140; i++)
@@ -227,8 +226,8 @@ public class PaintPropertyView extends JPanel implements Observer {
 		fontSizeLabel  = new JLabel(Utils.msg.getString("fontsize")+":");
 		fontStyleLabel = new JLabel(Utils.msg.getString("fontstyle")+":");
 		
-		Dimension faceComboDimension = new Dimension(getMaxTextWidth(fontFaceCombo, GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames()), ICON_SIZE);
-		
+		Dimension faceComboDimension = new Dimension(getMaxTextWidth(fontFaceCombo, GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames()), Tool.ICON_SIZE + GAP);
+
 		textField.setFocusable(true);
 		textField.addFocusListener(new FocusListener() {
 			@Override
@@ -248,7 +247,7 @@ public class PaintPropertyView extends JPanel implements Observer {
 			}
 		});
 		
-		textField.setPreferredSize(new Dimension(Short.MAX_VALUE, ICON_SIZE));
+		textField.setPreferredSize(new Dimension(Short.MAX_VALUE, Tool.ICON_SIZE + GAP));
 		textField.setFont(defaultValueFont);
 		textLabel.setFont(defaultTitleFont);
 		fontFaceLabel.setFont(defaultTitleFont);
@@ -256,7 +255,7 @@ public class PaintPropertyView extends JPanel implements Observer {
 		fontSizeLabel.setFont(defaultTitleFont);
 		fontFaceCombo.setPreferredSize(faceComboDimension);
 		fontStyleCombo.setPreferredSize(comboDimension);
-		fontSizeCombo.setPreferredSize(new Dimension(50, ICON_SIZE));
+		fontSizeCombo.setPreferredSize(new Dimension(50, Tool.ICON_SIZE + GAP));
 		fontFaceCombo.setFont(defaultValueFont);
 		fontStyleCombo.setFont(defaultValueFont);
 		fontSizeCombo.setFont(defaultValueFont);
@@ -330,17 +329,17 @@ public class PaintPropertyView extends JPanel implements Observer {
 		capsCombo.setFont(defaultValueFont);
 		joinCombo.setFont(defaultValueFont);
 		
-		int gap = + LabelComboBoxRenderer.ICON_GAP*3 + LabelComboBoxRenderer.ICON_SIZE*2;
-		Dimension capsComboDimension = new Dimension(getMaxTextWidth(capsCombo, END_CAPS_TYPES) + gap, ICON_SIZE);
-		Dimension joinComboDimension = new Dimension(getMaxTextWidth(joinCombo, LINE_JOIN_TYPES)+ gap, ICON_SIZE);
-		Dimension dashComboDimension = new Dimension(100, ICON_SIZE);
+		int gap = + LabelComboBoxRenderer.ICON_GAP*3  + Tool.ICON_SIZE * 2;
+		Dimension capsComboDimension = new Dimension(getMaxTextWidth(capsCombo, END_CAPS_TYPES) + gap, Tool.ICON_SIZE + GAP);
+		Dimension joinComboDimension = new Dimension(getMaxTextWidth(joinCombo, LINE_JOIN_TYPES)+ gap, Tool.ICON_SIZE + GAP);
+		Dimension dashComboDimension = new Dimension(100, Tool.ICON_SIZE + GAP);
 		
 		capsCombo.setEditable(false);
 		joinCombo.setEditable(false);
 		capsCombo.setPreferredSize(capsComboDimension);
 		joinCombo.setPreferredSize(joinComboDimension);
-		widthSpinner.setPreferredSize(new Dimension(50, ICON_SIZE));
-		opacitySpinner.setPreferredSize(new Dimension(50, ICON_SIZE));
+		widthSpinner.setPreferredSize(new Dimension(50, Tool.ICON_SIZE + GAP));
+		opacitySpinner.setPreferredSize(new Dimension(50, Tool.ICON_SIZE + GAP));
 		dashCombo.setPreferredSize(dashComboDimension);
 		capsCombo.setActionCommand(SET_CAPS_ACTION);
 		joinCombo.setActionCommand(SET_JOINS_ACTION);
@@ -426,11 +425,11 @@ public class PaintPropertyView extends JPanel implements Observer {
 		colorLabel = new JLabel(Utils.msg.getString("color")+":");
 		colorField = new JLabel();
 		
-		colorLabel.setIcon(new ImageIcon(Utils.createIconImage(ICON_SIZE, ICON_SIZE, "/icons/color1.png")));
+		colorLabel.setIcon(new ImageIcon(Utils.createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, "/icons/tools/color1.png")));
 		colorLabel.setLabelFor(colorField);
 //		colorLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		colorLabel.setFont(defaultTitleFont);
-		colorField.setPreferredSize(new Dimension(ICON_SIZE, ICON_SIZE));
+		colorField.setPreferredSize(new Dimension(Tool.ICON_SIZE + GAP, Tool.ICON_SIZE + GAP));
 		colorField.setOpaque(true);
 		colorField.setBorder(javax.swing.BorderFactory.createCompoundBorder(new javax.swing.border.LineBorder(new java.awt.Color(209, 209, 209), 1, true), new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.LOWERED)));
 		colorField.setBackground(DEFAULT_COLOR);
@@ -581,8 +580,8 @@ public class PaintPropertyView extends JPanel implements Observer {
 		GroupLayout.ParallelGroup   vParallelGroup = layout.createParallelGroup(GroupLayout.Alignment.CENTER);
 		GroupLayout.SequentialGroup hSequentialGroup = layout.createSequentialGroup();
 //		GroupLayout.SequentialGroup vSequentialGroup = layout.createSequentialGroup();
-		createIconImage(ICON_SIZE, ICON_SIZE, tool.getIconPath());
-		toolIcon.setIcon(new ImageIcon(createIconImage(ICON_SIZE, ICON_SIZE, tool.getIconPath())));
+		createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, tool.getIconPath());
+		toolIcon.setIcon(new ImageIcon(createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, tool.getIconPath())));
 		toolIcon.setToolTipText(tool.getToolTipText());
 		
 		hSequentialGroup.addContainerGap()
@@ -997,17 +996,17 @@ public class PaintPropertyView extends JPanel implements Observer {
 	
 	
 //	private Dimension createStrokePanel() {
-//		Dimension     minButtonDimension = new Dimension(ICON_SIZE + BUTTON_HGAP, ICON_SIZE + BUTTON_HGAP);
+//		Dimension     minButtonDimension = new Dimension(Tool.ICON_SIZE + BUTTON_HGAP, Tool.ICON_SIZE + BUTTON_HGAP);
 //		Dimension     minSliderDimension = new Dimension(minButtonDimension.width * 3, minButtonDimension.height - BUTTON_HGAP);
 //		JSlider       widthSlider        = new JSlider(0, 20);
 //		ButtonGroup   endCapsGroup       = new ButtonGroup();
 //		ButtonGroup   lineJoinGroup      = new ButtonGroup();
-//		ImageIcon     bevelJoinIcon      = new ImageIcon(createIconImage(ICON_SIZE, ICON_SIZE, BEVEL_JOIN_ICON_PATH)); 
-//		ImageIcon     miterJoinIcon      = new ImageIcon(createIconImage(ICON_SIZE, ICON_SIZE, MITER_JOIN_ICON_PATH));
-//		ImageIcon     roundJoinIcon      = new ImageIcon(createIconImage(ICON_SIZE, ICON_SIZE, ROUND_JOIN_ICON_PATH));
-//		ImageIcon     buttEndIcon        = new ImageIcon(createIconImage(ICON_SIZE, ICON_SIZE, BUTT_END_ICON_PATH));
-//		ImageIcon     squareEndIcon      = new ImageIcon(createIconImage(ICON_SIZE, ICON_SIZE, SQUARE_END_ICON_PATH));
-//		ImageIcon     roundEndIcon       = new ImageIcon(createIconImage(ICON_SIZE, ICON_SIZE, ROUND_END_ICON_PATH));
+//		ImageIcon     bevelJoinIcon      = new ImageIcon(createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, BEVEL_JOIN_ICON_PATH)); 
+//		ImageIcon     miterJoinIcon      = new ImageIcon(createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, MITER_JOIN_ICON_PATH));
+//		ImageIcon     roundJoinIcon      = new ImageIcon(createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, ROUND_JOIN_ICON_PATH));
+//		ImageIcon     buttEndIcon        = new ImageIcon(createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, BUTT_END_ICON_PATH));
+//		ImageIcon     squareEndIcon      = new ImageIcon(createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, SQUARE_END_ICON_PATH));
+//		ImageIcon     roundEndIcon       = new ImageIcon(createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, ROUND_END_ICON_PATH));
 //		JToggleButton endCapsButt        = new JToggleButton(buttEndIcon);
 //		JToggleButton endCapsRound       = new JToggleButton(roundEndIcon);
 //		JToggleButton endCapsSquare      = new JToggleButton(squareEndIcon);
@@ -1190,14 +1189,10 @@ public class PaintPropertyView extends JPanel implements Observer {
 
 	
 	class LabelComboBoxRenderer extends JLabel implements ListCellRenderer {
-
-		/**
-		 * 
-		 */
 		private static final long serialVersionUID = 1L;
 		private Icon[]   icons;
 		private String[] descriptions;
-		public static final int ICON_SIZE = 16;
+		
 		public static final int ICON_GAP  = 3;
 		
 		public LabelComboBoxRenderer(Border b, String[] iconPaths, String[] descriptions) {
@@ -1211,7 +1206,7 @@ public class PaintPropertyView extends JPanel implements Observer {
 			icons = new Icon[iconPaths.length];
 			
 			for(int i = 0; i < iconPaths.length; i++) {
-				Image image = createIconImage(ICON_SIZE, ICON_SIZE, iconPaths[i]);
+				Image image = createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, iconPaths[i]);
 				if (image != null)
 					icons[i] = new ImageIcon(image);
 			}

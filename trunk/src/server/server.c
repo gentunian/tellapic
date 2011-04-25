@@ -573,6 +573,7 @@ void
   print_output(buff);
 #endif
 
+
   // send the connected clients to this client
   int i;
   for(i = 0 - thread->tnum; i < MAX_CLIENTS - thread->tnum; i++)
@@ -584,6 +585,7 @@ void
 	}
       pthread_mutex_unlock(&thread[i].stmutex);
     }
+
 
   pthread_mutex_lock(&ccbitsetmutex);                  /* Lock the shared resource   */
   ccbitset |= (1 << thread->tnum);                     /* Set the bit flag indicating this client thread number connection */
@@ -813,8 +815,8 @@ forward_stream(tdata_t *thread)
       pthread_mutex_lock(&message->mutex);
       message->delivers--;
 
-      if (message->delivers == 0)
-	unqueue_message(message); 
+      //      if (message->delivers == 0)
+      //unqueue_message(message); 
       
       pthread_mutex_unlock(&message->mutex);
       

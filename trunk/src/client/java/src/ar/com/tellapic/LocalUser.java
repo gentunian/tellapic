@@ -84,11 +84,11 @@ public class LocalUser extends AbstractUser {
 		return false;
 	}
 
-	/* (non-Javadoc)
-	 * @see com.tellapic.AbstractUser#isVisible()
-	 */
-	@Override
-	public boolean isVisible() {
-		return true;
-	}
+//	/* (non-Javadoc)
+//	 * @see com.tellapic.AbstractUser#isVisible()
+//	 */
+//	@Override
+//	public boolean isVisible() {
+//		return true;
+//	}
 }

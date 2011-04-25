@@ -18,7 +18,7 @@
 package ar.com.tellapic;
 
 import javax.swing.JOptionPane;
-import javax.swing.JProgressBar;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
@@ -128,7 +128,7 @@ public class Main {
 	}
 	
 	
-	public static void initiate(int id, String name) {
+	public static void initiate(final int id, final String name) {
 		ToolFactory.registerToolClassName(tellapicConstants.TOOL_ELLIPSE, EllipseNet.class.getName());
 		ToolFactory.registerToolClassName(tellapicConstants.TOOL_LINE, LineNet.class.getName());
 		ToolFactory.registerToolClassName(99, Zoom.class.getName());
@@ -138,9 +138,16 @@ public class Main {
 		ToolFactory.registerToolClassName(tellapicConstants.TOOL_PATH, PenNet.class.getName());
 		
 		
-		UserManager userManager = UserManager.getInstance();
-		LocalUser luser = userManager.createLocalUser(id, name);
-		new UserGUIBuilder(luser);
+		final UserManager userManager = UserManager.getInstance();
+		final LocalUser luser = (LocalUser) userManager.createUser(id, name, false);
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+//				UserManager userManager = UserManager.getInstance();
+				
+				new UserGUIBuilder(luser);
+			}
+		});
+		
 	}
 	
 		//UserGUIBuilder gui = new UserGUIBuilder((LocalUser)userManager.getLocalUser());

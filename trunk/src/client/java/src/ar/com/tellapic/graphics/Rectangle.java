@@ -11,13 +11,15 @@ import ar.com.tellapic.utils.Utils;
 public class Rectangle extends DrawingTool {
 	private Point2D             firstPoint;
 	private Rectangle2D         rectangle;
-	private Drawing             temporalDrawing;
+//	private Drawing             temporalDrawing;
 	private boolean             inUse;
+	private static final String RECTANGLE_ICON_PATH = "/icons/tools/rectangle.png"; 
+	private static final String RECTANGLE_CURSOR_PATH = "/icons/tools/rectangle-cursor.png"; 
 	
 	
 	
 	public Rectangle(String name) {
-		super(tellapicConstants.TOOL_RECT, name, "/icons/rectangle.png", Utils.msg.getString("rectangletooltip"), Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+		super(tellapicConstants.TOOL_RECT, name, RECTANGLE_ICON_PATH, Utils.msg.getString("rectangletooltip"), Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 		firstPoint = new Point2D.Double();
 		inUse = false;
 		temporalDrawing = new Drawing(getName());
@@ -26,16 +28,6 @@ public class Rectangle extends DrawingTool {
 	
 	public Rectangle() {
 		this("Rectangle");
-	}
-
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#getDrawing()
-	 */
-	@Override
-	public Drawing getDrawing() {
-		temporalDrawing.setShape(rectangle);
-		return (Drawing) temporalDrawing.clone();
 	}
 
 

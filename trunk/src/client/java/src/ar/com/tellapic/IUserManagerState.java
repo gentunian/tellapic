@@ -17,7 +17,7 @@
  */  
 package ar.com.tellapic;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 
 
 /**
@@ -29,9 +29,9 @@ import java.util.HashMap;
 public interface IUserManagerState {
 
 	public LocalUser                         getLocalUser();
-	public RemoteUser                        getRemoteUser(String userName);
+//	public RemoteUser                        getRemoteUser(String userName);
 	public AbstractUser                      getUser(String userName);
 	public AbstractUser                      getUser(int id);
-	public HashMap<String, RemoteUser>       getRemoteUsers();
-	public HashMap<String, AbstractUser>     getUsers();
+//	public HashMap<String, RemoteUser>       getRemoteUsers();
+	public ArrayList<AbstractUser>           getUsers();
 }
