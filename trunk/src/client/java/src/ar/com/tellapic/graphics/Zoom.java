@@ -24,10 +24,13 @@ public final class Zoom extends ControlTool implements ComboBoxModel{
 	public static final String ZOOMOUT_CURSOR_PATH = "/icons/tools/zoomOutCursor.png";
 	public static final String ZOOMIN_ICON_PATH = "/icons/tools/zoomin.png";
 	public static final String ZOOMOUT_ICON_PATH = "/icons/tools/zoomout.png";
+	public static final String ZOOMTOFIT_ICON_PATH = "/icons/tools/zoomtofit.png";
+	public static final String ZOOMTOSIZE_ICON_PATH = "/icons/tools/zoomtosize.png";
 	public static final float MAX_ZOOM_FACTOR = 3.0f;
 	public static final float MIN_ZOOM_FACTOR = 0.25f;
 	
 	private static final String[] values = new String[] { "25%", "50%", "75%", "100%", "125%", "150%", "175%", "200%", "225%", "250%", "275%", "300%"};
+	
 	private int current = 3;
 	
 	private static class Holder {
@@ -44,10 +47,11 @@ public final class Zoom extends ControlTool implements ComboBoxModel{
 		zoomFactor = 1;
 		Toolkit toolkit = Toolkit.getDefaultToolkit();
 //		Image image = toolkit.getImage(ZOOMOUT_ICON_PATH);
-		Image image = Utils.createIconImage(24,24, ZOOMOUT_CURSOR_PATH);
+		Image image = Utils.createIconImage(16, 16, ZOOMOUT_ICON_PATH);
 		zoomOutCursor = toolkit.createCustomCursor(image, new Point(10,10), getName()+"Out");
-		image = Utils.createIconImage(24,24, ZOOMIN_CURSOR_PATH);
+		image = Utils.createIconImage(16, 16, ZOOMIN_ICON_PATH);
 		zoomInCursor = toolkit.createCustomCursor(image, new Point(10,10), getName()+"In");
+		
 		setZoomIn(true);
 	}
 	
@@ -214,6 +218,10 @@ public final class Zoom extends ControlTool implements ComboBoxModel{
 		if (zoomFactor < MIN_ZOOM_FACTOR)
 			zoomFactor = MIN_ZOOM_FACTOR;
 		
+		if (value == 1) //TODO: LOL WTF?
+			current = 3;
+		
+		dataListener.contentsChanged(new ListDataEvent(values, ListDataEvent.CONTENTS_CHANGED, 0, values.length));
 		setChanged();
 		notifyObservers(zoomFactor);
 	}

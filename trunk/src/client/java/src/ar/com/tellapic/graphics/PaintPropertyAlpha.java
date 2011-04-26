@@ -8,6 +8,13 @@ public class PaintPropertyAlpha extends PaintProperty {
 	//TODO: private field
 	public float alpha;
 	
+	
+	public PaintPropertyAlpha(float a) {
+		super(PaintPropertyType.ALPHA);
+		alpha = a;
+	}
+	
+	
 	public PaintPropertyAlpha() {
 		super(PaintPropertyType.ALPHA);
 		alpha = 1.0f;

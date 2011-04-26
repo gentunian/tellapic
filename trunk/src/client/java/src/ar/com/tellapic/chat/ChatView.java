@@ -30,6 +30,7 @@ import java.util.Observer;
 
 import javax.swing.AbstractAction;
 import javax.swing.GroupLayout;
+import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
@@ -61,6 +62,52 @@ public class ChatView extends JPanel implements Observer {
 
 	private static final long serialVersionUID = -4356214471573728672L;
 
+	private static final String[] SMILEY_TEXT = new String[] {
+		":)",
+		":(",
+		":d",
+		":$",
+		":s",
+		";(",
+		"8)",
+		":*",
+		"$$",
+		":p",
+		";)",
+		"d:",
+		">(",
+		"<3",
+		"</3",
+		":u",
+		"(y)",
+		"(n)",
+		"8D",
+		"o.O"
+	};
+
+	private static final String[] SMILEY = new String[] {
+		"/icons/smileys/smiley.png",
+		"/icons/smileys/smiley-sad.png",
+		"/icons/smileys/smiley-grin.png",
+		"/icons/smileys/smiley-red.png",
+		"/icons/smileys/smiley-confuse.png",
+		"/icons/smileys/smiley-cry.png",
+		"/icons/smileys/smiley-cool.png",
+		"/icons/smileys/smiley-kiss.png",
+		"/icons/smileys/smiley-money.png",
+		"/icons/smileys/smiley-razz.png",
+		"/icons/smileys/smiley-wink.png",
+		"/icons/smileys/smiley-yell.png",
+		"/icons/smileys/smiley-mad.png",
+		"/icons/smileys/heart.png",
+		"/icons/smileys/heart-break.png",
+		"/icons/smileys/smiley-draw.png",
+		"/icons/smileys/thumb-up.png",
+		"/icons/smileys/thumb.png",
+		"/icons/smileys/smiley-green.png",
+		"/icons/smileys/smiley-eek.png"
+	};
+
 	private int                      currentTabIndex;
 	private String                   currentTabTitle;
 	private JTabbedPane              tabbedPane;
@@ -78,7 +125,9 @@ public class ChatView extends JPanel implements Observer {
 		inputText  = new JTextField();
 		tabbedPane = new JTabbedPane();
 		//inputText.setPreferredSize(new Dimension(100,20));
-
+		
+		createSmileys();
+		
 		Keymap map = inputText.getKeymap();
 		map.addActionForKeyStroke(
 				KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, InputEvent.CTRL_DOWN_MASK),
@@ -180,6 +229,14 @@ public class ChatView extends JPanel implements Observer {
 	}
 	
 	
+	/**
+	 * 
+	 */
+	private void createSmileys() {
+
+	}
+
+
 	private int createNewTab(String title) {
 		int exist = tabbedPane.indexOfTab(title);
 		if (exist != -1)
@@ -213,27 +270,50 @@ public class ChatView extends JPanel implements Observer {
 	}
 	
 
+	
 	private void updateTab(int tabIndex, String[] message) {
 		JScrollPane scrollPane = (JScrollPane) tabbedPane.getComponentAt(tabIndex);
 		JViewport   viewPort   = scrollPane.getViewport();
 		JTextPane   textArea   = (JTextPane) viewPort.getView();
-//		textArea.append(message);
 		
 		StyledDocument doc = textArea.getStyledDocument();
 		Style def = StyleContext.getDefaultStyleContext().getStyle(StyleContext.DEFAULT_STYLE);
 		Style user = doc.addStyle("user", def);
 		Style text = doc.addStyle("text", def);
 		StyleConstants.setBold(user, true);
+	
 		if (message[0].equals(UserManager.getInstance().getLocalUser().getName())) {
 			StyleConstants.setItalic(user, true);
 			StyleConstants.setItalic(text, true);
 		}
 		StyleConstants.setFontFamily(def, "Droid");
+		
 		doc.addStyle("text", def);
 		doc.addStyle("user", def);
+		
 		try {
 			doc.insertString(doc.getLength(), message[0]+": ", user);
-			doc.insertString(doc.getLength(), message[1]+"\n", text);
+			String str = message[1];
+			
+			for(int i = 0; i < str.length(); i++) {
+				int k = 0;
+				boolean found = false;
+				for(k = 0; k < SMILEY_TEXT.length && !found; k++) {
+					int j = 0;
+					for (j = i+1; j < str.length() && SMILEY_TEXT[k].startsWith(str.substring(i, j).toLowerCase()) && j-i < SMILEY_TEXT[k].length(); j++);
+					if (found = str.substring(i, j).toLowerCase().equals(SMILEY_TEXT[k])) {
+						Style smiley = doc.addStyle("smiley", def);
+						StyleConstants.setIcon(smiley, new ImageIcon(Utils.createIconImage(16, 16, SMILEY[k])));
+						doc.insertString(doc.getLength(), str.substring(i, j), smiley);
+						i += (j-i)-1;
+					}
+				}
+				if (!found)
+					/* We didn't find any 'smiley string' so, print ':' as usual */
+					doc.insertString(doc.getLength(), str.substring(i, i+1), text);
+			}
+			doc.insertString(doc.getLength(), "\n", text);
+			
 		} catch (BadLocationException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
