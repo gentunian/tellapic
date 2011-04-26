@@ -20,8 +20,8 @@ package ar.com.tellapic;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.Observable;
 import java.util.Observer;
@@ -66,13 +66,6 @@ public class UserView extends JPanel implements Observer {
 	private UserOptionsController  userOptionsController;
 	private JXTreeTable            tree;
 	
-//	private Some treeTableModel;
-//	private JTreeTable treeTable;
-//	private final Icon eyeIcon = new ImageIcon(getClass().getResource("/icons/new/eye.png"));
-//	private final Icon closedEyeIcon = new ImageIcon(getClass().getResource("/icons/new/eye-close.png"));
-	//private JCheckBox showHide;
-//	ToggleVisibilityCellRenderer r;
-	
 	private static class Holder {
 		private static final UserView INSTANCE = new UserView();
 	}
@@ -83,8 +76,9 @@ public class UserView extends JPanel implements Observer {
 		setName(Utils.msg.getString("userview"));
 		
 		tree = new JXTreeTable(UserManager.getInstance());
-//		tree.getTreeTableModel().addTreeModelListener(UserManager.getInstance());
-		tree.addMouseListener(new MouseListener(){
+		//tree.getTreeTableModel().addTreeModelListener(new TreeModelListener(){});
+
+		tree.addMouseListener(new MouseAdapter(){
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				int colSel = tree.getColumnModel().getColumnIndexAtX(e.getX());
@@ -93,8 +87,6 @@ public class UserView extends JPanel implements Observer {
 					return;
 				
 				Object o = path.getLastPathComponent();
-//				System.out.println("Clicked: "+colSel+" component: "+tree.getComponentAt(e.getX(), e.getY()).getComponentAt(e.getX(), e.getY())+" count: "+tree.getSelectedColumnCount());
-				
 				if (userOptionsController != null) {
 					if (o instanceof AbstractUser) {
 						AbstractUser user = (AbstractUser) o;
@@ -123,39 +115,16 @@ public class UserView extends JPanel implements Observer {
 					}
 				}
 			}
-
-			@Override
-			public void mouseEntered(MouseEvent e) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public void mouseExited(MouseEvent e) {
-				// TODO Auto-generated method stub
-			
-			}
-
-			@Override
 			public void mousePressed(MouseEvent e) {
 				// TODO Auto-generated method stub
 				if (e.isPopupTrigger()) {
 					TreePath path = tree.getPathForLocation(e.getX(), e.getY());
-					
-					System.out.println("Clicked: "+path+" col: "+tree.getSelectedColumn());
 					if (path != null) {
 						tree.getTreeSelectionModel().addSelectionPath(path);
 						TreePopupOptions popup = new TreePopupOptions(path.getLastPathComponent(), userOptionsController);
-						
 						popup.show(UserView.this, e.getX(), e.getY());
 					}
 				}
-			}
-
-			@Override
-			public void mouseReleased(MouseEvent e) {
-				// TODO Auto-generated method stub
-				
 			}
 		});
 //		tree.addTreeSelectionListener(new TreeSelectionListener(){
@@ -172,122 +141,29 @@ public class UserView extends JPanel implements Observer {
 		tree.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		tree.setSortable(false);
 		
-		/*********************************************************************/
-		/* This is the renderer for the tree (the first column in the table) */
-		/*********************************************************************/
-//		tree.setTreeCellRenderer(new TreeCellRenderer() {
-//			private MyNameLabel    description = new MyNameLabel();
-//			public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-//				if (value instanceof AbstractUser) {
-//					description.setText(value.toString());
-//					if (value instanceof LocalUser) {
-//						String text = description.getText();
-//						description.setText("<html><b>"+text+"</b> <i>(you)</i></html>");
-//					}
-//					description.setUserIcon();
-//				} else if (value instanceof Drawing) {
-//					description.setDrawingIcon();
-//					description.setText(value.toString());
-//				} else {
-//					description.setUsersIcon();
-//					String text = Utils.msg.getString("userlist");
-//					description.setText("<html>"+text+" <b>("+((ArrayList<?>)value).size()+")</b></html>");
-//				}
-//				return description;
-//			}
-//		});
-		
-		
-		/****************************************************************/
-		/* This will render the column for showing the hide/show option */
-		/****************************************************************/
-//		tree.setDefaultRenderer(MyEyeCheckBox.class, new TableCellRenderer(){
-//			private MyEyeCheckBox visibility = new MyEyeCheckBox();
-//			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-//				visibility.setSelected((Boolean)value);
-//
-//				if (isSelected)
-//					visibility.setBackground(Color.LIGHT_GRAY);
-//				else
-//					visibility.setBackground(Color.white);
-//				int w = visibility.getPreferredSize().width + 10;
-//				TableColumn tc = table.getColumnModel().getColumn(column);
-//				tc.setPreferredWidth(w);
-//				tc.setMaxWidth(w);
-//				return visibility;
-//			}
-//		});
-
-
-		/****************************************************************/
-		/* This will render the column for showing the CHAT option      */
-		/****************************************************************/
-//		tree.setDefaultRenderer(MyChatLabel.class, new TableCellRenderer() {
-//			private MyChatLabel chat = new MyChatLabel();
-//			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-//				if (isSelected)
-//					chat.setBackground(Color.LIGHT_GRAY);
-//				else
-//					chat.setBackground(Color.white);
-//				chat.useIcon((Boolean)value);
-//				int w = chat.getPreferredSize().width + 10;
-//				TableColumn tc = table.getColumnModel().getColumn(column);
-//				tc.setPreferredWidth(w);
-//				tc.setMaxWidth(w);
-//				return chat;
-//			}
-//		});
-		
-		
-		/****************************************************************/
-		/* This will render the column for showing the custom properties*/
-		/****************************************************************/
-//		tree.setDefaultRenderer(MyPropertiesLabel.class, new TableCellRenderer(){
-//			private MyPropertiesLabel properties = new MyPropertiesLabel();
-//			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-//				if (isSelected)
-//					properties.setBackground(Color.LIGHT_GRAY);
-//				else
-//					properties.setBackground(Color.white);
-//				properties.useIcon((Boolean)value);
-//				int w = properties.getPreferredSize().width + 10;
-//				TableColumn tc = table.getColumnModel().getColumn(column);
-//				tc.setPreferredWidth(w);
-//				tc.setMaxWidth(w);
-//				return properties;
-//			}
-//		});
-//		
-//		tree.setDefaultEditor(MyEyeCheckBox.class, new MyEyeCheckBoxEditor());
-//		tree.setDefaultEditor(MyChatLabel.class, new MyChatLabelEditor());
-//		tree.setDefaultEditor(MyPropertiesLabel.class, new MyPropertiesLabelEditor());
-		
 //		tree.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
 		ComponentProvider<AbstractButton> visibilityProvider = new CheckBoxProvider("/icons/system/eye.png", "/icons/system/eye-close.png");
 		ComponentProvider<JLabel> userProvider = new LabelProvider(new UserValue(), (int)JLabel.CENTER_ALIGNMENT);
+		tree.setDefaultRenderer(MyEyeCheckBox.class, new DefaultTableRenderer(visibilityProvider));
+		tree.setDefaultRenderer(String.class, new DefaultTableRenderer(userProvider));
+		tree.setTreeCellRenderer(new DefaultTreeRenderer(userProvider));
+		tree.setAutoCreateColumnsFromModel(false);
 		
-		tree.getColumn(1).setCellRenderer(new DefaultTableRenderer(visibilityProvider));
-		tree.getColumn(2).setCellRenderer(new DefaultTableRenderer(userProvider));
-		tree.getColumn(3).setCellRenderer(new DefaultTableRenderer(userProvider));
 		tree.getColumn(1).setMaxWidth(22);
 		tree.getColumn(2).setMaxWidth(22);
 		tree.getColumn(3).setMaxWidth(22);
+		
 		tree.getColumn(1).setMinWidth(12);
 		tree.getColumn(2).setMinWidth(12);
 		tree.getColumn(3).setMinWidth(12);
 		
-//		tree.setShowGrid(true);
-//		HighlightPredicate customPredicate = new HipghlightPredicate() {
-//			@Override
-//			public boolean isHighlighted(Component renderer, ComponentAdapter adapter) {
-//				return true;
-//			}
-//		};
-//		Highlighter hl = new ColorHighlighter(customPredicate, Color.GREEN, Color.BLUE);
-//		tree.addHighlighter(hl);
-		tree.setTreeCellRenderer(new DefaultTreeRenderer(userProvider));
-		tree.packAll();
+		tree.getColumn(0).setPreferredWidth(50);
+		tree.getColumn(1).setPreferredWidth(16);
+		tree.getColumn(2).setPreferredWidth(16);
+		tree.getColumn(3).setPreferredWidth(16);
+
+		tree.packTable(2);
 		treeView = new JScrollPane(tree);
 		treeView.setBorder(BorderFactory.createEmptyBorder());
 		setBackground(Color.white);
@@ -402,11 +278,12 @@ public class UserView extends JPanel implements Observer {
 				icon = userIcon;
 			else if (value instanceof Drawing)
 				icon = drawingIcon;
-			else if (value.toString().startsWith("[chat]"))
-				icon = chatIcon;
-			else  if (value.toString().startsWith("[properties]"))
-				icon = propertiesIcon;
-
+			else if (value instanceof String) {
+				if (value.toString().startsWith("[chat]"))
+					icon = chatIcon;
+				else  if (value.toString().startsWith("[properties]"))
+					icon = propertiesIcon;
+			}
 			return icon;
 		}
 		

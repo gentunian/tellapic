@@ -26,6 +26,7 @@ import javax.swing.ButtonGroup;
 import javax.swing.GroupLayout;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JColorChooser;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -101,50 +102,51 @@ public class PaintPropertyView extends JPanel implements Observer {
 	private static final int      DEFAULT_LINE_JOIN = BasicStroke.JOIN_MITER;
 	private static final double   DEFAULT_OPACITY = 100;
 	private static final double   DEFAULT_WIDTH = 5.0;
+	private static final String   SET_ZOOM_TOSIZE_ACTION = "zoomtosize";
+	private static final String   SET_ZOOM_TOFIT_ACTION = "zoomtofit";
 	
 	
 	
-	private final Font            defaultTitleFont = Font.decode("Droid-bold-10");
-	private final Font            defaultValueFont = Font.decode("Droid-10");
-	
-//	private JComboBox widthCombo;
-	private JSpinner  widthSpinner;
-	
-//	private JComboBox opacityCombo;
-	private JSpinner opacitySpinner;
-	private JComboBox dashCombo;
-	private JComboBox capsCombo;
-	private JComboBox joinCombo;
-	private JLabel toolIcon;
-	private JLabel widthLabel;
-	private JLabel opacityLabel;
-	private JLabel dashLabel;
-	private JLabel capsLabel;
-	private JLabel joinLabel;
-	private JLabel fontFaceLabel;
-	private JLabel fontSizeLabel;
-	private JLabel fontStyleLabel;
-	private JLabel textLabel;
-	private JLabel colorLabel;
-	private JLabel colorField;
-	private JSeparator jSeparator1;
-	private JSeparator jSeparator2;
-	private JSeparator jSeparator3;
-	private JSeparator jSeparator4;
-	private JSeparator jSeparator5;
-	private GroupLayout layout;
-	private JComboBox fontFaceCombo;
-	private JComboBox fontSizeCombo;
-	private JComboBox fontStyleCombo;
-	private JTextField textField;
+	private final Font               defaultTitleFont = Font.decode("Droid-bold-10");
+	private final Font               defaultValueFont = Font.decode("Droid-10");
+	private JSpinner                 widthSpinner;
+	private JSpinner                 opacitySpinner;
+	private JComboBox                dashCombo;
+	private JComboBox                capsCombo;
+	private JComboBox                joinCombo;
+	private JLabel                   toolIcon;
+	private JLabel                   widthLabel;
+	private JLabel                   opacityLabel;
+	private JLabel                   dashLabel;
+	private JLabel                   capsLabel;
+	private JLabel                   joinLabel;
+	private JLabel                   fontFaceLabel;
+	private JLabel                   fontSizeLabel;
+	private JLabel                   fontStyleLabel;
+	private JLabel                   textLabel;
+	private JLabel                   colorLabel;
+	private JLabel                   colorField;
+	private JSeparator               jSeparator1;
+	private JSeparator               jSeparator2;
+	private JSeparator               jSeparator3;
+	private JSeparator               jSeparator4;
+	private JSeparator               jSeparator5;
+	private GroupLayout              layout;
+	private JComboBox                fontFaceCombo;
+	private JComboBox                fontSizeCombo;
+	private JComboBox                fontStyleCombo;
+	private JTextField               textField;
 	private IPaintPropertyController controller;
-	private MyActionListener actionListener;
-	private JSeparator jSeparator6;
-	private JSeparator jSeparator7;
-	private JToggleButton zoomInButton;
-	private JToggleButton zoomOutButton;
-	private JComboBox     zoomCombo;
-	private JSeparator jSeparator8;
+	private MyActionListener         actionListener;
+	private JSeparator               jSeparator6;
+	private JSeparator               jSeparator7;
+	private JToggleButton            zoomInButton;
+	private JToggleButton            zoomOutButton;
+	private JComboBox                zoomCombo;
+	private JSeparator               jSeparator8;
+	private JButton                  zoomToFitButton;
+	private JButton                  zoomToSizeButton;
+	
 	
 	/** Creates new form ToolView */
 	public PaintPropertyView() {
@@ -184,6 +186,8 @@ public class PaintPropertyView extends JPanel implements Observer {
 	 * 
 	 */
 	private void createZoomOptions() {
+		zoomToFitButton = new JButton();
+		zoomToSizeButton = new JButton();
 		zoomInButton = new JToggleButton();
 		zoomOutButton = new JToggleButton();
 		zoomCombo = new JComboBox(Zoom.getInstance());
@@ -194,13 +198,20 @@ public class PaintPropertyView extends JPanel implements Observer {
 		
 		zoomInButton.setIcon(new ImageIcon(Utils.createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, Zoom.ZOOMIN_ICON_PATH)));
 		zoomOutButton.setIcon(new ImageIcon(Utils.createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, Zoom.ZOOMOUT_ICON_PATH)));
+		zoomToFitButton.setIcon(new ImageIcon(Utils.createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, Zoom.ZOOMTOFIT_ICON_PATH)));
+		zoomToSizeButton.setIcon(new ImageIcon(Utils.createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, Zoom.ZOOMTOSIZE_ICON_PATH)));
 		
 		zoomCombo.setFont(defaultValueFont);
 		zoomCombo.setActionCommand(SET_ZOOM_ACTION);
+		zoomToSizeButton.setActionCommand(SET_ZOOM_TOSIZE_ACTION);
+		zoomToFitButton.setActionCommand(SET_ZOOM_TOFIT_ACTION);
 		zoomInButton.setActionCommand(SET_ZOOM_IN_ACTION);
 		zoomOutButton.setActionCommand(SET_ZOOM_OUT_ACTION);
+		
 		zoomInButton.addActionListener(actionListener);
 		zoomOutButton.addActionListener(actionListener);
+		zoomToSizeButton.addActionListener(actionListener);
+		zoomToFitButton.addActionListener(actionListener);
 		zoomCombo.addActionListener(actionListener);
 		zoomInButton.setSelected(true);
 		
@@ -551,6 +562,7 @@ public class PaintPropertyView extends JPanel implements Observer {
 		remove(jSeparator5);
 		remove(jSeparator6);
 		remove(jSeparator7);
+		remove(jSeparator8);
 		remove(widthLabel);
 		remove(opacityLabel);
 		remove(capsLabel);
@@ -575,6 +587,8 @@ public class PaintPropertyView extends JPanel implements Observer {
 		remove(zoomInButton);
 		remove(zoomOutButton);
 		remove(zoomCombo);
+		remove(zoomToFitButton);
+		remove(zoomToSizeButton);
 		
 //		GroupLayout.ParallelGroup   hParallelGroup = layout.createParallelGroup(GroupLayout.Alignment.BASELINE);
 		GroupLayout.ParallelGroup   vParallelGroup = layout.createParallelGroup(GroupLayout.Alignment.CENTER);
@@ -710,6 +724,12 @@ public class PaintPropertyView extends JPanel implements Observer {
 		if (tool instanceof ControlTool && ((ControlTool)tool).hasZoomCapability()) {
 			hSequentialGroup
 			.addGap(5,5,5)
+			.addComponent(zoomToFitButton, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+			.addGap(5,5,5)
+			.addComponent(zoomToSizeButton, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+			.addGap(5,5,5)
+			.addComponent(jSeparator7, SEPARATOR_WIDTH, SEPARATOR_WIDTH, SEPARATOR_WIDTH)
+			.addGap(5,5,5)
 			.addComponent(zoomInButton, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 			.addGap(5,5,5)
 			.addComponent(zoomOutButton, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
@@ -719,6 +739,9 @@ public class PaintPropertyView extends JPanel implements Observer {
 			;
 			
 			vParallelGroup
+			.addComponent(zoomToFitButton, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+			.addComponent(zoomToSizeButton, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+			.addComponent(jSeparator7, SEPARATOR_WIDTH, SEPARATOR_WIDTH, SEPARATOR_WIDTH)
 			.addComponent(zoomInButton, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 			.addComponent(zoomOutButton, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 			.addComponent(zoomCombo, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
@@ -1301,6 +1324,13 @@ public class PaintPropertyView extends JPanel implements Observer {
 					float zoom = Float.valueOf(str.substring(0, str.length() - 1)) / 100;
 					controller.handleZoomChange(zoom);
 				}
+				
+				else if (action.equals(SET_ZOOM_TOFIT_ACTION)) {
+					
+				}
+				
+				else if (action.equals(SET_ZOOM_TOSIZE_ACTION))
+					controller.handleZoomChange(1);
 			}
 		}
 	}

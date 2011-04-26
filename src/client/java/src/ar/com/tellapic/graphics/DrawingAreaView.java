@@ -357,7 +357,7 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 			}
 		}
 		
-		if (observable instanceof DrawingTool) {
+		if (observable instanceof DrawingTool && ((DrawingTool)observable).isBeingUsed()) {
 			DrawingTool drawingTool = (DrawingTool) observable;
 			Drawing         drawing = drawingTool.getTemporalDrawing();
 			AbstractUser user = drawing.getUser();

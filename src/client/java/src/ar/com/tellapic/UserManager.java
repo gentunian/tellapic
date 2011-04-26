@@ -107,7 +107,7 @@ public class UserManager implements IUserManager, IUserManagerState, TreeTableMo
 	 * @see ar.com.tellapic.IUserManager#addUser(ar.com.tellapic.AbstractUser)
 	 */
 	@Override
-	public boolean addUser(final AbstractUser user) {
+	public boolean addUser(AbstractUser user) {
 		boolean userWasAdded = users.add(user);
 		
 		if (userWasAdded) {
@@ -115,6 +115,7 @@ public class UserManager implements IUserManager, IUserManagerState, TreeTableMo
 //			tms.fireChildrenAdded(new TreePath(new Object[] {users}), indices, children);
 //			tms.fireChildAdded(new TreePath(new Object[]{getRoot()}), users.indexOf(user), user);
 			tms.fireTreeStructureChanged(new TreePath(users));
+//			tms.fireChildAdded(new TreePath(new Object[]{getRoot()}), users.indexOf(user), user);
 		}
 		
 		return userWasAdded;
@@ -406,7 +407,7 @@ public class UserManager implements IUserManager, IUserManagerState, TreeTableMo
 			else 
 				child = parent;
 
-//		Utils.logMessage("getChild: "+parent+ " at: "+index+ " is: "+child);
+		Utils.logMessage("getChild: "+parent+ " at: "+index+ " is: "+child);
 		return child;
 	}
 
