@@ -33,57 +33,79 @@ public class UserOptionsController {
 	
 	private ChatView chatView;
 	
+	
+	/**
+	 * 
+	 * @param view
+	 */
 	public UserOptionsController(ChatView view) {
 		chatView = view;
 	}
 	
 	
+	/**
+	 * 
+	 * @param user
+	 */
 	public void initiateChat(AbstractUser user) {
 		chatView.createNewChatTab(user.getName());
 	}
 	
-	public void showCustomColorPopup(AbstractUser user, int x, int y) {
-		CustomPropertiesDialog popup = null;
-		PaintPropertyColor c = (PaintPropertyColor) user.getCustomColor();
-		
-		popup = new CustomPropertiesDialog(null, true, user, c);
-		popup.setLocation(x - popup.getSize().width, y);
-		popup.setVisible(true);
-		if (popup.getReturnStatus() != CustomPropertiesDialog.RET_CANCEL) {
-			try {
-				Color color = popup.getCustomColor();
-				if (color != null)
-					user.setCustomProperty(new PaintPropertyColor(color), AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
-				else
-					user.removeCustomColor();
-			} catch (NoSuchPropertyTypeException e1) {
-				e1.printStackTrace();
-			} catch (WrongPropertyTypeException e1) {
-				e1.printStackTrace();
-			}
-		} else {
-			user.removeCustomColor();
-		}
-	}
 	
-	public void setUserVisible(AbstractUser user, boolean visible) {
-		user.setVisible(visible);
-	}
-
-
-	/**
-	 * @param user
-	 */
-	public void toggleUserVisibility(AbstractUser user) {
-		boolean oldValue = user.isVisible();
-		user.setVisible(!oldValue);
-	}
-
-
-	/**
-	 * @param drawing
-	 */
-	public void toggleDrawingVisibility(Drawing drawing) {
-		drawing.getUser().changeDrawingVisibility(drawing);
-	}
+//	/**
+//	 * 
+//	 * @param user
+//	 * @param x
+//	 * @param y
+//	 */
+//	public void showCustomColorPopup(AbstractUser user, int x, int y) {
+//		CustomPropertiesDialog popup = null;
+//		PaintPropertyColor c = (PaintPropertyColor) user.getCustomColor();
+//		
+//		popup = new CustomPropertiesDialog(null, true, user, c);
+//		popup.setLocation(x - popup.getSize().width, y);
+//		popup.setVisible(true);
+//		if (popup.getReturnStatus() != CustomPropertiesDialog.RET_CANCEL) {
+//			try {
+//				Color color = popup.getCustomColor();
+//				if (color != null)
+//					user.setCustomProperty(new PaintPropertyColor(color), AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
+//				else
+//					user.removeCustomColor();
+//			} catch (NoSuchPropertyTypeException e1) {
+//				e1.printStackTrace();
+//			} catch (WrongPropertyTypeException e1) {
+//				e1.printStackTrace();
+//			}
+//		} else {
+//			user.removeCustomColor();
+//		}
+//	}
+//	
+//	public void setUserVisible(AbstractUser user, boolean visible) {
+//		user.setVisible(visible);
+//	}
+//
+//	public void setDrawingVisible(AbstractUser user, boolean visible) {
+//		user.setVisible(visible);
+//	}
+//	
+//	public void setDrawingVisible(Drawing drawing, boolean visible) {
+//		user.setVisible(visible);
+//	}
+//	/**
+//	 * @param user
+//	 */
+//	public void toggleUserVisibility(AbstractUser user) {
+//		boolean oldValue = user.isVisible();
+//		user.setVisible(!oldValue);
+//	}
+//
+//
+//	/**
+//	 * @param drawing
+//	 */
+//	public void toggleDrawingVisibility(Drawing drawing) {
+//		drawing.getUser().changeDrawingVisibility(drawing);
+//	}
 }

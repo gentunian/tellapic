@@ -260,6 +260,20 @@ public abstract class AbstractUser extends Observable  {
 	
 	/**
 	 * 
+	 * @param drawing
+	 */
+	public void setDrawingVisible(Drawing drawing, boolean visible) {
+		if (!drawingList.contains(drawing))
+			throw new NoSuchElementException("Drawing is not a member of this user drawing list");
+		
+		drawing.setVisible(visible);
+		setChanged();
+		notifyObservers(drawingList.indexOf(drawing));
+	}
+	
+	
+	/**
+	 * 
 	 */
 	public void cleanUp() {
 		removed = true;
@@ -399,5 +413,30 @@ public abstract class AbstractUser extends Observable  {
 		customProperties[CUSTOM_PAINT_PROPERTY_STROKE] = null;
 		setChanged();
 		notifyObservers();
+	}
+
+
+	/**
+	 * @param drawing
+	 */
+	public boolean removeDrawing(Drawing drawing) {
+		int index = drawingList.indexOf(drawing);
+		boolean removed = drawingList.remove(drawing);
+		
+		if (removed) {
+			setChanged();
+			notifyObservers(new Object[]{drawing, index});
+		}
+		
+		return removed;
+	}
+
+
+	/**
+	 * 
+	 */
+	public void changeVisibility() {
+		boolean oldValue = isVisible();
+		setVisible(!oldValue);
 	}
 }

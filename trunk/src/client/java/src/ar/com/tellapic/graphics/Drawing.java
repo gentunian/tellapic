@@ -185,12 +185,31 @@ public class Drawing extends AbstractDrawing implements Cloneable {
 		return fontProperty != null;
 	}	
 	
+	
+	/**
+	 * 
+	 * @return
+	 */
 	public boolean hasShape() {
 		return shape != null;
 	}
 	
+	
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
 	@Override
 	public String toString() {
+		return name;
+	}
+	
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public String getName() {
 		return name;
 	}
 

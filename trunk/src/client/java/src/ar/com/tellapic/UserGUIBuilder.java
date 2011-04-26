@@ -164,8 +164,8 @@ public class UserGUIBuilder {
 		SingleCDockable dock5 = wrapToDockable(userView);
 		ThemeMap t = control1.getThemes();
 		t.select(ThemeMap.KEY_BASIC_THEME);
-
-		mainWindow.setPreferredSize(new Dimension(400,400));
+		
+		mainWindow.setPreferredSize(new Dimension(800,600));
 		
 		grid.add(0, 0, 20, 20, dock1);
 		grid.add(2, 0, 200, 40, dock3);

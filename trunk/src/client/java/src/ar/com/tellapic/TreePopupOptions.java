@@ -17,6 +17,7 @@
  */  
 package ar.com.tellapic;
 
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -24,10 +25,16 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
+import javax.swing.KeyStroke;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
+
+import ar.com.tellapic.graphics.Drawing;
+import ar.com.tellapic.graphics.PaintPropertyColor;
+import ar.com.tellapic.utils.Utils;
 
 /**
  * @author 
@@ -58,6 +65,8 @@ public class TreePopupOptions extends JPopupMenu {
 		controller = c;
 		if (data instanceof AbstractUser)
 			buildUserPopup((AbstractUser) data);
+		else if (data instanceof Drawing) 
+			buildDrawingPopup((Drawing)data);
 		
 		addPopupMenuListener(new PopupMenuListener(){
 			public void popupMenuCanceled(PopupMenuEvent e) {}
@@ -70,6 +79,48 @@ public class TreePopupOptions extends JPopupMenu {
 	}
 	
 	
+	/**
+	 * @param data
+	 */
+	private void buildDrawingPopup(final Drawing drawing) {
+		/* +------------------------------+ */
+		/* |          <ToolName>          | /
+		/* +------------------------------+ */ 
+		/* |    Delete                    | */
+		/* |    Hide                      | */
+		/* +------------------------------+ */
+		JMenuItem name     = new JMenuItem(drawing.getName());
+		JMenuItem delete   = new JMenuItem(Utils.msg.getString("delete"));
+		JCheckBoxMenuItem hide = new JCheckBoxMenuItem(Utils.msg.getString("hide"));
+		
+		name.setEnabled(false);
+		name.setHorizontalTextPosition(JLabel.CENTER);
+		delete.setAccelerator(KeyStroke.getKeyStroke("DELETE"));
+		hide.setAccelerator(KeyStroke.getKeyStroke("H"));
+		hide.addItemListener(new ItemListener(){
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				drawing.getUser().setDrawingVisible(drawing, !(e.getStateChange() == ItemEvent.SELECTED));
+			}
+		});
+		delete.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				System.out.println("ASDFAS: "+e.getSource());
+				AbstractUser user = drawing.getUser();
+				user.removeDrawing(drawing);
+			}
+		});
+		hide.setSelected(!drawing.isVisible());
+		name.setFont(Font.decode(USER_FONT));
+		name.setAlignmentX(JPopupMenu.CENTER_ALIGNMENT);
+		add(name);
+		addSeparator();
+		add(delete);
+		add(hide);
+	}
+
+
 	private void buildUserPopup(final AbstractUser user) {
 		/* +------------------------------+ */
 		/* |          <username>          | /
@@ -84,16 +135,38 @@ public class TreePopupOptions extends JPopupMenu {
 		JCheckBoxMenuItem hide = new JCheckBoxMenuItem("Hide");
 		
 		name.setEnabled(false);
+		name.setHorizontalTextPosition(JLabel.CENTER);
+		doChat.setAccelerator(KeyStroke.getKeyStroke("ENTER"));
+		setColor.setAccelerator(KeyStroke.getKeyStroke("C"));
+		hide.setAccelerator(KeyStroke.getKeyStroke("H"));
 		hide.addItemListener(new ItemListener(){
 			@Override
 			public void itemStateChanged(ItemEvent e) {
-				controller.setUserVisible(user, !(e.getStateChange() == ItemEvent.SELECTED));
+				user.setVisible(!(e.getStateChange() == ItemEvent.SELECTED));
 			}
 		});
 		setColor.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				controller.showCustomColorPopup(user, x, y);
+				CustomPropertiesDialog popup = null;
+				PaintPropertyColor c = (PaintPropertyColor) user.getCustomColor();
+				popup = new CustomPropertiesDialog(null, true, user, c);
+				popup.setLocation(x - popup.getSize().width, y);
+				popup.setVisible(true);
+				if (popup.getReturnStatus() != CustomPropertiesDialog.RET_CANCEL) {
+					try {
+						Color color = popup.getCustomColor();
+						if (color != null)
+							user.setCustomProperty(new PaintPropertyColor(color), AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
+						else
+							user.removeCustomColor();
+					} catch (NoSuchPropertyTypeException e1) {
+						e1.printStackTrace();
+					} catch (WrongPropertyTypeException e1) {
+						e1.printStackTrace();
+					}
+				} else
+					user.removeCustomColor();
 			}
 		});
 		doChat.addActionListener(new ActionListener() {

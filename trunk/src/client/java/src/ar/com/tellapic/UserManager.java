@@ -509,13 +509,22 @@ public class UserManager implements IUserManager, IUserManagerState, TreeTableMo
 		AbstractUser user = (AbstractUser) o;
 		ArrayList<Drawing> childs = user.getDrawings();
 		if (arg instanceof Drawing) {
-			tms.fireChildAdded(new TreePath(new Object[]{ getRoot(), user }), childs.indexOf(arg), arg);
+			if (childs.contains(arg))
+				tms.fireChildAdded(new TreePath(new Object[]{ getRoot(), user }), childs.indexOf(arg), arg);
+			
 		} else if (arg instanceof Boolean){
 			tms.fireChildChanged(new TreePath(new Object[]{ getRoot() }), users.indexOf(user), user);
+			
 		} else if (arg instanceof Integer) {
 			int index = (Integer) arg;
 			tms.fireChildChanged(new TreePath(new Object[]{getRoot(), user}), index, childs.get(index));
+			
+		} else if (arg instanceof Object[]) {
+			int index = (Integer)((Object[]) arg)[1];
+			Drawing drawing = (Drawing)((Object[])arg)[0];
+			tms.fireChildRemoved(new TreePath(new Object[]{ getRoot(), user }), index, drawing);
 		}
+		
 		DrawingAreaView.getInstance().update(null, null);
 	}
 
