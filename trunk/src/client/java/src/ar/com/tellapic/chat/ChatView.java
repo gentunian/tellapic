@@ -19,6 +19,7 @@ package ar.com.tellapic.chat;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -31,7 +32,9 @@ import java.util.Observer;
 import javax.swing.AbstractAction;
 import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
@@ -81,8 +84,8 @@ public class ChatView extends JPanel implements Observer {
 		":u",
 		"(y)",
 		"(n)",
-		"8D",
-		"o.O"
+		"8d",
+		"o.o"
 	};
 
 	private static final String[] SMILEY = new String[] {
@@ -104,18 +107,23 @@ public class ChatView extends JPanel implements Observer {
 		"/icons/smileys/smiley-draw.png",
 		"/icons/smileys/thumb-up.png",
 		"/icons/smileys/thumb.png",
-		"/icons/smileys/smiley-green.png",
+		"/icons/smileys/smiley-mr-green.png",
 		"/icons/smileys/smiley-eek.png"
 	};
 
+	private SmileysPopup             popup;
 	private int                      currentTabIndex;
 	private String                   currentTabTitle;
 	private JTabbedPane              tabbedPane;
 	private JTextField               inputText;
 	private IChatController          controller;
 	private ArrayList<JTextPane>     chatTabs;
+	private JButton                  smileyButton;
 	
-	
+	/**
+	 * 
+	 * @param c
+	 */
 	public ChatView(IChatController c) {
 		setName(Utils.msg.getString("chatview"));
 		ChatClientModel.getInstance().addObserver(this);
@@ -124,33 +132,19 @@ public class ChatView extends JPanel implements Observer {
 		chatTabs   = new ArrayList<JTextPane>();
 		inputText  = new JTextField();
 		tabbedPane = new JTabbedPane();
-		//inputText.setPreferredSize(new Dimension(100,20));
-		
-		createSmileys();
-		
-		Keymap map = inputText.getKeymap();
-		map.addActionForKeyStroke(
-				KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, InputEvent.CTRL_DOWN_MASK),
-				new AbstractAction("Change Tab"){
-					private static final long serialVersionUID = 1L;
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						tabbedPane.setSelectedIndex((currentTabIndex+1)%tabbedPane.getTabCount());
-					}
-				});
-		
-		map.addActionForKeyStroke(
-				KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, InputEvent.CTRL_DOWN_MASK),
-				new AbstractAction("Change Tab"){
-					private static final long serialVersionUID = 1L;
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						if (currentTabIndex == 0)
-							tabbedPane.setSelectedIndex(tabbedPane.getTabCount()-1);
-						else
-							tabbedPane.setSelectedIndex((currentTabIndex-1)%tabbedPane.getTabCount());
-					}
-				});
+		smileyButton = new JButton(new ImageIcon(Utils.createIconImage(16, 16, "/icons/system/smiley-button.png")));
+		smileyButton.setPreferredSize(new Dimension(24,24));
+		smileyButton.setMaximumSize(new Dimension(24,24));
+		smileyButton.addActionListener(new ActionListener(){
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JButton b = (JButton) e.getSource();
+				if (popup == null)
+					popup = new SmileysPopup();
+				popup.setVisible(!popup.isVisible());
+				popup.setLocation(b.getLocationOnScreen().x - popup.getSize().width, b.getLocationOnScreen().y - popup.getSize().height);
+			}
+		});
 		
 		GroupLayout layout = new GroupLayout(ChatView.this);
 		setLayout(layout);
@@ -158,22 +152,21 @@ public class ChatView extends JPanel implements Observer {
 		layout.setHorizontalGroup(
 				layout.createParallelGroup(GroupLayout.Alignment.LEADING)
 				.addGroup(layout.createSequentialGroup()
-//						.addContainerGap()
 						.addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
 								.addComponent(tabbedPane, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-								.addComponent(inputText, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-//								.addContainerGap()
-				)
+								.addGroup(layout.createSequentialGroup()
+										.addContainerGap()
+										.addComponent(inputText, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+										.addComponent(smileyButton, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, 24))))
 		);
 		
 		layout.setVerticalGroup(
 				layout.createParallelGroup(GroupLayout.Alignment.LEADING)
 				.addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
 						.addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-//						.addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-						.addComponent(inputText, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-						.addContainerGap()
-				)
+						.addGroup(layout.createParallelGroup()
+								.addComponent(inputText, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+								.addComponent(smileyButton, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, 24)))
 		);
 
 		inputText.addActionListener(new ActionListener() {
@@ -225,18 +218,45 @@ public class ChatView extends JPanel implements Observer {
 				((ChatViewTabComponent)tabbedPane.getTabComponentAt(currentTabIndex)).setTitleColor(Color.black);
 			}
 		});
-
+		createBindings();
 	}
 	
 	
 	/**
 	 * 
 	 */
-	private void createSmileys() {
+	private void createBindings() {
+		Keymap map = inputText.getKeymap();
+		map.addActionForKeyStroke(
+				KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, InputEvent.CTRL_DOWN_MASK),
+				new AbstractAction("Change Tab"){
+					private static final long serialVersionUID = 1L;
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						tabbedPane.setSelectedIndex((currentTabIndex+1)%tabbedPane.getTabCount());
+					}
+				});
 
+		map.addActionForKeyStroke(
+				KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, InputEvent.CTRL_DOWN_MASK),
+				new AbstractAction("Change Tab"){
+					private static final long serialVersionUID = 1L;
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						if (currentTabIndex == 0)
+							tabbedPane.setSelectedIndex(tabbedPane.getTabCount()-1);
+						else
+							tabbedPane.setSelectedIndex((currentTabIndex-1)%tabbedPane.getTabCount());
+					}
+				});
 	}
 
 
+	/**
+	 * 
+	 * @param title
+	 * @return
+	 */
 	private int createNewTab(String title) {
 		int exist = tabbedPane.indexOfTab(title);
 		if (exist != -1)
@@ -270,7 +290,11 @@ public class ChatView extends JPanel implements Observer {
 	}
 	
 
-	
+	/**
+	 * 
+	 * @param tabIndex
+	 * @param message
+	 */
 	private void updateTab(int tabIndex, String[] message) {
 		JScrollPane scrollPane = (JScrollPane) tabbedPane.getComponentAt(tabIndex);
 		JViewport   viewPort   = scrollPane.getViewport();
@@ -374,5 +398,36 @@ public class ChatView extends JPanel implements Observer {
 	public void createNewChatTab(String name) {
 		int index = createNewTab(name);
 		tabbedPane.setSelectedIndex(index);
+	}
+	
+	
+	/**
+	 * 
+	 * @author 
+	 *          Sebastian Treu
+	 *          sebastian.treu(at)gmail.com
+	 *
+	 */
+	private class SmileysPopup extends JPopupMenu {
+		private static final long serialVersionUID = 1L;
+
+		public SmileysPopup() {
+//			setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+			GridLayout layout = new GridLayout(0, SMILEY.length/4);
+			setLayout(layout);
+			for(int i = 0; i < SMILEY.length; i++) {
+				final JButton smiley = new JButton(new ImageIcon(Utils.createIconImage(16, 16, SMILEY[i])));
+				smiley.setName(SMILEY_TEXT[i]);
+				smiley.addActionListener(new ActionListener(){
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						String oldText = inputText.getText();
+						inputText.setText(oldText+" "+smiley.getName());
+						inputText.requestFocus();
+					}
+				});
+				add(smiley);
+			}
+		}
 	}
 }
