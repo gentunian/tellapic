@@ -20,19 +20,24 @@ package ar.com.tellapic;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Observable;
 import java.util.Observer;
 
+import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
+import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.InputMap;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.tree.TreePath;
 
@@ -48,6 +53,7 @@ import org.jdesktop.swingx.renderer.LabelProvider;
 import org.jdesktop.swingx.renderer.StringValue;
 
 import ar.com.tellapic.graphics.Drawing;
+import ar.com.tellapic.graphics.PaintPropertyColor;
 import ar.com.tellapic.utils.Utils;
 
 /**
@@ -78,6 +84,8 @@ public class UserView extends JPanel implements Observer {
 		tree = new JXTreeTable(UserManager.getInstance());
 		//tree.getTreeTableModel().addTreeModelListener(new TreeModelListener(){});
 
+		addKeyShortcuts();
+		
 		tree.addMouseListener(new MouseAdapter(){
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -92,10 +100,12 @@ public class UserView extends JPanel implements Observer {
 						AbstractUser user = (AbstractUser) o;
 						switch(colSel) {
 						case 1:
-							userOptionsController.toggleUserVisibility(user);
+//							userOptionsController.toggleUserVisibility(user);
+							boolean oldValue = user.isVisible();
+							user.setVisible(!oldValue);
 							break;
 						case 2:
-							userOptionsController.showCustomColorPopup(user, e.getXOnScreen(), e.getYOnScreen());
+							showCustomColorPopup(user, e.getXOnScreen(), e.getYOnScreen());
 							break;
 						case 3:
 							userOptionsController.initiateChat(user);
@@ -105,7 +115,8 @@ public class UserView extends JPanel implements Observer {
 						Drawing drawing = (Drawing) o;
 						switch(colSel) {
 						case 1:
-							userOptionsController.toggleDrawingVisibility(drawing);
+//							userOptionsController.toggleDrawingVisibility(drawing);
+							drawing.getUser().changeDrawingVisibility(drawing);
 							break;
 						case 2:
 							break;
@@ -173,6 +184,70 @@ public class UserView extends JPanel implements Observer {
 	
 	/**
 	 * 
+	 */
+	private void addKeyShortcuts() {
+		InputMap  inputMap  = tree.getInputMap();
+		ActionMap actionMap = tree.getActionMap();
+		inputMap.put(KeyStroke.getKeyStroke("DELETE"), "deleteDrawing");
+		inputMap.put(KeyStroke.getKeyStroke("H"), "hide");
+		inputMap.put(KeyStroke.getKeyStroke("ENTER"), "chat");
+		inputMap.put(KeyStroke.getKeyStroke("C"), "color");
+		
+		actionMap.put("hide", new AbstractAction() {
+			private static final long serialVersionUID = 1L;
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int row = tree.getSelectedRow();
+				Object value = tree.getValueAt(row, tree.getHierarchicalColumn());
+				if (value instanceof Drawing) {
+					Drawing drawing = (Drawing) value;
+					drawing.getUser().changeDrawingVisibility(drawing);
+				} else if (value instanceof AbstractUser)
+					((AbstractUser)value).changeVisibility();
+			}
+		});
+		
+		actionMap.put("chat", new AbstractAction() {
+			private static final long serialVersionUID = 1L;
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int row = tree.getSelectedRow();
+				Object value = tree.getValueAt(row, tree.getHierarchicalColumn());
+				if (value instanceof AbstractUser)
+					userOptionsController.initiateChat((AbstractUser) value);
+			}
+			
+		});
+		
+		actionMap.put("color", new AbstractAction() {
+			private static final long serialVersionUID = 1L;
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int row = tree.getSelectedRow();
+				Object value = tree.getValueAt(row, tree.getHierarchicalColumn());
+				if (value instanceof AbstractUser) {
+					showCustomColorPopup((AbstractUser) value, getLocationOnScreen().x, getLocationOnScreen().y);
+				}
+			}
+		});
+		
+		actionMap.put("deleteDrawing", new AbstractAction() {
+			private static final long serialVersionUID = 1L;
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int row = tree.getSelectedRow();
+				Object value = tree.getValueAt(row, 0);
+				if (value instanceof Drawing) {
+					AbstractUser user = ((Drawing)value).getUser();
+					user.removeDrawing((Drawing) value);
+				}
+			}
+		});
+	}
+
+
+	/**
+	 * 
 	 * @param c
 	 */
 	public void setUserOptionsController(UserOptionsController c) {
@@ -236,8 +311,42 @@ public class UserView extends JPanel implements Observer {
 //			rendererComponent.setText(getValueAsString(context));
 		}
 	}
-
 	
+	
+	/**
+	 * 
+	 * @param user
+	 */
+	private void showCustomColorPopup(AbstractUser user, int x, int y) {
+		CustomPropertiesDialog popup = null;
+		PaintPropertyColor c = (PaintPropertyColor) user.getCustomColor();
+		popup = new CustomPropertiesDialog(null, true, user, c);
+		popup.setLocation(x - popup.getSize().width, y);
+		popup.setVisible(true);
+		if (popup.getReturnStatus() != CustomPropertiesDialog.RET_CANCEL) {
+			try {
+				Color color = popup.getCustomColor();
+				if (color != null)
+					user.setCustomProperty(new PaintPropertyColor(color), AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
+				else
+					user.removeCustomColor();
+			} catch (NoSuchPropertyTypeException e1) {
+				e1.printStackTrace();
+			} catch (WrongPropertyTypeException e1) {
+				e1.printStackTrace();
+			}
+		} else
+			user.removeCustomColor();
+	}
+	
+	
+	/**
+	 * 
+	 * @author 
+	 *          Sebastian Treu
+	 *          sebastian.treu(at)gmail.com
+	 *
+	 */
 	private class UserValue implements IconValue, StringValue {
 		private static final long serialVersionUID = 1L;
 		private Icon userIcon = (Icon)(new ImageIcon(Utils.createIconImage(12, 12, "/icons/system/user.png")));
