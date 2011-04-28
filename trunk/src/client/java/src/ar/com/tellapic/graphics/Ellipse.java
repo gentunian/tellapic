@@ -1,5 +1,6 @@
 package ar.com.tellapic.graphics;
 
+import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.event.MouseEvent;
@@ -12,6 +13,13 @@ import ar.com.tellapic.utils.Utils;
 public class Ellipse extends DrawingTool {
 	private static final String ELLIPSE_ICON_PATH = "/icons/tools/ellipse.png";
 	private static final String ELLIPSE_CURSOR_PATH = "/icons/tools/ellipse-cursor.png";
+	
+	private static final double DEFAULT_ALPHA = 1;
+	private static final int    DEFAULT_CAPS = 0;
+	private static final Color  DEFAULT_COLOR = Color.white;
+	private static final int    DEFAULT_JOINS = 0;
+	private static final float  DEFAULT_MITER_LIMIT = 1;
+	private static final double DEFAULT_WIDTH = 5;
 	
 	private Ellipse2D           ellipse;
 	private Point2D             firstPoint;
@@ -290,5 +298,86 @@ public class Ellipse extends DrawingTool {
 	@Override
 	public boolean hasStrokeCapability() {
 		return true;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#getDefaultAlpha()
+	 */
+	@Override
+	public double getDefaultAlpha() {
+		return DEFAULT_ALPHA;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#getDefaultCaps()
+	 */
+	@Override
+	public int getDefaultCaps() {
+		return DEFAULT_CAPS;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#getDefaultColor()
+	 */
+	@Override
+	public Color getDefaultColor() {
+		return DEFAULT_COLOR;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#getDefaultFontFace()
+	 */
+	@Override
+	public String getDefaultFontFace() {
+		return null;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#getDefaultFontSize()
+	 */
+	@Override
+	public double getDefaultFontSize() {
+		return 0;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#getDefaultFontStyle()
+	 */
+	@Override
+	public int getDefaultFontStyle() {
+		return 0;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#getDefaultJoins()
+	 */
+	@Override
+	public int getDefaultJoins() {
+		return DEFAULT_JOINS;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#getDefaultMiterLimit()
+	 */
+	@Override
+	public float getDefaultMiterLimit() {
+		return DEFAULT_MITER_LIMIT;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#getDefaultWidth()
+	 */
+	@Override
+	public double getDefaultWidth() {
+		return DEFAULT_WIDTH;
 	}
 }

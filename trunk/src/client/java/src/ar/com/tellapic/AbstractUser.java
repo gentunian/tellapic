@@ -420,6 +420,9 @@ public abstract class AbstractUser extends Observable  {
 	 * @param drawing
 	 */
 	public boolean removeDrawing(Drawing drawing) {
+		if (drawing == null)
+			return false;
+		
 		int index = drawingList.indexOf(drawing);
 		boolean removed = drawingList.remove(drawing);
 		
@@ -429,6 +432,20 @@ public abstract class AbstractUser extends Observable  {
 		}
 		
 		return removed;
+	}
+	
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public boolean removeLastDrawing() {
+		if (drawingList.isEmpty())
+			return false;
+		
+		Drawing drawing = drawingList.get(drawingList.size() - 1);
+		
+		return removeDrawing(drawing);
 	}
 
 

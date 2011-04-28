@@ -13,6 +13,7 @@ import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Transparency;
+import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
@@ -25,11 +26,15 @@ import java.awt.image.BufferedImage;
 import java.util.Observable;
 import java.util.Observer;
 
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JToggleButton;
 import javax.swing.JViewport;
+import javax.swing.KeyStroke;
 import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
 import javax.swing.event.AncestorEvent;
@@ -196,6 +201,17 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 			public void ancestorMoved(AncestorEvent event) {}
 			@Override
 			public void ancestorRemoved(AncestorEvent event) {}
+		});
+		
+		InputMap inputMap = getInputMap();
+		inputMap.put(KeyStroke.getKeyStroke("control Z"), "removeLast");
+		ActionMap actionMap = getActionMap();
+		actionMap.put("removeLast", new AbstractAction(){
+			private static final long serialVersionUID = 1L;
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				user.removeLastDrawing();
+			}
 		});
 		
 		setVisible(true);

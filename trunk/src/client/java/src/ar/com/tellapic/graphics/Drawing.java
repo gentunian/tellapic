@@ -7,7 +7,7 @@ public class Drawing extends AbstractDrawing implements Cloneable {
 	private PaintPropertyColor  colorProperty;
 	private PaintPropertyAlpha  alphaProperty;
 	private PaintPropertyFont   fontProperty;
-	private PaintPropertyZoom   zoomProperty;
+//	private PaintPropertyZoom   zoomProperty;
 	private Shape               shape;
 	
 	
@@ -155,15 +155,15 @@ public class Drawing extends AbstractDrawing implements Cloneable {
 		if (hasColorProperty())
 			colorProperty  = (PaintPropertyColor) colorProperty.clone();
 		
-		if (hasZoomProperty())
-			zoomProperty = (PaintPropertyZoom) zoomProperty.clone();
+//		if (hasZoomProperty())
+//			zoomProperty = (PaintPropertyZoom) zoomProperty.clone();
 	}
 	
 	
-	@Override
-	public boolean hasZoomProperty() {
-		return zoomProperty != null;
-	}
+//	@Override
+//	public boolean hasZoomProperty() {
+//		return zoomProperty != null;
+//	}
 
 	@Override
 	public boolean hasAlphaProperty() {
@@ -213,19 +213,19 @@ public class Drawing extends AbstractDrawing implements Cloneable {
 		return name;
 	}
 
-	/**
-	 * @param zoomProperty the zoomProperty to set
-	 */
-	public void setPaintPropertyZoom(PaintPropertyZoom zoomProperty) {
-		this.zoomProperty = zoomProperty;
-	}
-
-	/**
-	 * @return the zoomProperty
-	 */
-	public PaintPropertyZoom getPaintPropertyZoom() {
-		return zoomProperty;
-	}
+//	/**
+//	 * @param zoomProperty the zoomProperty to set
+//	 */
+//	public void setPaintPropertyZoom(PaintPropertyZoom zoomProperty) {
+//		this.zoomProperty = zoomProperty;
+//	}
+//
+//	/**
+//	 * @return the zoomProperty
+//	 */
+//	public PaintPropertyZoom getPaintPropertyZoom() {
+//		return zoomProperty;
+//	}
 
 	
 	@Override

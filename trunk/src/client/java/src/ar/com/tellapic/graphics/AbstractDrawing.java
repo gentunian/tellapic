@@ -79,7 +79,7 @@ public abstract class AbstractDrawing {
 	 * 
 	 * @return
 	 */
-	public abstract PaintPropertyZoom getPaintPropertyZoom();
+//	public abstract PaintPropertyZoom getPaintPropertyZoom();
 	
 	public abstract boolean hasFontProperty();
 	
@@ -89,7 +89,7 @@ public abstract class AbstractDrawing {
 	
 	public abstract boolean hasAlphaProperty();
 	
-	public abstract boolean hasZoomProperty();
+//	public abstract boolean hasZoomProperty();
 
 	/**
 	 * @param user the user to set

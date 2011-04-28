@@ -93,8 +93,8 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 		if (tool == null)
 			throw new IllegalArgumentException("tool cannot be null");
 
-//		DrawingAreaView.getInstance().setCursor(tool.getCursor());
 		lastUsedTool = tool;
+		
 		setChanged();
 		notifyObservers(new ActionData(SHOW_TOOL, lastUsedTool));
 	}
@@ -357,6 +357,8 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 		if (lastUsedTool instanceof DrawingTool) {
 			((DrawingTool) lastUsedTool).setFont(fontProperty);
 		}
+		setChanged();
+		notifyObservers(new ActionData(UPDATE_TOOL, lastUsedTool));
 	}
 
 
@@ -368,13 +370,12 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 		if (toolName == null)
 			throw new IllegalArgumentException("toolName cannot be null");
 		
-		lastUsedTool = tools.get(toolName);
-		if (lastUsedTool == null)
+		Tool tool = tools.get(toolName);
+		
+		if (tool == null)
 			throw new NoSuchElementException("No tool with name "+toolName+" found.");
 		
-		//DrawingAreaView.getInstance().setCursor(lastUsedTool.getCursor());
-		setChanged();
-		notifyObservers(new ActionData(SHOW_TOOL, lastUsedTool));
+		setCurrentTool(tool);
 	}
 
 
@@ -387,6 +388,8 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 		if (lastUsedTool instanceof DrawingTool) {
 			((DrawingTool) lastUsedTool).setColor(colorProperty);
 		}
+		setChanged();
+		notifyObservers(new ActionData(UPDATE_TOOL, lastUsedTool));
 	}
 
 
@@ -409,5 +412,33 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 		Zoom zoom = (Zoom) tools.get("Zoom"); //TODO: use constant.
 		
 		zoom.setZoom(value);
+	}
+
+
+	/**
+	 * 
+	 */
+	public void setCurrentToolDefaultValues() {
+		if (lastUsedTool instanceof DrawingTool) {
+			if (((DrawingTool) lastUsedTool).hasAlphaCapability())
+				setAlphaPropertyValue(((DrawingTool)lastUsedTool).getDefaultAlpha());
+			
+			if (((DrawingTool) lastUsedTool).hasColorCapability())
+				setColorPropertyValue(((DrawingTool)lastUsedTool).getDefaultColor());
+			
+			if (((DrawingTool) lastUsedTool).hasFontCapability()) {
+				setFontPropertyFace(((DrawingTool)lastUsedTool).getDefaultFontFace());
+				setFontPropertySize((int) ((DrawingTool)lastUsedTool).getDefaultFontSize());
+				setFontPropertyStyle(((DrawingTool)lastUsedTool).getDefaultFontStyle());
+//				this.setFontPropertyText(((DrawingTool)lastUsedTool).getDefaultTe());
+			}
+			
+			if (((DrawingTool) lastUsedTool).hasStrokeCapability()) {
+				setStrokePropertyCaps(((DrawingTool)lastUsedTool).getDefaultCaps());
+				setStrokePropertyJoins(((DrawingTool)lastUsedTool).getDefaultJoins());
+				setStrokePropertyWidth(((DrawingTool)lastUsedTool).getDefaultWidth());
+				setStrokePropertyMiterLimit(((DrawingTool)lastUsedTool).getDefaultMiterLimit());
+			}
+		}
 	}
 }

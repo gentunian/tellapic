@@ -22,13 +22,16 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableModel;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
@@ -53,7 +56,7 @@ import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
  *   </server>
  * </favourites>
  */
-public class FavouritesTableModel extends AbstractTableModel {
+public class FavouritesTableModel extends AbstractTableModel implements TableModel{
 	/**
 	 * 
 	 */
@@ -77,7 +80,18 @@ public class FavouritesTableModel extends AbstractTableModel {
 	private DocumentBuilder        builder;
 	
 	
+	/**
+	 * 
+	 */
 	public FavouritesTableModel() {
+		initDocumentFactory();
+	}
+	
+	
+	/**
+	 * 
+	 */
+	private void initDocumentFactory() {
 		factory = DocumentBuilderFactory.newInstance();
 		try {
 			builder = factory.newDocumentBuilder();
@@ -90,12 +104,10 @@ public class FavouritesTableModel extends AbstractTableModel {
 			Utils.logMessage("No "+FAVOURITE_FILE+" file found.");
 			rowCount = 0;
 		} catch (ParserConfigurationException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (SAXException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		}	
 	}
 	
 	
@@ -122,13 +134,14 @@ public class FavouritesTableModel extends AbstractTableModel {
 	 */
 	@Override
 	public Object getValueAt(int rowIndex, int columnIndex) {
-		int i;
-		for (i = 0; i < rowCount && i != rowIndex; i++);
-		if (i < rowCount) {
-			Element server = (Element) servers.item(i);
-			return ((Element) server.getElementsByTagName(COLUMN_ELEMENTS[columnIndex]).item(0)).getTextContent();
+//		int i;
+//		for (i = 0; i < rowCount && i != rowIndex; i++);
+		Object value = null;
+		if (rowIndex < rowCount) {
+			Element server = (Element) servers.item(rowIndex);
+			value = ((Element) server.getElementsByTagName(COLUMN_ELEMENTS[columnIndex]).item(0)).getTextContent();
 		}
-		return null;
+		return value;
 	}
 
 	
@@ -139,7 +152,7 @@ public class FavouritesTableModel extends AbstractTableModel {
 	 * @param name
 	 * @param password
 	 */
-	public void addFavourite(String host, int port, String name, String password) {
+	public boolean addFavourite(String host, int port, String name, String password) {
 				
 		FileOutputStream fos = null;
 		try {
@@ -169,23 +182,116 @@ public class FavouritesTableModel extends AbstractTableModel {
 
 			favouriteRoot.appendChild(serverElement);
 			
-			fos = new FileOutputStream(FAVOURITE_FILE);
-			OutputFormat of = new OutputFormat("XML","UTF-8",true);
-			of.setIndent(1);
-			of.setIndenting(true);
-			XMLSerializer serializer = new XMLSerializer(fos,of);
-
-			serializer.asDOMSerializer();
-			serializer.serialize(document.getDocumentElement() );
-			fos.close();
+			saveToFile();
 			rowCount++;
-			fireTableRowsInserted(rowCount-1, rowCount);
+			fireTableRowsInserted(0, rowCount-1);
+			return true;
 		} catch (FileNotFoundException e) {
 			Utils.logMessage("No "+FAVOURITE_FILE+" file found.");
-			return;
+			return false;
 		} catch (IOException e) {
 			Utils.logMessage("Could not create "+FAVOURITE_FILE);
-			return;
+			return false;
 		}
+	}
+
+
+	/* (non-Javadoc)
+	 * @see javax.swing.table.TableModel#addTableModelListener(javax.swing.event.TableModelListener)
+	 */
+	@Override
+	public void addTableModelListener(TableModelListener l) {
+		super.addTableModelListener(l);
+	}
+
+
+	/* (non-Javadoc)
+	 * @see javax.swing.table.TableModel#getColumnClass(int)
+	 */
+	@Override
+	public Class<?> getColumnClass(int columnIndex) {
+		return String.class;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see javax.swing.table.TableModel#getColumnName(int)
+	 */
+	@Override
+	public String getColumnName(int columnIndex) {
+		return COLUMN_ELEMENTS[columnIndex];
+	}
+
+
+	/* (non-Javadoc)
+	 * @see javax.swing.table.TableModel#isCellEditable(int, int)
+	 */
+	@Override
+	public boolean isCellEditable(int rowIndex, int columnIndex) {
+		return true;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see javax.swing.table.TableModel#removeTableModelListener(javax.swing.event.TableModelListener)
+	 */
+	@Override
+	public void removeTableModelListener(TableModelListener l) {
+		removeTableModelListener(l);
+	}
+
+
+	/* (non-Javadoc)
+	 * @see javax.swing.table.TableModel#setValueAt(java.lang.Object, int, int)
+	 */
+	@Override
+	public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+		Element server = (Element) servers.item(rowIndex);
+		((Element) server.getElementsByTagName(COLUMN_ELEMENTS[columnIndex]).item(0)).setTextContent((String) aValue);
+		
+		try {
+			saveToFile();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
+	/**
+	 * 
+	 * @param rowIndex
+	 */
+	public void removeFavourite(int rowIndex) {
+		Element server = (Element) servers.item(rowIndex);
+		Node parent = server.getParentNode();
+		parent.removeChild(server);
+		
+		try {
+			saveToFile();
+			rowCount--;
+			fireTableRowsDeleted(0, rowCount-1);
+			initDocumentFactory();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
+	/**
+	 * 
+	 */
+	private void saveToFile() throws FileNotFoundException, IOException{
+		FileOutputStream fos = new FileOutputStream(FAVOURITE_FILE);
+		OutputFormat of = new OutputFormat("XML","UTF-8",true);
+		of.setIndent(1);
+		of.setIndenting(true);
+		XMLSerializer serializer = new XMLSerializer(fos,of);
+		serializer.asDOMSerializer();
+		serializer.serialize(document.getDocumentElement());
+		fos.close();
 	}
 }

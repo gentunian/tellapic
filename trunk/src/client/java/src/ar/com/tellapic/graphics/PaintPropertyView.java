@@ -14,8 +14,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.net.URL;
@@ -146,12 +146,13 @@ public class PaintPropertyView extends JPanel implements Observer {
 	private JSeparator               jSeparator8;
 	private JButton                  zoomToFitButton;
 	private JButton                  zoomToSizeButton;
+	private boolean                  useDefaultValues;
 	
 	
 	/** Creates new form ToolView */
 	public PaintPropertyView() {
 		setName(Utils.msg.getString("propertyview"));
-		
+		useDefaultValues = true;
 		layout      = new GroupLayout(this);
 		actionListener = new MyActionListener();
 
@@ -385,7 +386,44 @@ public class PaintPropertyView extends JPanel implements Observer {
 		widthSpinner.addMouseWheelListener(l2);
 	}
 
+	
+	/**
+	 * 
+	 */
+	private void createColorOptions() {
+		colorLabel = new JLabel(Utils.msg.getString("color")+":");
+		colorField = new JLabel();
 
+		colorLabel.setIcon(new ImageIcon(Utils.createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, "/icons/tools/color1.png")));
+		colorLabel.setLabelFor(colorField);
+		colorLabel.setFont(defaultTitleFont);
+		colorField.setPreferredSize(new Dimension(Tool.ICON_SIZE + GAP, Tool.ICON_SIZE + GAP));
+		colorField.setOpaque(true);
+		colorField.setBorder(javax.swing.BorderFactory.createCompoundBorder(new javax.swing.border.LineBorder(new java.awt.Color(209, 209, 209), 1, true), new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.LOWERED)));
+		colorField.setBackground(DEFAULT_COLOR);
+		colorField.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		colorField.setToolTipText(Utils.msg.getString("colorfieldtooltip"));
+		colorField.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				JLabel label = (JLabel)e.getSource();
+				Color c = JColorChooser.showDialog(PaintPropertyView.this, "Pick a Color", label.getBackground()); 
+				if (c != null) {
+					controller.handleColorChange(c);
+					label.setBackground(c);
+				}
+			}
+		});
+	}
+	
+	
+	/**
+	 * 
+	 * @author 
+	 *          Sebastian Treu
+	 *          sebastian.treu(at)gmail.com
+	 *
+	 */
 	private class ComboWheelListener implements MouseWheelListener {
 		private JComboBox source;
 
@@ -404,6 +442,14 @@ public class PaintPropertyView extends JPanel implements Observer {
 		}
 	}
 	
+	
+	/**
+	 * 
+	 * @author 
+	 *          Sebastian Treu
+	 *          sebastian.treu(at)gmail.com
+	 *
+	 */
 	private class SpinnerWheelListener implements MouseWheelListener {
 		
 		private JSpinner source;
@@ -432,56 +478,6 @@ public class PaintPropertyView extends JPanel implements Observer {
 	/**
 	 * 
 	 */
-	private void createColorOptions(){
-		colorLabel = new JLabel(Utils.msg.getString("color")+":");
-		colorField = new JLabel();
-		
-		colorLabel.setIcon(new ImageIcon(Utils.createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, "/icons/tools/color1.png")));
-		colorLabel.setLabelFor(colorField);
-//		colorLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-		colorLabel.setFont(defaultTitleFont);
-		colorField.setPreferredSize(new Dimension(Tool.ICON_SIZE + GAP, Tool.ICON_SIZE + GAP));
-		colorField.setOpaque(true);
-		colorField.setBorder(javax.swing.BorderFactory.createCompoundBorder(new javax.swing.border.LineBorder(new java.awt.Color(209, 209, 209), 1, true), new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.LOWERED)));
-		colorField.setBackground(DEFAULT_COLOR);
-		colorField.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-		colorField.setToolTipText(Utils.msg.getString("colorfieldtooltip"));
-		colorField.addMouseListener(new MouseListener() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				JLabel label = (JLabel)e.getSource();
-				Color c = JColorChooser.showDialog(PaintPropertyView.this, "Pick a Color", label.getBackground()); 
-				if (c != null) {
-					controller.handleColorChange(c);
-					label.setBackground(c);
-				}
-			}
-
-			@Override
-			public void mouseEntered(MouseEvent e) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public void mouseExited(MouseEvent e) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public void mousePressed(MouseEvent e) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public void mouseReleased(MouseEvent e) {
-				// TODO Auto-generated method stub
-				
-			}
-		});
-	}
 	
 	
 	/**
@@ -753,7 +749,11 @@ public class PaintPropertyView extends JPanel implements Observer {
 		layout.setVerticalGroup(vParallelGroup);
 	}
 	
-	
+
+	/**
+	 * 
+	 * @param strokeProperty
+	 */
 	private void setStrokeProperties(PaintPropertyStroke strokeProperty) {
 		int    caps  = strokeProperty.getEndCaps();
 		int    join  = strokeProperty.getLineJoins();
@@ -762,42 +762,36 @@ public class PaintPropertyView extends JPanel implements Observer {
 		capsCombo.setSelectedItem(caps);
 		joinCombo.setSelectedItem(join);
 		widthSpinner.setValue(width);
-//		for(Component item : strokePanel.getComponents()) {
-//			if (item instanceof JSlider) {
-//				JSlider slider = ((JSlider) item);
-//				if (slider.getName().equals("width"))
-//					slider.setValue(widthValue);
-//				
-//			} else if (item instanceof JToggleButton) {
-//				JToggleButton button = ((JToggleButton) item);
-//				if      (button.getActionCommand().equals(SET_CAP_BUTT_ACTION) && capsValue == BasicStroke.CAP_BUTT && !button.isSelected())
-//					button.doClick();
-//				else if (button.getActionCommand().equals(SET_CAP_ROUND_ACTION) && capsValue == BasicStroke.CAP_ROUND && !button.isSelected())
-//					button.doClick();
-//				else if (button.getActionCommand().equals(SET_CAP_SQUARE_ACTION) && capsValue == BasicStroke.CAP_SQUARE && !button.isSelected())
-//					button.doClick();
-//				else if (button.getActionCommand().equals(SET_JOIN_BEVEL_ACTION) && joinValue == BasicStroke.JOIN_BEVEL && !button.isSelected())
-//					button.doClick();
-//				else if (button.getActionCommand().equals(SET_JOIN_MITER_ACTION) && joinValue == BasicStroke.JOIN_MITER && !button.isSelected())
-//					button.doClick();
-//				else if (button.getActionCommand().equals(SET_JOIN_ROUND_ACTION) && joinValue == BasicStroke.JOIN_ROUND && !button.isSelected())
-//					button.doClick();
-//			}
-//		}
 	}
 	
+	
+	/**
+	 * 
+	 * @param fontProperty
+	 */
 	private void setFontProperties(PaintPropertyFont fontProperty) {
 		textField.requestFocus();
 	}
 	
+	
+	/**
+	 * 
+	 * @param colorProperty
+	 */
 	private void setColorProperties(PaintPropertyColor colorProperty) {
-		
+		colorField.setBackground(colorProperty.getColor());
 	}
 	
+	
+	/**
+	 * 
+	 * @param opacityProperty
+	 */
 	private void setAlphaProperties(PaintPropertyAlpha opacityProperty) {
 		double opacity = opacityProperty.alpha*100;
 		opacitySpinner.setValue(opacity);
 	}
+	
 	
 	/**
 	 * 
@@ -805,16 +799,18 @@ public class PaintPropertyView extends JPanel implements Observer {
 	 */
 	public void setController(IPaintPropertyController c) {
 		controller = c;
-		
 		setDefaultProperties();
 	}
 	
-
+	
+	/**
+	 * 
+	 */
 	private void setDefaultProperties() {
-		capsCombo.setSelectedIndex(DEFAULT_END_CAPS);
-		joinCombo.setSelectedIndex(DEFAULT_LINE_JOIN);
-		widthSpinner.setValue(DEFAULT_WIDTH);
-		opacitySpinner.setValue(DEFAULT_OPACITY);
+//		capsCombo.setSelectedIndex(DEFAULT_END_CAPS);
+//		joinCombo.setSelectedIndex(DEFAULT_LINE_JOIN);
+//		widthSpinner.setValue(DEFAULT_WIDTH);
+//		opacitySpinner.setValue(DEFAULT_OPACITY);
 		controller.handleColorChange(DEFAULT_COLOR);
 //		controller.handleEndCapsChange(DEFAULT_END_CAPS);
 //		controller.handleFontFaceChange(DEFAULT_FONT_FACE);
@@ -826,189 +822,6 @@ public class PaintPropertyView extends JPanel implements Observer {
 	}
 	
 	
-	 
-	public void setColorPanelEnabled(boolean enabled) {
-//		Utils.logMessage("Enabling color panel: "+enabled+" current size: ("+getSize().width+","+getSize().height+")");
-//		int h = getSize().height + (colorPanelDimension.height * (enabled? 1 : -1) );
-//		Utils.logMessage("new height calculated: "+h);
-//		if (enabled)
-//			add(colorPanel);
-//		else
-//			remove(colorPanel);
-//		Utils.logMessage("new size after adding item: ("+getSize().width+","+getSize().height+")");
-//		
-//		setMinimumSize(new Dimension(getSize().width, h));
-//		printSizes();
-//		this.validate();
-	}
-	
-	
-//	private Dimension createOpacityPanel() {
-//		JLabel        opacityLabel = new JLabel("Opacity:");
-//		JSlider       opacity      = new JSlider();
-//		FontMetrics   metrics = opacityLabel.getFontMetrics(mainFont);
-//		SliderChangeListener listener    = new SliderChangeListener();
-//		
-//		opacity.setPaintTicks(true);
-//		opacity.setName("opacity");
-//		opacity.addChangeListener(listener);
-//		opacity.setMinorTickSpacing(10);
-//		opacity.setValue(100);
-//		opacityLabel.setLabelFor(opacity);
-//		opacityLabel.setFont(mainFont);
-//		opacityLabel.setMinimumSize(new Dimension(metrics.stringWidth(opacityLabel.getText()) + 8, metrics.getHeight()));
-//		
-//		GroupLayout layout = new GroupLayout(opacityPanel);
-//		opacityPanel.setLayout(layout);
-//		layout.setAutoCreateGaps(true);
-//		layout.setAutoCreateContainerGaps(true);
-//		layout.setVerticalGroup(
-//				layout.createSequentialGroup()
-//				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-//						.addComponent(opacityLabel)
-//						.addComponent(opacity)
-//				)
-//		);
-//		layout.setHorizontalGroup(
-//				layout.createSequentialGroup()
-//				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-//						.addComponent(opacityLabel)
-//				)
-//				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-//						.addComponent(opacity)
-//				)
-//		);
-//		
-//		opacityPanel.setMinimumSize(layout.minimumLayoutSize(opacityPanel));
-//		return opacityPanel.getMinimumSize();
-//	}
-//	 
-//	
-//	private Dimension createColorPanel() {
-//		JLabel  foregroundColor = new JLabel();
-//		JLabel  backgroundColor = new JLabel();
-//		Dimension minPanelSize  = new Dimension(50, 50);
-//		Dimension labelSize     = new Dimension(40, 30);	
-//		
-//		foregroundColor.setMinimumSize(labelSize);
-//		foregroundColor.setPreferredSize(labelSize);
-//		foregroundColor.setBackground(Color.black);
-//		foregroundColor.setOpaque(true);
-//		foregroundColor.setBorder(BorderFactory.createLoweredBevelBorder());
-//		backgroundColor.setMinimumSize(labelSize);
-//		backgroundColor.setPreferredSize(labelSize);
-//		backgroundColor.setBackground(Color.white);
-//		backgroundColor.setOpaque(true);
-//		backgroundColor.setBorder(BorderFactory.createLoweredBevelBorder());
-//		colorPanel.add(foregroundColor);
-//		colorPanel.add(backgroundColor);
-//		
-//		foregroundColor.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-//		foregroundColor.addMouseListener(new ColorChangeListener());
-//		
-//		return minPanelSize;
-//	}
-//
-//	
-//	private Dimension createFontPanel() {
-//		//TODO: make constants
-//		Integer[] fontSizes = new Integer[140 - 8];
-//		for(int i = 8; i < 140; i++)
-//			fontSizes[i - 8] = i;
-//		JLabel       sizeLabel      = new JLabel("Size:");
-//		JLabel       faceLabel      = new JLabel("Face:");
-//		JLabel       styleLabel     = new JLabel("Style:");
-//		JLabel       textLabel      = new JLabel("Text:");
-//		JComboBox    fontFaceCombo  = new JComboBox(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames());
-//		JComboBox    fontStyleCombo = new JComboBox(FONT_STYLES);
-//		JComboBox    fontSizeCombo  = new JComboBox(fontSizes);
-//		JTextField   text           = new JTextField();
-//		FontListener fontListener   = new FontListener();
-//		
-//		for(String item : GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames()) {			
-//			FontMetrics metrics = fontFaceCombo.getFontMetrics(mainFont);
-//			fontFaceCombo.setMinimumSize(new Dimension(metrics.stringWidth(item) + 8, metrics.getHeight()));
-//		}
-//		
-//		for(JLabel item : new JLabel[] { sizeLabel, faceLabel, styleLabel, textLabel}) {
-//			String txt = item.getText();
-//			FontMetrics metrics = item.getFontMetrics(mainFont);
-//			item.setMinimumSize(new Dimension(metrics.stringWidth(txt) + 8, metrics.getHeight()));
-//		}
-//		
-//		fontFaceCombo.setActionCommand(SET_FONT_FACE_ACTION);
-//		fontSizeCombo.setActionCommand(SET_FONT_SIZE_ACTION);
-//		fontStyleCombo.setActionCommand(SET_FONT_STYLE_ACTION);
-//		fontFaceCombo.addActionListener(fontListener);
-//		fontSizeCombo.addActionListener(fontListener);
-//		fontStyleCombo.addActionListener(fontListener);
-//		sizeLabel.setLabelFor(fontSizeCombo);
-//		faceLabel.setLabelFor(fontFaceCombo);
-//		styleLabel.setLabelFor(fontStyleCombo);
-//		textLabel.setLabelFor(text);
-//		textLabel.setFont(mainFont);
-//		sizeLabel.setFont(mainFont);
-//		faceLabel.setFont(mainFont);
-//		styleLabel.setFont(mainFont);
-//		fontFaceCombo.setFont(mainFont);
-//		fontStyleCombo.setFont(mainFont);
-//		fontSizeCombo.setFont(mainFont);
-//		fontSizeCombo.setMinimumSize(fontFaceCombo.getMinimumSize());
-//		fontStyleCombo.setMinimumSize(fontFaceCombo.getMinimumSize());
-//		text.addCaretListener(new CaretListener(){
-//			@Override
-//			public void caretUpdate(CaretEvent arg0) {
-//				if (controller != null)
-//					controller.handleTextChange(((JTextField) arg0.getSource()).getText());
-//			}
-//		});
-//		
-//		GroupLayout layout = new GroupLayout(fontPanel);
-//		fontPanel.setLayout(layout);
-//		layout.setAutoCreateGaps(true);
-//		layout.setAutoCreateContainerGaps(true);
-//
-//		layout.setVerticalGroup(
-//				layout.createSequentialGroup()
-//				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-//						.addComponent(faceLabel)
-//						.addComponent(fontFaceCombo)
-//				)
-//				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-//						.addComponent(sizeLabel)
-//						.addComponent(fontSizeCombo)
-//				)
-//				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-//						.addComponent(styleLabel)
-//						.addComponent(fontStyleCombo)
-//				)
-//				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-//						.addComponent(textLabel)
-//						.addComponent(text)
-//				)
-//		);
-//		
-//		layout.setHorizontalGroup(
-//				layout.createSequentialGroup()
-//				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-//						.addComponent(faceLabel)
-//						.addComponent(sizeLabel)
-//						.addComponent(styleLabel)
-//						.addComponent(textLabel)
-//				)
-//				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-//						.addComponent(fontFaceCombo)
-//						.addComponent(fontSizeCombo)
-//						.addComponent(fontStyleCombo)
-//						.addComponent(text)
-//				)
-//		);
-//		
-//		fontPanel.setMinimumSize(layout.minimumLayoutSize(fontPanel));
-//		return fontPanel.getMinimumSize();
-//	}
-	
-	
 	private Image createIconImage(int w, int h, String path) {
 		URL url = getClass().getResource(path);
 		if (url == null)
@@ -1018,162 +831,6 @@ public class PaintPropertyView extends JPanel implements Observer {
 	}
 	
 	
-//	private Dimension createStrokePanel() {
-//		Dimension     minButtonDimension = new Dimension(Tool.ICON_SIZE + BUTTON_HGAP, Tool.ICON_SIZE + BUTTON_HGAP);
-//		Dimension     minSliderDimension = new Dimension(minButtonDimension.width * 3, minButtonDimension.height - BUTTON_HGAP);
-//		JSlider       widthSlider        = new JSlider(0, 20);
-//		ButtonGroup   endCapsGroup       = new ButtonGroup();
-//		ButtonGroup   lineJoinGroup      = new ButtonGroup();
-//		ImageIcon     bevelJoinIcon      = new ImageIcon(createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, BEVEL_JOIN_ICON_PATH)); 
-//		ImageIcon     miterJoinIcon      = new ImageIcon(createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, MITER_JOIN_ICON_PATH));
-//		ImageIcon     roundJoinIcon      = new ImageIcon(createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, ROUND_JOIN_ICON_PATH));
-//		ImageIcon     buttEndIcon        = new ImageIcon(createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, BUTT_END_ICON_PATH));
-//		ImageIcon     squareEndIcon      = new ImageIcon(createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, SQUARE_END_ICON_PATH));
-//		ImageIcon     roundEndIcon       = new ImageIcon(createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, ROUND_END_ICON_PATH));
-//		JToggleButton endCapsButt        = new JToggleButton(buttEndIcon);
-//		JToggleButton endCapsRound       = new JToggleButton(roundEndIcon);
-//		JToggleButton endCapsSquare      = new JToggleButton(squareEndIcon);
-//		JToggleButton lineJoinBevel      = new JToggleButton(bevelJoinIcon);
-//		JToggleButton lineJoinMiter      = new JToggleButton(miterJoinIcon);
-//		JToggleButton lineJoinRound      = new JToggleButton(roundJoinIcon);
-//		JLabel        widthLabel         = new JLabel("Width:");
-//		JLabel        joinLabel          = new JLabel("Join:");
-//		JLabel        capLabel           = new JLabel("Cap:");
-//		JLabel        dashLabel          = new JLabel("Dash:");
-//		JComboBox     miterLimit         = new JComboBox();
-//		SliderChangeListener listener    = new SliderChangeListener();
-//		ButtonListener       buttonListener = new ButtonListener();
-//		
-//		endCapsButt.setActionCommand(SET_CAP_BUTT_ACTION);
-//		endCapsRound.setActionCommand(SET_CAP_ROUND_ACTION);
-//		endCapsSquare.setActionCommand(SET_CAP_SQUARE_ACTION);
-//		lineJoinBevel.setActionCommand(SET_JOIN_BEVEL_ACTION);
-//		lineJoinMiter.setActionCommand(SET_JOIN_MITER_ACTION);
-//		lineJoinRound.setActionCommand(SET_JOIN_ROUND_ACTION);
-//		
-//		// Listeners setup
-//		endCapsButt.addActionListener(buttonListener);
-//		endCapsRound.addActionListener(buttonListener);
-//		endCapsSquare.addActionListener(buttonListener);
-//		lineJoinBevel.addActionListener(buttonListener);
-//		lineJoinMiter.addActionListener(buttonListener);
-//		lineJoinRound.addActionListener(buttonListener);
-//		
-//		widthSlider.addChangeListener(listener);
-//		widthSlider.setName("width");
-//		widthSlider.setPaintTicks(true);
-//		widthSlider.setMinorTickSpacing(1);
-//		widthSlider.setValue(1);
-//		
-//		widthLabel.setLabelFor(widthSlider);
-//		dashLabel.setLabelFor(miterLimit);
-//		
-//		widthLabel.setFont(mainFont);
-//		joinLabel.setFont(mainFont);
-//		capLabel.setFont(mainFont);
-//		dashLabel.setFont(mainFont);
-//		
-//		endCapsGroup.add(endCapsButt);
-//		endCapsGroup.add(endCapsRound);
-//		endCapsGroup.add(endCapsSquare);
-//		lineJoinGroup.add(lineJoinBevel);
-//		lineJoinGroup.add(lineJoinMiter);
-//		lineJoinGroup.add(lineJoinRound);
-//		
-//		widthSlider.setMinimumSize(minSliderDimension);
-//		miterLimit.setMinimumSize(minSliderDimension);
-//		
-//		endCapsRound.setMinimumSize(minButtonDimension);
-//		endCapsRound.setPreferredSize(minButtonDimension);
-//		endCapsRound.setMaximumSize(minButtonDimension);
-//		
-//		endCapsButt.setMinimumSize(minButtonDimension);
-//		endCapsButt.setPreferredSize(minButtonDimension);
-//		endCapsButt.setMaximumSize(minButtonDimension);
-//		
-//		endCapsSquare.setMinimumSize(minButtonDimension);
-//		endCapsSquare.setPreferredSize(minButtonDimension);
-//		endCapsSquare.setMaximumSize(minButtonDimension);
-//		endCapsSquare.doClick();
-//		
-//		lineJoinBevel.setMinimumSize(minButtonDimension);
-//		lineJoinBevel.setPreferredSize(minButtonDimension);
-//		lineJoinBevel.setMaximumSize(minButtonDimension);
-//		
-//		lineJoinRound.setMinimumSize(minButtonDimension);
-//		lineJoinRound.setPreferredSize(minButtonDimension);
-//		lineJoinRound.setMaximumSize(minButtonDimension);
-//		
-//		lineJoinMiter.setMinimumSize(minButtonDimension);
-//		lineJoinMiter.setMaximumSize(minButtonDimension);
-//		lineJoinMiter.setPreferredSize(minButtonDimension);
-//		lineJoinMiter.doClick();
-//		
-//		for(JLabel item : new JLabel[] { dashLabel, widthLabel, joinLabel, capLabel}) {
-//			String txt = item.getText();
-//			FontMetrics metrics = item.getFontMetrics(mainFont);
-//			item.setMinimumSize(new Dimension(metrics.stringWidth(txt) + 8, metrics.getHeight()));
-//		}
-//		
-//		GroupLayout layout = new GroupLayout(strokePanel);
-//		strokePanel.setLayout(layout);
-//		layout.setAutoCreateGaps(true);
-//		layout.setAutoCreateContainerGaps(true);
-//		layout.setVerticalGroup(
-//				layout.createSequentialGroup()
-//				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-//						.addComponent(widthLabel)
-//						.addComponent(widthSlider)
-//				)
-//				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-//						.addComponent(joinLabel)
-//						.addComponent(lineJoinBevel)
-//						.addComponent(lineJoinRound)
-//						.addComponent(lineJoinMiter)
-//				)
-//				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-//						.addComponent(capLabel)
-//						.addComponent(endCapsRound)
-//						.addComponent(endCapsButt)
-//						.addComponent(endCapsSquare)
-//				)
-//				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-//						.addComponent(dashLabel)
-//						.addComponent(miterLimit)
-//				)
-//		);
-//		layout.setHorizontalGroup(
-//				layout.createSequentialGroup()
-//				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-//						.addComponent(widthLabel)
-//						.addComponent(joinLabel)
-//						.addComponent(capLabel)
-//						.addComponent(dashLabel)
-//				)
-//				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-//						.addComponent(widthSlider)
-//						.addGroup(layout.createSequentialGroup()
-//								.addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-//										.addComponent(lineJoinBevel)
-//										.addComponent(endCapsRound)
-//								)
-//								.addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-//										.addComponent(lineJoinRound)
-//										.addComponent(endCapsButt)
-//								)
-//								.addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-//										.addComponent(lineJoinMiter)
-//										.addComponent(endCapsSquare)
-//								)
-//						)
-//						.addComponent(miterLimit)
-//				)
-//		);
-//		strokePanel.setMinimumSize(layout.minimumLayoutSize(strokePanel));
-//		return strokePanel.getMinimumSize();
-//	}
-	
-		
 	@Override	
 	public void update(Observable o, Object arg) {
 		ToolBoxModel box = (ToolBoxModel) o;
@@ -1184,6 +841,9 @@ public class PaintPropertyView extends JPanel implements Observer {
 			if (action == ToolBoxModel.SHOW_TOOL && tool != null) {
 				
 				showPanel(tool);
+				if (useDefaultValues)
+					box.setCurrentToolDefaultValues();
+				
 //				setStrokePanelEnabled(tool.hasStrokeProperties());
 //				setFontPanelEnabled(tool.hasFontProperties());
 //				setOpacityPanelEnabled(tool.hasAlphaProperties());
@@ -1191,7 +851,6 @@ public class PaintPropertyView extends JPanel implements Observer {
 //				((TitledBorder) getBorder()).setTitle(tool.getName());
 //				
 			} else if (action == ToolBoxModel.UPDATE_TOOL && tool != null) {
-//				
 				if (tool instanceof DrawingTool && ((DrawingTool)tool).hasStrokeCapability())
 					setStrokeProperties(box.getStrokeProperty());
 				
@@ -1204,13 +863,18 @@ public class PaintPropertyView extends JPanel implements Observer {
 				if (tool instanceof DrawingTool && ((DrawingTool)tool).hasColorCapability())
 					setColorProperties(box.getColorProperty());
 			}
-//		}
 		repaint();
-	
 		}
 	}
 
 	
+	/**
+	 * 
+	 * @author 
+	 *          Sebastian Treu
+	 *          sebastian.treu(at)gmail.com
+	 *
+	 */
 	class LabelComboBoxRenderer extends JLabel implements ListCellRenderer {
 		private static final long serialVersionUID = 1L;
 		private Icon[]   icons;
@@ -1278,9 +942,6 @@ public class PaintPropertyView extends JPanel implements Observer {
 	 *
 	 */
 	private class MyActionListener implements ActionListener {
-
-		
-
 		/* (non-Javadoc)
 		 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
 		 */
@@ -1335,74 +996,3 @@ public class PaintPropertyView extends JPanel implements Observer {
 		}
 	}
 }
-//	
-//	
-//	private class ButtonListener implements ActionListener {		
-//
-//		/* (non-Javadoc)
-//		 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
-//		 */
-//		@Override
-//		public void actionPerformed(ActionEvent arg0) {
-//			String action = arg0.getActionCommand();
-//			
-//			if (action != null) {				
-//				if (action.equals(SET_CAP_SQUARE_ACTION) && controller != null)
-//					controller.handleEndCapsChange(BasicStroke.CAP_SQUARE);
-//				
-//				else if (action.equals(SET_CAP_ROUND_ACTION) && controller != null)
-//					controller.handleEndCapsChange(BasicStroke.CAP_ROUND);
-//				
-//				else if (action.equals(SET_CAP_BUTT_ACTION) && controller != null)
-//					controller.handleEndCapsChange(BasicStroke.CAP_BUTT);
-//				
-//				else if (action.equals(SET_JOIN_BEVEL_ACTION) && controller != null)
-//					controller.handleLineJoinsChange(BasicStroke.JOIN_BEVEL);
-//				
-//				else if (action.equals(SET_JOIN_ROUND_ACTION) && controller != null)
-//					controller.handleLineJoinsChange(BasicStroke.JOIN_ROUND);
-//				
-//				else if (action.equals(SET_JOIN_MITER_ACTION) && controller != null)
-//					controller.handleLineJoinsChange(BasicStroke.JOIN_MITER);
-//			}
-//		}
-//	}
-//	
-//	
-//	private class ColorChangeListener extends MouseAdapter {
-//		/*
-//		 * (non-Javadoc)
-//		 * @see java.awt.event.MouseAdapter#mouseClicked(java.awt.event.MouseEvent)
-//		 */
-//		@Override
-//		public void mouseClicked(MouseEvent e) {
-//			Color c = JColorChooser.showDialog(PaintPropertyView.this, "Pick a Color", ((JLabel) e.getSource()).getBackground()); 
-//			if (c != null) {
-//				controller.handleColorChange(c);
-//				((JLabel) e.getSource()).setBackground(c);
-//			}
-//		}
-//	}
-//	
-//	private class SliderChangeListener implements ChangeListener {
-//
-//		/* (non-Javadoc)
-//		 * @see javax.swing.event.ChangeListener#stateChanged(javax.swing.event.ChangeEvent)
-//		 */
-//		@Override
-//		public void stateChanged(ChangeEvent arg0) {
-//			JSlider s = (JSlider) arg0.getSource();
-//			
-//			if (!s.getValueIsAdjusting() && controller != null) {
-//				int value = s.getValue();
-//				
-//				if (s.getName().equals("width"))
-//					controller.handleWidthChange(value);
-//				
-//				if (s.getName().equals("opacity"))
-//					controller.handleOpacityChange((value)/100f);
-//
-//			}
-//		}
-//	}
-

@@ -71,6 +71,22 @@ public class Main {
 			//fallback
 		}
 		
+//		JFrame f = new JFrame();
+//		f.setIconImage(Utils.createIconImage(24,24, "/icons/system/logo.png"));
+//		Window w = new Window(f);
+//		w.setIconImage(Utils.createIconImage(24,24, "/icons/system/logo.png"));
+//		JDialog d = new JDialog(w);
+//		d.setIconImage(Utils.createIconImage(24,24, "/icons/system/logo.png"));
+//		d.setPreferredSize(new Dimension(100,100));
+//		d.setTitle("WTF?");
+//		d.setResizable(true);
+//		f.setPreferredSize(new Dimension(100,100));
+//		f.pack();
+//		d.pack();
+//		d.setVisible(true);
+//		System.out.println(d.getParent());
+//		System.out.println(d.getOwner());
+		
 		if (args.length == 0) {
 			MainDialog main = new MainDialog();
 			main.setVisible(true);
@@ -123,7 +139,7 @@ public class Main {
 	}
 	
 	public static int verifyDialogInput(MainDialog main) {
-		//TODO: do what this menthod is mentioned to be
+		//TODO: do what this method is mentioned to be
 		return main.getOption();
 	}
 	
