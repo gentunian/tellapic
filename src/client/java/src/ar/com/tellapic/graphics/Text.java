@@ -1,5 +1,6 @@
 package ar.com.tellapic.graphics;
 
+import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.geom.Point2D;
 
@@ -10,6 +11,12 @@ public class Text extends DrawingTool {
 	private Point2D            firstPoint;
 	private static final String TEXT_ICON_PATH = "/icons/tools/text.png";
 	private static final String TEXT_CURSOR_PATH = "/icons/tools/text-cursor.png";
+	private static final double DEFAULT_ALPHA = 1;
+	private static final double DEFAULT_WIDTH = 5;
+	private static final Color  DEFAULT_COLOR = Color.black;
+	private static final String DEFAULT_FACE = "Droid-10";
+	private static final double DEFAULT_SIZE = 12;
+	private static final int    DEFAULT_STYLE = 0;
 	
 //	private Drawing            temporalDrawing;
 	
@@ -254,5 +261,87 @@ public class Text extends DrawingTool {
 	@Override
 	public boolean isOnReleaseSupported() {
 		return true;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#getDefaultWidth()
+	 */
+	@Override
+	public double getDefaultWidth() {
+		return DEFAULT_WIDTH;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#getDefaultAlpha()
+	 */
+	@Override
+	public double getDefaultAlpha() {
+		return DEFAULT_ALPHA;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#getDefaultCaps()
+	 */
+	@Override
+	public int getDefaultCaps() {
+		return 0;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#getDefaultColor()
+	 */
+	@Override
+	public Color getDefaultColor() {
+		return DEFAULT_COLOR;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#getDefaultFontFace()
+	 */
+	@Override
+	public String getDefaultFontFace() {
+		return DEFAULT_FACE;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#getDefaultFontSize()
+	 */
+	@Override
+	public double getDefaultFontSize() {
+		return DEFAULT_SIZE;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#getDefaultFontStyle()
+	 */
+	@Override
+	public int getDefaultFontStyle() {
+		return DEFAULT_STYLE;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#getDefaultJoins()
+	 */
+	@Override
+	public int getDefaultJoins() {
+		return 0;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#getDefaultMiterLimit()
+	 */
+	@Override
+	public float getDefaultMiterLimit() {
+		// TODO Auto-generated method stub
+		return 0;
 	}
 }

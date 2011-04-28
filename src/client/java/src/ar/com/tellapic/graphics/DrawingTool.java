@@ -17,6 +17,7 @@
  */  
 package ar.com.tellapic.graphics;
 
+import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Image;
 import java.awt.Point;
@@ -117,4 +118,16 @@ public abstract class DrawingTool extends Tool {
 	public abstract void setColor(PaintPropertyColor color);
 	public abstract void setFont(PaintPropertyFont font);
 	public abstract void setStroke(PaintPropertyStroke stroke);
+	
+
+	public abstract double getDefaultAlpha();
+	public abstract Color getDefaultColor();
+	public abstract String getDefaultFontFace();
+	public abstract double getDefaultFontSize();
+	public abstract int    getDefaultFontStyle();
+	public abstract double getDefaultWidth();
+	public abstract float  getDefaultMiterLimit();
+	public abstract int    getDefaultCaps();
+	public abstract int    getDefaultJoins();
+	
 }
