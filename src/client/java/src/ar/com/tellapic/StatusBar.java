@@ -19,6 +19,7 @@ package ar.com.tellapic;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Image;
 import java.util.Observable;
@@ -30,6 +31,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
+import javax.swing.LayoutStyle;
 import javax.swing.SwingConstants;
 
 import ar.com.tellapic.utils.Utils;
@@ -69,6 +71,7 @@ public class StatusBar extends JPanel implements Observer {
 	
 	public StatusBar() {
 		super();
+		ping = new JLabel("0 ms");
 		mouseCoords = new JLabel();
 		toolInfo = new JLabel();
 		connectionStatusLabel = new JLabel(Utils.msg.getString("status"));
@@ -76,14 +79,18 @@ public class StatusBar extends JPanel implements Observer {
 		pingLabel.setLabelFor(ping);
 		connectionStatusLabel.setLabelFor(connectionStatus);
 		connectionStatus = new JLabel();
-		pingLabel.setFont(new java.awt.Font("Droid Sans", 1, 12)); // NOI18N
-		connectionStatusLabel.setFont(new java.awt.Font("Droid Sans", 1, 12)); // NOI18N
-		ping = new JLabel("0 ms");
+		pingLabel.setFont(new Font("Droid Sans", 1, 12)); // NOI18N
+		connectionStatusLabel.setFont(new Font("Droid Sans", 1, 12)); // NOI18N
+		toolInfo.setFont(new Font("Droid Sans", 1, 12));
+		mouseCoords.setFont(new Font("Droid Sans", 0, 12));
+		ping.setFont(new Font("Droid Sans", 0, 12));
+		connectionStatus.setFont(new Font("Droid Sans", 0, 12));
+		
 		JSeparator separator = new JSeparator();
 		separator.setOrientation(SwingConstants.VERTICAL);
-		separator.setMaximumSize(new java.awt.Dimension(10, 24));
-		separator.setMinimumSize(new java.awt.Dimension(10, 24));
-		separator.setPreferredSize(new java.awt.Dimension(10, 24));
+		separator.setMaximumSize(new Dimension(10, 24));
+		separator.setMinimumSize(new Dimension(10, 24));
+		separator.setPreferredSize(new Dimension(10, 24));
 		
 		setPreferredSize(new Dimension(100, 24));
 		setMaximumSize(new Dimension(99999, 24));
@@ -95,35 +102,35 @@ public class StatusBar extends JPanel implements Observer {
 		GroupLayout layout = new GroupLayout(this);
 		setLayout(layout);
 		layout.setHorizontalGroup(
-				layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+				layout.createParallelGroup(GroupLayout.Alignment.LEADING)
 				.addGroup(layout.createSequentialGroup()
 						.addContainerGap()
 						.addComponent(mouseCoords)
 						.addGap(18, 18, 18)
 						.addComponent(toolInfo)
-						.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 392, Short.MAX_VALUE)
+						.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED, 392, Short.MAX_VALUE)
 						.addComponent(connectionStatusLabel)
-						.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+						.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
 						.addComponent(connectionStatus)
-						.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-						.addComponent(separator, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-						.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+						.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+						.addComponent(separator, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+						.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
 						.addComponent(pingLabel)
-						.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+						.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
 						.addComponent(ping)
 						.addContainerGap())
 		);
 		layout.setVerticalGroup(
-				layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+				layout.createParallelGroup(GroupLayout.Alignment.LEADING)
 				.addGroup(layout.createSequentialGroup()
-						.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-								.addComponent(separator, javax.swing.GroupLayout.Alignment.LEADING, 0, 0, Short.MAX_VALUE)
-								.addComponent(mouseCoords, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-								.addComponent(ping, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-								.addComponent(pingLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-								.addComponent(connectionStatus, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-								.addComponent(connectionStatusLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-								.addComponent(toolInfo, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+						.addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING, false)
+								.addComponent(separator, GroupLayout.Alignment.LEADING, 0, 0, Short.MAX_VALUE)
+								.addComponent(mouseCoords, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+								.addComponent(ping, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+								.addComponent(pingLabel, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+								.addComponent(connectionStatus, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+								.addComponent(connectionStatusLabel, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+								.addComponent(toolInfo, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
 								.addContainerGap(54, Short.MAX_VALUE))
 		);
 		//setLayout(new BorderLayout(20,1));
