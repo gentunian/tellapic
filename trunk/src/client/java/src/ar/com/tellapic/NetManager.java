@@ -68,6 +68,8 @@ public class NetManager extends Observable {
 	
 	private int       monitorStep;
 	private double    ping;
+	private double    pingTime;
+	private boolean   pongReceived;
 	private boolean   connected;
 	private int       fd;
 	private int       id;
@@ -361,6 +363,8 @@ public class NetManager extends Observable {
 		SessionUtils.setServer(host);
 		SessionUtils.setPort(port);
 		
+		pongReceived = false;
+		
 		/* Authenticate with the server */
 		if ((error = authenticate(password, name)) < 0)
 			return error;
@@ -376,6 +380,25 @@ public class NetManager extends Observable {
 		ReceiverThread r = new ReceiverThread(fd);
 //		SwingUtilities.invokeLater(r);
 		r.start();
+		
+		new Thread(new Runnable(){
+			@Override
+			public void run() {
+				while(isConnected()) {
+					try {
+						Thread.sleep(2000);
+						if (pongReceived ) {
+							System.out.println("Sending ping...");
+							tellapic.tellapic_send_ctl(fd, SessionUtils.getId(), tellapic.CTL_CL_PING);
+							pongReceived = false;
+							pingTime = System.nanoTime();
+						}
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}).start();
 		
 		monitor.setCurrent("Starting network thread", monitorStep++);
 		
@@ -499,8 +522,7 @@ public class NetManager extends Observable {
 	private class ReceiverThread extends Thread {
 		private boolean running;
 		private int     fd;
-		private double pingTime;
-		private boolean pongReceived;
+		
 		
 		public ReceiverThread(int fd) {
 			running = false;
@@ -518,7 +540,7 @@ public class NetManager extends Observable {
 			running = true;
 			
 			while(running && isConnected()) {
-				stream = tellapic.tellapic_read_stream_nb(fd);
+				stream = tellapic.tellapic_read_stream_b(fd);
 				header = stream.getHeader();
 				//System.out.println("Something read");
 				
@@ -579,16 +601,8 @@ public class NetManager extends Observable {
 				} else if (tellapic.tellapic_isfigtxt(stream) == 1) {
 					System.out.println("Was text");
 
-				} else if (tellapic.tellapic_istimeout(header) == 1) {
-					//System.out.println("Was timeout");
-					if (pongReceived) {
-						pongReceived = false;
-						tellapic.tellapic_send_ctl(fd, SessionUtils.getId(), tellapic.CTL_CL_PING);
-						pingTime = System.nanoTime();
-					}
-					
 				} else if (tellapic.tellapic_ispong(header) == 1) {
-					//System.out.println("Was pong");
+					System.out.println("Was pong");
 					pingTime = (double) ((System.nanoTime() - pingTime) / 1000000);
 					setPing(pingTime);
 					pongReceived = true;
