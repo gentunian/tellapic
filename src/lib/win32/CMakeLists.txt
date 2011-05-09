@@ -8,4 +8,4 @@ include_directories(${INCDIR})
 add_library(tellapic SHARED  ${TELLAPIC_FILE})
 
 #
-target_link_libraries(tellapic ${CMAKE_REQUIRED_LIBRARIES} ${TELLAPIC_COMMON})
+target_link_libraries(tellapic ${CMAKE_REQUIRED_LIBRARIES} ../${TELLAPIC_COMMON})
