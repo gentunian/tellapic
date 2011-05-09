@@ -1,57 +1,38 @@
 find_package(Java)
-
 include(FindJNI)
 include(${SWIG_USE_FILE})
-
 include_directories(${JNI_INCLUDE_DIRS})
 include_directories(${INCDIR})
 
 # Sets the name of the java package 
-#
 set(SWIG_JAVA_PACKAGE_NAME "ar.com.tellapic.lib")
 
-
-
 # Sets the interface file for the swig wrapper.
-#
 set(INTERFACE_FILE "module.i")
 
-
-#
-#
+# 
 set(CMAKE_SWIG_FLAGS "-package" ${SWIG_JAVA_PACKAGE_NAME} "-cpperraswarn")
-
-
 
 # Sets  -outdir <dir>   - Set language specific files output directory to <dir>
 # This is where .java generetad files will go. Better path? It will flood the dir with .java files
 set(CMAKE_SWIG_OUTDIR ${CMAKE_CURRENT_BINARY_DIR}/ar/com/tellapic/lib) 
 
-
-#
-#
-#set(LIBRARY_OUTPUT_PATH ${EXECUTABLE_OUTPUT_PATH}/lib/java) 
-
-
 # Add the java module and link it
-#
-swig_add_module(tellapicjava java ${INTERFACE_FILE})
+swig_add_module(tellapicjava java ${INTERFACE_FILE} ${TELLAPIC_FILE} ${TELLAPIC_COMMON} ${POSH_FILE})
 
-
-# Create the library libtellapicjava.so
-#
-swig_link_libraries(tellapicjava ${JAVA_LIBRARIES} posh tellapic)
+# 
+swig_link_libraries(tellapicjava ${JAVA_LIBRARIES})
+#set(SWIG_MODULE_tellapicjava_EXTRA_DEPS ${SRCDIR}/posh/posh.c)
+#target_link_libraries(tellapicjava ${CMAKE_REQUIRED_LIBRARIES} tellapic posh)
 
 
 # Set the debug flag for javac
-#
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
   set(JAVA_DEBUG_FLAG "-g")
 endif()
 
 
 # Compile the source files
-#
 add_custom_command(
   TARGET tellapicjava 
   POST_BUILD 

@@ -22,13 +22,14 @@
 #  undef POSH_DLL
 #endif
 
+
 #ifndef POSH_BUILDING_LIB
 #define POSH_BUILDING_LIB
 #endif
 
-#include "posh/posh.h"
 #include <stdarg.h>
 #include "tellapic/types.h"
+
 
 
 /**
@@ -83,7 +84,7 @@ tellapic_read_header_nb(tellapic_socket_t socket);
  *
  */
 POSH_PUBLIC_API(int)
-tellapic_send(int socket, stream_t *stream);
+tellapic_send(tellapic_socket_t socket, stream_t *stream);
 
 /**
  *
