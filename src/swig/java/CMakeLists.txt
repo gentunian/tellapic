@@ -35,11 +35,12 @@ set(CMAKE_SWIG_OUTDIR ${CMAKE_CURRENT_BINARY_DIR}/ar/com/tellapic/lib)
 
 # Add the java module and link it
 #
-swig_add_module(tellapicjava java ${INTERFACE_FILE} ${SRCDIR}/lib/tellapic.c )
+swig_add_module(tellapicjava java ${INTERFACE_FILE})
+
 
 # Create the library libtellapicjava.so
 #
-swig_link_libraries(tellapicjava ${JAVA_LIBRARIES} posh)
+swig_link_libraries(tellapicjava ${JAVA_LIBRARIES} posh tellapic)
 
 
 # Set the debug flag for javac

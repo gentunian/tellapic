@@ -18,18 +18,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-
-#if defined LINUX
-#include <sys/socket.h>
-#elif defined WIN32
-#include <winsock.h>
-#include <winsock2.h>
-#endif
-
-#include <arpa/inet.h>            
-#include <resolv.h>
-#include <netdb.h>
-#include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
 
@@ -58,6 +46,7 @@
  *        something like: _get_<name>(struct *t).
  *
  */
+
 
 
 /**
@@ -1172,98 +1161,6 @@ _wrap_figure_data(stream_t *dest, byte_t *data, tellapic_u32_t datasize)
 
 
 /**
- * A wrapper from read() C function 
- */
-static size_t
-_read_nb(int fd, size_t totalbytes, byte_t *buf) 
-{
-
-  int    flag = fcntl(fd, F_GETFL);
-
-  fcntl(fd, F_SETFL, flag | O_NONBLOCK);
-
-  size_t nbytes = read(fd, buf, totalbytes);
-
-  fcntl(fd, F_SETFL, flag);
-
-  return nbytes;
-}
-
-
-/**
- * A wrapper from read() C function always in blocking mode. Returns the number of bytes
- * and places the read data in the output parameter buf.
- *
- * YOU SHOULD take care using this function and NOTICE that it will BLOCK your thread, and
- * also will set your file descriptor fd to blocking mode. So please, dont blame, if you
- * want non-blocking mode, write your own...
- */
-static size_t
-_read_b(int fd, size_t totalbytes, byte_t *buf) 
-{
-  size_t bytesleft = totalbytes;
-  size_t bytesread = 0;
-
-  /* This function should be feeded with a file descriptor with the O_NONBLOCK flag unset. */
-  /* The *_b means that this function WILL block until data arrives. */
-  /* Get the fd flags. */
-  int flags = fcntl(fd, F_GETFL);
-
-  /* If fd has O_NONBLOCK set, unset it. THIS IS MANDATORY, that's what _b means. */
-  if ((flags & O_NONBLOCK) == O_NONBLOCK)
-    fcntl(fd, F_SETFL, flags & ~O_NONBLOCK);
-
-  /* Now we have a fd in blocking mode... */
-  while(bytesleft > 0) 
-    {
-      //bytesread = recv(fd, buf + bytesread, nbytes, 0);
-      size_t bytes = read(fd, buf + bytesread, bytesleft);
-
-      if (bytes > 0)
-	{
-	  bytesleft -= bytes;
-	  bytesread += bytes;
-	}
-      else
-	bytesleft = 0;
-    }
-
-  /* Restore the flags */
-  fcntl(fd, F_SETFL, flags);
-
-  return bytesread;
-}
-
-
-/**
- * A helper function to read first the header, validates it, and then read the data section.
- * Note that tellapic_read_header_b() is a blocking function as well as any other *_b() function.
- *
- * This is the best effort I made for now. I REALLY need to avoid blocking I/O but that will be
- * added to TODO's list.
- *
- * Note that the header is a valid header already checked by the fuction, but another test should be
- * made to avoid reading data that is not coming and block.
- */
-POSH_PUBLIC_API(stream_t)
-tellapic_read_stream_b(int fd) 
-{
-  stream_t stream;
-
-  stream.header = tellapic_read_header_b(fd);
-   
-  if ( stream.header.cbyte != CTL_FAIL     && 
-       stream.header.cbyte != CTL_NOPIPE   &&
-       stream.header.cbyte != CTL_NOSTREAM &&
-       stream.header.cbyte != CTL_CL_TIMEOUT )
-
-    stream = tellapic_read_data_b(fd, stream.header);
-  
-  return stream;
-}
-
-
-/**
  * Wraps bytes chunks in the header structure to be returned.
  * _b means blocking. For now, we just implement blocking mode.
  * If we successfuly read HEADER_SIZE bytes, we check the control
@@ -1271,12 +1168,11 @@ tellapic_read_stream_b(int fd)
  * is at least a valid value for the corresponding control byte.
  */
 POSH_PUBLIC_API(header_t)
-tellapic_read_header_b(int fd) 
+tellapic_read_header_b(tellapic_socket_t socket) 
 {
 
   byte_t        *data  = malloc(HEADER_SIZE);
-  //byte_t        data[HEADER_SIZE];
-  int           nbytes = _read_b(fd, HEADER_SIZE, data);
+  int           nbytes = _read_b(socket, HEADER_SIZE, data);
   header_t      header;
 
   if (nbytes == HEADER_SIZE)
@@ -1311,19 +1207,30 @@ tellapic_read_header_b(int fd)
 
 
 /**
+ * Read first the header, validate it, and then read the data section.
+ * Note that tellapic_read_header_b() is a blocking function as well as any other *_b() function.
  *
+ * This is the best effort I made for now. I REALLY need to avoid blocking I/O but that will be
+ * added to TODO's list.
+ *
+ * Note that the header is a valid header already checked by the fuction, but another test should be
+ * made to avoid reading data that is not coming and block.
  */
-POSH_PUBLIC_API(byte_t *)
-tellapic_read_bytes_b(int fd, size_t chunk)
+POSH_PUBLIC_API(stream_t)
+tellapic_read_stream_b(tellapic_socket_t socket) 
 {
-  if (chunk <= 0)
-    return NULL;
+  stream_t stream;
 
-  byte_t *data = malloc(chunk);
-  int p = 0;
-  _read_b(fd, chunk, data);
+  stream.header = tellapic_read_header_b(socket);
+   
+  if ( stream.header.cbyte != CTL_FAIL     && 
+       stream.header.cbyte != CTL_NOPIPE   &&
+       stream.header.cbyte != CTL_NOSTREAM &&
+       stream.header.cbyte != CTL_CL_TIMEOUT )
 
-  return data;
+    stream = tellapic_read_data_b(socket, stream.header);
+  
+  return stream;
 }
 
 
@@ -1758,7 +1665,7 @@ tellapic_rawsend(int fd, byte_t *rawstream)
  * TODO: this is not finished nor updated. 
  */
 POSH_PUBLIC_API(int)
-tellapic_send(int socket, stream_t *stream) 
+tellapic_send(tellapic_socket_t socket, stream_t *stream) 
 {
   byte_t *rawstream = malloc(stream->header.ssize);
   int     cbyte = stream->header.cbyte; 
@@ -1834,7 +1741,7 @@ tellapic_send(int socket, stream_t *stream)
  *
  */
 POSH_PUBLIC_API(int)
-tellapic_send_file(int fd, FILE *file, tellapic_u32_t filesize)
+tellapic_send_file(tellapic_socket_t socket, FILE *file, tellapic_u32_t filesize)
 {
 
   byte_t *rawstream = malloc(filesize + HEADER_SIZE);
@@ -1853,7 +1760,7 @@ tellapic_send_file(int fd, FILE *file, tellapic_u32_t filesize)
 
   rewind(file);
 
-  tellapic_u32_t r = send(fd, rawstream, filesize + HEADER_SIZE, 0);
+  tellapic_u32_t r = send(socket, rawstream, filesize + HEADER_SIZE, 0);
 
   free(rawstream);
 
@@ -1865,14 +1772,15 @@ tellapic_send_file(int fd, FILE *file, tellapic_u32_t filesize)
  *
  */
 POSH_PUBLIC_API(int)
-tellapic_send_struct(int fd, stream_t *stream)
+tellapic_send_struct(tellapic_socket_t socket, stream_t *stream)
 {
   switch(stream->header.cbyte) 
     {
+
     case CTL_CL_FIG:
       if (stream->data.drawing.dcbyte == TOOL_TEXT | EVENT_NULL)
 	{
-	  tellapic_send_text(fd, 
+	  tellapic_send_text(socket, 
 			     stream->data.drawing.idfrom, 
 			     stream->data.drawing.number, 
 			     stream->data.drawing.width, 
@@ -1897,7 +1805,7 @@ tellapic_send_struct(int fd, stream_t *stream)
  *
  */
 POSH_PUBLIC_API(int)
-tellapic_send_text(int fd, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int style, int facelen, char *face, int textlen, char *text)
+tellapic_send_text(tellapic_socket_t socket, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int style, int facelen, char *face, int textlen, char *text)
 {
   tellapic_u32_t ssize = MIN_FIGTXT_STREAM_SIZE + facelen + textlen;
   byte_t *rawstream = malloc(ssize);
@@ -1951,7 +1859,7 @@ tellapic_send_text(int fd, int idfrom, int dnum, float w, float op, int red, int
                                                                          /*  +-------------------+                    */
                                                                          /*  total bytes = 32 + facenamelen + infolen */
 #endif
-  tellapic_u32_t r = send(fd, rawstream, ssize, 0);
+  tellapic_u32_t r = send(socket, rawstream, ssize, 0);
 
   free(rawstream);
 
@@ -1963,7 +1871,7 @@ tellapic_send_text(int fd, int idfrom, int dnum, float w, float op, int red, int
  *
  */
 POSH_PUBLIC_API(int)
-tellapic_send_drw_using(int fd, int tool, int dcbyte_ext, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1)
+tellapic_send_drw_using(tellapic_socket_t socket, int tool, int dcbyte_ext, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1)
 {
   byte_t *rawstream = malloc(DRW_USING_STREAM_SIZE);
   void   *pointer   = rawstream;
@@ -2001,7 +1909,7 @@ tellapic_send_drw_using(int fd, int tool, int dcbyte_ext, int idfrom, int dnum, 
   pointer = POSH_WriteU16ToBig(pointer, y1);
 #endif  
 
-  tellapic_u32_t r = send(fd, rawstream, DRW_USING_STREAM_SIZE, 0);
+  tellapic_u32_t r = send(socket, rawstream, DRW_USING_STREAM_SIZE, 0);
 
   free(rawstream);
 
@@ -2013,7 +1921,7 @@ tellapic_send_drw_using(int fd, int tool, int dcbyte_ext, int idfrom, int dnum, 
  *
  */
 POSH_PUBLIC_API(int)
-tellapic_send_drw_init(int fd, int tool, int dcbyte_ext, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int x2, int y2, int lj, int ec, float ml, float dp, float da[])
+tellapic_send_drw_init(tellapic_socket_t socket, int tool, int dcbyte_ext, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int x2, int y2, int lj, int ec, float ml, float dp, float da[])
 {
   byte_t *rawstream = malloc(DRW_INIT_STREAM_SIZE);
   void   *pointer   = rawstream;
@@ -2068,7 +1976,7 @@ tellapic_send_drw_init(int fd, int tool, int dcbyte_ext, int idfrom, int dnum, f
   pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(da[1]));
 #endif
   
-  tellapic_u32_t r = send(fd, rawstream, DRW_INIT_STREAM_SIZE, 0);
+  tellapic_u32_t r = send(socket, rawstream, DRW_INIT_STREAM_SIZE, 0);
 
   free(rawstream);
 
@@ -2079,7 +1987,7 @@ tellapic_send_drw_init(int fd, int tool, int dcbyte_ext, int idfrom, int dnum, f
  *
  */
 POSH_PUBLIC_API(int)
-tellapic_send_fig(int fd, int tool, int dcbyte_ext, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int x2, int y2, int lj, int ec, float ml, float dp, float da[])
+tellapic_send_fig(tellapic_socket_t socket, int tool, int dcbyte_ext, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int x2, int y2, int lj, int ec, float ml, float dp, float da[])
 {
   byte_t *rawstream = malloc(FIG_STREAM_SIZE);
   void   *pointer   = rawstream;
@@ -2107,7 +2015,7 @@ tellapic_send_fig(int fd, int tool, int dcbyte_ext, int idfrom, int dnum, float 
   pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(dp));   /* |   dash phase  | 4 bytes */
   pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(da[0]));/* |   dash array0 | 4 bytes */
   pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(da[1]));/* |   dash array1 | 4 bytes */
-#else                                                                 /* +---------------+         */
+#else                                                                   /* +---------------+         */
   /* total bytes = 50 bytes    */
                                                                         
   pointer = WriteByte(pointer, 1);
@@ -2134,7 +2042,7 @@ tellapic_send_fig(int fd, int tool, int dcbyte_ext, int idfrom, int dnum, float 
   pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(da[1]));
 #endif
 
-  tellapic_u32_t r = send(fd, rawstream, FIG_STREAM_SIZE, 0);
+  tellapic_u32_t r = send(socket, rawstream, FIG_STREAM_SIZE, 0);
 
   free(rawstream);
 
@@ -2146,7 +2054,7 @@ tellapic_send_fig(int fd, int tool, int dcbyte_ext, int idfrom, int dnum, float 
  *
  */
 POSH_PUBLIC_API(int)
-tellapic_send_chatp(int fd, int idfrom, int idto, int textlen, char* text)
+tellapic_send_chatp(tellapic_socket_t socket, int idfrom, int idto, int textlen, char* text)
 {
   tellapic_u32_t   ssize = HEADER_SIZE + textlen + 2;
   byte_t *rawstream = malloc(ssize);
@@ -2169,7 +2077,7 @@ tellapic_send_chatp(int fd, int idfrom, int idto, int textlen, char* text)
   pointer = WriteBytes(pointer, text, textlen);
 #endif
 
-  tellapic_u32_t r = send(fd, rawstream, ssize, 0);
+  tellapic_u32_t r = send(socket, rawstream, ssize, 0);
 
   free(rawstream);
 
@@ -2181,7 +2089,7 @@ tellapic_send_chatp(int fd, int idfrom, int idto, int textlen, char* text)
  *
  */
 POSH_PUBLIC_API(int)
-tellapic_send_chatb(int fd, int idfrom, int textlen, char* text)
+tellapic_send_chatb(tellapic_socket_t socket, int idfrom, int textlen, char* text)
 {
   tellapic_u32_t   ssize = HEADER_SIZE + textlen + 1;
   byte_t *rawstream = malloc(ssize);
@@ -2202,7 +2110,7 @@ tellapic_send_chatb(int fd, int idfrom, int textlen, char* text)
   pointer = WriteBytes(pointer, text, textlen);
 #endif
 
-  tellapic_u32_t r = send(fd, rawstream, ssize, 0);
+  tellapic_u32_t r = send(socket, rawstream, ssize, 0);
 
   free(rawstream);
 
@@ -2214,7 +2122,7 @@ tellapic_send_chatb(int fd, int idfrom, int textlen, char* text)
  *
  */
 POSH_PUBLIC_API(int)
-tellapic_send_ctle(int fd, int idfrom, int ctle, int infolen, char *info)
+tellapic_send_ctle(tellapic_socket_t socket, int idfrom, int ctle, int infolen, char *info)
 {
   tellapic_u32_t    ssize = HEADER_SIZE + infolen + 1;
   byte_t *rawstream = malloc(ssize);
@@ -2235,7 +2143,7 @@ tellapic_send_ctle(int fd, int idfrom, int ctle, int infolen, char *info)
   pointer = WriteBytes(pointer, info, infolen);
 #endif
 
-  tellapic_u32_t r = send(fd, rawstream, ssize, 0);
+  tellapic_u32_t r = send(socket, rawstream, ssize, 0);
 
   free(rawstream);
 
@@ -2247,7 +2155,7 @@ tellapic_send_ctle(int fd, int idfrom, int ctle, int infolen, char *info)
  *
  */
 POSH_PUBLIC_API(int)
-tellapic_send_ctl(int fd, int idfrom, int ctl)
+tellapic_send_ctl(tellapic_socket_t socket, int idfrom, int ctl)
 {
   byte_t *rawstream = malloc(CTL_STREAM_SIZE);
   void *pointer = rawstream;
@@ -2266,7 +2174,7 @@ tellapic_send_ctl(int fd, int idfrom, int ctl)
 #endif
   
 
-  tellapic_u32_t r = send(fd, rawstream, CTL_STREAM_SIZE, 0);
+  tellapic_u32_t r = send(socket, rawstream, CTL_STREAM_SIZE, 0);
 
   free(rawstream);
 
@@ -2277,32 +2185,18 @@ tellapic_send_ctl(int fd, int idfrom, int ctl)
 /**
  *
  */
-POSH_PUBLIC_API(int)
-tellapic_connect_to(const char *hostname, int port) 
-{   
-  int sd;
+POSH_PUBLIC_API(byte_t *)
+tellapic_read_bytes_b(tellapic_socket_t socket, size_t chunk)
+{
+  if (chunk <= 0)
+    return NULL;
 
-  struct hostent *host;
-  struct sockaddr_in addr;
+  byte_t *data = malloc(chunk);
 
-  if ( (host = gethostbyname(hostname)) == NULL )
-    return -1;
 
-  sd = socket(AF_INET, SOCK_STREAM, 0);
+  _read_b(socket, chunk, data);
 
-  bzero(&addr, sizeof(addr));
-
-  addr.sin_family      = AF_INET;
-  addr.sin_port        = htons(port);
-  addr.sin_addr.s_addr = *(long*)(host->h_addr);
-
-  if ( connect(sd, (struct sockaddr*)&addr, sizeof(addr)) != 0 ) 
-    {
-      close(sd);
-      return -1;
-    }
-
-  return sd;
+  return data;
 }
 
 

@@ -20,6 +20,14 @@
 #include "tellapic/constants.h"
 #include "posh/posh.h"
 
+#if defined linux
+typedef int tellapic_socket_t;
+#elif defined WIN32
+#include <winsock.h>
+#include <winsock2.h>
+typedef SOCKET tellapic_socket_t;
+#endif
+ 
 typedef posh_byte_t byte_t;  //basic byte unit
 typedef posh_u16_t  tellapic_u16_t;
 typedef posh_u32_t  tellapic_u32_t;

@@ -20,12 +20,16 @@
   float f[2];
   f[0] = POSH_FloatFromBigBits($1[0]);
   f[1] = POSH_FloatFromBigBits($1[1]);
-  $result = f;
+  jfloatArray a = (jfloatArray) JCALL1(NewFloatArray,jenv, 2);
+  JCALL4(SetFloatArrayRegion, jenv, a, 0, 2, (jfloat *) f);
+  $result = a;
 #else
   float f[2];
   f[0] = POSH_FloatFromLittleBits($1[0]);
   f[1] = POSH_FloatFromLittleBits($1[1]);
-  JCALL4(SetFloatArrayRegion, jenv, $result, 0, 2, f);
+  jfloatArray a = (jfloatArray) JCALL1(NewFloatArray,jenv, 2);
+  JCALL4(SetFloatArrayRegion, jenv, a, 0, 2, (jfloat *) f);
+  $result = a;
 #endif
  }
 
