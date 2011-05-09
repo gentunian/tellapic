@@ -16,10 +16,11 @@ _read_nb(int fd, size_t totalbytes, byte_t *buf)
 {
 
   int    flag = fcntl(fd, F_GETFL);
+  size_t nbytes = 0;
 
   fcntl(fd, F_SETFL, flag | O_NONBLOCK);
 
-  size_t nbytes = read(fd, buf, totalbytes);
+  nbytes = read(fd, buf, totalbytes);
 
   fcntl(fd, F_SETFL, flag);
 
@@ -53,7 +54,7 @@ _read_b(int fd, size_t totalbytes, byte_t *buf)
   /* Now we have a fd in blocking mode... */
   while(bytesleft > 0) 
     {
-      //bytesread = recv(fd, buf + bytesread, nbytes, 0);
+
       size_t bytes = read(fd, buf + bytesread, bytesleft);
 
       if (bytes > 0)
