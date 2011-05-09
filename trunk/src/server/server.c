@@ -617,34 +617,38 @@ void
       int fetchresult = 0;
       to.tv_sec = 180;
       fdsetcopy = readfdset;   /* Maintain a copy of the file descriptor set */
-#ifdef DEBUG
+
+#     ifdef DEBUG
       memset(buff, '\0', 256);
       sprintf(buff, "[NFO]:\tEntering select() on thread %d", thread->tnum);
       print_output(buff);
-#endif
+#     endif
+
       int rv = select(fdmax, &fdsetcopy, NULL, NULL, &to);
       if (rv < 0) 
 	{
+	  
 	} 
       else if ( rv == 0)
 	{
 
-#ifdef DEBUG
+#         ifdef DEBUG
 	  memset(buff, '\0', 256);
 	  sprintf(buff, "[NFO]:\tSelect timeout. Check error condition and/or continue for thread %d", thread->tnum);
 	  print_output(buff);
-#endif
+#         endif
+
 	  /* We got a timeout. Do we have an uncleared error on fetching streams? */
 	  if (fetchresult < 0)
 	    set_tstate(thread, THREAD_STATE_END);
 	}
       else
 	{
-#ifdef DEBUG
+#         ifdef DEBUG
 	  memset(buff, '\0', 256);
 	  sprintf(buff, "[NFO]:\tEXIT Select on thread %d", thread->tnum);
 	  print_output(buff);
-#endif
+#         endif
 
 
 	  /* Check if select() has set the socket ready for reading. */
@@ -663,11 +667,13 @@ void
   ccbitset &= ~(1 << thread->tnum);      /* Set the bit flag without this client flag */
   pthread_mutex_unlock(&ccbitsetmutex);  /* Unlock the shared resource */
   pthread_cleanup_pop(1);                /* pop the cleanup function */
-#ifdef DEBUG 
+
+# ifdef DEBUG 
   memset(buff, '\0', 256);
   sprintf(buff, "[NFO]:\tThread %d exiting normally. Closing link with client.", thread->tnum);    /* this thread has no more reason to live */
   print_output(buff);
-#endif
+# endif
+
   pthread_exit(NULL);
 }
 
@@ -846,6 +852,7 @@ fetch_stream(tdata_t *thread)
     return rc;
 
   item = malloc(sizeof(mitem_t));
+
   if (item == NULL)
     return rc;
 

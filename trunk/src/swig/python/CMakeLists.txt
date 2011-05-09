@@ -21,8 +21,8 @@ set(CMAKE_SWIG_FLAGS "-module" "pytellapic" "-cpperraswarn")
 #set(CMAKE_SWIG_OUTDIR ${SRCDIR}/swig/python) 
 
 # Add the python module and link it
-swig_add_module(pytellapic python ${INTERFACE_FILE} ${SRCDIR}/lib/tellapic.c)
-swig_link_libraries(pytellapic ${PYTHON_LIBRARIES})
+swig_add_module(pytellapic python ${INTERFACE_FILE})
+swig_link_libraries(pytellapic ${PYTHON_LIBRARIES} tellapic posh)
 
 #
 #set(PY_FILE ${CMAKE_SWIG_OUTDIR}/pytellapic.py)
