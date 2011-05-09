@@ -28,6 +28,7 @@ import java.util.Observable;
 
 import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 import ar.com.tellapic.chat.ChatController;
 import ar.com.tellapic.chat.IChatController;
@@ -371,7 +372,9 @@ public class NetManager extends Observable {
 		monitor.setCurrent("Downloading done!", monitorStep++);
 		
 		setConnected(true);
+		
 		ReceiverThread r = new ReceiverThread(fd);
+//		SwingUtilities.invokeLater(r);
 		r.start();
 		
 		monitor.setCurrent("Starting network thread", monitorStep++);
@@ -552,16 +555,26 @@ public class NetManager extends Observable {
 				} else if ((tellapic.tellapic_ischatb(header) == 1) || (tellapic.tellapic_ischatp(header) == 1)) {
 					System.out.println("Was chat");
 					ManageChatThread t = new ManageChatThread(stream);
-					t.start();
+					SwingUtilities.invokeLater(t);
 
 				} else if (tellapic.tellapic_isdrw(header) == 1 ) {
-					ddata_t    drawing    = stream.getData().getDrawing();
-					createAndAddDrawing(drawing);
+					final ddata_t    drawing    = stream.getData().getDrawing();
+					SwingUtilities.invokeLater(new Runnable() {
+						@Override
+						public void run() {
+							createAndAddDrawing(drawing);
+						}
+					});
 
 				} else if (tellapic.tellapic_isfig(header) == 1) {
 					System.out.println("Was fig");
-					ddata_t    drawing    = stream.getData().getDrawing();
-					createAndAddFigure(drawing);
+					final ddata_t    drawing    = stream.getData().getDrawing();
+					SwingUtilities.invokeLater(new Runnable() {
+						@Override
+						public void run() {
+							createAndAddFigure(drawing);
+						}
+					});
 
 				} else if (tellapic.tellapic_isfigtxt(stream) == 1) {
 					System.out.println("Was text");
@@ -638,7 +651,7 @@ public class NetManager extends Observable {
 				c.handleEndCapsChange(drawingData.getType().getFigure().getEndcaps());
 				c.handleLineJoinsChange(drawingData.getType().getFigure().getLinejoin());
 				c.handleOpacityChange(drawingData.getOpacity());
-				c.handleWidthChange((int)drawingData.getWidth());
+				c.handleWidthChange(drawingData.getWidth());
 				c.handleDashChange(drawingData.getType().getFigure().getDash_array(), drawingData.getType().getFigure().getDash_phase());
 			}
 			

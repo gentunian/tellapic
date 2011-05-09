@@ -26,16 +26,760 @@
 #include <winsock2.h>
 #endif
 
-#include <arpa/inet.h>
+#include <arpa/inet.h>            
 #include <resolv.h>
 #include <netdb.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
 
-#include "types.h"
-#include "constants.h"
-#include "tellapic.h"
+#define POSH_BUILDING_LIB
+
+#include "tellapic/types.h"
+#include "tellapic/constants.h"
+#include "tellapic/tellapic.h"
+
+
+/**
+ *
+ * _copy_* functions will copy data from a structure to a memory portion, 
+ *         something like: _copy_<name>(void * stream, struct t).
+ *
+ * _read_<data|header|stream>_* functions will read a specific byte, bytes or structure from a memory portion moving the pointer forward,
+ *         something like: _read_data_<name>(void * stream).
+ *
+ * _wrap_* functions will wrap memory to a structure,
+ *         something like: _wrap_<name>(struct *dest, void *stream, ...)
+ *
+ * _set_* functions will set specific values in a structure.
+ *         something like: _set_<name>(struct *t, type value).
+ *
+ * _get_* functions will get specific values from a structure.
+ *        something like: _get_<name>(struct *t).
+ *
+ */
+
+
+/**
+ *
+ */
+static void
+_set_header_endian(header_t *header, byte_t endian)
+{
+  header->endian = endian;
+}
+
+
+/**
+ *
+ */
+static void
+_set_header_cbyte(header_t *header, byte_t cbyte)
+{
+  header->cbyte = cbyte;
+}
+
+
+/**
+ *
+ */
+static void
+_set_header_ssize(header_t *header, tellapic_u32_t size)
+{
+#ifdef LITTLE_ENDIAN_VALUE
+  header->ssize = POSH_LittleU32(size);
+#else
+  header->ssize = POSH_BigU32(size);
+#endif
+}
+
+
+/**
+ *
+ */
+static byte_t
+_get_header_endian(header_t *header)
+{
+  return header->endian;
+}
+
+
+/**
+ *
+ */
+static byte_t
+_get_header_cbyte(header_t *header)
+{
+  return header->cbyte;
+}
+
+
+/**
+ *
+ */
+static tellapic_u32_t
+_get_header_ssize(header_t *header)
+{
+#ifdef LITTLE_ENDIAN_VALUE
+  return POSH_LittleU32(header->ssize);
+#else
+  return POSH_LittleU32(header->ssize);
+#endif
+}
+
+
+/**
+ *
+ */
+static void *
+WriteBytes(byte_t *p, byte_t *bytes, tellapic_u32_t len)
+{
+  memcpy(p, bytes, len);
+  p += len;
+  return p;
+}
+
+
+/**
+ *
+ */
+static void *
+WriteByte(byte_t *p, byte_t byte)
+{
+  return WriteBytes(p, &byte, 1);
+}
+
+
+/**
+ * Copies the text_t structure to the rawstream pointer
+ * 
+ * Returns the pointer
+ */
+static void*
+_copy_text_data(byte_t *rawstream, text_t text)
+{
+  void *pointer = rawstream;
+
+  pointer = WriteByte(pointer, text.style);
+  pointer = WriteByte(pointer, text.facelen);
+  pointer = WriteBytes(pointer, text.face, text.facelen);
+  pointer = WriteBytes(pointer, text.info, text.infolen);
+
+  return pointer;
+}
+
+
+/**
+ * Copies a message_t structure to the rawstream pointer.
+ * 
+ * Returns the pointer
+ */
+static void *
+_copy_privchat_data(byte_t *rawstream, message_t message, tellapic_u32_t ssize)
+{
+  void *pointer = rawstream;
+	
+  pointer = WriteByte(pointer, message.idfrom);
+  pointer = WriteByte(pointer, message.type.privmsg.idto);
+  pointer = WriteBytes(pointer, message.type.privmsg.text, ssize - HEADER_SIZE - 2);
+	
+  return pointer;
+}
+
+
+/**
+ * Copies a message_t structure to the rawstream pointer.
+ * 
+ * Returns the pointer
+ */
+static void *
+_copy_broadchat_data(byte_t *rawstream, message_t message, tellapic_u32_t ssize)
+{
+  void *pointer = rawstream;
+	
+  pointer = WriteByte(pointer, message.idfrom);
+  pointer = WriteBytes(pointer, message.type.broadmsg, ssize - HEADER_SIZE - 1);
+	
+  return pointer;
+}
+
+
+/**
+ * 
+ */
+static void *
+_copy_file_data(byte_t *rawstream, byte_t *file, tellapic_u32_t size)
+{
+  void *pointer = rawstream;
+  
+  pointer = WriteBytes(pointer, file, size);
+  
+  return pointer;
+}
+
+
+/**
+ * Copies the color_t structure to the rawstream pointer
+ * 
+ * Returns the pointer
+ */
+static void *
+_copy_drawing_color(byte_t *rawstream, color_t color)
+{
+  void *pointer = rawstream;
+  
+  pointer = WriteByte(pointer, color.red);
+  pointer = WriteByte(pointer, color.green);
+  pointer = WriteByte(pointer, color.blue);
+  
+  return pointer;
+}
+
+
+/**
+ * Copies the point_t structure to the rawstream pointer
+ * 
+ * Returns the pointer
+ */
+static void *
+_copy_drawing_point(byte_t *rawstream, point_t point)
+{
+  void *pointer = rawstream;
+  
+#ifdef LITTLE_ENDIAN_VALUE
+  pointer = POSH_WriteU16ToLittle(pointer, point.x);
+  pointer = POSH_WriteU16ToLittle(pointer, point.y);
+#else
+  pointer = POSH_WriteU16ToBig(pointer, point.x);
+  pointer = POSH_WriteU16ToBig(pointer, point.y);
+#endif
+  
+  return pointer;
+}
+
+
+/**
+ * Copies the figure_t structure to the rawstream pointer
+ * 
+ * Returns the pointer
+ */
+static void*
+_copy_drawing_figure(byte_t *rawstream, figure_t figure)
+{
+  void *pointer = rawstream;
+  
+  pointer = _copy_drawing_point(pointer, figure.point2);
+  pointer = WriteByte(pointer, figure.linejoin);
+  pointer = WriteByte(pointer, figure.endcaps);
+#ifdef LITTLE_ENDIAN_VALUE
+  pointer = POSH_WriteU32ToLittle(pointer, figure.miterlimit);
+  pointer = POSH_WriteU32ToLittle(pointer, figure.dash_phase);
+  pointer = POSH_WriteU32ToLittle(pointer, figure.dash_array[0]);
+  pointer = POSH_WriteU32ToLittle(pointer, figure.dash_array[1]);  
+#else
+  pointer = POSH_WriteU32ToBig(pointer, figure.miterlimit);
+  pointer = POSH_WriteU32ToBig(pointer, figure.dash_phase);
+  pointer = POSH_WriteU32ToBig(pointer, figure.dash_array[0]);
+  pointer = POSH_WriteU32ToBig(pointer, figure.dash_array[1]);
+#endif
+  
+  return pointer;
+}
+
+
+/**
+ * Copies the drawing structure ddata_t to the rawstream pointer
+ * 
+ * Returns the pointer
+ */
+static void *
+_copy_drawing(byte_t *rawstream, ddata_t drawing)
+{
+  void *pointer = rawstream;
+  
+  pointer = WriteByte(pointer, drawing.idfrom);
+  pointer = WriteByte(pointer, drawing.dcbyte);
+  pointer = WriteByte(pointer, drawing.dcbyte_ext);
+#ifdef LITTLE_ENDIAN_VALUE
+  pointer = POSH_WriteU32ToLittle(pointer, drawing.number);
+  pointer = POSH_WriteU32ToLittle(pointer, drawing.width);
+  pointer = POSH_WriteU32ToLittle(pointer, drawing.opacity);
+#else
+  pointer = POSH_WriteU32ToBig(pointer, drawing.number);
+  pointer = POSH_WriteU32ToBig(pointer, drawing.width);
+  pointer = POSH_WriteU32ToBig(pointer, drawing.opacity);  
+#endif
+  pointer = _copy_drawing_color(pointer, drawing.color);
+  pointer = _copy_drawing_point(pointer, drawing.point1);
+  
+  return pointer;
+}
+
+
+/**
+ * Copies the header section structure header 
+ * to the header raw bytes.
+ */
+static void *
+_copy_header_data(byte_t *rawheader, header_t header) 
+{
+  void *pointer = rawheader;
+  
+  pointer = WriteByte(pointer, header.endian);
+  pointer = WriteByte(pointer, header.cbyte);
+  
+#ifdef LITTLE_ENDIAN_VALUE
+  pointer = POSH_WriteU32ToLittle(pointer, header.ssize);
+#else
+  pointer = POSH_WriteU32ToBig(pointer, header.ssize);
+#endif
+  
+  return pointer;
+}
+
+
+/**
+ * Copies drawing data to the raw stream.
+ *
+ * ddata has specific platform dependent variable types sizes. For instance,
+ * ddata.type.figure.point1.x is an integer variable that possibly has 4 bytes.
+ * Instead, a protocol coordinate has 2 bytes for each coordinate, that is 4 bytes long.
+ * Thus, an integer needs to be truncated or wrapped to the protocol coordinate _type_.
+ * 
+ */
+static void *
+_copy_drawing_data(byte_t *rawstream, stream_t stream)
+{
+  int etype  = stream.data.drawing.dcbyte & EVENT_MASK;
+  int tool   = stream.data.drawing.dcbyte & TOOL_MASK;
+
+  /* Copy the data section fixed part */
+  void *pointer = rawstream;
+  pointer = _copy_drawing(rawstream, stream.data.drawing);
+
+  if (etype == EVENT_NULL || etype == EVENT_PRESS) 
+    {
+      /* EVENT_NULL means that we are copying a deferred drawing. */
+      /* Deferred drawing could be text or something else.        */
+      /* Text has different kind of information over the stream.  */
+      /* Also a initiated Tool in direct mode has the same meaning*/
+      /* as a deferred drawing, but different when EVENT_RELEASE  */
+      /* or EVENT_DRAG.                                           */
+      if (tool != TOOL_TEXT) 
+        pointer = _copy_drawing_figure(pointer, stream.data.drawing.type.figure);
+
+      else
+        // Treat text different
+        pointer = _copy_text_data(pointer, stream.data.drawing.type.text);
+    }
+  else
+    {
+      /* Deferred mode with event EVENT_DRAG or EVENT_RELEASE */
+    }
+
+  return pointer;
+}
+
+
+/**
+ * 
+ */
+static void *
+_copy_drawing_using(byte_t *rawstream, stream_t stream)
+{
+  void *pointer = rawstream;
+  
+  pointer = _copy_drawing(pointer, stream.data.drawing);
+  
+  return pointer;
+}
+
+
+/**
+ * Copies drawing data to the raw stream.
+ */
+static void *
+_copy_drawing_init(byte_t *rawstream, stream_t stream)
+{
+  void *pointer = rawstream;
+  
+  pointer = _copy_drawing(pointer, stream.data.drawing);
+  pointer = _copy_drawing_figure(pointer, stream.data.drawing.type.figure);
+  
+  return pointer;
+}
+
+
+/**
+ * 
+ */
+static void *
+_copy_control_extended_data(byte_t *rawstream, svcontrol_t control, tellapic_u32_t len)
+{
+  void *pointer = rawstream;
+
+  pointer = WriteByte(pointer, control.idfrom);
+  pointer = WriteBytes(pointer, control.info, len);
+
+  return pointer;
+}
+
+
+/**
+ * 
+ */
+static void *
+_copy_control_data(byte_t *rawstream, svcontrol_t control)
+{
+  void *pointer = rawstream;
+
+  pointer = WriteByte(pointer, control.idfrom);
+
+  return pointer;
+}
+
+
+/**
+ *
+ */
+static tellapic_u32_t
+_read_header_ssize(byte_t *header)
+{
+#ifdef LITTLE_ENDIAN_VALUE
+  return POSH_ReadU32FromLittle(header + SBYTE_INDEX);
+#else
+  return POSH_ReadU32FromBig(header + SBYTE_INDEX);
+#endif
+}
+
+
+/**
+ *
+ */
+static byte_t
+_read_data_idfrom(byte_t *data)
+{
+  return data[DATA_IDFROM_INDEX];
+}
+
+
+/**
+ *
+ */
+static byte_t
+_read_data_idto(byte_t *data)
+{
+  return data[DATA_PMSG_IDTO_INDEX];
+}
+
+
+/**
+ *
+ */
+static byte_t
+_read_data_dcbyte(byte_t *data)
+{
+  return data[DDATA_DCBYTE_INDEX];
+}
+
+
+/**
+ *
+ */
+static byte_t
+_read_data_dcbyte_ext(byte_t *data)
+{
+  return data[DDATA_DCBYTE_EXT_INDEX];
+}
+
+
+/**
+ *
+ */
+static tellapic_u16_t
+_read_data_point1_x(byte_t *data)
+{
+#ifdef LITTLE_ENDIAN_VALUE
+  return POSH_ReadU16FromLittle(data + DDATA_COORDX1_INDEX);
+#else
+  return POSH_ReadU16FromBig(data + DDATA_COORDX1_INDEX);
+#endif
+}
+
+
+/**
+ *
+ */
+static tellapic_u16_t
+_read_data_point1_y(byte_t *data)
+{
+#ifdef LITTLE_ENDIAN_VALUE
+  return POSH_ReadU16FromLittle(data + DDATA_COORDY1_INDEX);
+#else
+  return POSH_ReadU16FromBig(data + DDATA_COORDY1_INDEX);
+#endif
+}
+
+
+/**
+ *
+ */
+static tellapic_u16_t
+_read_data_point2_x(byte_t *data)
+{
+#ifdef LITTLE_ENDIAN_VALUE
+  return POSH_ReadU16FromLittle(data + DDATA_COORDX2_INDEX);
+#else
+  return POSH_ReadU16FromBig(data + DDATA_COORDX2_INDEX);
+#endif
+}
+
+
+/**
+ *
+ */
+static tellapic_u16_t
+_read_data_point2_y(byte_t *data)
+{
+#ifdef LITTLE_ENDIAN_VALUE
+  return POSH_ReadU16FromLittle(data + DDATA_COORDY2_INDEX);
+#else
+  return POSH_ReadU16FromBig(data + DDATA_COORDY2_INDEX);
+#endif
+}
+
+
+/**
+ *
+ */
+static tellapic_u32_t
+_read_data_number(byte_t *data)
+{
+#ifdef LITTLE_ENDIAN_VALUE
+  return POSH_ReadU32FromLittle(data + DDATA_DNUMBER_INDEX);
+#else
+  return POSH_ReadU32FromBig(data + DDATA_DNUMBER_INDEX);
+#endif
+}
+
+
+/**
+ *
+ */
+static tellapic_u32_t
+_read_data_width(byte_t *data)
+{
+#ifdef LITTLE_ENDIAN_VALUE
+  return POSH_ReadU32FromLittle(data + DDATA_WIDTH_INDEX);
+#else
+  return POSH_ReadU32FromBig(data + DDATA_WIDTH_INDEX);
+#endif
+}
+
+
+/**
+ *
+ */
+static tellapic_u32_t
+_read_data_opacity(byte_t *data)
+{
+#ifdef LITTLE_ENDIAN_VALUE
+  return POSH_ReadU32FromLittle(data + DDATA_OPACITY_INDEX);
+#else
+  return POSH_ReadU32FromBig(data + DDATA_OPACITY_INDEX);
+#endif
+}
+
+
+/**
+ *
+ */
+static byte_t
+_read_data_color_red(byte_t *data)
+{
+  return data[DDATA_COLOR_INDEX];
+}
+
+
+/**
+ *
+ */
+static byte_t
+_read_data_color_green(byte_t *data)
+{
+  return data[DDATA_COLOR_INDEX + 1];
+}
+
+
+/**
+ *
+ */
+static byte_t
+_read_data_color_blue(byte_t *data)
+{
+  return data[DDATA_COLOR_INDEX + 2];
+}
+
+
+/**
+ *
+ */
+static tellapic_u32_t
+_read_data_miter_limit(byte_t * data)
+{
+#ifdef LITTLE_ENDIAN_VALUE
+  return POSH_ReadU32FromLittle(data + DDATA_MITER_INDEX);
+#else
+  return POSH_ReadU32FromBig(data + DDATA_MITER_INDEX);
+#endif
+}
+
+
+/**
+ *
+ */
+static tellapic_u32_t
+_read_data_dash_phase(byte_t * data)
+{
+#ifdef LITTLE_ENDIAN_VALUE
+  return POSH_ReadU32FromLittle(data + DDATA_DASHPHASE_INDEX);
+#else
+  return POSH_ReadU32FromBig(data + DDATA_DASHPHASE_INDEX);
+#endif
+}
+
+
+/**
+ *
+ */
+static tellapic_u32_t
+_read_data_dash_array0(byte_t * data)
+{
+#ifdef LITTLE_ENDIAN_VALUE
+  return POSH_ReadU32FromLittle(data + DDATA_DASHARRAY_INDEX);
+#else
+  return POSH_ReadU32FromBig(data + DDATA_DASHARRAY_INDEX);
+#endif
+}
+
+
+/**
+ *
+ */
+static tellapic_u32_t
+_read_data_dash_array1(byte_t * data)
+{
+#ifdef LITTLE_ENDIAN_VALUE
+  return POSH_ReadU32FromLittle(data + DDATA_DASHARRAY_INDEX + 4);
+#else
+  return POSH_ReadU32FromBig(data + DDATA_DASHARRAY_INDEX + 4);
+#endif
+}
+
+
+/**
+ *
+ */
+static byte_t
+_read_data_line_join(byte_t * data)
+{
+  return data[DDATA_JOINS_INDEX];
+}
+
+
+/**
+ *
+ */
+static byte_t
+_read_data_end_caps(byte_t * data)
+{
+  return data[DDATA_CAPS_INDEX];
+}
+
+
+/**
+ *
+ */
+static byte_t
+_read_data_facelen(byte_t * data)
+{
+  return data[DDATA_FONTFACELEN_INDEX];
+}
+
+/**
+ *
+ */
+static byte_t
+_read_data_text_style(byte_t * data)
+{
+  return data[DDATA_FONTSTYLE_INDEX];
+}
+
+
+/**
+ *
+ */
+static tellapic_u32_t
+_read_stream_size(byte_t * stream)
+{
+  tellapic_u32_t size = 0;
+
+#ifdef LITTLE_ENDIAN_VALUE
+  size = POSH_ReadU32FromLittle(stream + SBYTE_INDEX);
+#else
+  size = POSH_ReadU32FromBig(stream + SBYTE_INDEX);
+#endif
+
+  return size;
+}
+
+
+/**
+ *
+ */
+static byte_t
+_read_stream_endian(byte_t *stream)
+{
+  return stream[ENDIAN_INDEX];
+}
+
+/**
+ *
+ */
+static byte_t
+_read_stream_cbyte(byte_t *stream)
+{
+  return stream[CBYTE_INDEX];
+}
+
+
+/**
+ *
+ */
+static void
+_wrap_stream_header(header_t *header, byte_t *stream)
+{
+  header->endian = _read_stream_endian(stream);
+  header->cbyte  = _read_stream_cbyte(stream);
+  header->ssize  = _read_stream_size(stream);
+
+  if (!tellapic_ischatb(header) &&
+      !tellapic_ischatp(header) &&
+      !tellapic_isfig(header)   &&
+      !tellapic_isctle(header)  &&
+      !tellapic_isdrw(header)   &&
+      !tellapic_isfile(header)  &&
+      !tellapic_isctl(header)   &&
+      !tellapic_isping(header)  &&
+      !tellapic_ispong(header) 
+      )
+    {
+      printf("FAIl! read header. header.ssize: %d header.cbyte: %d\n", header->ssize, header->cbyte);
+      _set_header_ssize(header, 0);
+      _set_header_cbyte(header, CTL_NOSTREAM);
+    }
+}
+
 
 /**
  * The best I can do. This is not portable as some systems may
@@ -86,7 +830,7 @@
  * _pack(stream + X1_INDEX, (void *)&x1, 2); // 2 or a defined constant MACRO (e.g. COORDINATE_TYPE_SIZE)
  */
 static void
- _pack(byte_t *stream, void *value, size_t size)
+_pack(byte_t *stream, void *value, size_t size)
 {
   byte_t *fval = (byte_t *) value;
   int i = 0;
@@ -251,520 +995,62 @@ static _unpackf(const byte_t *stream, size_t size)
 static byte_t
 _extbyte(int byte, unsigned long data)
 { 
-
   return (data>>byte*8) & 0xff;
-
 }
 
 
 /**
- * Given a stream, sets the current ENDIAN value.
- *
- * This is currently an unused value. All data sent
- * will be sent in network byte order.
- *
- * It serves more than a reminder that data is MSB than
- * for anything else.
+ * Wraps the stream data section to a stream_t structure.
+ * Note that 'data' should start on the data section of the stream, e.g.,
+ * data[0] == stream[HEADER_SIZE]
  */
 static void
-_setendian(byte_t *stream)
+_wrap_privchat_data(stream_t *dest, byte_t *data, tellapic_u32_t datasize)
 {
+  tellapic_u32_t textsize = datasize - PMSG_TEXT_OFFSET;
 
-  /* 0 means Little Endian */
-  stream[ENDIAN_INDEX] = 1;
+  dest->data.chat.idfrom = _read_data_idfrom(data);
+  dest->data.chat.type.privmsg.idto = _read_data_idto(data);
 
-  /* The stream will be implemented with MSB first */
+  memcpy(dest->data.chat.type.privmsg.text, data + DATA_PMSG_TEXT_INDEX, textsize);
 
+  /* Fill with '\0's and prevent segfault */
+  if (textsize < MAX_TEXT_SIZE)
+    memset(&dest->data.chat.type.privmsg.text[textsize], '\0', MAX_TEXT_SIZE - textsize);
 }
 
 
 /**
- * Given a stream, sets the correspondent control byte.
- * No need to ask endian information for just a byte.
+ * Wraps the stream data section to a stream_t structure.
+ * Note that 'data' should start on the data section of the stream, e.g.,
+ * data[0] == stream[HEADER_SIZE]
  */
 static void
-_setcbyte(byte_t *stream, byte_t cbyte)
+_wrap_broadchat_data(stream_t *dest, byte_t *data, tellapic_u32_t datasize)
 {
+  tellapic_u32_t textsize = datasize - BMSG_TEXT_OFFSET;
 
-  stream[CBYTE_INDEX] = cbyte;
+  dest->data.chat.idfrom = _read_data_idfrom(data);
+
+  memcpy(dest->data.chat.type.broadmsg, data + DATA_BMSG_TEXT_INDEX, textsize);
+
+  /* Fill with '\0's and prevent segfault */
+  if (textsize < MAX_TEXT_SIZE)
+    memset(&dest->data.chat.type.broadmsg[textsize], '\0', MAX_TEXT_SIZE - textsize);
 
 }
 
 
 /**
- * Given a stream, sets the correspondent control byte.
- * No need to ask endian information for just a byte.
+ * Wraps the stream data section to a stream_t structure.
+ * Note that 'data' should start on the data section of the stream, e.g.,
+ * data[0] == stream[HEADER_SIZE]
  */
 static void
- _setdcbyte_ext(byte_t *stream, byte_t dcbyte_ext)
+_wrap_ctle_data(stream_t *dest, byte_t *data, tellapic_u32_t datasize)
 {
 
-  stream[DDATA_DCBYTE_EXT_INDEX + HEADER_SIZE] = dcbyte_ext;
-
-}
-
-
-/**
- * Given a stream, sets the stream size bytes on the header
- * part of the stream.
- *
- * Endiannes is big endian or MSB First or network byte order.
- *
- * Note that size should be less than 2^32 - 1.
- */
-static void
-_setssize(byte_t *stream, unsigned long size)
-{
-
-  /* Pack the unsigned long variable with just 4 LSB bytes.       */
-  /* Any unsinged long that uses for representation more          */
-  /* than 4 bytes should be discarted and though this function    */
-  /* should not be called. 'size' will be packed in the header    */
-  /* header.ssize section that allows only 4 bytes unsigned       */
-  /* integers, restraining the protocol stream to 2^32 bytes long */
-
-  _packul(stream + SBYTE_INDEX, size, 4);
-}
-
-
-/**
- * Given a stream, copies the id to the idfrom byte.
- *
- */
-static void
-_setidfrom(byte_t *stream, byte_t id)
-{
-
-  stream[DATA_IDFROM_INDEX + HEADER_SIZE] = id;
-  
-}
-
-
-/**
- * Given a stream, sets the drawing control byte.
- */
-static void
-_setdcbyte(byte_t *stream, byte_t dcbyte)
-{
-
-  stream[DDATA_DCBYTE_INDEX + HEADER_SIZE] = dcbyte;
-  
-}
-
-
-/**
- * Given a stream, sets the idto from a chat message.
- */
-static void
-_setidto(byte_t *stream, byte_t id)
-{
-
-  stream[DATA_PMSG_IDTO_INDEX + HEADER_SIZE] = id;
-  
-}
-
-
-/**
- * Given a stream, sets the drawing number of the drawing to be sent.
- */
-static void
-_setdnum(byte_t *stream, unsigned int dnum)
-{
-
-  _packul(stream + DDATA_DNUMBER_INDEX + HEADER_SIZE, dnum, 4);
-
-}
-
-
-/**
- * Given a stream, copies the width (as floating point 32bit large) to it.
- */
-static void
-_setwidth(byte_t *stream, float w)
-{
-
-  _packf(stream + DDATA_WIDTH_INDEX + HEADER_SIZE, w, 4);
-
-}
-
-
-/**
-  * Given a stream, copies the opacity (as floating point 32bit large) to it.
- */
-static void
-_setopacity(byte_t *stream, float op)  
-{
-
-  _packf(stream + DDATA_OPACITY_INDEX + HEADER_SIZE, op, 4);
-
-}
-
-
-/**
- * Given a stream, copies the red color attribute to it.
- */
-static void
-_setred(byte_t *stream, byte_t red)
-{
-
-  stream[DDATA_COLOR_INDEX + HEADER_SIZE] = red;
-  
-}
-
-
-/**
- * Given a stream, copies the green color attribute to it.
- */
-static void
-_setgreen(byte_t *stream, byte_t green)
-{
-
-  stream[DDATA_COLOR_INDEX + HEADER_SIZE + 1] = green;
-  
-}
-
-
-/**
- * Given a stream, copies the blue color attribute to it.
- */
-static void
-_setblue(byte_t *stream, byte_t blue)
-{
-
-  stream[DDATA_COLOR_INDEX + HEADER_SIZE + 2] = blue;
-  
-}
-
-
-/**
- *
- */
-static void
- _setx1(byte_t *stream, unsigned int x1)
-{
-
-  //stream[DDATA_COORDX1_INDEX + HEADER_SIZE    ] = (x1>>8) & 0xff;
-  //stream[DDATA_COORDX1_INDEX + HEADER_SIZE + 1] = x1 & 0xff;
-  _packul(stream + DDATA_COORDX1_INDEX + HEADER_SIZE, x1, 2);
-
-}
-
-
-/**
- *
- */
-static void
- _sety1(byte_t *stream, unsigned int y1)
-{
-
-  //stream[DDATA_COORDY1_INDEX + HEADER_SIZE    ] = (y1>>8) & 0xff;
-  //stream[DDATA_COORDY1_INDEX + HEADER_SIZE + 1] = y1 & 0xff;
-  _packul(stream + DDATA_COORDY1_INDEX + HEADER_SIZE, y1, 2);
-
-}
-
-
-/**
- *
- */
-static void
- _setx2(byte_t *stream, unsigned int x2)
-{
-
-  //stream[DDATA_COORDX2_INDEX + HEADER_SIZE    ] = (x2>>8) & 0xff;
-  //stream[DDATA_COORDX2_INDEX + HEADER_SIZE + 1] = x2 & 0xff;
-  _packul(stream + DDATA_COORDX2_INDEX + HEADER_SIZE, x2, 2);
-
-}
-
-
-/**
- *
- */
-static void
- _sety2(byte_t *stream, unsigned int y2)
-{
-
-  //stream[DDATA_COORDY2_INDEX + HEADER_SIZE    ] = (y2>>8) & 0xff;
-  //stream[DDATA_COORDY2_INDEX + HEADER_SIZE + 1] = y2 & 0xff;
-  _packul(stream + DDATA_COORDY2_INDEX + HEADER_SIZE, y2, 2);
-
-}
-
-
-/**
- *
- */
-static void
-_setjoins(byte_t *stream, byte_t lj)
-{
-
-  stream[DDATA_JOINS_INDEX + HEADER_SIZE] = lj;
-  
-}
-
-
-/**
- *
- */
-static void
-_setcaps(byte_t *stream, byte_t ec)
-{
-
-  stream[DDATA_CAPS_INDEX + HEADER_SIZE] = ec;
-  
-}
-
-
-/**
- *
- */
-static void
-_setml(byte_t *stream, float ml)
-{
-  
-  _packf(stream + DDATA_MITER_INDEX + HEADER_SIZE, ml, 4);
-
-}
-
-
-/**
- *
- */
-static void
-_setdp(byte_t *stream, float dp)
-{
-
-  _packf(stream + DDATA_DASHPHASE_INDEX +HEADER_SIZE, dp, 4);
-
-}
-
-
-/**
- *
- */
-static void
-_setda(byte_t *stream, float da[])
-{
-  
-  _packf(stream + DDATA_DASHARRAY_INDEX + HEADER_SIZE,     da[0], 4);
-  _packf(stream + DDATA_DASHARRAY_INDEX + HEADER_SIZE + 4, da[1], 4);
-
-}
-
-
-/**
- *
- */
-static void
-_settextstyle(byte_t *stream, byte_t v)
-{
-
-  stream[DDATA_FONTSTYLE_INDEX + HEADER_SIZE] = v;
-
-}
-
-
-/**
- *
- */
-static void
-_setfacelen(byte_t *stream, byte_t v)
-{
-
-  stream[DDATA_FONTLEN_INDEX + HEADER_SIZE] = v;
-  
-}
-
-
-/**
- * Copies the header section structure header 
- * to the header raw bytes.
- */
-static void
-_setheader(byte_t *rawheader, header_t header) 
-{
-  rawheader[ENDIAN_INDEX] = header.endian;
-  rawheader[CBYTE_INDEX]  = header.cbyte;
-
-  /* MSB first */
-  rawheader[SBYTE_INDEX]     = _extbyte(3, header.ssize);
-  rawheader[SBYTE_INDEX + 1] = _extbyte(2, header.ssize);
-  rawheader[SBYTE_INDEX + 2] = _extbyte(1, header.ssize);
-  rawheader[SBYTE_INDEX + 3] = _extbyte(0, header.ssize);
-
-}
-
-
-/**
- * Copies drawing data to the raw stream.
- *
- * ddata has specific platform dependent variable types sizes. For instance,
- * ddata.type.figure.point1.x is an integer variable that possibly has 4 bytes.
- * Instead, a protocol coordinate has 2 bytes for each coordinate, that is 4 bytes long.
- * Thus, an integer needs to be truncated or wrapped to the protocol coordinate _type_.
- * 
- */
-void 
-static _setddata(byte_t *rawstream, stream_t stream)
-{
-  int etype  = stream.data.drawing.dcbyte & EVENT_MASK;
-  int tool   = stream.data.drawing.dcbyte & TOOL_MASK;
-
-  /* Copy the data section fixed part */
-  _setidfrom(rawstream, stream.data.drawing.idfrom);
-  _setdcbyte(rawstream, stream.data.drawing.dcbyte);
-  _setdcbyte_ext(rawstream, stream.data.drawing.dcbyte_ext);
-  _setx1(rawstream, stream.data.drawing.point1.x);
-  _sety1(rawstream, stream.data.drawing.point1.y);
-  _setdnum(rawstream, stream.data.drawing.number);
-  _setwidth(rawstream, stream.data.drawing.width);
-  _setopacity(rawstream, stream.data.drawing.opacity);
-  _setred(rawstream, stream.data.drawing.color.red);
-  _setgreen(rawstream, stream.data.drawing.color.green);
-  _setblue(rawstream, stream.data.drawing.color.blue);
-
-  if (etype == EVENT_NULL || etype == EVENT_PRESS) 
-    {
-      /* EVENT_NULL means that we are copying a deferred drawing. */
-      /* Deferred drawing could be text or something else.        */
-      /* Text has different kind of information over the stream.  */
-      /* Also a initiated Tool in direct mode has the same meaning*/
-      /* as a deferred drawing, but different when EVENT_RELEASE  */
-      /* or EVENT_DRAG.                                           */
-      if (tool != TOOL_TEXT) 
-	{
-	  _setx2(rawstream, stream.data.drawing.type.figure.point2.x);
-	  _sety2(rawstream, stream.data.drawing.type.figure.point2.y);
-	  _setjoins(rawstream, stream.data.drawing.type.figure.linejoin);
-	  _setcaps(rawstream, stream.data.drawing.type.figure.endcaps);
-	  _setml(rawstream, stream.data.drawing.type.figure.miterlimit);
-	  _setdp(rawstream, stream.data.drawing.type.figure.dash_phase);
-	  _setda(rawstream, stream.data.drawing.type.figure.dash_array);
-	} 
-      else
-	{
-	  // Treat text different
-	  _settextstyle(rawstream, stream.data.drawing.type.text.style);
-	  _setfacelen(rawstream, stream.data.drawing.type.text.facelen);
-	  memcpy(rawstream + DDATA_FONTFACE_INDEX + HEADER_SIZE, stream.data.drawing.type.text.face, stream.data.drawing.type.text.facelen);
-	  long textsize = stream.header.ssize - (HEADER_SIZE + DDATA_TEXT_INDEX(stream.data.drawing.type.text.facelen));
-	  memcpy(rawstream + DDATA_TEXT_INDEX(stream.data.drawing.type.text.facelen) + HEADER_SIZE, stream.data.drawing.type.text.info, textsize);
-	}
-    }
-  else {
-    /* Deferred mode with event EVENT_DRAG or EVENT_RELEASE */
-  }
-}
-
-
-/**
- * Copies drawing data to the raw stream.
- *
- * ddata has specific platform dependent variable types sizes. For instance,
- * ddata.type.figure.point1.x is an integer variable that possibly has 4 bytes.
- * Instead, a protocol coordinate has 2 bytes for each coordinate, that is 4 bytes long.
- * Thus, an integer needs to be truncated or wrapped to the protocol coordinate _type_.
- * 
- */
-static void 
-_setddata_using(byte_t *rawstream, stream_t stream)
-{
-
-  /* Copy the data section fixed part */
-  _setidfrom(rawstream, stream.data.drawing.idfrom);
-  _setdcbyte(rawstream, stream.data.drawing.dcbyte);
-  _setdcbyte_ext(rawstream, stream.data.drawing.dcbyte_ext);
-  _setx1(rawstream, stream.data.drawing.point1.x);
-  _sety1(rawstream, stream.data.drawing.point1.y);
-  _setdnum(rawstream, stream.data.drawing.number);
-  _setwidth(rawstream, stream.data.drawing.width);
-  _setopacity(rawstream, stream.data.drawing.opacity);
-  _setred(rawstream, stream.data.drawing.color.red);
-  _setgreen(rawstream, stream.data.drawing.color.green);
-  _setblue(rawstream, stream.data.drawing.color.blue);
-
-}
-
-
-/**
- * Copies drawing data to the raw stream.
- *
- * ddata has specific platform dependent variable types sizes. For instance,
- * ddata.type.figure.point1.x is an integer variable that possibly has 4 bytes.
- * Instead, a protocol coordinate has 2 bytes for each coordinate, that is 4 bytes long.
- * Thus, an integer needs to be truncated or wrapped to the protocol coordinate _type_.
- * 
- */
-static void 
-_setddata_init(byte_t *rawstream, stream_t stream)
-{
-
-  /* Copy the data section fixed part */
-  _setidfrom(rawstream, stream.data.drawing.idfrom);
-  _setdcbyte(rawstream, stream.data.drawing.dcbyte);
-  _setdcbyte_ext(rawstream, stream.data.drawing.dcbyte_ext);
-  _setx1(rawstream, stream.data.drawing.point1.x);
-  _sety1(rawstream, stream.data.drawing.point1.y);
-  _setdnum(rawstream, stream.data.drawing.number);
-  _setwidth(rawstream, stream.data.drawing.width);
-  _setopacity(rawstream, stream.data.drawing.opacity);
-  _setred(rawstream, stream.data.drawing.color.red);
-  _setgreen(rawstream, stream.data.drawing.color.green);
-  _setblue(rawstream, stream.data.drawing.color.blue);
-  _setx2(rawstream, stream.data.drawing.type.figure.point2.x);
-  _sety2(rawstream, stream.data.drawing.type.figure.point2.y);
-  _setjoins(rawstream, stream.data.drawing.type.figure.linejoin);
-  _setcaps(rawstream, stream.data.drawing.type.figure.endcaps);
-  _setml(rawstream, stream.data.drawing.type.figure.miterlimit);
-  _setdp(rawstream, stream.data.drawing.type.figure.dash_phase);
-  _setda(rawstream, stream.data.drawing.type.figure.dash_array);
-
-}
-
-
-/**
- * Copies a bunch of bytes from a streamed data section to a stream data structure
- * for any chat control byte.
- */
-static void
- _chatdatacpy(stream_t *dest, byte_t *data, unsigned int datasize) 
-{
-  unsigned int textsize = 0;
-
-  dest->data.chat.idfrom = data[DATA_IDFROM_INDEX];
-
-  if (dest->header.cbyte == CTL_CL_PMSG)
-    {
-      textsize = datasize - PMSG_TEXT_OFFSET;
-      dest->data.chat.type.privmsg.idto = data[DATA_PMSG_IDTO_INDEX];
-      memcpy(dest->data.chat.type.privmsg.text, data + DATA_PMSG_TEXT_INDEX, textsize);
-
-      /* Fill with '\0's and prevent segfault */
-      if (textsize < MAX_TEXT_SIZE)
-	memset(&dest->data.chat.type.privmsg.text[textsize], '\0', MAX_TEXT_SIZE - textsize);
-    }
-  else
-    {
-      textsize = datasize - BMSG_TEXT_OFFSET;
-      memcpy(dest->data.chat.type.broadmsg, data + DATA_BMSG_TEXT_INDEX, textsize);
-
-      /* Fill with '\0's and prevent segfault */
-      if (textsize < MAX_TEXT_SIZE)
-	memset(&dest->data.chat.type.broadmsg[textsize], '\0', MAX_TEXT_SIZE - textsize);
-    }
-}
-
-
-/**
- * Copies a bunch of bytes from a streamed data section into a stream 
- * data structure for any ctl extended control byte.
- */
-static void
-_ctledatacpy(stream_t *dest, byte_t *data, unsigned long datasize)
-{
-
-  dest->data.control.idfrom = data[DATA_IDFROM_INDEX];
+  dest->data.control.idfrom = _read_data_idfrom(data);
 
   memcpy(dest->data.control.info, data + 1, datasize - 1);
 
@@ -776,24 +1062,26 @@ _ctledatacpy(stream_t *dest, byte_t *data, unsigned long datasize)
 
 
 /**
- * Copies a bunch of bytes from a streamed data section into a tream 
- * data structure for ctl simple control byte.
+ * Wraps the stream data section to a stream_t structure.
+ * Note that 'data' should start on the data section of the stream, e.g.,
+ * data[0] == stream[HEADER_SIZE]
  */
 static void
-_ctldatacpy(stream_t *dest, byte_t *data)
+_wrap_ctl_data(stream_t *dest, byte_t *data)
 {
 
-  dest->data.control.idfrom = 0;
-  dest->data.control.idfrom = data[DATA_IDFROM_INDEX];
+  dest->data.control.idfrom = _read_data_idfrom(data);
 
 }
 
 
 /**
- *
+ * Wraps the stream data section to a stream_t structure.
+ * Note that 'data' should start on the data section of the stream, e.g.,
+ * data[0] == stream[HEADER_SIZE]
  */
 static void
-_filedatacpy(stream_t *dest, byte_t *data, long datasize)
+_wrap_file_data(stream_t *dest, byte_t *data, long datasize)
 {
   dest->data.file = malloc(datasize);
 
@@ -802,28 +1090,26 @@ _filedatacpy(stream_t *dest, byte_t *data, long datasize)
 
 
 /**
- * Copies a bunch of bytes from data section to a data structure.
- *
- *  Note that tellapic_read_data_b() has
- * ensure us that datasize is the actual data pointer size, and by deduction,
- * datasize + HEADER_SIZE is the total amount of data in the whole stream read.
+ * Wraps the stream data section to a stream_t structure.
+ * Note that 'data' should start on the data section of the stream, e.g.,
+ * data[0] == stream[HEADER_SIZE]
  */
 static void
-_figdatacpy(stream_t *dest, byte_t *data, long datasize) 
+_wrap_figure_data(stream_t *dest, byte_t *data, tellapic_u32_t datasize) 
 {
 
   /* Copy the fixed section either for text or a figure. */
-  dest->data.drawing.idfrom      = data[DDATA_IDFROM_INDEX];
-  dest->data.drawing.dcbyte      = data[DDATA_DCBYTE_INDEX];
-  dest->data.drawing.dcbyte_ext  = data[DDATA_DCBYTE_EXT_INDEX];
-  dest->data.drawing.point1.x    = _unpackul(data + DDATA_COORDX1_INDEX, 2);
-  dest->data.drawing.point1.y    = _unpackul(data + DDATA_COORDY1_INDEX, 2);
-  dest->data.drawing.number      = _unpackul(data + DDATA_DNUMBER_INDEX, 4);
-  dest->data.drawing.width       = _unpackf(data + DDATA_WIDTH_INDEX, 4);
-  dest->data.drawing.opacity     = _unpackf(data + DDATA_OPACITY_INDEX, 4);
-  dest->data.drawing.color.red   = data[DDATA_COLOR_INDEX];
-  dest->data.drawing.color.green = data[DDATA_COLOR_INDEX + 1];
-  dest->data.drawing.color.blue  = data[DDATA_COLOR_INDEX + 2];
+  dest->data.drawing.idfrom      = _read_data_idfrom(data);
+  dest->data.drawing.dcbyte      = _read_data_dcbyte(data);
+  dest->data.drawing.dcbyte_ext  = _read_data_dcbyte_ext(data);
+  dest->data.drawing.point1.x    = _read_data_point1_x(data); //_unpackul(data + DDATA_COORDX1_INDEX, 2);
+  dest->data.drawing.point1.y    = _read_data_point1_y(data); //_unpackul(data + DDATA_COORDY1_INDEX, 2);
+  dest->data.drawing.number      = _read_data_number(data); //_unpackul(data + DDATA_DNUMBER_INDEX, 4);
+  dest->data.drawing.width       = _read_data_width(data);  //_unpackf(data + DDATA_WIDTH_INDEX, 4);
+  dest->data.drawing.opacity     = _read_data_opacity(data); //_unpackf(data + DDATA_OPACITY_INDEX, 4);
+  dest->data.drawing.color.red   = _read_data_color_red(data); //data[DDATA_COLOR_INDEX];
+  dest->data.drawing.color.green = _read_data_color_green(data); // data[DDATA_COLOR_INDEX + 1];
+  dest->data.drawing.color.blue  = _read_data_color_blue(data); // data[DDATA_COLOR_INDEX + 2];
 
 
   /* We will use this to define what we need to copy upon the selected tool or event. */
@@ -836,35 +1122,36 @@ _figdatacpy(stream_t *dest, byte_t *data, long datasize)
       if (tool != TOOL_TEXT) 
 	{
 
-	  dest->data.drawing.type.figure.point2.x      = _unpackul(data + DDATA_COORDX2_INDEX, 2);
-	  dest->data.drawing.type.figure.point2.y      = _unpackul(data + DDATA_COORDY2_INDEX, 2);
-	  dest->data.drawing.type.figure.miterlimit    = _unpackf(data + DDATA_MITER_INDEX, 4);
-	  dest->data.drawing.type.figure.dash_phase    = _unpackf(data + DDATA_DASHPHASE_INDEX, 4);
-	  dest->data.drawing.type.figure.dash_array[0] = _unpackf(data + DDATA_DASHARRAY_INDEX, 4);
-	  dest->data.drawing.type.figure.dash_array[1] = _unpackf(data + DDATA_DASHARRAY_INDEX + 4, 4);
-	  dest->data.drawing.type.figure.linejoin      = data[DDATA_JOINS_INDEX];
-	  dest->data.drawing.type.figure.endcaps       = data[DDATA_CAPS_INDEX];
+	  dest->data.drawing.type.figure.point2.x      = _read_data_point2_x(data); // _unpackul(data + DDATA_COORDX2_INDEX, 2);
+	  dest->data.drawing.type.figure.point2.y      = _read_data_point2_y(data); // _unpackul(data + DDATA_COORDY2_INDEX, 2);
+	  dest->data.drawing.type.figure.miterlimit    = _read_data_miter_limit(data); //_unpackf(data + DDATA_MITER_INDEX, 4);
+	  dest->data.drawing.type.figure.dash_phase    = _read_data_dash_phase(data); //_unpackf(data + DDATA_DASHPHASE_INDEX, 4);
+	  dest->data.drawing.type.figure.dash_array[0] = _read_data_dash_array0(data); // _unpackf(data + DDATA_DASHARRAY_INDEX, 4);
+	  dest->data.drawing.type.figure.dash_array[1] = _read_data_dash_array1(data); //_unpackf(data + DDATA_DASHARRAY_INDEX + 4, 4);
+	  dest->data.drawing.type.figure.linejoin      = _read_data_line_join(data);
+	  dest->data.drawing.type.figure.endcaps       = _read_data_end_caps(data);
 	} 
       else 
 	{
-	  dest->data.drawing.type.text.style = data[DDATA_FONTSTYLE_INDEX];
+	  dest->data.drawing.type.text.style = _read_data_text_style(data);
 
 	  /* Do some checks about the "truly" value of facelen to avoid buffer overrun. */
-	  /* data[DDATA_FONTLEN_INDEX] is only 1 byte len, don't worry about endiannes. */
-	  if (data[DDATA_FONTLEN_INDEX] < 0)
+	  /* data[DDATA_FONTFACELEN_INDEX] is only 1 byte len, don't worry about endiannes. */
+	  if (data[DDATA_FONTFACELEN_INDEX] < 0)
 	    dest->data.drawing.type.text.facelen = 0;
 	  
 	  /* Do not assign the maximum value if it will overrun the data buffer. */
-	  else if (data[DDATA_FONTLEN_INDEX] > MAX_FONTFACE_LEN && !(datasize - DDATA_FONTFACE_INDEX - MAX_FONTFACE_LEN <= 0))
+	  else if (data[DDATA_FONTFACELEN_INDEX] > MAX_FONTFACE_LEN && !(datasize - DDATA_FONTFACE_INDEX - MAX_FONTFACE_LEN <= 0))
 	    dest->data.drawing.type.text.facelen = MAX_FONTFACE_LEN;
+
 	  else
 	    {
 	      /* Assume we exit the above condition with a false in the second term to avoid writting an else. */
 	      dest->data.drawing.type.text.facelen = 0;
 
 	      /* If we assume wrong, this will fix it. */
-	      if(!(datasize - DDATA_FONTFACE_INDEX - data[DDATA_FONTLEN_INDEX] <= 0))
-		dest->data.drawing.type.text.facelen = data[DDATA_FONTLEN_INDEX];
+	      if(!(datasize - DDATA_FONTFACE_INDEX - data[DDATA_FONTFACELEN_INDEX] <= 0))
+		dest->data.drawing.type.text.facelen = _read_data_facelen(data); //data[DDATA_FONTFACELEN_INDEX];
 	    }
 	  
 	  /* We can be safe in assuming (at least I think...) that we won't overrun the buffer.     */
@@ -888,50 +1175,18 @@ _figdatacpy(stream_t *dest, byte_t *data, long datasize)
  * A wrapper from read() C function 
  */
 static size_t
-_read_nb(int fd, size_t totalbytes, byte_t *buf, int *timeout) 
+_read_nb(int fd, size_t totalbytes, byte_t *buf) 
 {
-  size_t bytesleft = totalbytes;
-  size_t bytesread = 0;
-  fd_set readset;
-  struct timeval to;
 
   int    flag = fcntl(fd, F_GETFL);
 
   fcntl(fd, F_SETFL, flag | O_NONBLOCK);
 
-  *timeout = 0;
-
-  while(bytesleft > 0 && *timeout != 1) 
-    {
-
-      FD_ZERO(&readset);
-      FD_SET(fd, &readset);
-
-      to.tv_sec  = 3;
-      to.tv_usec = 0;
-
-      int rc = select(fd + 1, &readset, NULL, NULL, &to);
-
-      size_t bytes;
-      if (rc > 0)
-	bytes = read(fd, buf + bytesread, bytesleft);
-      else if (rc == 0)
-	*timeout = 1;
-      else 
-	bytes = 0; /* This means, stop accumulating bytes. */
-
-      if (bytes > 0)
-	{
-	  bytesleft -= bytes;
-	  bytesread += bytes;
-	}
-      else
-	bytesleft = 0;
-    }
+  size_t nbytes = read(fd, buf, totalbytes);
 
   fcntl(fd, F_SETFL, flag);
 
-  return bytesread;
+  return nbytes;
 }
 
 
@@ -990,7 +1245,7 @@ _read_b(int fd, size_t totalbytes, byte_t *buf)
  * Note that the header is a valid header already checked by the fuction, but another test should be
  * made to avoid reading data that is not coming and block.
  */
-stream_t 
+POSH_PUBLIC_API(stream_t)
 tellapic_read_stream_b(int fd) 
 {
   stream_t stream;
@@ -1015,68 +1270,37 @@ tellapic_read_stream_b(int fd)
  * byte for a valid value. Also, we ensure that the header.ssize
  * is at least a valid value for the corresponding control byte.
  */
-header_t
+POSH_PUBLIC_API(header_t)
 tellapic_read_header_b(int fd) 
 {
 
   byte_t        *data  = malloc(HEADER_SIZE);
-  int           timeout = 0;
   //byte_t        data[HEADER_SIZE];
   int           nbytes = _read_b(fd, HEADER_SIZE, data);
   header_t      header;
 
-  if (timeout)
+  if (nbytes == HEADER_SIZE)
     {
-      header.cbyte = CTL_CL_TIMEOUT;
-      header.ssize = HEADER_SIZE;
-    }
-  else if (nbytes == HEADER_SIZE)
-    {
-      unsigned long ssize = _unpackul(data + SBYTE_INDEX, 4);
+      tellapic_u32_t ssize = _read_stream_size(data);
       if (ssize >= HEADER_SIZE && ssize <= MAX_STREAM_SIZE)
-	{
-	  header.endian = data[ENDIAN_INDEX];
-	  header.cbyte  = data[CBYTE_INDEX];
-	  header.ssize  = ssize;
+	_wrap_stream_header(&header, data);
+    } 
 
-	  /* This will check 2 things: */
-	  /* First, if the header.cbyte corresponds with the header.ssize. */
-	  /* And second, whether or not the header.cbyte is a valid value. */
-	  if (!tellapic_ischatb(header) &&
-	      !tellapic_ischatp(header) &&
-	      !tellapic_isfig(header)   &&
-	      !tellapic_isctle(header)  &&
-	      !tellapic_isdrw(header)   &&
-	      !tellapic_isfile(header)  &&
-	      !tellapic_isctl(header)   &&
-	      !tellapic_isping(header)  &&
-	      !tellapic_ispong(header) 
-	      ) 
-	    {
-	      //free(data);
-	      printf("FAIl! read header. header.ssize: %d header.cbyte: %d\n", header.ssize, header.cbyte);
-	      header.ssize = 0;
-	      header.cbyte = CTL_NOSTREAM;
-	      return header;
-	    }
-	}
-    }
   else if (nbytes > 0)
-    {
-      /* We didn't complete reading what was expected */
-      header.cbyte = CTL_NOSTREAM;
-    }
+    /* We didn't complete reading what was expected */
+    _set_header_cbyte(&header, CTL_NOSTREAM);
+
   else if (nbytes == 0) 
     {
-      header.cbyte = CTL_NOPIPE;
-      header.ssize = HEADER_SIZE;
+      _set_header_cbyte(&header, CTL_NOPIPE);
+      _set_header_ssize(&header, HEADER_SIZE);
       printf("nbytes == 0 on read_header\n");
     }
 
   else
     {
       printf("FAil read header\n");
-      header.cbyte = CTL_FAIL;
+      _set_header_cbyte(&header, CTL_FAIL);
     }
 
   // Free the data stream as we already filled up the stream structure for clients.
@@ -1089,7 +1313,7 @@ tellapic_read_header_b(int fd)
 /**
  *
  */
-byte_t *
+POSH_PUBLIC_API(byte_t *)
 tellapic_read_bytes_b(int fd, size_t chunk)
 {
   if (chunk <= 0)
@@ -1110,33 +1334,24 @@ tellapic_read_bytes_b(int fd, size_t chunk)
  * tellapic_read_header_b() ensures us that we have both, a valid
  * header, and the header size corresponds with HEADER_SIZE.
  */
-stream_t
+POSH_PUBLIC_API(stream_t)
 tellapic_read_data_b(int fd, header_t header) 
 {
-  long     datasize = header.ssize - HEADER_SIZE;
-  byte_t   *data    = malloc(datasize);
-  //byte_t   data[datasize];
-  int      timeout = 0;
-  long     nbytes   = _read_b(fd, datasize, data);
-  stream_t stream;
-
-
-  if (timeout)
-    {
-      stream.header.cbyte = CTL_CL_TIMEOUT;
-      stream.header.ssize = HEADER_SIZE;
-    }
+  tellapic_u32_t datasize = _get_header_ssize(&header) - HEADER_SIZE;
+  byte_t         *data    = malloc(datasize);
+  tellapic_u32_t nbytes   = _read_b(fd, datasize, data);
+  stream_t       stream;
+  
   /* This is important. It tells us that what header.ssize says is what we really read and     */
   /* what is indeed in the data buffer. So, is we move between 0 and header.ssize-HEADER_SIZE */
   /* we won't have SIGSEGV. This information is useful to _*cpy() functions.                  */
-  else if (nbytes == 0) 
-    {
-      stream.header.cbyte = CTL_NOPIPE;
-    }
+  if (nbytes == 0) 
+    _set_header_cbyte(&stream.header, CTL_NOPIPE);
+
   else if (nbytes < 0)
     {
-      stream.header.cbyte = CTL_FAIL;
-      stream.header.ssize = 0;
+      _set_header_cbyte(&stream.header, CTL_FAIL);
+      _set_header_ssize(&stream.header, 0);
     }
 
   else if (nbytes == datasize) 
@@ -1148,13 +1363,16 @@ tellapic_read_data_b(int fd, header_t header)
       switch(stream.header.cbyte) 
 	{
 	case CTL_CL_PMSG:
+	  _wrap_privchat_data(&stream, data, datasize);
+	  break; 
+
 	case CTL_CL_BMSG:
-	  _chatdatacpy(&stream, data, datasize);
+	  _wrap_broadchat_data(&stream, data, datasize);
 	  break;
 
 	case CTL_CL_FIG:
 	case CTL_CL_DRW:
-	  _figdatacpy(&stream, data, datasize);
+	  _wrap_figure_data(&stream, data, datasize);
 	  break;
 
 	case CTL_SV_CLIST:
@@ -1163,11 +1381,11 @@ tellapic_read_data_b(int fd, header_t header)
 	case CTL_SV_CLADD:
 	case CTL_CL_PWD:
 	case CTL_CL_NAME:
-	  _ctledatacpy(&stream, data, datasize);
+	  _wrap_ctle_data(&stream, data, datasize);
 	  break;
 
 	case CTL_SV_FILE:
-	  _filedatacpy(&stream, data, datasize);
+	  _wrap_file_data(&stream, data, datasize);
 	  break;
 
 	case CTL_CL_FILEASK:
@@ -1183,19 +1401,17 @@ tellapic_read_data_b(int fd, header_t header)
 	case CTL_SV_AUTHOK:
 	case CTL_CL_PING:
 	case CTL_SV_PONG:
-	  _ctldatacpy(&stream, data);
+	  _wrap_ctl_data(&stream, data);
 	  break;
 	  
 	default:
 	  printf("FAIL over HERE!\n");
-	  stream.header.cbyte = CTL_FAIL;
+	  _set_header_cbyte(&stream.header, CTL_FAIL);
 	  break;
 	}
     } 
   else if (nbytes > 0)
-    {
-      stream.header.cbyte = CTL_NOSTREAM;
-    }
+    _set_header_cbyte(&stream.header, CTL_NOSTREAM);
 
   free(data);
   return stream;
@@ -1205,7 +1421,7 @@ tellapic_read_data_b(int fd, header_t header)
 /**
  *
  */
-stream_t 
+POSH_PUBLIC_API(stream_t)
 tellapic_read_stream_nb(int fd) 
 {
   stream_t stream;
@@ -1226,68 +1442,37 @@ tellapic_read_stream_nb(int fd)
 /**
  *
  */
-header_t
+POSH_PUBLIC_API(header_t)
 tellapic_read_header_nb(int fd) 
 {
 
   byte_t        *data  = malloc(HEADER_SIZE);
-  int           timeout = 0;
-  //byte_t        data[HEADER_SIZE];
-  int           nbytes = _read_nb(fd, HEADER_SIZE, data, &timeout);
-  header_t      header;
+  tellapic_u16_t nbytes = _read_nb(fd, HEADER_SIZE, data);
+  header_t       header;
 
-  if (timeout)
+  if (nbytes == HEADER_SIZE)
     {
-      header.cbyte = CTL_CL_TIMEOUT;
-      header.ssize = HEADER_SIZE;
-    }
-  else if (nbytes == HEADER_SIZE)
-    {
-      unsigned long ssize = _unpackul(data + SBYTE_INDEX, 4);
+      tellapic_u32_t ssize = _read_stream_size(data);
       if (ssize >= HEADER_SIZE && ssize <= MAX_STREAM_SIZE)
-	{
-	  header.endian = data[ENDIAN_INDEX];
-	  header.cbyte  = data[CBYTE_INDEX];
-	  header.ssize  = ssize;
-
-	  /* This will check 2 things: */
-	  /* First, if the header.cbyte corresponds with the header.ssize. */
-	  /* And second, whether or not the header.cbyte is a valid value. */
-	  if (!tellapic_ischatb(header) &&
-	      !tellapic_ischatp(header) &&
-	      !tellapic_isfig(header)   &&
-	      !tellapic_isctle(header)  &&
-	      !tellapic_isdrw(header)   &&
-	      !tellapic_isfile(header)  &&
-	      !tellapic_isctl(header)   &&
-	      !tellapic_isping(header)  &&
-	      !tellapic_ispong(header) 
-	      ) 
-	    {
-	      //free(data);
-	      printf("FAIl! read header. header.ssize: %d header.cbyte: %d\n", header.ssize, header.cbyte);
-	      header.ssize = 0;
-	      header.cbyte = CTL_NOSTREAM;
-	      return header;
-	    }
-	}
+        _wrap_stream_header(&header, data);
+      
     }
   else if (nbytes > 0)
     {
       /* We didn't complete reading what was expected */
-      header.cbyte = CTL_NOSTREAM;
+      _set_header_cbyte(&header, CTL_NOSTREAM);
     }
   else if (nbytes == 0) 
     {
-      header.cbyte = CTL_NOPIPE;
-      header.ssize = HEADER_SIZE;
+      _set_header_cbyte(&header, CTL_NOPIPE);
+      _set_header_ssize(&header, HEADER_SIZE);
       printf("nbytes == 0 on read_header\n");
     }
 
   else
     {
       printf("FAil read header\n");
-      header.cbyte = CTL_FAIL;
+      _set_header_cbyte(&header, CTL_FAIL);
     }
 
   // Free the data stream as we already filled up the stream structure for clients.
@@ -1300,33 +1485,26 @@ tellapic_read_header_nb(int fd)
 /**
  *
  */
-stream_t
+POSH_PUBLIC_API(stream_t)
 tellapic_read_data_nb(int fd, header_t header) 
 {
-  long     datasize = header.ssize - HEADER_SIZE;
-  byte_t   *data    = malloc(datasize);
-  //byte_t   data[datasize];
-  int      timeout = 0;
-  long     nbytes   = _read_nb(fd, datasize, data, &timeout);
-  stream_t stream;
+  tellapic_u32_t datasize = _get_header_ssize(&header) - HEADER_SIZE;
+  byte_t         *data    = malloc(datasize);
+  tellapic_u32_t nbytes   = _read_nb(fd, datasize, data);
+  stream_t       stream;
 
 
-  if (timeout)
-    {
-      stream.header.cbyte = CTL_CL_TIMEOUT;
-      stream.header.ssize = HEADER_SIZE;
-    }
   /* This is important. It tells us that what header.ssize says is what we really read and     */
   /* what is indeed in the data buffer. So, is we move between 0 and header.ssize-HEADER_SIZE */
   /* we won't have SIGSEGV. This information is useful to _*cpy() functions.                  */
-  else if (nbytes == 0) 
+  if (nbytes == 0) 
     {
-      stream.header.cbyte = CTL_NOPIPE;
+      _set_header_cbyte(&stream.header, CTL_NOPIPE);
     }
   else if (nbytes < 0)
     {
-      stream.header.cbyte = CTL_FAIL;
-      stream.header.ssize = 0;
+      _set_header_cbyte(&stream.header, CTL_FAIL);
+      _set_header_ssize(&stream.header, 0);
     }
 
   else if (nbytes == datasize) 
@@ -1338,13 +1516,16 @@ tellapic_read_data_nb(int fd, header_t header)
       switch(stream.header.cbyte) 
 	{
 	case CTL_CL_PMSG:
+	  _wrap_privchat_data(&stream, data, datasize);
+	  break;
+
 	case CTL_CL_BMSG:
-	  _chatdatacpy(&stream, data, datasize);
+	  _wrap_broadchat_data(&stream, data, datasize);
 	  break;
 
 	case CTL_CL_FIG:
 	case CTL_CL_DRW:
-	  _figdatacpy(&stream, data, datasize);
+	  _wrap_figure_data(&stream, data, datasize);
 	  break;
 
 	case CTL_SV_CLIST:
@@ -1353,11 +1534,11 @@ tellapic_read_data_nb(int fd, header_t header)
 	case CTL_SV_CLADD:
 	case CTL_CL_PWD:
 	case CTL_CL_NAME:
-	  _ctledatacpy(&stream, data, datasize);
+	  _wrap_ctle_data(&stream, data, datasize);
 	  break;
 
 	case CTL_SV_FILE:
-	  _filedatacpy(&stream, data, datasize);
+	  _wrap_file_data(&stream, data, datasize);
 	  break;
 
 	case CTL_CL_FILEASK:
@@ -1373,19 +1554,18 @@ tellapic_read_data_nb(int fd, header_t header)
 	case CTL_SV_AUTHOK:
 	case CTL_CL_PING:
 	case CTL_SV_PONG:
-	  _ctldatacpy(&stream, data);
+	  _wrap_ctl_data(&stream, data);
 	  break;
 	  
 	default:
 	  printf("FAIL over HERE!\n");
-	  stream.header.cbyte = CTL_FAIL;
+	  _set_header_cbyte(&stream.header, CTL_FAIL);
 	  break;
 	}
     } 
   else if (nbytes > 0)
-    {
-      stream.header.cbyte = CTL_NOSTREAM;
-    }
+    _set_header_cbyte(&stream.header, CTL_NOSTREAM);
+  
 
   free(data);
   return stream;
@@ -1395,11 +1575,11 @@ tellapic_read_data_nb(int fd, header_t header)
 /**
  * Check if header is valid. If so, return the stream size. Else, return 0.
  */
-int
+POSH_PUBLIC_API(int)
 _stream_header_ok(byte_t *header)
 {
   /* get the stream size from the header section */
-  unsigned long ssize = _unpackul(header + SBYTE_INDEX, 4);
+  tellapic_u32_t ssize = _read_header_ssize(header);
 
   /* check if the stream size is upon valid values */
   if (ssize >= HEADER_SIZE && ssize <= MAX_STREAM_SIZE)
@@ -1445,49 +1625,33 @@ _stream_header_ok(byte_t *header)
 }
 
 
-
-
-
 /**
  * Reads a stream an return it "as is" without wrapping it to a structure.
  * Useful for forwarding. data must be freed somewhere though.
  */
-byte_t *
+POSH_PUBLIC_API(byte_t *)
 tellapic_rawread_b(int fd)
 {
   
   byte_t        *header= malloc(HEADER_SIZE);
   byte_t        *data  = NULL;
-  int           timeout = 0;
-  int           nbytes = _read_nb(fd, HEADER_SIZE, header, &timeout);
-
-  if (timeout)
-    {
-      free(header);
-      free(data);
-      return tellapic_build_rawstream(CTL_CL_TIMEOUT, fd);
-    }
+  tellapic_u32_t  nbytes = _read_b(fd, HEADER_SIZE, header);
 
   if (nbytes == HEADER_SIZE)
     {
-      int ssize =  _stream_header_ok(header);
+      tellapic_u32_t ssize =  _stream_header_ok(header);
 
       if (ssize != 0)
 	{
-	  int rbytes = ssize - HEADER_SIZE;
+	  tellapic_u32_t rbytes = ssize - HEADER_SIZE;
 	  data = malloc(ssize);
 	  memcpy(data, header, HEADER_SIZE);
 
-	  nbytes = _read_nb(fd, rbytes, data + HEADER_SIZE, &timeout);
+	  nbytes = _read_b(fd, rbytes, data + HEADER_SIZE);
 
 	  /* Check for errors. If someone is found, free the current data structure */
 	  /* build a new data structure to inform such error, and return data.      */
-	  if (timeout)
-	    {
-	      free(data);
-	      data = tellapic_build_rawstream(CTL_CL_TIMEOUT, fd);
-	    }
-	  else if (nbytes == 0)
+	  if (nbytes == 0)
 	    {
 	      free(data);
 	      data = tellapic_build_rawstream(CTL_NOPIPE, fd);
@@ -1505,19 +1669,16 @@ tellapic_rawread_b(int fd)
 	}
     }
   else if (nbytes == 0)
-    {
-      data = tellapic_build_rawstream(CTL_NOPIPE, fd);
-    }
+    data = tellapic_build_rawstream(CTL_NOPIPE, fd);
+
   else if (nbytes > 0)
-    {
-      data = tellapic_build_rawstream(CTL_NOSTREAM, fd);
-    }
+    data = tellapic_build_rawstream(CTL_NOSTREAM, fd);
+
   else
-    {
-      data = tellapic_build_rawstream(CTL_FAIL, fd);
-    }
+    data = tellapic_build_rawstream(CTL_FAIL, fd);
   
-  //free(header);
+  
+  free(header);
 
   return data;
 }
@@ -1526,38 +1687,33 @@ tellapic_rawread_b(int fd)
 /**
  * pwd could and should be NULL.
  */
-char *
+POSH_PUBLIC_API(char *)
 tellapic_read_pwd(int fd, char *pwd, int *len)
 {
-  //byte_t     header[HEADER_SIZE];
   byte_t     *header  = malloc(HEADER_SIZE);
   int        timeout = 0;
-  int        nbytes   = _read_nb(fd, HEADER_SIZE, header, &timeout);
+  tellapic_u32_t nbytes   = _read_b(fd, HEADER_SIZE, header);
   stream_t   stream;  /* This is used only as a placeholder. Avoid it for future release, use instead local variables*/
 
   *len = 0;
   
-  if (timeout)
-    return pwd;
-
-  stream.header.cbyte = CTL_FAIL;
-
+  _set_header_cbyte(&stream.header, CTL_FAIL);
+  
   if (nbytes == HEADER_SIZE && header[CBYTE_INDEX] == CTL_CL_PWD) 
     {
-      stream.header.endian = header[ENDIAN_INDEX];
-      stream.header.cbyte  = header[CBYTE_INDEX];
-      stream.header.ssize  = _unpackul(header + SBYTE_INDEX, 4);
+      _set_header_endian(&stream.header, header[ENDIAN_INDEX]);
+      _set_header_cbyte(&stream.header, header[CBYTE_INDEX]);
+      _set_header_ssize(&stream.header, _read_header_ssize(header));//_unpackul(header + SBYTE_INDEX, 4));
  
       if (stream.header.ssize <= MAX_CTLEXT_STREAM_SIZE && stream.header.ssize >= MIN_CTLEXT_STREAM_SIZE)
 	{
 	  byte_t *data = malloc(stream.header.ssize - HEADER_SIZE);
-	  //byte_t data[stream.header.ssize - HEADER_SIZE];
 	  int    error = 0;
-	  nbytes = _read_nb(fd, stream.header.ssize - HEADER_SIZE, data, &timeout);
+	  nbytes = _read_b(fd, stream.header.ssize - HEADER_SIZE, data);
 
-	  if (nbytes == stream.header.ssize - HEADER_SIZE && timeout == 0)
+	  if (nbytes == stream.header.ssize - HEADER_SIZE)
 	    {
-	      _ctledatacpy(&stream, data, nbytes);
+	      _wrap_ctle_data(&stream, data, nbytes);
 	      *len = nbytes - 1;
 	      pwd = malloc(*len + 1);
 	      strncpy(pwd, (char *)stream.data.control.info, *len);
@@ -1574,32 +1730,25 @@ tellapic_read_pwd(int fd, char *pwd, int *len)
 }
 
 
-
-
-
-
-
 /**
  *
  */
-void 
+POSH_PUBLIC_API(void)
 tellapic_close_fd(int fd) 
 {
-
   close(fd);
-
 }
 
 
 /**
  *
  */
-int
+POSH_PUBLIC_API(tellapic_u32_t)
 tellapic_rawsend(int fd, byte_t *rawstream)
 {
-  unsigned long ssize = _unpackul(rawstream + SBYTE_INDEX, 4);
+  tellapic_u32_t ssize = _read_stream_size(rawstream); //_unpackul(rawstream + SBYTE_INDEX, 4);
 
-  int r = send(fd, rawstream, ssize, 0);
+  tellapic_u32_t r = send(fd, rawstream, ssize, 0);
   
   return r;
 }
@@ -1608,38 +1757,36 @@ tellapic_rawsend(int fd, byte_t *rawstream)
 /**
  * TODO: this is not finished nor updated. 
  */
-int 
+POSH_PUBLIC_API(int)
 tellapic_send(int socket, stream_t *stream) 
 {
-
   byte_t *rawstream = malloc(stream->header.ssize);
+  int     cbyte = stream->header.cbyte; 
   
   /* Copy the header to the raw stream data */
-  _setheader(rawstream, stream->header);
-  int cbyte = stream->header.cbyte;
-
+  void *pointer = rawstream;
+  
+  pointer = _copy_header_data(pointer, stream->header);
+	
   switch(cbyte)
     {
     case  CTL_CL_PMSG:
-      _setidfrom(rawstream, stream->data.chat.idfrom);
-      _setidto(rawstream, stream->data.chat.type.privmsg.idto);
-      memcpy(rawstream + DATA_PMSG_TEXT_INDEX + HEADER_SIZE, stream->data.chat.type.privmsg.text, stream->header.ssize - HEADER_SIZE - 2);
+      pointer = _copy_privchat_data(rawstream, stream->data.chat, stream->header.ssize);
       break;
 
     case CTL_CL_BMSG:
-      _setidfrom(rawstream, stream->data.chat.idfrom);
-      memcpy(rawstream + DATA_BMSG_TEXT_INDEX +HEADER_SIZE, stream->data.chat.type.broadmsg, stream->header.ssize - HEADER_SIZE - 1);
+      pointer = _copy_broadchat_data(rawstream, stream->data.chat, stream->header.ssize);
       break;
 
     case CTL_CL_FIG:
-      _setddata(rawstream, *stream);
+      pointer = _copy_drawing_data(rawstream, *stream);
       break;
 
     case CTL_CL_DRW:
       if (stream->header.ssize == DRW_INIT_STREAM_SIZE)
-	_setddata_init(rawstream, *stream);
+	pointer = _copy_drawing_init(rawstream, *stream);
       else
-	_setddata_using(rawstream, *stream);
+	pointer = _copy_drawing_using(rawstream, *stream);
       break;
 
 
@@ -1649,13 +1796,15 @@ tellapic_send(int socket, stream_t *stream)
       break;
 
     case CTL_SV_FILE:
-      memcpy(rawstream + HEADER_SIZE, stream->data.file, stream->header.ssize - HEADER_SIZE);
+      pointer = _copy_file_data(rawstream, stream->data.file, stream->header.ssize - HEADER_SIZE);
       break;
 
     case CTL_CL_PWD:
     case CTL_SV_CLADD:
     case CTL_CL_NAME:
-      memcpy(rawstream + DATA_CLADD_NAME_INDEX + HEADER_SIZE, stream->data.control.info, stream->header.ssize - HEADER_SIZE - 1);
+      pointer = _copy_control_extended_data(rawstream, stream->data.control, stream->header.ssize - HEADER_SIZE -1);
+      break;
+      
     case CTL_CL_FILEASK:
     case CTL_CL_FILEOK:
     case CTL_SV_PWDFAIL:
@@ -1666,7 +1815,7 @@ tellapic_send(int socket, stream_t *stream)
     case CTL_SV_ID:
     case CTL_SV_NAMEINUSE:
     case CTL_SV_AUTHOK:
-      _setidfrom(rawstream, stream->data.control.idfrom);
+      pointer = _copy_control_data(rawstream, stream->data.control);
       break;
 
     default:
@@ -1674,7 +1823,7 @@ tellapic_send(int socket, stream_t *stream)
       return 0;
     }
 
-  int r = send(socket, rawstream, stream->header.ssize, 0);
+  tellapic_u32_t r = send(socket, rawstream, stream->header.ssize, 0);
 
   free(rawstream);
   return r;
@@ -1684,20 +1833,27 @@ tellapic_send(int socket, stream_t *stream)
 /**
  *
  */
-int
-tellapic_send_file(int fd, FILE *file, long filesize)
+POSH_PUBLIC_API(int)
+tellapic_send_file(int fd, FILE *file, tellapic_u32_t filesize)
 {
 
   byte_t *rawstream = malloc(filesize + HEADER_SIZE);
+  void *pointer = rawstream;
 
-  _setendian(rawstream);
-  _setcbyte(rawstream, CTL_SV_FILE);
-  _setssize(rawstream, filesize + HEADER_SIZE);
+  pointer = WriteByte(pointer, 1);
+  pointer = WriteByte(pointer, CTL_SV_FILE);
 
-  fread(rawstream + HEADER_SIZE, sizeof(byte_t), filesize, file);
+#ifdef POSH_LITTLE_ENDIAN
+  pointer = POSH_WriteU32ToLittle(pointer, filesize + HEADER_SIZE);
+#else
+  pointer = POSH_WriteU32ToBit(pointer, filesize + HEADER_SIZE);
+#endif
+
+  fread(pointer, sizeof(byte_t), filesize, file);
+
   rewind(file);
 
-  int r = send(fd, rawstream, filesize + HEADER_SIZE, 0);
+  tellapic_u32_t r = send(fd, rawstream, filesize + HEADER_SIZE, 0);
 
   free(rawstream);
 
@@ -1708,35 +1864,96 @@ tellapic_send_file(int fd, FILE *file, long filesize)
 /**
  *
  */
-int
+POSH_PUBLIC_API(int)
+tellapic_send_struct(int fd, stream_t *stream)
+{
+  switch(stream->header.cbyte) 
+    {
+    case CTL_CL_FIG:
+      if (stream->data.drawing.dcbyte == TOOL_TEXT | EVENT_NULL)
+	{
+	  tellapic_send_text(fd, 
+			     stream->data.drawing.idfrom, 
+			     stream->data.drawing.number, 
+			     stream->data.drawing.width, 
+			     stream->data.drawing.opacity,
+			     stream->data.drawing.color.red,
+			     stream->data.drawing.color.green,
+			     stream->data.drawing.color.blue,
+			     stream->data.drawing.point1.x,
+			     stream->data.drawing.point1.y,
+			     stream->data.drawing.type.text.style,
+			     stream->data.drawing.type.text.facelen,
+			     stream->data.drawing.type.text.face,
+			     stream->data.drawing.type.text.infolen,
+			     stream->data.drawing.type.text.info
+			     );
+	}
+    }
+}
+
+
+/**
+ *
+ */
+POSH_PUBLIC_API(int)
 tellapic_send_text(int fd, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int style, int facelen, char *face, int textlen, char *text)
 {
-  int    ssize      = MIN_FIGTXT_STREAM_SIZE + facelen + textlen;
-  //byte_t *rawstream = malloc(ssize);
-  byte_t rawstream[ssize];
+  tellapic_u32_t ssize = MIN_FIGTXT_STREAM_SIZE + facelen + textlen;
+  byte_t *rawstream = malloc(ssize);
+  void *pointer = rawstream;
+  //~ byte_t rawstream[ssize];
 
-  _setendian(rawstream);
-  _setcbyte(rawstream, CTL_CL_FIG);
-  _setdcbyte(rawstream, TOOL_TEXT | EVENT_NULL);
-  _setssize(rawstream, ssize);
-  _setidfrom(rawstream, idfrom);
-  _setdnum(rawstream, dnum);
-  _setwidth(rawstream, w);
-  _setopacity(rawstream, op);
-  _setred(rawstream, red);
-  _setgreen(rawstream, green);
-  _setblue(rawstream, blue);
-  _setx1(rawstream, x1);
-  _sety1(rawstream, y1);
-  _settextstyle(rawstream, style);
-  _setfacelen(rawstream, facelen);
+#ifdef LITTLE_ENDIAN_VALUE                                              /*  +-------------------+                    */
+  pointer = WriteByte(pointer, 1);                                       /*  |    endianness     |  1 byte            */
+  pointer = WriteByte(pointer, CTL_CL_FIG);                              /*  |      cbyte        |  1 byte            */
+  pointer = POSH_WriteU32ToLittle(pointer, ssize);                       /*  |    stream size    |  4 bytes           */
+  pointer = WriteByte(pointer, idfrom);                                  /*  |      idfrom       |  1 byte            */
+  pointer = WriteByte(pointer, CTL_CL_FIG);                              /*  |      dcbyte       |  1 byte            */
+  pointer = WriteByte(pointer, TOOL_TEXT | EVENT_NULL);                  /*  |    dcbyte_ext     |  1 byte            */
+  pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleU32(dnum));        /*  |   drawing number  |  4 bytes           */
+  pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleU32(w));           /*  |       width       |  4 bytes           */
+  pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleU32(op));          /*  |      opacity      |  4 bytes           */
+  pointer = WriteByte(pointer, red);                                     /*  |     color red     |  1 byte            */
+  pointer = WriteByte(pointer, green);                                   /*  |    color green    |  1 byte            */
+  pointer = WriteByte(pointer, blue);                                    /*  |     color blue    |  1 byte            */
+  pointer = POSH_WriteU16ToLittle(pointer, POSH_LittleU16(x1));          /*  |     x point 1     |  2 bytes           */
+  pointer = POSH_WriteU16ToLittle(pointer, POSH_LittleU16(y1));          /*  |     y point 1     |  2 bytes           */
+  pointer = WriteByte(pointer, style);                                   /*  |    font style     |  1 byte            */
+  pointer = WriteByte(pointer, facelen);                                 /*  |   face name len   |  1 byte            */
+  pointer = POSH_WriteU16ToLittle(pointer, POSH_LittleU16(textlen));     /*  |      infolen      |  2 bytes           */
+  pointer = WriteBytes(pointer, face, facelen);                          /*  |   font face name  |  facenamelen bytes */
+  pointer = WriteBytes(pointer, text, textlen);                          /*  |       text        |  infolen bytes     */
+                                                                         /*  +-------------------+                    */
+                                                                         /*  total bytes = 32 + facenamelen + infolen */
+                                                                         
+                                                                         
+#else                                                                  /*  +-------------------+                    */
+  pointer = WriteByte(pointer, 1);                                       /*  |    endianness     |  1 byte            */
+  pointer = WriteByte(pointer, CTL_CL_FIG);                              /*  |      cbyte        |  1 byte            */
+  pointer = POSH_WriteU32ToBig(pointer, ssize);                          /*  |    stream size    |  4 bytes           */
+  pointer = WriteByte(pointer, idfrom);                                  /*  |      idfrom       |  1 byte            */
+  pointer = WriteByte(pointer, CTL_CL_FIG);                              /*  |      dcbyte       |  1 byte            */
+  pointer = WriteByte(pointer, TOOL_TEXT | EVENT_NULL);                  /*  |    dcbyte_ext     |  1 byte            */
+  pointer = POSH_WriteU32ToBig(pointer, POSH_LittleU32(dnum));           /*  |   drawing number  |  4 bytes           */
+  pointer = POSH_WriteU32ToBig(pointer, POSH_LittleFloatBits(w));        /*  |       width       |  4 bytes           */
+  pointer = POSH_WriteU32ToBig(pointer, POSH_LittleFloatBits(op));       /*  |      opacity      |  4 bytes           */
+  pointer = WriteByte(pointer, red);                                     /*  |     color red     |  1 byte            */
+  pointer = WriteByte(pointer, green);                                   /*  |    color green    |  1 byte            */
+  pointer = WriteByte(pointer, blue);                                    /*  |     color blue    |  1 byte            */
+  pointer = POSH_WriteU16ToBig(pointer, POSH_LittleU16(x1));             /*  |     x point 1     |  2 bytes           */
+  pointer = POSH_WriteU16ToBig(pointer, POSH_LittleU16(y1));             /*  |     y point 1     |  2 bytes           */
+  pointer = WriteByte(pointer, style);                                   /*  |    font style     |  1 byte            */
+  pointer = WriteByte(pointer, facelen);                                 /*  |   face name len   |  1 byte            */
+  pointer = POSH_WriteU16ToBig(pointer, POSH_LittleU16(textlen));        /*  |      infolen      |  2 bytes           */
+  pointer = WriteBytes(pointer, face, facelen);                          /*  |   font face name  |  facenamelen bytes */
+  pointer = WriteBytes(pointer, text, textlen);                          /*  |       text        |  infolen bytes     */
+                                                                         /*  +-------------------+                    */
+                                                                         /*  total bytes = 32 + facenamelen + infolen */
+#endif
+  tellapic_u32_t r = send(fd, rawstream, ssize, 0);
 
-  memcpy(rawstream + HEADER_SIZE + DDATA_FONTFACE_INDEX, face, facelen);
-  memcpy(rawstream + HEADER_SIZE + DDATA_TEXT_INDEX(facelen), text, textlen);
-  
-  int r = send(fd, rawstream, ssize, 0);
-
-  //free(rawstream);
+  free(rawstream);
 
   return r;
 }
@@ -1745,30 +1962,48 @@ tellapic_send_text(int fd, int idfrom, int dnum, float w, float op, int red, int
 /**
  *
  */
-int
+POSH_PUBLIC_API(int)
 tellapic_send_drw_using(int fd, int tool, int dcbyte_ext, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1)
 {
-  //byte_t *rawstream = malloc(DRW_USING_STREAM_SIZE);
-  byte_t rawstream[DRW_USING_STREAM_SIZE];
+  byte_t *rawstream = malloc(DRW_USING_STREAM_SIZE);
+  void   *pointer   = rawstream;
 
-  _setendian(rawstream);
-  _setcbyte(rawstream, CTL_CL_DRW);
-  _setdcbyte_ext(rawstream, dcbyte_ext);
-  _setssize(rawstream, DRW_USING_STREAM_SIZE);
-  _setidfrom(rawstream, idfrom);
-  _setdcbyte(rawstream, tool);
-  _setdnum(rawstream, dnum);
-  _setwidth(rawstream, w);
-  _setopacity(rawstream, op);
-  _setred(rawstream, red);
-  _setgreen(rawstream, green);
-  _setblue(rawstream, blue);
-  _setx1(rawstream, x1);
-  _sety1(rawstream, y1);
+#ifdef LITTLE_ENDIAN_VALUE                                             /* +---------------+         */
+  pointer = WriteByte(pointer, 1);                                      /* |  endianness   | 1 byte  */
+  pointer = WriteByte(pointer, CTL_CL_DRW);                             /* |     cbyte     | 1 byte  */
+  pointer = POSH_WriteU32ToLittle(pointer, DRW_USING_STREAM_SIZE);      /* | stream size   | 4 bytes */
+  pointer = WriteByte(pointer, idfrom);                                 /* |    id from    | 1 byte  */
+  pointer = WriteByte(pointer, tool);                                   /* |    dcbyte     | 1 byte  */
+  pointer = WriteByte(pointer, dcbyte_ext);                             /* |  dcbyte ext   | 1 byte  */
+  pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleU32(dnum));       /* | drawingnumber | 4 bytes */
+  pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(w));    /* |     width     | 4 bytes */
+  pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(op));   /* |    opacity    | 4 bytes */
+  pointer = WriteByte(pointer, red);                                    /* |   color red   | 1 byte  */
+  pointer = WriteByte(pointer, green);                                  /* |   color green | 1 byte  */
+  pointer = WriteByte(pointer, blue);                                   /* |   color blue  | 1 byte  */
+  pointer = POSH_WriteU16ToLittle(pointer, x1);                         /* |    x point 1  | 2 bytes */
+  pointer = POSH_WriteU16ToLittle(pointer, y1);                         /* |    y point 1  | 2 bytes */
+#else                                                                   /* +---------------+         */
+  /*  total bytes = 28 bytes   */
+  pointer = WriteByte(pointer, 1);
+  pointer = WriteByte(pointer, CTL_CL_DRW);
+  pointer = POSH_WriteU32ToBig(pointer, DRW_USING_STREAM_SIZE);
+  pointer = WriteByte(pointer, idfrom);
+  pointer = WriteByte(pointer, tool);
+  pointer = WriteByte(pointer, dcbyte_ext);
+  pointer = POSH_WriteU32ToBig(pointer, POSH_BigU32(dnum));
+  pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(w));
+  pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(op));
+  pointer = WriteByte(pointer, red);
+  pointer = WriteByte(pointer, green);
+  pointer = WriteByte(pointer, blue);
+  pointer = POSH_WriteU16ToBig(pointer, x1);
+  pointer = POSH_WriteU16ToBig(pointer, y1);
+#endif  
 
-  int r = send(fd, rawstream, DRW_USING_STREAM_SIZE, 0);
+  tellapic_u32_t r = send(fd, rawstream, DRW_USING_STREAM_SIZE, 0);
 
-  //free(rawstream);
+  free(rawstream);
 
   return r;
 }
@@ -1777,37 +2012,65 @@ tellapic_send_drw_using(int fd, int tool, int dcbyte_ext, int idfrom, int dnum, 
 /**
  *
  */
-int
+POSH_PUBLIC_API(int)
 tellapic_send_drw_init(int fd, int tool, int dcbyte_ext, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int x2, int y2, int lj, int ec, float ml, float dp, float da[])
 {
-  //byte_t *rawstream = malloc(DRW_INIT_STREAM_SIZE);
-  byte_t rawstream[DRW_INIT_STREAM_SIZE];
+  byte_t *rawstream = malloc(DRW_INIT_STREAM_SIZE);
+  void   *pointer   = rawstream;
+  
+#ifdef LITTLE_ENDIAN_VALUE                                             /* +---------------+         */
+  pointer = WriteByte(pointer, 1);                                      /* |  endianness   | 1 byte  */
+  pointer = WriteByte(pointer, CTL_CL_DRW);                             /* |     cbyte     | 1 byte  */
+  pointer = POSH_WriteU32ToLittle(pointer, DRW_INIT_STREAM_SIZE);       /* | stream size   | 4 bytes */
+  pointer = WriteByte(pointer, idfrom);                                 /* |    id from    | 1 byte  */
+  pointer = WriteByte(pointer, tool);                                   /* |    dcbyte     | 1 byte  */
+  pointer = WriteByte(pointer, dcbyte_ext);                             /* |  dcbyte ext   | 1 byte  */
+  pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleU32(dnum));       /* | drawingnumber | 4 bytes */
+  pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(w));    /* |     width     | 4 bytes */
+  pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(op));   /* |    opacity    | 4 bytes */
+  pointer = WriteByte(pointer, red);                                    /* |   color red   | 1 byte  */
+  pointer = WriteByte(pointer, green);                                  /* |   color green | 1 byte  */
+  pointer = WriteByte(pointer, blue);                                   /* |   color blue  | 1 byte  */
+  pointer = POSH_WriteU16ToLittle(pointer, x1);                         /* |    x point 1  | 2 bytes */
+  pointer = POSH_WriteU16ToLittle(pointer, y1);                         /* |    y point 1  | 2 bytes */
+  pointer = POSH_WriteU16ToLittle(pointer, x2);                         /* |    x point 2  | 2 bytes */
+  pointer = POSH_WriteU16ToLittle(pointer, y2);                         /* |    y point 2  | 2 bytes */  
+  pointer = WriteByte(pointer, lj);                                     /* |   line joins  | 1 byte  */
+  pointer = WriteByte(pointer, ec);                                     /* |   end caps    | 1 byte  */  
+  pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(ml));   /* |   miter limit | 4 bytes */
+  pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(dp));   /* |   dash phase  | 4 bytes */
+  pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(da[0]));/* |   dash array0 | 4 bytes */
+  pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(da[1]));/* |   dash array1 | 4 bytes */
+#else                                                                 /* +---------------+         */
+  /* total bytes = 50 bytes    */
+                                                                        
+  pointer = WriteByte(pointer, 1);
+  pointer = WriteByte(pointer, CTL_CL_DRW);
+  pointer = POSH_WriteU32ToBig(pointer, DRW_INIT_STREAM_SIZE);
+  pointer = WriteByte(pointer, idfrom);
+  pointer = WriteByte(pointer, tool);
+  pointer = WriteByte(pointer, dcbyte_ext);
+  pointer = POSH_WriteU32ToBig(pointer, POSH_BigU32(dnum));
+  pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(w));
+  pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(op));
+  pointer = WriteByte(pointer, red);
+  pointer = WriteByte(pointer, green);
+  pointer = WriteByte(pointer, blue);
+  pointer = POSH_WriteU16ToBig(pointer, x1);
+  pointer = POSH_WriteU16ToBig(pointer, y1);
+  pointer = POSH_WriteU16ToBig(pointer, x2);
+  pointer = POSH_WriteU16ToBig(pointer, y2);
+  pointer = WriteByte(pointer, lj);
+  pointer = WriteByte(pointer, ec);
+  pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(ml));
+  pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(dp));
+  pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(da[0]));
+  pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(da[1]));
+#endif
+  
+  tellapic_u32_t r = send(fd, rawstream, DRW_INIT_STREAM_SIZE, 0);
 
-  _setendian(rawstream);
-  _setcbyte(rawstream, CTL_CL_DRW);
-  _setdcbyte_ext(rawstream, dcbyte_ext);
-  _setssize(rawstream, DRW_INIT_STREAM_SIZE);
-  _setidfrom(rawstream, idfrom);
-  _setdcbyte(rawstream, tool);
-  _setdnum(rawstream, dnum);
-  _setwidth(rawstream, w);
-  _setopacity(rawstream, op);
-  _setred(rawstream, red);
-  _setgreen(rawstream, green);
-  _setblue(rawstream, blue);
-  _setx1(rawstream, x1);
-  _sety1(rawstream, y1);
-  _setx2(rawstream, x2);
-  _sety2(rawstream, y2);
-  _setjoins(rawstream, lj);
-  _setcaps(rawstream, ec);
-  _setml(rawstream, ml);
-  _setdp(rawstream, dp);
-  _setda(rawstream, da);
-
-  int r = send(fd, rawstream, DRW_INIT_STREAM_SIZE, 0);
-
-  //free(rawstream);
+  free(rawstream);
 
   return r;
 }
@@ -1815,37 +2078,65 @@ tellapic_send_drw_init(int fd, int tool, int dcbyte_ext, int idfrom, int dnum, f
 /**
  *
  */
-int
+POSH_PUBLIC_API(int)
 tellapic_send_fig(int fd, int tool, int dcbyte_ext, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int x2, int y2, int lj, int ec, float ml, float dp, float da[])
 {
-  //byte_t *rawstream = malloc(FIG_STREAM_SIZE);
-  byte_t rawstream[FIG_STREAM_SIZE];
+  byte_t *rawstream = malloc(FIG_STREAM_SIZE);
+  void   *pointer   = rawstream;
+  
+#ifdef LITTLE_ENDIAN_VALUE                                             /* +---------------+         */
+  pointer = WriteByte(pointer, 1);                                      /* |  endianness   | 1 byte  */
+  pointer = WriteByte(pointer, CTL_CL_FIG);                             /* |     cbyte     | 1 byte  */
+  pointer = POSH_WriteU32ToLittle(pointer, FIG_STREAM_SIZE);            /* | stream size   | 4 bytes */
+  pointer = WriteByte(pointer, idfrom);                                 /* |    id from    | 1 byte  */
+  pointer = WriteByte(pointer, tool);                                   /* |    dcbyte     | 1 byte  */
+  pointer = WriteByte(pointer, dcbyte_ext);                             /* |  dcbyte ext   | 1 byte  */
+  pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleU32(dnum));       /* | drawingnumber | 4 bytes */
+  pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(w));    /* |     width     | 4 bytes */
+  pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(op));   /* |    opacity    | 4 bytes */
+  pointer = WriteByte(pointer, red);                                    /* |   color red   | 1 byte  */
+  pointer = WriteByte(pointer, green);                                  /* |   color green | 1 byte  */
+  pointer = WriteByte(pointer, blue);                                   /* |   color blue  | 1 byte  */
+  pointer = POSH_WriteU16ToLittle(pointer, x1);                         /* |    x point 1  | 2 bytes */
+  pointer = POSH_WriteU16ToLittle(pointer, y1);                         /* |    y point 1  | 2 bytes */
+  pointer = POSH_WriteU16ToLittle(pointer, x2);                         /* |    x point 2  | 2 bytes */
+  pointer = POSH_WriteU16ToLittle(pointer, y2);                         /* |    y point 2  | 2 bytes */  
+  pointer = WriteByte(pointer, lj);                                     /* |   line joins  | 1 byte  */
+  pointer = WriteByte(pointer, ec);                                     /* |   end caps    | 1 byte  */  
+  pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(ml));   /* |   miter limit | 4 bytes */
+  pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(dp));   /* |   dash phase  | 4 bytes */
+  pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(da[0]));/* |   dash array0 | 4 bytes */
+  pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(da[1]));/* |   dash array1 | 4 bytes */
+#else                                                                 /* +---------------+         */
+  /* total bytes = 50 bytes    */
+                                                                        
+  pointer = WriteByte(pointer, 1);
+  pointer = WriteByte(pointer, CTL_CL_FIG);
+  pointer = POSH_WriteU32ToBig(pointer, FIG_STREAM_SIZE);
+  pointer = WriteByte(pointer, idfrom);
+  pointer = WriteByte(pointer, tool);
+  pointer = WriteByte(pointer, dcbyte_ext);
+  pointer = POSH_WriteU32ToBig(pointer, POSH_BigU32(dnum));
+  pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(w));
+  pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(op));
+  pointer = WriteByte(pointer, red);
+  pointer = WriteByte(pointer, green);
+  pointer = WriteByte(pointer, blue);
+  pointer = POSH_WriteU16ToBig(pointer, x1);
+  pointer = POSH_WriteU16ToBig(pointer, y1);
+  pointer = POSH_WriteU16ToBig(pointer, x2);
+  pointer = POSH_WriteU16ToBig(pointer, y2);
+  pointer = WriteByte(pointer, lj);
+  pointer = WriteByte(pointer, ec);
+  pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(ml));
+  pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(dp));
+  pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(da[0]));
+  pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(da[1]));
+#endif
 
-  _setendian(rawstream);
-  _setcbyte(rawstream, CTL_CL_FIG);
-  _setdcbyte_ext(rawstream, dcbyte_ext);
-  _setssize(rawstream, FIG_STREAM_SIZE);
-  _setidfrom(rawstream, idfrom);
-  _setdcbyte(rawstream, tool);
-  _setdnum(rawstream, dnum);
-  _setwidth(rawstream, w);
-  _setopacity(rawstream, op);
-  _setred(rawstream, red);
-  _setgreen(rawstream, green);
-  _setblue(rawstream, blue);
-  _setx1(rawstream, x1);
-  _sety1(rawstream, y1);
-  _setx2(rawstream, x2);
-  _sety2(rawstream, y2);
-  _setjoins(rawstream, lj);
-  _setcaps(rawstream, ec);
-  _setml(rawstream, ml);
-  _setdp(rawstream, dp);
-  _setda(rawstream, da);
+  tellapic_u32_t r = send(fd, rawstream, FIG_STREAM_SIZE, 0);
 
-  int r = send(fd, rawstream, FIG_STREAM_SIZE, 0);
-
-  //free(rawstream);
+  free(rawstream);
 
   return r;
 }
@@ -1854,24 +2145,33 @@ tellapic_send_fig(int fd, int tool, int dcbyte_ext, int idfrom, int dnum, float 
 /**
  *
  */
-int
+POSH_PUBLIC_API(int)
 tellapic_send_chatp(int fd, int idfrom, int idto, int textlen, char* text)
 {
-  int    ssize = HEADER_SIZE + textlen + 2;
-  //byte_t *rawstream = malloc(ssize);
-  byte_t rawstream[ssize];
+  tellapic_u32_t   ssize = HEADER_SIZE + textlen + 2;
+  byte_t *rawstream = malloc(ssize);
+  void   *pointer   = rawstream;
 
-  _setendian(rawstream);
-  _setcbyte(rawstream, CTL_CL_PMSG);
-  _setssize(rawstream, ssize);
-  _setidfrom(rawstream, idfrom);
-  _setidto(rawstream, idto);
+#ifdef LITTLE_ENDIAN_VALUE                                             /* +------------------+ */
+  pointer = WriteByte(pointer, 1);                                      /* |   endianness     | */
+  pointer = WriteByte(pointer, CTL_CL_PMSG);                            /* |     cbyte        | */
+  pointer = POSH_WriteU32ToLittle(pointer, ssize);                      /* |   stream size    | */
+  pointer = WriteByte(pointer, idfrom);                                 /* |     id from      | */
+  pointer = WriteByte(pointer, idto);                                   /* |     id to        | */
+  pointer = WriteBytes(pointer, text, textlen);                         /* |       text       | */
+                                                                        /* +------------------+ */
+#else
+  pointer = WriteByte(pointer, 1);
+  pointer = WriteByte(pointer, CTL_CL_PMSG);
+  pointer = POSH_WriteU32ToBig(pointer, ssize);
+  pointer = WriteByte(pointer, idfrom);
+  pointer = WriteByte(pointer, idto);
+  pointer = WriteBytes(pointer, text, textlen);
+#endif
 
-  memcpy(rawstream+HEADER_SIZE+DATA_PMSG_TEXT_INDEX, text, textlen);
+  tellapic_u32_t r = send(fd, rawstream, ssize, 0);
 
-  int r = send(fd, rawstream, ssize, 0);
-
-  //free(rawstream);
+  free(rawstream);
 
   return r;
 }
@@ -1880,23 +2180,31 @@ tellapic_send_chatp(int fd, int idfrom, int idto, int textlen, char* text)
 /**
  *
  */
-int
+POSH_PUBLIC_API(int)
 tellapic_send_chatb(int fd, int idfrom, int textlen, char* text)
 {
-  int    ssize = HEADER_SIZE + textlen + 1;
-  //byte_t *rawstream = malloc(ssize);
-  byte_t rawstream[ssize];
+  tellapic_u32_t   ssize = HEADER_SIZE + textlen + 1;
+  byte_t *rawstream = malloc(ssize);
+  void   *pointer   = rawstream;
 
-  _setendian(rawstream);
-  _setcbyte(rawstream, CTL_CL_BMSG);
-  _setssize(rawstream, ssize);
-  _setidfrom(rawstream, idfrom);
+#ifdef LITTLE_ENDIAN_VALUE                                             /* +------------------+ */
+  pointer = WriteByte(pointer, 1);                                      /* |   endianness     | */
+  pointer = WriteByte(pointer, CTL_CL_BMSG);                            /* |     cbyte        | */
+  pointer = POSH_WriteU32ToLittle(pointer, ssize);                      /* |   stream size    | */
+  pointer = WriteByte(pointer, idfrom);                                 /* |     id from      | */
+  pointer = WriteBytes(pointer, text, textlen);                         /* |       text       | */
+                                                                        /* +------------------+ */
+#else
+  pointer = WriteByte(pointer, 1);
+  pointer = WriteByte(pointer, CTL_CL_BMSG);
+  pointer = POSH_WriteU32ToBig(pointer, ssize);
+  pointer = WriteByte(pointer, idfrom);
+  pointer = WriteBytes(pointer, text, textlen);
+#endif
 
-  memcpy(rawstream+HEADER_SIZE+DATA_BMSG_TEXT_INDEX, text, textlen);
+  tellapic_u32_t r = send(fd, rawstream, ssize, 0);
 
-  int r = send(fd, rawstream, ssize, 0);
-
-  //free(rawstream);
+  free(rawstream);
 
   return r;
 }
@@ -1905,23 +2213,31 @@ tellapic_send_chatb(int fd, int idfrom, int textlen, char* text)
 /**
  *
  */
-int
+POSH_PUBLIC_API(int)
 tellapic_send_ctle(int fd, int idfrom, int ctle, int infolen, char *info)
 {
-  int    ssize = HEADER_SIZE + infolen + 1;
-  //byte_t *rawstream = malloc(ssize);
-  byte_t rawstream[ssize];
+  tellapic_u32_t    ssize = HEADER_SIZE + infolen + 1;
+  byte_t *rawstream = malloc(ssize);
+  void   *pointer = rawstream;
 
-  _setendian(rawstream);
-  _setcbyte(rawstream, ctle);
-  _setssize(rawstream, ssize);
-  _setidfrom(rawstream, idfrom);
-  
-  memcpy(rawstream + HEADER_SIZE + 1, info, infolen);  
+#ifdef LITTLE_ENDIAN_VALUE                                             /* +------------------+ */
+  pointer = WriteByte(pointer, 1);                                      /* |   endianness     | */
+  pointer = WriteByte(pointer, ctle);                                   /* |     cbyte        | */
+  pointer = POSH_WriteU32ToLittle(pointer, ssize);                      /* |   stream size    | */
+  pointer = WriteByte(pointer, idfrom);                                 /* |     id from      | */
+  pointer = WriteBytes(pointer, info, infolen);                         /* |       text       | */
+                                                                        /* +------------------+ */
+#else
+  pointer = WriteByte(pointer, 1);
+  pointer = WriteByte(pointer, CTL_CL_BMSG);
+  pointer = POSH_WriteU32ToBig(pointer, ssize);
+  pointer = WriteByte(pointer, idfrom);
+  pointer = WriteBytes(pointer, info, infolen);
+#endif
 
-  int r = send(fd, rawstream, ssize, 0);
+  tellapic_u32_t r = send(fd, rawstream, ssize, 0);
 
-  //free(rawstream);
+  free(rawstream);
 
   return r;
 }
@@ -1930,21 +2246,29 @@ tellapic_send_ctle(int fd, int idfrom, int ctle, int infolen, char *info)
 /**
  *
  */
-int
+POSH_PUBLIC_API(int)
 tellapic_send_ctl(int fd, int idfrom, int ctl)
 {
-  //byte_t *rawstream = malloc(CTL_STREAM_SIZE);
-  byte_t rawstream[CTL_STREAM_SIZE];
+  byte_t *rawstream = malloc(CTL_STREAM_SIZE);
+  void *pointer = rawstream;
+  //~ byte_t rawstream[CTL_STREAM_SIZE];
+#ifdef LITTLE_ENDIAN_VALUE                                             /* +------------------+ */
+  pointer = WriteByte(pointer, 1);                                      /* |   endianness     | */
+  pointer = WriteByte(pointer, ctl);                                    /* |     cbyte        | */
+  pointer = POSH_WriteU32ToLittle(pointer, CTL_STREAM_SIZE);            /* |   stream size    | */
+  pointer = WriteByte(pointer, idfrom);                                 /* |     id from      | */
+                                                                        /* +------------------+ */
+#else
+  pointer = WriteByte(pointer, 1);
+  pointer = WriteByte(pointer, CTL_CL_BMSG);
+  pointer = POSH_WriteU32ToBig(pointer, CTL_STREAM_SIZE);
+  pointer = WriteByte(pointer, idfrom);
+#endif
+  
 
-  _setendian(rawstream);
-  _setcbyte(rawstream, ctl);
-  _setssize(rawstream, CTL_STREAM_SIZE);
-  _setidfrom(rawstream, idfrom);
+  tellapic_u32_t r = send(fd, rawstream, CTL_STREAM_SIZE, 0);
 
-  int r = send(fd, rawstream, CTL_STREAM_SIZE, 0);
-  int i = 0;
-
-  //free(rawstream);
+  free(rawstream);
 
   return r;
 }
@@ -1953,7 +2277,7 @@ tellapic_send_ctl(int fd, int idfrom, int ctl)
 /**
  *
  */
-int
+POSH_PUBLIC_API(int)
 tellapic_connect_to(const char *hostname, int port) 
 {   
   int sd;
@@ -1962,7 +2286,7 @@ tellapic_connect_to(const char *hostname, int port)
   struct sockaddr_in addr;
 
   if ( (host = gethostbyname(hostname)) == NULL )
-      return -1;
+    return -1;
 
   sd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -1983,9 +2307,9 @@ tellapic_connect_to(const char *hostname, int port)
 
 
 /**
- *
+ * This should be deprecated
  */
-byte_t *
+POSH_PUBLIC_API(byte_t *)
 tellapic_build_rawstream(byte_t ctlbyte, ...)
 {
   /* The resulting stream */
@@ -2018,10 +2342,15 @@ tellapic_build_rawstream(byte_t ctlbyte, ...)
       {
 	int id       = va_arg(argp, int);
 	outstream    = malloc(CTL_STREAM_SIZE);
-	_setendian(outstream);
-	_setcbyte(outstream, ctlbyte);
-	_setssize(outstream, CTL_STREAM_SIZE);
-	_setidfrom(outstream, id);
+	void *pointer = outstream;
+	pointer = WriteByte(pointer, 1);
+	pointer = WriteByte(pointer, ctlbyte);
+#ifdef POSH_LITTLE_ENDIAN
+	pointer = POSH_WriteU32ToLittle(pointer, CTL_STREAM_SIZE);
+#else
+	pointer = POSH_WriteU32ToBig(pointer, CTL_STREAM_SIZE);
+#endif
+	pointer = WriteByte(pointer, id);
       }
       break;
 
@@ -2037,12 +2366,16 @@ tellapic_build_rawstream(byte_t ctlbyte, ...)
 	if (nbytes > HEADER_SIZE && nbytes <= MAX_FILE_SIZE)
 	  {
 	    outstream = malloc(nbytes);
-	    _setendian(outstream);
-	    _setcbyte(outstream, ctlbyte);
-	    _setssize(outstream, nbytes);
-	    
+	    void *pointer = outstream;
+	    pointer = WriteByte(pointer, 1);
+	    pointer = WriteByte(pointer, ctlbyte);
+#ifdef POSH_LITTLE_ENDIAN
+	    pointer = POSH_WriteU32ToLittle(pointer, nbytes);
+#else
+	    pointer = POSH_WriteU32ToBig(pointer, nbytes);
+#endif
 	    rewind(file);
-	    fread(outstream + HEADER_SIZE, sizeof(byte_t), nbytes - HEADER_SIZE, file);
+	    fread(pointer, sizeof(byte_t), nbytes - HEADER_SIZE, file);
 	    rewind(file);
 	  }
       }
@@ -2061,13 +2394,16 @@ tellapic_build_rawstream(byte_t ctlbyte, ...)
 	if (infolen > 0 && infolen + HEADER_SIZE <= MAX_CTLEXT_STREAM_SIZE)
 	  {
 	    outstream = malloc(infolen + HEADER_SIZE + 1);
-	    _setendian(outstream);
-	    _setcbyte(outstream, ctlbyte);
-	    _setssize(outstream, infolen + HEADER_SIZE + 1);
-	    _setidfrom(outstream, id);
-	
-	    memcpy(outstream + HEADER_SIZE + 1, info, infolen);
-
+	    void *pointer = outstream;
+	    pointer = WriteByte(pointer, 1);
+	    pointer = WriteByte(pointer, ctlbyte);
+#ifdef POSH_LITTLE_ENDIAN
+	    pointer = POSH_WriteU32ToLittle(pointer, infolen + HEADER_SIZE + 1);
+#else
+	    pointer = POSH_WriteU32ToBig(pointer, infolen + HEADER_SIZE + 1);
+#endif
+	    pointer = WriteByte(pointer, id);
+	    memcpy(pointer, info, infolen);
 	  }
 
       }
@@ -2086,7 +2422,7 @@ tellapic_build_rawstream(byte_t ctlbyte, ...)
 /**
  *
  */
-stream_t 
+POSH_PUBLIC_API(stream_t)
 tellapic_build_ctle(int ctl, int idfrom, int infosize, char *info) 
 {
   stream_t stream;
@@ -2121,12 +2457,12 @@ tellapic_build_ctle(int ctl, int idfrom, int infosize, char *info)
 /**
  *
  */
-stream_t
+POSH_PUBLIC_API(stream_t)
 tellapic_build_ctl(int ctl, int idfrom) 
 {
   stream_t stream;
 
- //TODO: add ctl checks
+  //TODO: add ctl checks
 
   stream.header.endian = 0;
   stream.header.cbyte  = ctl;
@@ -2140,7 +2476,7 @@ tellapic_build_ctl(int ctl, int idfrom)
 /**
  *
  */
-stream_t 
+POSH_PUBLIC_API(stream_t)
 tellapic_build_chat(int cbyte, int idfrom, int idto, int textsize, char *text) //TODO: something is wrong HERE!
 {
   stream_t stream;
@@ -2192,148 +2528,133 @@ tellapic_build_chat(int cbyte, int idfrom, int idto, int textsize, char *text) /
 /**
  *
  */
-void
+POSH_PUBLIC_API(void)
 tellapic_free(stream_t *stream)
 {
-
   /* The only allocated memmory from a stream_t structure is this: */
   free(stream->data.file);
-
 }
 
 
 /**
  *
  */
-int
-tellapic_istimeout(header_t header)
+POSH_PUBLIC_API(int)
+tellapic_istimeout(header_t *header)
 {
-  return header.cbyte == CTL_CL_TIMEOUT;
+  return header->cbyte == CTL_CL_TIMEOUT;
 }
 
 
 /**
  *
  */
-int
-tellapic_isping(header_t header)
+POSH_PUBLIC_API(int)
+tellapic_isping(header_t *header)
 {
-  return header.cbyte == CTL_CL_PING;
+  return header->cbyte == CTL_CL_PING;
 }
 
 
 /**
  *
  */
-int
-tellapic_ispong(header_t header)
+POSH_PUBLIC_API(int)
+tellapic_ispong(header_t *header)
 {
-  return header.cbyte == CTL_SV_PONG;
+  return header->cbyte == CTL_SV_PONG;
 }
 
 
 /**
  * Returns a non-zero value if 'stream' is a broadcast message.
  */
-int
-tellapic_ischatb(header_t header) 
+POSH_PUBLIC_API(int)
+tellapic_ischatb(header_t *header) 
 {
-
-  return (header.cbyte == CTL_CL_BMSG && header.ssize <= MAX_BMSG_STREAM_SIZE   && header.ssize >= MIN_BMSG_STREAM_SIZE);
-
+  return (header->cbyte == CTL_CL_BMSG && header->ssize <= MAX_BMSG_STREAM_SIZE   && header->ssize >= MIN_BMSG_STREAM_SIZE);
 }
 
 
 /**
  * Returns a non-zero value if 'stream' is a private message.
  */
-int
-tellapic_ischatp(header_t header) 
+POSH_PUBLIC_API(int)
+tellapic_ischatp(header_t *header) 
 {
-
-  return (header.cbyte == CTL_CL_PMSG && header.ssize <= MAX_PMSG_STREAM_SIZE   && header.ssize >= MIN_PMSG_STREAM_SIZE);
-
+  return (header->cbyte == CTL_CL_PMSG && header->ssize <= MAX_PMSG_STREAM_SIZE   && header->ssize >= MIN_PMSG_STREAM_SIZE);
 }
 
 
 /**
  * Returns a non-zero value if 'stream' is a control stream.
  */
-int 
-tellapic_isctl(header_t header)
+POSH_PUBLIC_API(int)
+tellapic_isctl(header_t *header)
 {
-
-  return ((header.cbyte == CTL_CL_FILEASK ||
-	   header.cbyte == CTL_CL_FILEOK  ||
-	   header.cbyte == CTL_SV_PWDFAIL ||
-	   header.cbyte == CTL_SV_PWDOK   ||
-	   header.cbyte == CTL_CL_CLIST   ||
-	   header.cbyte == CTL_CL_DISC    ||
-	   header.cbyte == CTL_SV_CLRM    ||
-	   header.cbyte == CTL_SV_ID      ||
-	   header.cbyte == CTL_SV_AUTHOK  ||
-	   header.cbyte == CTL_SV_NAMEINUSE) && header.ssize == CTL_STREAM_SIZE);
-
+  return ((header->cbyte == CTL_CL_FILEASK ||
+	   header->cbyte == CTL_CL_FILEOK  ||
+	   header->cbyte == CTL_SV_PWDFAIL ||
+	   header->cbyte == CTL_SV_PWDOK   ||
+	   header->cbyte == CTL_CL_CLIST   ||
+	   header->cbyte == CTL_CL_DISC    ||
+	   header->cbyte == CTL_SV_CLRM    ||
+	   header->cbyte == CTL_SV_ID      ||
+	   header->cbyte == CTL_SV_AUTHOK  ||
+	   header->cbyte == CTL_SV_NAMEINUSE) && header->ssize == CTL_STREAM_SIZE);
 }
 
 
 /**
  * Returns a non-zero value if 'stream' is an extended control stream.
  */
-int 
-tellapic_isctle(header_t header) 
+POSH_PUBLIC_API(int)
+tellapic_isctle(header_t *header) 
 {
-
-  return ((header.cbyte == CTL_CL_PWD   ||
-	   header.cbyte == CTL_CL_NAME  ||
-	   header.cbyte == CTL_SV_CLADD) && header.ssize <= MAX_CTLEXT_STREAM_SIZE && header.ssize >= MIN_CTLEXT_STREAM_SIZE) ;
-
+  return ((header->cbyte == CTL_CL_PWD   ||
+	   header->cbyte == CTL_CL_NAME  ||
+	   header->cbyte == CTL_SV_CLADD) && header->ssize <= MAX_CTLEXT_STREAM_SIZE && header->ssize >= MIN_CTLEXT_STREAM_SIZE) ;
 }
 
 
 /**
  *
  */
-int
-tellapic_isfile(header_t header)
+POSH_PUBLIC_API(int)
+tellapic_isfile(header_t *header)
 {
-
-  return (header.cbyte == CTL_SV_FILE && header.ssize <= MAX_STREAM_SIZE && header.ssize >= MIN_CTLEXT_STREAM_SIZE);
-
+  return (header->cbyte == CTL_SV_FILE && header->ssize <= MAX_STREAM_SIZE && header->ssize >= MIN_CTLEXT_STREAM_SIZE);
 }
 
 
 /**
  * Returns a non-zero value if 'stream' is a drawing packet.
  */
-int 
-tellapic_isdrw(header_t header) 
+POSH_PUBLIC_API(int)
+tellapic_isdrw(header_t *header) 
 {
-
-  return (header.cbyte == CTL_CL_DRW  && (header.ssize == DRW_INIT_STREAM_SIZE || header.ssize == DRW_USING_STREAM_SIZE));
-
+  return (header->cbyte == CTL_CL_DRW  && (header->ssize == DRW_INIT_STREAM_SIZE || header->ssize == DRW_USING_STREAM_SIZE));
 }
 
 
 /**
  * Returns a non-zero value if 'stream' is a text drawn figure.
  */
-int 
-tellapic_isfigtxt(stream_t stream) 
+POSH_PUBLIC_API(int)
+tellapic_isfigtxt(stream_t *stream) 
 {
-
-  return (stream.header.cbyte == CTL_CL_FIG &&  (stream.data.drawing.dcbyte & TOOL_MASK) == TOOL_TEXT && stream.header.ssize <= MAX_FIGTXT_STREAM_SIZE && stream.header.ssize >= MIN_FIGTXT_STREAM_SIZE);
-
+  return (stream->header.cbyte == CTL_CL_FIG && 
+	  (stream->data.drawing.dcbyte & TOOL_MASK) == TOOL_TEXT &&
+	  stream->header.ssize <= MAX_FIGTXT_STREAM_SIZE &&
+	  stream->header.ssize >= MIN_FIGTXT_STREAM_SIZE);
 }
 
 
 /**
  * Returns a non-zero value if 'stream' is a drawn figure.
  */
-int 
-tellapic_isfig(header_t header) 
+POSH_PUBLIC_API(int)
+tellapic_isfig(header_t *header) 
 {
-
-  return (header.cbyte == CTL_CL_FIG && header.ssize <= MAX_FIGTXT_STREAM_SIZE && header.ssize >= MIN_FIGTXT_STREAM_SIZE);
-
+  return (header->cbyte == CTL_CL_FIG && header->ssize <= MAX_FIGTXT_STREAM_SIZE && header->ssize >= MIN_FIGTXT_STREAM_SIZE);
 }

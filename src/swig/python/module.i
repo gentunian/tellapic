@@ -1,6 +1,7 @@
 %include "../tellapic.i"
 
-%include "tellapic.h"
-%include "types.h"
-%include "constants.h"
+%include "posh/posh.h"
+%include "tellapic/tellapic.h"
+%include "tellapic/types.h"
+%include "tellapic/constants.h"
 

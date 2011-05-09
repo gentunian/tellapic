@@ -22,6 +22,7 @@ import java.net.URL;
 import java.util.Observable;
 import java.util.Observer;
 
+import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.GroupLayout;
 import javax.swing.Icon;
@@ -40,8 +41,11 @@ import javax.swing.JToggleButton;
 import javax.swing.ListCellRenderer;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
+import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
+import javax.swing.border.SoftBevelBorder;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.event.ChangeEvent;
@@ -397,9 +401,20 @@ public class PaintPropertyView extends JPanel implements Observer {
 		colorLabel.setIcon(new ImageIcon(Utils.createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, "/icons/tools/color1.png")));
 		colorLabel.setLabelFor(colorField);
 		colorLabel.setFont(defaultTitleFont);
+		colorLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		colorLabel.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				Color c = JColorChooser.showDialog(PaintPropertyView.this, "Pick a Color", colorField.getBackground()); 
+				if (c != null) {
+					controller.handleColorChange(c);
+					colorField.setBackground(c);
+				}
+			}
+		});
 		colorField.setPreferredSize(new Dimension(Tool.ICON_SIZE + GAP, Tool.ICON_SIZE + GAP));
 		colorField.setOpaque(true);
-		colorField.setBorder(javax.swing.BorderFactory.createCompoundBorder(new javax.swing.border.LineBorder(new java.awt.Color(209, 209, 209), 1, true), new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.LOWERED)));
+		colorField.setBorder(BorderFactory.createCompoundBorder(new LineBorder(new Color(209, 209, 209), 1, true), new SoftBevelBorder(BevelBorder.LOWERED)));
 		colorField.setBackground(DEFAULT_COLOR);
 		colorField.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		colorField.setToolTipText(Utils.msg.getString("colorfieldtooltip"));
@@ -494,35 +509,35 @@ public class PaintPropertyView extends JPanel implements Observer {
 		jSeparator7 = new JSeparator();
 		jSeparator8 = new JSeparator();
 		
-		jSeparator1.setOrientation(javax.swing.SwingConstants.VERTICAL);
+		jSeparator1.setOrientation(SwingConstants.VERTICAL);
 		jSeparator1.setMaximumSize(separatorDimension);
 		jSeparator1.setMinimumSize(separatorDimension);
 		jSeparator1.setPreferredSize(separatorDimension);
-		jSeparator2.setOrientation(javax.swing.SwingConstants.VERTICAL);
+		jSeparator2.setOrientation(SwingConstants.VERTICAL);
 		jSeparator2.setMaximumSize(separatorDimension);
 		jSeparator2.setMinimumSize(separatorDimension);
 		jSeparator2.setPreferredSize(separatorDimension);
-		jSeparator3.setOrientation(javax.swing.SwingConstants.VERTICAL);
+		jSeparator3.setOrientation(SwingConstants.VERTICAL);
 		jSeparator3.setMaximumSize(separatorDimension);
 		jSeparator3.setMinimumSize(separatorDimension);
 		jSeparator3.setPreferredSize(separatorDimension);
-		jSeparator4.setOrientation(javax.swing.SwingConstants.VERTICAL);
+		jSeparator4.setOrientation(SwingConstants.VERTICAL);
 		jSeparator4.setMaximumSize(separatorDimension);
 		jSeparator4.setMinimumSize(separatorDimension);
 		jSeparator4.setPreferredSize(separatorDimension);
-		jSeparator5.setOrientation(javax.swing.SwingConstants.VERTICAL);
+		jSeparator5.setOrientation(SwingConstants.VERTICAL);
 		jSeparator5.setMaximumSize(separatorDimension);
 		jSeparator5.setMinimumSize(separatorDimension);
 		jSeparator5.setPreferredSize(separatorDimension);
-		jSeparator6.setOrientation(javax.swing.SwingConstants.VERTICAL);
+		jSeparator6.setOrientation(SwingConstants.VERTICAL);
 		jSeparator6.setMaximumSize(separatorDimension);
 		jSeparator6.setMinimumSize(separatorDimension);
 		jSeparator6.setPreferredSize(separatorDimension);
-		jSeparator7.setOrientation(javax.swing.SwingConstants.VERTICAL);
+		jSeparator7.setOrientation(SwingConstants.VERTICAL);
 		jSeparator7.setMaximumSize(separatorDimension);
 		jSeparator7.setMinimumSize(separatorDimension);
 		jSeparator7.setPreferredSize(separatorDimension);
-		jSeparator8.setOrientation(javax.swing.SwingConstants.VERTICAL);
+		jSeparator8.setOrientation(SwingConstants.VERTICAL);
 		jSeparator8.setMaximumSize(separatorDimension);
 		jSeparator8.setMinimumSize(separatorDimension);
 		jSeparator8.setPreferredSize(separatorDimension);
@@ -900,8 +915,8 @@ public class PaintPropertyView extends JPanel implements Observer {
 				
 			
 			this.descriptions = descriptions;
-//			setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.LOWERED, null, null, java.awt.Color.darkGray, java.awt.Color.lightGray));
-			//setBorder(javax.swing.BorderFactory.createCompoundBorder(new javax.swing.border.LineBorder(new java.awt.Color(209, 209, 209), 1, true), new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.LOWERED)));
+//			setBorder(new border.SoftBevelBorder(border.BevelBorder.LOWERED, null, null, Color.darkGray, Color.lightGray));
+			//setBorder(BorderFactory.createCompoundBorder(new border.LineBorder(new Color(209, 209, 209), 1, true), new border.SoftBevelBorder(border.BevelBorder.LOWERED)));
 			setBorder(new EmptyBorder(ICON_GAP, 0, ICON_GAP, 0));
 			//setBorder(b);
 		}
@@ -943,7 +958,7 @@ public class PaintPropertyView extends JPanel implements Observer {
 	 */
 	private class MyActionListener implements ActionListener {
 		/* (non-Javadoc)
-		 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+		 * @see event.ActionListener#actionPerformed(event.ActionEvent)
 		 */
 		@Override
 		public void actionPerformed(ActionEvent arg0) {

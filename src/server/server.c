@@ -35,10 +35,11 @@
 #endif
 
 #include "server.h"
-#include "types.h"
-#include "constants.h"
+#include "tellapic/types.h"
+#include "tellapic/constants.h"
+#include "tellapic/tellapic.h"
 #include "common.h"
-#include "tellapic.h"
+
 
 
 //TODO: Portability.
@@ -73,7 +74,6 @@ int main(int argc, char *argv[]) {
   tdata_t            thread_data[MAX_CLIENTS];                            /* this is the main shared data */
   fd_set             readset;
   fd_set             copyset;
-
 
   sig_action.sa_handler = signal_handler;
   sigemptyset(&sig_action.sa_mask);

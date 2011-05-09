@@ -87,8 +87,9 @@
 
 /* for text */
 #define DDATA_FONTSTYLE_INDEX      22
-#define DDATA_FONTLEN_INDEX        23
-#define DDATA_FONTFACE_INDEX       24
+#define DDATA_FONTFACELEN_INDEX    23
+#define DDATA_FONTNAMELEN_INDEX    24
+#define DDATA_FONTFACE_INDEX       25
 #define DDATA_TEXT_INDEX(fontface_len)		\
   (DDATA_FONTFACE_INDEX + fontface_len)
 
@@ -184,6 +185,8 @@
 #define EVENT_SHIFT_DOWN 0x2
 #define EVENT_ALT_DOWN   0x3
 #define EVENT_NULL       0x0
+
+
 /* 
  * An event example:
  *                                 tool       event   button
