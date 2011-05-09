@@ -27,6 +27,9 @@
 #include "tellapic/tellapic.h"
 
 
+POSH_PUBLIC_API(size_t)
+_read_b(tellapic_socket_t socket, size_t totalbytes, byte_t *buf);
+
 /**
  *
  * _copy_* functions will copy data from a structure to a memory portion, 
@@ -1245,11 +1248,11 @@ tellapic_read_stream_b(tellapic_socket_t socket)
  * header, and the header size corresponds with HEADER_SIZE.
  */
 POSH_PUBLIC_API(stream_t)
-tellapic_read_data_b(int fd, header_t header) 
+tellapic_read_data_b(tellapic_socket_t socket, header_t header) 
 {
   tellapic_u32_t datasize = _get_header_ssize(&header) - HEADER_SIZE;
   byte_t         *data    = malloc(datasize);
-  tellapic_u32_t nbytes   = _read_b(fd, datasize, data);
+  tellapic_u32_t nbytes   = _read_b(socket, datasize, data);
   stream_t       stream;
   
   /* This is important. It tells us that what header.ssize says is what we really read and     */
@@ -1332,18 +1335,18 @@ tellapic_read_data_b(int fd, header_t header)
  *
  */
 POSH_PUBLIC_API(stream_t)
-tellapic_read_stream_nb(int fd) 
+tellapic_read_stream_nb(tellapic_socket_t socket) 
 {
   stream_t stream;
 
-  stream.header = tellapic_read_header_nb(fd);
+  stream.header = tellapic_read_header_nb(socket);
    
   if ( stream.header.cbyte != CTL_FAIL     && 
        stream.header.cbyte != CTL_NOPIPE   &&
        stream.header.cbyte != CTL_NOSTREAM &&
        stream.header.cbyte != CTL_CL_TIMEOUT )
 
-    stream = tellapic_read_data_nb(fd, stream.header);
+    stream = tellapic_read_data_nb(socket, stream.header);
   
   return stream;
 }
@@ -1353,11 +1356,11 @@ tellapic_read_stream_nb(int fd)
  *
  */
 POSH_PUBLIC_API(header_t)
-tellapic_read_header_nb(int fd) 
+tellapic_read_header_nb(tellapic_socket_t socket) 
 {
 
   byte_t        *data  = malloc(HEADER_SIZE);
-  tellapic_u16_t nbytes = _read_nb(fd, HEADER_SIZE, data);
+  tellapic_u16_t nbytes = _read_nb(socket, HEADER_SIZE, data);
   header_t       header;
 
   if (nbytes == HEADER_SIZE)
@@ -1396,11 +1399,11 @@ tellapic_read_header_nb(int fd)
  *
  */
 POSH_PUBLIC_API(stream_t)
-tellapic_read_data_nb(int fd, header_t header) 
+tellapic_read_data_nb(tellapic_socket_t socket, header_t header) 
 {
   tellapic_u32_t datasize = _get_header_ssize(&header) - HEADER_SIZE;
   byte_t         *data    = malloc(datasize);
-  tellapic_u32_t nbytes   = _read_nb(fd, datasize, data);
+  tellapic_u32_t nbytes   = _read_nb(socket, datasize, data);
   stream_t       stream;
 
 
@@ -1540,12 +1543,12 @@ _stream_header_ok(byte_t *header)
  * Useful for forwarding. data must be freed somewhere though.
  */
 POSH_PUBLIC_API(byte_t *)
-tellapic_rawread_b(int fd)
+tellapic_rawread_b(tellapic_socket_t socket)
 {
   
   byte_t        *header= malloc(HEADER_SIZE);
   byte_t        *data  = NULL;
-  tellapic_u32_t  nbytes = _read_b(fd, HEADER_SIZE, header);
+  tellapic_u32_t  nbytes = _read_b(socket, HEADER_SIZE, header);
 
   if (nbytes == HEADER_SIZE)
     {
@@ -1557,35 +1560,35 @@ tellapic_rawread_b(int fd)
 	  data = malloc(ssize);
 	  memcpy(data, header, HEADER_SIZE);
 
-	  nbytes = _read_b(fd, rbytes, data + HEADER_SIZE);
+	  nbytes = _read_b(socket, rbytes, data + HEADER_SIZE);
 
 	  /* Check for errors. If someone is found, free the current data structure */
 	  /* build a new data structure to inform such error, and return data.      */
 	  if (nbytes == 0)
 	    {
 	      free(data);
-	      data = tellapic_build_rawstream(CTL_NOPIPE, fd);
+	      data = tellapic_build_rawstream(CTL_NOPIPE, socket);
 	    }
 	  else if (nbytes < 0)
 	    {
 	      free(data);
-	      data = tellapic_build_rawstream(CTL_FAIL, fd);
+	      data = tellapic_build_rawstream(CTL_FAIL, socket);
 	    }
 	  else if (nbytes > 0 && nbytes != rbytes)
 	    {
 	      free(data);
-	      data = tellapic_build_rawstream(CTL_NOSTREAM, fd);
+	      data = tellapic_build_rawstream(CTL_NOSTREAM, socket);
 	    }
 	}
     }
   else if (nbytes == 0)
-    data = tellapic_build_rawstream(CTL_NOPIPE, fd);
+    data = tellapic_build_rawstream(CTL_NOPIPE, socket);
 
   else if (nbytes > 0)
-    data = tellapic_build_rawstream(CTL_NOSTREAM, fd);
+    data = tellapic_build_rawstream(CTL_NOSTREAM, socket);
 
   else
-    data = tellapic_build_rawstream(CTL_FAIL, fd);
+    data = tellapic_build_rawstream(CTL_FAIL, socket);
   
   
   free(header);
@@ -1598,11 +1601,11 @@ tellapic_rawread_b(int fd)
  * pwd could and should be NULL.
  */
 POSH_PUBLIC_API(char *)
-tellapic_read_pwd(int fd, char *pwd, int *len)
+tellapic_read_pwd(tellapic_socket_t socket, char *pwd, int *len)
 {
   byte_t     *header  = malloc(HEADER_SIZE);
   int        timeout = 0;
-  tellapic_u32_t nbytes   = _read_b(fd, HEADER_SIZE, header);
+  tellapic_u32_t nbytes   = _read_b(socket, HEADER_SIZE, header);
   stream_t   stream;  /* This is used only as a placeholder. Avoid it for future release, use instead local variables*/
 
   *len = 0;
@@ -1619,7 +1622,7 @@ tellapic_read_pwd(int fd, char *pwd, int *len)
 	{
 	  byte_t *data = malloc(stream.header.ssize - HEADER_SIZE);
 	  int    error = 0;
-	  nbytes = _read_b(fd, stream.header.ssize - HEADER_SIZE, data);
+	  nbytes = _read_b(socket, stream.header.ssize - HEADER_SIZE, data);
 
 	  if (nbytes == stream.header.ssize - HEADER_SIZE)
 	    {
@@ -1644,9 +1647,9 @@ tellapic_read_pwd(int fd, char *pwd, int *len)
  *
  */
 POSH_PUBLIC_API(void)
-tellapic_close_fd(int fd) 
+tellapic_close_fd(tellapic_socket_t socket) 
 {
-  close(fd);
+  close(socket);
 }
 
 
@@ -1654,11 +1657,11 @@ tellapic_close_fd(int fd)
  *
  */
 POSH_PUBLIC_API(tellapic_u32_t)
-tellapic_rawsend(int fd, byte_t *rawstream)
+tellapic_rawsend(tellapic_socket_t socket, byte_t *rawstream)
 {
   tellapic_u32_t ssize = _read_stream_size(rawstream);
 
-  tellapic_u32_t r = send(fd, rawstream, ssize, 0);
+  tellapic_u32_t r = send(socket, rawstream, ssize, 0);
   
   return r;
 }
@@ -1800,6 +1803,7 @@ tellapic_send_struct(tellapic_socket_t socket, stream_t *stream)
 			     );
 	}
     }
+    return 0;
 }
 
 

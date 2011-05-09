@@ -1,6 +1,6 @@
 #
 # Project Name
-#
+# 
 project(tellapic)
 
 # Minimum CMake version supported
@@ -24,7 +24,6 @@ find_package(pthread REQUIRED)
 # We should know the endianness of this machine
 include(TestBigEndian)
 
-
 # Dont build in.source. Enrique's idea.
 include(MacroOutOfSourceBuild)
 
@@ -33,27 +32,30 @@ macro_ensure_out_of_source_build("${PROJECT_NAME}")
 
 set(LIBRARIES pthread)
 
-#Sets the root build directory.
-#set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/build) 
-
-# Sets the python bindings output path for the generated swig library.
-#set(LIBRARY_OUTPUT_PATH ${EXECUTABLE_OUTPUT_PATH}/lib) 
-
-# Sets the root source directory
+# Sets the root source directory and include path
 set(SRCDIR ${PROJECT_SOURCE_DIR}/src)
-
-# Sets the root include directory
 set(INCDIR ${PROJECT_SOURCE_DIR}/include)
 set(INCDIR ${INCDIR} ${PROJECT_SOURCE_DIR}/include/posh)
+set(TELLAPIC_COMMON ${SRCDIR}/lib/tellapic_common.c)
+set(POSH_FILE ${SRCDIR}/posh/posh.c)
+
+if (DEFINED UNIX)
+	set(TELLAPIC_FILE ${SRCDIR}/lib/linux/tellapic.c)
+elseif(DEFINED WIN32)
+	set(TELLAPIC_FILE ${SRCDIR}/lib/win32/tellapic.c)
+else()
+  message("No target OS defined!!")
+  # how to abort???
+endif()
+
 include_directories(${INCDIR})
 
-add_library(posh SHARED ${tellapic_SOURCE_DIR}/src/posh/posh)
+#add_library(posh STATIC ${tellapic_SOURCE_DIR}/src/posh/posh)
 
 # is big endian?
 test_big_endian(BIG_ENDIAN_VALUE)
 if (NOT BIG_ENDIAN_VALUE)
   set(CMAKE_C_FLAGS "-DLITTLE_ENDIAN_VALUE=1")
 endif()
-
 
 add_subdirectory(src)
