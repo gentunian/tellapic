@@ -41,43 +41,43 @@ tellapic_build_rawstream(byte_t ctlbyte, ...);
  *
  */
 POSH_PUBLIC_API(byte_t *)
-tellapic_rawread_b(int fd);
+tellapic_rawread_b(tellapic_socket_t socket);
 
 /**
  *
  */
 POSH_PUBLIC_API(char *)
-tellapic_read_pwd(int fd, char *, int *len);
+tellapic_read_pwd(tellapic_socket_t socket, char *, int *len);
 
 /**
  *
  */
 POSH_PUBLIC_API(stream_t)
-tellapic_read_data_b(int fd, header_t header);
+tellapic_read_data_b(tellapic_socket_t socket, header_t header);
 
 /**
  *
  */
 POSH_PUBLIC_API(byte_t *)
-tellapic_read_bytes_b(int fd, size_t chunk);
+tellapic_read_bytes_b(tellapic_socket_t socket, size_t chunk);
 
 /**
  *
  */
 POSH_PUBLIC_API(header_t)
-tellapic_read_header_b(int fd);
+tellapic_read_header_b(tellapic_socket_t socket);
 
 /**
  *
  */
 POSH_PUBLIC_API(stream_t)
-tellapic_read_data_nb(int fd, header_t header);
+tellapic_read_data_nb(tellapic_socket_t socket, header_t header);
 
 /**
  *
  */
 POSH_PUBLIC_API(header_t)
-tellapic_read_header_nb(int fd);
+tellapic_read_header_nb(tellapic_socket_t socket);
 
 /**
  *
@@ -95,75 +95,75 @@ tellapic_connect_to(const char *hostname, int port);
  *
  */
 POSH_PUBLIC_API(void)
-tellapic_close_fd(int fd);
+tellapic_close_fd(tellapic_socket_t socket);
 
 /**
  *
  */
 POSH_PUBLIC_API(stream_t)
-tellapic_read_stream_b(int fd);
+tellapic_read_stream_b(tellapic_socket_t socket);
 
 /**
  *
  */
 POSH_PUBLIC_API(stream_t)
-tellapic_read_stream_nb(int fd);
+tellapic_read_stream_nb(tellapic_socket_t socket);
 
 /**
  *
  */
 POSH_PUBLIC_API(int)
-tellapic_send_text(int fd, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int style, int facelen, char *face, int textlen, char *text);
+tellapic_send_text(tellapic_socket_t socket, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int style, int facelen, unsigned char *face, int textlen, unsigned char *text);
 
 /**
  *
  */
 POSH_PUBLIC_API(int)
-tellapic_send_fig(int fd, int tool, int dcbyte_ext, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int x2, int y2, int lj, int ec, float ml, float dp, float da[]);
-
-
-/**
- *
- */
-POSH_PUBLIC_API(int)
-tellapic_send_drw_using(int fd, int tool, int dcbyte_ext, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1);
+tellapic_send_fig(tellapic_socket_t socket, int tool, int dcbyte_ext, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int x2, int y2, int lj, int ec, float ml, float dp, float da[]);
 
 
 /**
  *
  */
 POSH_PUBLIC_API(int)
-tellapic_send_drw_init(int fd, int tool, int dcbyte_ext, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int x2, int y2, int lj, int ec, float ml, float dp, float da[]);
+tellapic_send_drw_using(tellapic_socket_t socket, int tool, int dcbyte_ext, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1);
+
 
 /**
  *
  */
 POSH_PUBLIC_API(int)
-tellapic_send_chatp(int fd, int idfrom, int idto, int textlen, char* text);
+tellapic_send_drw_init(tellapic_socket_t socket, int tool, int dcbyte_ext, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int x2, int y2, int lj, int ec, float ml, float dp, float da[]);
 
 /**
  *
  */
 POSH_PUBLIC_API(int)
-tellapic_send_chatb(int fd, int idfrom, int textlen, char* text);
+tellapic_send_chatp(tellapic_socket_t socket, int idfrom, int idto, int textlen, unsigned char* text);
 
 /**
  *
  */
 POSH_PUBLIC_API(int)
-tellapic_send_ctle(int fd, int idfrom, int ctle, int infolen, char *info);
+tellapic_send_chatb(tellapic_socket_t socket, int idfrom, int textlen, unsigned char* text);
 
 /**
  *
  */
 POSH_PUBLIC_API(int)
-tellapic_send_ctl(int fd, int idfrom, int ctl);
+tellapic_send_ctle(tellapic_socket_t socket, int idfrom, int ctle, int infolen, unsigned char *info);
+
+/**
+ *
+ */
+POSH_PUBLIC_API(int)
+tellapic_send_ctl(tellapic_socket_t socket, int idfrom, int ctl);
 
 /**
  *
  */
 POSH_PUBLIC_API(stream_t)
-tellapic_build_ctle(int ctl, int idfrom, int infosize, char *info);
+tellapic_build_ctle(int ctl, int idfrom, int infosize, unsigned char *info);
 
 /**
  *
@@ -175,7 +175,7 @@ tellapic_build_ctl(int ctl, int idfrom);
  *
  */
 POSH_PUBLIC_API(stream_t)
-tellapic_build_chat(int cbyte, int idfrom, int idto, int textsize, char *text);
+tellapic_build_chat(int cbyte, int idfrom, int idto, int textsize, unsigned char *text);
 
 /**
  *
