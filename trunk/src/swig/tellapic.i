@@ -2,9 +2,9 @@
 
 %{
   
-#include "types.h"
-#include "constants.h"
-#include "tellapic.h"
+#include "tellapic/types.h"
+#include "tellapic/constants.h"
+#include "tellapic/tellapic.h"
 
   %}
 

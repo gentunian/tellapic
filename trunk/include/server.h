@@ -16,7 +16,7 @@
 
 //#include "common.h"
 #include "list.h"
-#include "types.h"
+#include "tellapic/types.h"
 
 
 /***************************/

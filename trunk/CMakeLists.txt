@@ -1,4 +1,6 @@
+#
 # Project Name
+#
 project(tellapic)
 
 # Minimum CMake version supported
@@ -22,6 +24,7 @@ find_package(pthread REQUIRED)
 # We should know the endianness of this machine
 include(TestBigEndian)
 
+
 # Dont build in.source. Enrique's idea.
 include(MacroOutOfSourceBuild)
 
@@ -41,8 +44,15 @@ set(SRCDIR ${PROJECT_SOURCE_DIR}/src)
 
 # Sets the root include directory
 set(INCDIR ${PROJECT_SOURCE_DIR}/include)
+set(INCDIR ${INCDIR} ${PROJECT_SOURCE_DIR}/include/posh)
+include_directories(${INCDIR})
+
+add_library(posh SHARED ${tellapic_SOURCE_DIR}/src/posh/posh)
 
 # is big endian?
 test_big_endian(BIG_ENDIAN_VALUE)
+if (NOT BIG_ENDIAN_VALUE)
+  set(CMAKE_C_FLAGS "-DLITTLE_ENDIAN_VALUE=1")
+endif()
 
 add_subdirectory(src)

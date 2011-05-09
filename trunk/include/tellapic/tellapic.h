@@ -16,228 +16,237 @@
 #ifndef __TELLAPIC__H__
 #define __TELLAPIC__H__
 
+#if defined TELLAPIC_DLL
+#  define POSH_DLL
+#else
+#  undef POSH_DLL
+#endif
+
+#ifndef POSH_BUILDING_LIB
+#define POSH_BUILDING_LIB
+#endif
+
+#include "posh/posh.h"
 #include <stdarg.h>
-
-#include "types.h"
-
+#include "tellapic/types.h"
 
 
 /**
  *
  */
-byte_t *
+POSH_PUBLIC_API(byte_t *)
 tellapic_build_rawstream(byte_t ctlbyte, ...);
 
 /**
  *
  */
-byte_t *
+POSH_PUBLIC_API(byte_t *)
 tellapic_rawread_b(int fd);
 
 /**
  *
  */
-char *
+POSH_PUBLIC_API(char *)
 tellapic_read_pwd(int fd, char *, int *len);
 
 /**
  *
  */
-stream_t
+POSH_PUBLIC_API(stream_t)
 tellapic_read_data_b(int fd, header_t header);
 
 /**
  *
  */
-byte_t *
+POSH_PUBLIC_API(byte_t *)
 tellapic_read_bytes_b(int fd, size_t chunk);
 
 /**
  *
  */
-header_t
+POSH_PUBLIC_API(header_t)
 tellapic_read_header_b(int fd);
 
 /**
  *
  */
-stream_t
+POSH_PUBLIC_API(stream_t)
 tellapic_read_data_nb(int fd, header_t header);
 
 /**
  *
  */
-header_t
+POSH_PUBLIC_API(header_t)
 tellapic_read_header_nb(int fd);
 
 /**
  *
  */
-int 
+POSH_PUBLIC_API(int)
 tellapic_send(int socket, stream_t *stream);
 
 /**
  *
  */
-int
+POSH_PUBLIC_API(int)
 tellapic_connect_to(const char *hostname, int port);
 
 /**
  *
  */
-void
+POSH_PUBLIC_API(void)
 tellapic_close_fd(int fd);
 
 /**
  *
  */
-stream_t
+POSH_PUBLIC_API(stream_t)
 tellapic_read_stream_b(int fd);
 
 /**
  *
  */
-stream_t
+POSH_PUBLIC_API(stream_t)
 tellapic_read_stream_nb(int fd);
 
 /**
  *
  */
-int
+POSH_PUBLIC_API(int)
 tellapic_send_text(int fd, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int style, int facelen, char *face, int textlen, char *text);
 
 /**
  *
  */
-int
+POSH_PUBLIC_API(int)
 tellapic_send_fig(int fd, int tool, int dcbyte_ext, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int x2, int y2, int lj, int ec, float ml, float dp, float da[]);
 
 
 /**
  *
  */
-int
+POSH_PUBLIC_API(int)
 tellapic_send_drw_using(int fd, int tool, int dcbyte_ext, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1);
 
 
 /**
  *
  */
-int
+POSH_PUBLIC_API(int)
 tellapic_send_drw_init(int fd, int tool, int dcbyte_ext, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int x2, int y2, int lj, int ec, float ml, float dp, float da[]);
 
 /**
  *
  */
-int
+POSH_PUBLIC_API(int)
 tellapic_send_chatp(int fd, int idfrom, int idto, int textlen, char* text);
 
 /**
  *
  */
-int
+POSH_PUBLIC_API(int)
 tellapic_send_chatb(int fd, int idfrom, int textlen, char* text);
 
 /**
  *
  */
-int
+POSH_PUBLIC_API(int)
 tellapic_send_ctle(int fd, int idfrom, int ctle, int infolen, char *info);
 
 /**
  *
  */
-int
+POSH_PUBLIC_API(int)
 tellapic_send_ctl(int fd, int idfrom, int ctl);
 
 /**
  *
  */
-stream_t 
+POSH_PUBLIC_API(stream_t)
 tellapic_build_ctle(int ctl, int idfrom, int infosize, char *info);
 
 /**
  *
  */
-stream_t
+POSH_PUBLIC_API(stream_t)
 tellapic_build_ctl(int ctl, int idfrom);
 
 /**
  *
  */
-stream_t 
+POSH_PUBLIC_API(stream_t)
 tellapic_build_chat(int cbyte, int idfrom, int idto, int textsize, char *text);
 
 /**
  *
  */
-int
-tellapic_isping(header_t header);
+POSH_PUBLIC_API(int)
+tellapic_isping(header_t *header);
 
 /**
  *
  */
-int
-tellapic_ispong(header_t header);
+POSH_PUBLIC_API(int)
+tellapic_ispong(header_t *header);
 
 /**
  *
  */
-int
-tellapic_istimeout(header_t header);
+POSH_PUBLIC_API(int)
+tellapic_istimeout(header_t *header);
 
 /**
  *
  */
-int 
-tellapic_ischatb(header_t header);
+POSH_PUBLIC_API(int)
+tellapic_ischatb(header_t *header);
 
 /**
  *
  */
-int 
-tellapic_ischatp(header_t header);
+POSH_PUBLIC_API(int)
+tellapic_ischatp(header_t *header);
 
 /**
  *
  */
-int 
-tellapic_isctl(header_t header);
+POSH_PUBLIC_API(int)
+tellapic_isctl(header_t *header);
 
 /**
  *
  */
-int 
-tellapic_isfile(header_t header);
+POSH_PUBLIC_API(int)
+tellapic_isfile(header_t *header);
 
 /**
  *
  */
-int 
-tellapic_isctle(header_t header);
+POSH_PUBLIC_API(int)
+tellapic_isctle(header_t *header);
 
 /**
  *
  */
-int 
-tellapic_isdrw(header_t header);
+POSH_PUBLIC_API(int)
+tellapic_isdrw(header_t *header);
 
 /**
  *
  */
-int 
-tellapic_isfigtxt(stream_t stream);
+POSH_PUBLIC_API(int)
+tellapic_isfigtxt(stream_t *stream);
 
 /**
  *
  */
-int
-tellapic_isfig(header_t header);
+POSH_PUBLIC_API(int)
+tellapic_isfig(header_t *header);
 
 /**
  *
  */
-void
+POSH_PUBLIC_API(void)
 tellapic_free(stream_t *stream);
 
 #endif
