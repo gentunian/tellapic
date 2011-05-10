@@ -22,9 +22,11 @@
 
 #if defined linux
 typedef int tellapic_socket_t;
-#else if defined WIN32
-#include <winsock2.h>
-typedef SOCKET tellapic_socket_t;
+#else
+#   if defined WIN32
+#      include <winsock2.h>
+       typedef SOCKET tellapic_socket_t;
+#   endif
 #endif
 
 

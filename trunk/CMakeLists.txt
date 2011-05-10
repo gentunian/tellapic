@@ -40,9 +40,10 @@ set(TELLAPIC_COMMON ${SRCDIR}/lib/tellapic_common.c)
 set(POSH_FILE ${SRCDIR}/posh/posh.c)
 
 if (DEFINED UNIX)
-	set(TELLAPIC_FILE ${SRCDIR}/lib/linux/tellapic.c)
+  set(TELLAPIC_FILE ${SRCDIR}/lib/linux/tellapic.c)
 elseif(DEFINED WIN32)
-	set(TELLAPIC_FILE ${SRCDIR}/lib/win32/tellapic.c)
+  set(TELLAPIC_FILE ${SRCDIR}/lib/win32/tellapic.c)
+  set_target_properties(tellapic PROPERTIES DEFINE_SYMBOL  "TELLAPIC_DLL")
 else()
   message("No target OS defined!!")
   # how to abort???
