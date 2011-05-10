@@ -1,7 +1,7 @@
 #
 # SERVER CMake file
 #
-set(COMMON_FILES ${COMMON_FILES} ${tellapic_SOURCE_DIR}/src/common/list.c ${tellapic_SOURCE_DIR}/src/common/common.c )
+set(COMMON_FILES ${COMMON_FILES} ${tellapic_SOURCE_DIR}/src/common/list.c ${tellapic_SOURCE_DIR}/src/common/common.c ${POSH_FILE})
 
 if (CDK_FOUND MATCHES TRUE)
   set(CDK_FILES ${COMMON_FILES} ${tellapic_SOURCE_DIR}/src/common/console.c)
@@ -26,4 +26,4 @@ set_target_properties(server PROPERTIES COMPILE_FLAGS "${CDK_COMPILE_FLAG} ${DEB
 
   
 # 
-target_link_libraries(server tellapic ${CMAKE_REQUIRED_LIBRARIES} ${CDK_LIBRARIES} ${LIBRARIES} posh)
+target_link_libraries(server tellapic ${CMAKE_REQUIRED_LIBRARIES} ${CDK_LIBRARIES} ${LIBRARIES})
