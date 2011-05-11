@@ -235,7 +235,7 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	 * @see ar.com.tellapic.graphics.IToolBoxManager#setFontPropertySize(int)
 	 */
 	@Override
-	public void setFontPropertySize(int size) {
+	public void setFontPropertySize(float size) {
 		fontProperty.setSize(size);
 //		Utils.logMessage("Font size has been set to "+size);
 		if (lastUsedTool instanceof DrawingTool) {

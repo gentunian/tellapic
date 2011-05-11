@@ -55,7 +55,7 @@ public interface IPaintPropertyController {
 	 * 
 	 * @param size
 	 */
-	public void handleFontSizeChange(int size);
+	public void handleFontSizeChange(float size);
 	
 	/**
 	 * 
