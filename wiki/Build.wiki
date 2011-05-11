@@ -24,6 +24,7 @@ You will need this libraries installed on your system:
 And this tools:
 
   * A C compiler for your operating system (Linux or Windows supported).
+  * [http://ant.apache.org/bindownload.cgi Apache Ant].
   * [http://download.microsoft.com/download/vc15/patch/1.52/w95/en-us/nmake15.exe NMake] for *Windows*.
   * [http://ftp.gnu.org/gnu/make/make-3.82.tar.gz Make] 3.82 for *Linux*.
   * [http://www.cmake.org/cmake/resources/software.html CMake] 2.8 preferred.
