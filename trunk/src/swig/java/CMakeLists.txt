@@ -11,7 +11,7 @@ set(SWIG_JAVA_PACKAGE_NAME "ar.com.tellapic.lib")
 set(INTERFACE_FILE "module.i")
 
 # 
-set(CMAKE_SWIG_FLAGS "-package" ${SWIG_JAVA_PACKAGE_NAME} "-cpperraswarn")
+set(CMAKE_SWIG_FLAGS "-package" ${SWIG_JAVA_PACKAGE_NAME} "-cpperraswarn" ${OS_DEFINITION} "-Wall" )
 
 # Sets  -outdir <dir>   - Set language specific files output directory to <dir>
 # This is where .java generetad files will go. Better path? It will flood the dir with .java files
