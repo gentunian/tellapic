@@ -1,4 +1,4 @@
-<wiki:toc max_depth="2" />
+<wiki:toc max_depth="3" />
 
 To build this package you will need cmake installed (2.8 preferred), and svn for download the sources. *Only linux build is supported.*
 
@@ -71,7 +71,89 @@ No extra dependency is needed.
 ~ $ make pytellapic
 }}}
 
+== Building Java GUI ==
+
+There's only a GUI written in Java that uses the native library. Java is portable and almost _write once run everywhere_, but the internal library that specifies tellapic protocol is not. You will need to build the java wrapper first (that is, pass SWIG layer) for windows or linux, depending which OS you are running.
+
+=== Building under Windows ===
+
+For building the windows native library (_tellapicjava.dll_) in conjuction with the SWIG wrapper and Java GUI, follow this steps:
+
+{{{
+~ $ cd tellapic-read-only/
+~ $ mkdir build-win32
+~ $ cd build-win32/
+~ $ cmake ..
+~ $ nmake tellapicjava
+~ $ cd ..
+~ $ cd src
+~ $ cd client
+~ $ cd java
+~ $ ant -Dbuild.dir=../../../build-win32
+~ $ ant -Dbuild.dir=../../../build-win32 create_run_jar
+}}}
+
+The last two steps will compile the Java GUI code, and then will create a runnable jar file called *tellapic-executable.jar* on your build dir (in the example above the build dir is: _build-win32/_).
+
+=== Building under Linux ===
+
+For building the linux native library (_libtellapicjava.so_) in conjunction with the SWIG wrapper and Java GUI, follow this steps:
+
+{{{
+~ $ cd tellapic-read-only/
+~ $ mkdir build-linux
+~ $ cd build-linux/
+~ $ cmake ..
+~ $ make tellapicjava
+~ $ cd ..
+~ $ cd src
+~ $ cd client
+~ $ cd java
+~ $ ant -Dbuild.dir=../../../build-linux
+~ $ ant -Dbuild.dir=../../../build-linux create_run_jar
+}}}
+
+The last two steps will compile the Java GUI code, and then will create a runnable jar file called *tellapic-executable.jar* on your build dir (in the example above the build dir is: _build-linux/_).
+
+=== Running and Testing the Java GUI ==
+
+To run the *tellapic-executable.jar* file created above, you should use the *java -jar* command, but in this case you need to provide the path where the native library is. The path depends where you are building the rule *tellapicjava*. In the above examples, we where building it on _build-win32/_ and _build-linux/_ directory for windows and linux respectively. I will call those directories: _build-dir_, and the root directory (that is, where you checkout the sources) will be called: _tellapic-root_.
+
+So, in order to run and test the Java GUI, you will need to follow this steps on the _tellapic-root_ directory:
+
+{{{
+~ $ cd build-dir
+~ $ java -Djava.library.path=src/swig/java -jar tellapic-executable.jar
+}}}
+
+*NOTE*: Windows users will probably need to change the '/' slash to '\'.
+
+=== Complete Windows procedure build and run Java GUI ===
+
+{{{
+~ $ svn checkout http://tellapic.googlecode.com/svn/trunk/ tellapic-read-only
+~ $ cd tellapic-read-only/
+~ $ mkdir build-linux
+~ $ cd build-linux/
+~ $ cmake ..
+~ $ nmake tellapicjava
+~ $ cd ..
+~ $ cd src
+~ $ cd client
+~ $ cd java
+~ $ ant -Dbuild.dir=../../../build-linux
+~ $ ant -Dbuild.dir=../../../build-linux create_run_jar
+~ $ cd ..
+~ $ cd ..
+~ $ cd ..
+~ $ cd build-win32
+~ $ java -Djava.library.path=src\swig\java -jar tellapic-executable.jar
+}}}
+
+
 == Details ==
+
+Useful files. 'build' is your named build directory.
 
 Build output will be placed in <source-root>:
 {{{
@@ -90,7 +172,7 @@ Build output will be placed in <source-root>:
                |
                `------+ java
                       `------+ tellapicjava.jar
-                      `------+ libtellapicjava.so
+                      `------+ libtellapicjava.so (or tellapicjava.dll)
 }}}
 
 == List of files ==
@@ -100,4 +182,5 @@ Build output will be placed in <source-root>:
 || *`_`pytellapic.so* || _is the SWIG generated library to interact with python programs._ ||
 || *pytellapic.py* || _is the SWIG generated python file for use within python programs._ ||
 || *tellapijava.jar* ||   _is the SWIG generated java JNI classes._ ||
-|| *libtellapicjava.so* || _is the java native library._ ||
+|| *libtellapicjava.so* || _is the linux java native library._ ||
+|| *tellapicjava.dll* || _is the windows java native library._ ||
