@@ -61,7 +61,7 @@
 	<attribute name="Class-Path" value="."/>
 	<attribute name="Rsrc-Class-Path" value="./ tellapicjava.jar dockingFramesCore.jar dockingFramesCommon.jar guava-r09.jar swingx-core-1.6.2.jar"/>
       </manifest>
-      <zipfileset src="jar-in-jar-loader.zip"/>
+      <zipfileset src="../../../utils/jar-in-jar-loader.zip"/>
       <zipfileset dir="${build.dir}/src/swig/java" includes="tellapicjava.jar"/>
       <fileset dir="bin"/>
       <zipfileset dir="${build.dir}/extra" includes="dockingFramesCore.jar"/>
