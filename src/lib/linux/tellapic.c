@@ -3,15 +3,17 @@
 #include <arpa/inet.h>            
 #include <resolv.h>
 #include <netdb.h>
-#include "tellapic/tellapic.h"
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
+
+#include "tellapic/tellapic.h"
 
 
 /**
  * A wrapper from read() C function 
  */
-size_t
+POSH_PUBLIC_API(size_t)
 _read_nb(int fd, size_t totalbytes, byte_t *buf) 
 {
 
@@ -36,7 +38,7 @@ _read_nb(int fd, size_t totalbytes, byte_t *buf)
  * also will set your file descriptor fd to blocking mode. So please, dont blame, if you
  * want non-blocking mode, write your own...
  */
-size_t
+POSH_PUBLIC_API(size_t)
 _read_b(int fd, size_t totalbytes, byte_t *buf) 
 {
   size_t bytesleft = totalbytes;
@@ -77,7 +79,7 @@ _read_b(int fd, size_t totalbytes, byte_t *buf)
  *
  */
 POSH_PUBLIC_API(tellapic_socket_t)
-tellapic_connect_to(const char *hostname, int port)
+tellapic_connect_to(const char *hostname, const char *port)
 {
   int sd;
 
@@ -92,7 +94,7 @@ tellapic_connect_to(const char *hostname, int port)
   bzero(&addr, sizeof(addr));
 
   addr.sin_family      = AF_INET;
-  addr.sin_port        = htons(port);
+  addr.sin_port        = htons(atoi(port));
   addr.sin_addr.s_addr = *(long*)(host->h_addr);
 
   if ( connect(sd, (struct sockaddr*)&addr, sizeof(addr)) != 0 ) 
@@ -103,3 +105,4 @@ tellapic_connect_to(const char *hostname, int port)
 
   return sd;
 }
+
