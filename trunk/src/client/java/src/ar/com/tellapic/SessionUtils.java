@@ -32,7 +32,7 @@ public class SessionUtils {
 	private static String         server;
 	private static String         password;
 	private static int            id;
-	private static int            port;
+	private static String         port;
 	
 	/**
 	 * @param sharedImage the sharedImage to set
@@ -97,16 +97,16 @@ public class SessionUtils {
 	}
 
 	/**
-	 * @param port the port to set
+	 * @param port2 the port to set
 	 */
-	public static void setPort(int port) {
-		SessionUtils.port = port;
+	public static void setPort(String port2) {
+		SessionUtils.port = port2;
 	}
 
 	/**
 	 * @return the port
 	 */
-	public static int getPort() {
+	public static String getPort() {
 		return port;
 	}
 

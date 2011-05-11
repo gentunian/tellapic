@@ -1,7 +1,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
-//#include <openssl/sha.h>
+#include <stdio.h>
+
 #include "common.h"
 
 

@@ -68,8 +68,8 @@ final public class TextNet extends Text {
 					drawing.getTextX(),
 					drawing.getTextY(),
 					drawing.getPaintPropertyFont().getStyle(),
-					drawing.getPaintPropertyFont().getName().length(),
-					drawing.getPaintPropertyFont().getName(),
+					drawing.getPaintPropertyFont().getFace().length(),
+					drawing.getPaintPropertyFont().getFace(),
 					drawing.getText().length(),
 					drawing.getText()
 			);

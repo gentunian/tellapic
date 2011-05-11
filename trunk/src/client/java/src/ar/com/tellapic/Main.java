@@ -123,7 +123,7 @@ public class Main {
 		} else if (args.length == 4){
 			int r=-1;
 			try {
-				r = NetManager.getInstance().connect(args[0], Integer.parseInt(args[1]), args[2], args[3]);
+				r = NetManager.getInstance().connect(args[0], args[1], args[2], args[3]);
 			} catch (NumberFormatException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
