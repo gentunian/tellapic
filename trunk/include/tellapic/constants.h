@@ -88,11 +88,12 @@
 /* for text */
 #define DDATA_FONTSTYLE_INDEX      22
 #define DDATA_FONTFACELEN_INDEX    23
-#define DDATA_FONTNAMELEN_INDEX    24
-#define DDATA_FONTFACE_INDEX       25
-#define DDATA_TEXT_INDEX(fontface_len)		\
+#define DDATA_TEXTLEN_INDEX        24
+#define DDATA_FONTFACE_INDEX       26
+/* I DONT LIKE THIS MACRO 
+#define DDATA_TEXT_INDEX(fontface_len)	\
   (DDATA_FONTFACE_INDEX + fontface_len)
-
+*/
 
 /* Indexes for CLADD (client connected) data section */
 #define DATA_CLADD_IDFROM_INDEX  DATA_IDFROM_INDEX
