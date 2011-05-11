@@ -14,7 +14,7 @@ include_directories(${INCDIR})
 set(INTERFACE_FILE module.i)
 
 #
-set(CMAKE_SWIG_FLAGS "-module" "pytellapic" "-cpperraswarn")
+set(CMAKE_SWIG_FLAGS "-module" "pytellapic" "-cpperraswarn" ${OS_DEFINITION})
 
 # Sets  -outdir <dir>   - Set language specific files output directory to <dir>
 # This is were tellapic.py will go it should be in the same place as _pytellapic.so
