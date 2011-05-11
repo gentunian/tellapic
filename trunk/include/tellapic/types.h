@@ -67,7 +67,7 @@ typedef struct {
 typedef struct {
   byte_t             endian;            /* endian byte */
   byte_t             cbyte;             /* control byte */
-  tellapic_u32_t      ssize;
+  tellapic_u32_t     ssize;
 } header_t;
 
 
