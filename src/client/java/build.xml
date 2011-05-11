@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project basedir="." default="build" name="tellapic">
+  <property environment="env"/>
+  <property name="debuglevel" value="source,lines,vars"/>
+  <property name="target" value="1.6"/>
+  <property name="source" value="1.6"/>
+  <path id="tellapic.classpath">
+    <pathelement location="${build.dir}/src/swig/java/tellapicjava.jar"/>
+    <pathelement location="bin"/>
+    <pathelement location="${build.dir}/extra/dockingFramesCore.jar"/>
+    <pathelement location="${build.dir}/extra/dockingFramesCommon.jar"/>
+    <pathelement location="${build.dir}/extra/guava-r09.jar"/>
+    <pathelement location="${build.dir}/extra/swingx-core-1.6.2.jar"/>
+  </path>
+  <target name="init">
+    <fail>
+      <condition>
+	<not>
+	  <isset property="build.dir"/>
+	</not>
+	</condition>Specify build type
+    </fail>
+    <mkdir dir="bin"/>
+    <copy includeemptydirs="false" todir="bin">
+      <fileset dir="src">
+	<exclude name="**/*.launch"/>
+	<exclude name="**/*.java"/>
+      </fileset>
+    </copy>
+  </target>
+  <target name="clean">
+    <delete dir="bin"/>
+  </target>
+  <target depends="clean" name="cleanall"/>
+  <target depends="build-subprojects,build-project" name="build"/>
+  <target name="build-subprojects"/>
+  <target depends="init, get-extra" name="build-project">
+    <echo message="${ant.project.name}: ${ant.file}"/>
+    <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
+      <src path="src"/>
+      <classpath refid="tellapic.classpath"/>
+    </javac>
+  </target>
+  <target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects"/>
+
+  <!-- guava: http://guava-libraries.googlecode.com/files/guava-r09.zip -->
+  <!-- swingx: http://java.net/downloads/swingx/releases/1.6.2/swingx-1.6.2-bundle.zip -->
+  <!-- docking frames: http://dock.javaforge.com/dockingFrames_v1.1.0/df_1.1.0.zip -->
+  <target name="create_run_jar" depends="build, init, extract-df, extract-guava, extract-swingx">
+    <fail>
+      <condition>
+	<not>
+	  <isset property="build.dir"/>
+	</not>
+	</condition>Specify build type
+    </fail>
+    <jar destfile="${build.dir}/tellapic-executable.jar">
+      <manifest>
+	<attribute name="Main-Class" value="org.eclipse.jdt.internal.jarinjarloader.JarRsrcLoader"/>
+	<attribute name="Rsrc-Main-Class" value="ar.com.tellapic.Main"/>
+	<attribute name="Class-Path" value="."/>
+	<attribute name="Rsrc-Class-Path" value="./ tellapicjava.jar dockingFramesCore.jar dockingFramesCommon.jar guava-r09.jar swingx-core-1.6.2.jar"/>
+      </manifest>
+      <zipfileset src="jar-in-jar-loader.zip"/>
+      <zipfileset dir="${build.dir}/src/swig/java" includes="tellapicjava.jar"/>
+      <fileset dir="bin"/>
+      <zipfileset dir="${build.dir}/extra" includes="dockingFramesCore.jar"/>
+      <zipfileset dir="${build.dir}/extra" includes="dockingFramesCommon.jar"/>
+      <zipfileset dir="${build.dir}/extra" includes="guava-r09.jar"/>
+      <zipfileset dir="${build.dir}/extra" includes="swingx-core-1.6.2.jar"/>
+    </jar>
+  </target>
+  
+  <target name="get-extra" depends="extract-df, extract-guava, extract-swingx">
+    
+  </target>
+  
+  <target name="get-guava">
+    <get src="http://guava-libraries.googlecode.com/files/guava-r09.zip" dest="${build.dir}/extra/guava-r09.zip" skipexisting="true" />
+  </target>
+  
+  <target name="get-swingx">
+    <get src="http://java.net/downloads/swingx/releases/1.6.2/swingx-1.6.2-bundle.zip" dest="${build.dir}/extra/swingx-1.6.2-bundle.zip" skipexisting="true" />
+  </target>
+  
+  <target name="get-df">
+    <mkdir dir="${build.dir}/extra"/>
+    <get src="http://dock.javaforge.com/dockingFrames_v1.1.0/df_1.1.0.zip" dest="${build.dir}/extra/df_1.1.0.zip" skipexisting="true" />
+  </target>
+  
+  <target name="extract-df" depends="get-df">
+    <unzip src="${build.dir}/extra/df_1.1.0.zip" dest="${build.dir}/extra/">
+      <patternset>
+	<include name="**/dock*Core.jar"/>
+	<include name="**/dock*Common.jar"/>
+      </patternset>
+      <mapper type="flatten"/>
+    </unzip>
+  </target>
+  
+  <target name="extract-swingx" depends="get-swingx">
+    <unzip src="${build.dir}/extra/swingx-1.6.2-bundle.zip" dest="${build.dir}/extra">
+      <patternset>
+	<include name="**/swingx-core-1.6.2.jar"/>		
+      </patternset>
+      <mapper type="flatten"/>
+    </unzip>
+  </target>
+  
+  <target name="extract-guava" depends="get-guava">
+    <unzip src="${build.dir}/extra/guava-r09.zip" dest="${build.dir}/extra">
+      <patternset>
+	<include name="**/guava-r09.jar"/>		
+      </patternset>
+      <mapper type="flatten"/>
+    </unzip>
+  </target>
+</project>
