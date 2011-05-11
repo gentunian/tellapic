@@ -49,6 +49,7 @@ public class Main {
 	static DrawingAreaView   dav;
 	
 	static {
+		//System.setProperty("java.library.path", ".");
 		System.loadLibrary("tellapicjava");
 		
 	}
@@ -57,7 +58,8 @@ public class Main {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-
+		
+		
 		// UI theme
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
