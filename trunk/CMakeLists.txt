@@ -42,16 +42,17 @@ set(POSH_FILE ${SRCDIR}/posh/posh.c)
 if (DEFINED UNIX)
   set(TELLAPIC_FILE ${SRCDIR}/lib/linux/tellapic.c)
   set(OS_DEFINITION "-DLINUX")
+  add_definitions("-Wall")
 elseif(DEFINED WIN32)
   set(TELLAPIC_FILE ${SRCDIR}/lib/win32/tellapic.c)
   set(OS_DEFINITION "-DWIN32")
   #~ set_target_properties(tellapic PROPERTIES DEFINE_SYMBOL  "TELLAPIC_DLL")
-  add_definitions(-DTELLAPIC_DLL)
+  add_definitions("-W4 -DTELLAPIC_DLL")
 elseif(DEFINED _WIN32)
   set(TELLAPIC_FILE ${SRCDIR}/lib/win32/tellapic.c)
   set(OS_DEFINITION "-D_WIN32")
   #~ set_target_properties(tellapic PROPERTIES DEFINE_SYMBOL  "TELLAPIC_DLL")
-  add_definitions(-DTELLAPIC_DLL)
+  add_definitions("-W4 -DTELLAPIC_DLL")
 else()
   message("No target OS defined!!")
   # how to abort???
@@ -59,13 +60,10 @@ endif()
 
 include_directories(${INCDIR})
 
-#add_library(posh STATIC ${tellapic_SOURCE_DIR}/src/posh/posh)
-
 # is big endian?
 test_big_endian(BIG_ENDIAN_VALUE)
 if (NOT BIG_ENDIAN_VALUE)
   set(CMAKE_C_FLAGS "-DLITTLE_ENDIAN_VALUE=1")
 endif()
 
-add_definitions("-Wall")
 add_subdirectory(src)
