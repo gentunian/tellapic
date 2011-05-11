@@ -90,7 +90,7 @@ tellapic_send(tellapic_socket_t socket, stream_t *stream);
  *
  */
 POSH_PUBLIC_API(int)
-tellapic_connect_to(const char *hostname, int port);
+tellapic_connect_to(const char *hostname, const char *port);
 
 /**
  *
@@ -114,7 +114,7 @@ tellapic_read_stream_nb(tellapic_socket_t socket);
  *
  */
 POSH_PUBLIC_API(int)
-tellapic_send_text(tellapic_socket_t socket, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int style, int facelen, unsigned char *face, int textlen, unsigned char *text);
+tellapic_send_text(tellapic_socket_t socket, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int style, int facelen, char *face, int textlen, char *text);
 
 /**
  *
@@ -140,19 +140,19 @@ tellapic_send_drw_init(tellapic_socket_t socket, int tool, int dcbyte_ext, int i
  *
  */
 POSH_PUBLIC_API(int)
-tellapic_send_chatp(tellapic_socket_t socket, int idfrom, int idto, int textlen, unsigned char* text);
+tellapic_send_chatp(tellapic_socket_t socket, int idfrom, int idto, int textlen, char* text);
 
 /**
  *
  */
 POSH_PUBLIC_API(int)
-tellapic_send_chatb(tellapic_socket_t socket, int idfrom, int textlen, unsigned char* text);
+tellapic_send_chatb(tellapic_socket_t socket, int idfrom, int textlen, char* text);
 
 /**
  *
  */
 POSH_PUBLIC_API(int)
-tellapic_send_ctle(tellapic_socket_t socket, int idfrom, int ctle, int infolen, unsigned char *info);
+tellapic_send_ctle(tellapic_socket_t socket, int idfrom, int ctle, int infolen, char *info);
 
 /**
  *
@@ -164,7 +164,7 @@ tellapic_send_ctl(tellapic_socket_t socket, int idfrom, int ctl);
  *
  */
 POSH_PUBLIC_API(stream_t)
-tellapic_build_ctle(int ctl, int idfrom, int infosize, unsigned char *info);
+tellapic_build_ctle(int ctl, int idfrom, int infosize, char *info);
 
 /**
  *
@@ -176,7 +176,7 @@ tellapic_build_ctl(int ctl, int idfrom);
  *
  */
 POSH_PUBLIC_API(stream_t)
-tellapic_build_chat(int cbyte, int idfrom, int idto, int textsize, unsigned char *text);
+tellapic_build_chat(int cbyte, int idfrom, int idto, int textsize, char *text);
 
 /**
  *
