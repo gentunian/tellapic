@@ -106,3 +106,12 @@ tellapic_connect_to(const char *hostname, const char *port)
   return sd;
 }
 
+
+/**
+ *
+ */
+POSH_PUBLIC_API(void)
+tellapic_close_fd(tellapic_socket_t socket) 
+{
+  close(socket);
+}
