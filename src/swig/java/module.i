@@ -91,9 +91,9 @@
 
 %typemap(in) tellapic_float {
 #ifdef BIH_ENDIAN_VALUE
-  $1 = POSH_FloatFromBigBits($input);
+  $1 = POSH_BigFloatBits($input);
 #else
-  $1 = POSH_FloatFromLittleBits($input);
+  $1 = POSH_LittleFloatBits($input);
 #endif
  }
 
