@@ -133,7 +133,7 @@ _get_header_ssize(header_t *header)
  *
  */
 static void *
-WriteBytes(void *p, void *bytes, tellapic_u32_t len)
+WriteBytes(byte_t *p, const void *bytes, tellapic_u32_t len)
 {
   memcpy(p, bytes, len);
 
@@ -1112,7 +1112,7 @@ _wrap_file_data(stream_t *dest, byte_t *data, long datasize)
  * data[0] == stream[HEADER_SIZE]
  */
 static void
-_wrap_figure_data(stream_t *dest, byte_t *data, tellapic_u32_t datasize) 
+_wrap_figure_data(stream_t *dest, byte_t *data) 
 {
   int tool  = 0;
   int etype = 0;
@@ -1313,7 +1313,7 @@ tellapic_read_data_b(tellapic_socket_t socket, header_t header)
 
 	case CTL_CL_FIG:
 	case CTL_CL_DRW:
-	  _wrap_figure_data(&stream, data, datasize);
+	  _wrap_figure_data(&stream, data);
 	  break;
 
 	case CTL_SV_CLIST:
@@ -1388,7 +1388,7 @@ tellapic_read_header_nb(tellapic_socket_t socket)
 {
 
   byte_t        *data  = malloc(HEADER_SIZE);
-  tellapic_u16_t nbytes = _read_nb(socket, HEADER_SIZE, data);
+  tellapic_u32_t nbytes = _read_nb(socket, HEADER_SIZE, data);
   header_t       header;
 
   if (nbytes == HEADER_SIZE)
@@ -1466,7 +1466,7 @@ tellapic_read_data_nb(tellapic_socket_t socket, header_t header)
 
 	case CTL_CL_FIG:
 	case CTL_CL_DRW:
-	  _wrap_figure_data(&stream, data, datasize);
+	  _wrap_figure_data(&stream, data);
 	  break;
 
 	case CTL_SV_CLIST:
@@ -1646,7 +1646,7 @@ tellapic_read_pwd(tellapic_socket_t socket, char *pwd, int *len)
       _set_header_cbyte(&stream.header, header[CBYTE_INDEX]);
       _set_header_ssize(&stream.header, _read_header_ssize(header));
  
-      if (stream.header.ssize <= MAX_CTLEXT_STREAM_SIZE && stream.header.ssize >= MIN_CTLEXT_STREAM_SIZE)
+      if (stream.header.ssize <= MAX_CTLEXT_STREAM_SIZE && stream.header.ssize >= MIN_CTLEXT_STREAM_SIZE + 1)
 	{
 	  byte_t *data = malloc(stream.header.ssize - HEADER_SIZE);
 	  nbytes = _read_b(socket, stream.header.ssize - HEADER_SIZE, data);
@@ -1656,7 +1656,11 @@ tellapic_read_pwd(tellapic_socket_t socket, char *pwd, int *len)
 	      _wrap_ctle_data(&stream, data, nbytes);
 	      *len = nbytes - 1;
 	      pwd = malloc(*len + 1);
+#if defined (linux) || defined (LINUX)
 	      strncpy(pwd, (char *)stream.data.control.info, *len);
+#elif defined (WIN32) || (_WIN32)
+	      strncpy_s(pwd, *len, (char *)stream.data.control.info, *len);
+#endif
 	      pwd[*len] = '\0';
 	    }
 
@@ -1667,16 +1671,6 @@ tellapic_read_pwd(tellapic_socket_t socket, char *pwd, int *len)
   free(header);
 
   return pwd;
-}
-
-
-/**
- *
- */
-POSH_PUBLIC_API(void)
-tellapic_close_fd(tellapic_socket_t socket) 
-{
-  close(socket);
 }
 
 
@@ -1812,22 +1806,7 @@ tellapic_send_struct(tellapic_socket_t socket, stream_t *stream)
     case CTL_CL_FIG:
       if (stream->data.drawing.dcbyte == (TOOL_TEXT | EVENT_NULL) )
 	{
-	  tellapic_send_text(socket, 
-			     stream->data.drawing.idfrom, 
-			     stream->data.drawing.number, 
-			     stream->data.drawing.width, 
-			     stream->data.drawing.opacity,
-			     stream->data.drawing.color.red,
-			     stream->data.drawing.color.green,
-			     stream->data.drawing.color.blue,
-			     stream->data.drawing.point1.x,
-			     stream->data.drawing.point1.y,
-			     stream->data.drawing.type.text.style,
-			     stream->data.drawing.type.text.facelen,
-			     (char *) stream->data.drawing.type.text.face,
-			     stream->data.drawing.type.text.infolen,
-			     (char *) stream->data.drawing.type.text.info
-			     );
+
 	}
     }
     return 0;
@@ -1850,19 +1829,19 @@ tellapic_send_text(tellapic_socket_t socket, int idfrom, int dnum, float w, floa
   pointer = WriteByte(pointer, 1);                                       /*  |    endianness     |  1 byte            */
   pointer = WriteByte(pointer, CTL_CL_FIG);                              /*  |      cbyte        |  1 byte            */
   pointer = POSH_WriteU32ToLittle(pointer, ssize);                       /*  |    stream size    |  4 bytes           */
-  pointer = WriteByte(pointer, idfrom);                                  /*  |      idfrom       |  1 byte            */
+  pointer = WriteByte(pointer, (byte_t)idfrom);                          /*  |      idfrom       |  1 byte            */
   pointer = WriteByte(pointer, TOOL_TEXT | EVENT_NULL);                  /*  |      dcbyte       |  1 byte            */
   pointer = WriteByte(pointer, 0);                                       /*  |    dcbyte_ext     |  1 byte            */
   pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleU32(dnum));        /*  |   drawing number  |  4 bytes           */
   pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(w));     /*  |       width       |  4 bytes           */
   pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(op));    /*  |      opacity      |  4 bytes           */
-  pointer = WriteByte(pointer, red);                                     /*  |     color red     |  1 byte            */
-  pointer = WriteByte(pointer, green);                                   /*  |    color green    |  1 byte            */
-  pointer = WriteByte(pointer, blue);                                    /*  |     color blue    |  1 byte            */
+  pointer = WriteByte(pointer, (byte_t)red);                             /*  |     color red     |  1 byte            */
+  pointer = WriteByte(pointer, (byte_t)green);                           /*  |    color green    |  1 byte            */
+  pointer = WriteByte(pointer, (byte_t)blue);                            /*  |     color blue    |  1 byte            */
   pointer = POSH_WriteU16ToLittle(pointer, POSH_LittleU16(x1));          /*  |     x point 1     |  2 bytes           */
   pointer = POSH_WriteU16ToLittle(pointer, POSH_LittleU16(y1));          /*  |     y point 1     |  2 bytes           */
-  pointer = WriteByte(pointer, style);                                   /*  |    font style     |  1 byte            */
-  pointer = WriteByte(pointer, facelen);                                 /*  |   face name len   |  1 byte            */
+  pointer = WriteByte(pointer, (byte_t)style);                           /*  |    font style     |  1 byte            */
+  pointer = WriteByte(pointer, (byte_t)facelen);                         /*  |   face name len   |  1 byte            */
   pointer = POSH_WriteU16ToLittle(pointer, POSH_LittleU16(textlen));     /*  |      infolen      |  2 bytes           */
   pointer = WriteBytes(pointer, face, facelen);                          /*  |   font face name  |  facenamelen bytes */
   pointer = WriteBytes(pointer, text, textlen);                          /*  |       text        |  infolen bytes     */
@@ -1874,19 +1853,19 @@ tellapic_send_text(tellapic_socket_t socket, int idfrom, int dnum, float w, floa
   pointer = WriteByte(pointer, 1);                                       /*  |    endianness     |  1 byte            */
   pointer = WriteByte(pointer, CTL_CL_FIG);                              /*  |      cbyte        |  1 byte            */
   pointer = POSH_WriteU32ToBig(pointer, ssize);                          /*  |    stream size    |  4 bytes           */
-  pointer = WriteByte(pointer, idfrom);                                  /*  |      idfrom       |  1 byte            */
+  pointer = WriteByte(pointer, (byte_t)idfrom);                          /*  |      idfrom       |  1 byte            */
   pointer = WriteByte(pointer, TOOL_TEXT | EVENT_NULL);                  /*  |      dcbyte       |  1 byte            */
   pointer = WriteByte(pointer, 0);                                       /*  |    dcbyte_ext     |  1 byte            */
   pointer = POSH_WriteU32ToBig(pointer, POSH_BigU32(dnum));              /*  |   drawing number  |  4 bytes           */
   pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(w));           /*  |       width       |  4 bytes           */
   pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(op));          /*  |      opacity      |  4 bytes           */
-  pointer = WriteByte(pointer, red);                                     /*  |     color red     |  1 byte            */
-  pointer = WriteByte(pointer, green);                                   /*  |    color green    |  1 byte            */
-  pointer = WriteByte(pointer, blue);                                    /*  |     color blue    |  1 byte            */
+  pointer = WriteByte(pointer, (byte_t)red);                             /*  |     color red     |  1 byte            */
+  pointer = WriteByte(pointer, (byte_t)green);                           /*  |    color green    |  1 byte            */
+  pointer = WriteByte(pointer, (byte_t)blue);                            /*  |     color blue    |  1 byte            */
   pointer = POSH_WriteU16ToBig(pointer, POSH_BigU16(x1));                /*  |     x point 1     |  2 bytes           */
   pointer = POSH_WriteU16ToBig(pointer, POSH_BigU16(y1));                /*  |     y point 1     |  2 bytes           */
-  pointer = WriteByte(pointer, style);                                   /*  |    font style     |  1 byte            */
-  pointer = WriteByte(pointer, facelen);                                 /*  |   face name len   |  1 byte            */
+  pointer = WriteByte(pointer, (byte_t)style);                           /*  |    font style     |  1 byte            */
+  pointer = WriteByte(pointer, (byte_t)facelen);                         /*  |   face name len   |  1 byte            */
   pointer = POSH_WriteU16ToBig(pointer, POSH_BigU16(textlen));           /*  |      infolen      |  2 bytes           */
   pointer = WriteBytes(pointer, face, facelen);                          /*  |   font face name  |  facenamelen bytes */
   pointer = WriteBytes(pointer, text, textlen);                          /*  |       text        |  infolen bytes     */
@@ -1916,15 +1895,15 @@ tellapic_send_drw_using(tellapic_socket_t socket, int tool, int dcbyte_ext, int 
   pointer = WriteByte(pointer, 1);                                      /* |  endianness   | 1 byte  */
   pointer = WriteByte(pointer, CTL_CL_DRW);                             /* |     cbyte     | 1 byte  */
   pointer = POSH_WriteU32ToLittle(pointer, DRW_USING_STREAM_SIZE);      /* | stream size   | 4 bytes */
-  pointer = WriteByte(pointer, idfrom);                                 /* |    id from    | 1 byte  */
-  pointer = WriteByte(pointer, tool);                                   /* |    dcbyte     | 1 byte  */
-  pointer = WriteByte(pointer, dcbyte_ext);                             /* |  dcbyte ext   | 1 byte  */
+  pointer = WriteByte(pointer, (byte_t)idfrom);                         /* |    id from    | 1 byte  */
+  pointer = WriteByte(pointer, (byte_t)tool);                           /* |    dcbyte     | 1 byte  */
+  pointer = WriteByte(pointer, (byte_t)dcbyte_ext);                     /* |  dcbyte ext   | 1 byte  */
   pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleU32(dnum));       /* | drawingnumber | 4 bytes */
   pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(w));    /* |     width     | 4 bytes */
   pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(op));   /* |    opacity    | 4 bytes */
-  pointer = WriteByte(pointer, red);                                    /* |   color red   | 1 byte  */
-  pointer = WriteByte(pointer, green);                                  /* |   color green | 1 byte  */
-  pointer = WriteByte(pointer, blue);                                   /* |   color blue  | 1 byte  */
+  pointer = WriteByte(pointer, (byte_t)red);                            /* |   color red   | 1 byte  */
+  pointer = WriteByte(pointer, (byte_t)green);                          /* |   color green | 1 byte  */
+  pointer = WriteByte(pointer, (byte_t)blue);                           /* |   color blue  | 1 byte  */
   pointer = POSH_WriteU16ToLittle(pointer, x1);                         /* |    x point 1  | 2 bytes */
   pointer = POSH_WriteU16ToLittle(pointer, y1);                         /* |    y point 1  | 2 bytes */
 #else                                                                   /* +---------------+         */
@@ -1932,15 +1911,15 @@ tellapic_send_drw_using(tellapic_socket_t socket, int tool, int dcbyte_ext, int 
   pointer = WriteByte(pointer, 1);
   pointer = WriteByte(pointer, CTL_CL_DRW);
   pointer = POSH_WriteU32ToBig(pointer, DRW_USING_STREAM_SIZE);
-  pointer = WriteByte(pointer, idfrom);
-  pointer = WriteByte(pointer, tool);
-  pointer = WriteByte(pointer, dcbyte_ext);
+  pointer = WriteByte(pointer, (byte_t)idfrom);
+  pointer = WriteByte(pointer, (byte_t)tool);
+  pointer = WriteByte(pointer, (byte_t)dcbyte_ext);
   pointer = POSH_WriteU32ToBig(pointer, POSH_BigU32(dnum));
   pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(w));
   pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(op));
-  pointer = WriteByte(pointer, red);
-  pointer = WriteByte(pointer, green);
-  pointer = WriteByte(pointer, blue);
+  pointer = WriteByte(pointer, (byte_t)red);
+  pointer = WriteByte(pointer, (byte_t)green);
+  pointer = WriteByte(pointer, (byte_t)blue);
   pointer = POSH_WriteU16ToBig(pointer, x1);
   pointer = POSH_WriteU16ToBig(pointer, y1);
 #endif  
@@ -1967,21 +1946,21 @@ tellapic_send_drw_init(tellapic_socket_t socket, int tool, int dcbyte_ext, int i
   pointer = WriteByte(pointer, 1);                                      /* |  endianness   | 1 byte  */
   pointer = WriteByte(pointer, CTL_CL_DRW);                             /* |     cbyte     | 1 byte  */
   pointer = POSH_WriteU32ToLittle(pointer, DRW_INIT_STREAM_SIZE);       /* | stream size   | 4 bytes */
-  pointer = WriteByte(pointer, idfrom);                                 /* |    id from    | 1 byte  */
-  pointer = WriteByte(pointer, tool);                                   /* |    dcbyte     | 1 byte  */
-  pointer = WriteByte(pointer, dcbyte_ext);                             /* |  dcbyte ext   | 1 byte  */
+  pointer = WriteByte(pointer, (byte_t)idfrom);                         /* |    id from    | 1 byte  */
+  pointer = WriteByte(pointer, (byte_t)tool);                           /* |    dcbyte     | 1 byte  */
+  pointer = WriteByte(pointer, (byte_t)dcbyte_ext);                     /* |  dcbyte ext   | 1 byte  */
   pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleU32(dnum));       /* | drawingnumber | 4 bytes */
   pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(w));    /* |     width     | 4 bytes */
   pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(op));   /* |    opacity    | 4 bytes */
-  pointer = WriteByte(pointer, red);                                    /* |   color red   | 1 byte  */
-  pointer = WriteByte(pointer, green);                                  /* |   color green | 1 byte  */
-  pointer = WriteByte(pointer, blue);                                   /* |   color blue  | 1 byte  */
+  pointer = WriteByte(pointer, (byte_t)red);                            /* |   color red   | 1 byte  */
+  pointer = WriteByte(pointer, (byte_t)green);                          /* |   color green | 1 byte  */
+  pointer = WriteByte(pointer, (byte_t)blue);                           /* |   color blue  | 1 byte  */
   pointer = POSH_WriteU16ToLittle(pointer, x1);                         /* |    x point 1  | 2 bytes */
   pointer = POSH_WriteU16ToLittle(pointer, y1);                         /* |    y point 1  | 2 bytes */
   pointer = POSH_WriteU16ToLittle(pointer, x2);                         /* |    x point 2  | 2 bytes */
   pointer = POSH_WriteU16ToLittle(pointer, y2);                         /* |    y point 2  | 2 bytes */  
-  pointer = WriteByte(pointer, lj);                                     /* |   line joins  | 1 byte  */
-  pointer = WriteByte(pointer, ec);                                     /* |   end caps    | 1 byte  */  
+  pointer = WriteByte(pointer, (byte_t)lj);                             /* |   line joins  | 1 byte  */
+  pointer = WriteByte(pointer, (byte_t)ec);                             /* |   end caps    | 1 byte  */  
   pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(ml));   /* |   miter limit | 4 bytes */
   pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(dp));   /* |   dash phase  | 4 bytes */
   pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(da[0]));/* |   dash array0 | 4 bytes */
@@ -1992,21 +1971,21 @@ tellapic_send_drw_init(tellapic_socket_t socket, int tool, int dcbyte_ext, int i
   pointer = WriteByte(pointer, 1);
   pointer = WriteByte(pointer, CTL_CL_DRW);
   pointer = POSH_WriteU32ToBig(pointer, DRW_INIT_STREAM_SIZE);
-  pointer = WriteByte(pointer, idfrom);
-  pointer = WriteByte(pointer, tool);
-  pointer = WriteByte(pointer, dcbyte_ext);
+  pointer = WriteByte(pointer, (byte_t)idfrom);
+  pointer = WriteByte(pointer, (byte_t)tool);
+  pointer = WriteByte(pointer, (byte_t)dcbyte_ext);
   pointer = POSH_WriteU32ToBig(pointer, POSH_BigU32(dnum));
   pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(w));
   pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(op));
-  pointer = WriteByte(pointer, red);
-  pointer = WriteByte(pointer, green);
-  pointer = WriteByte(pointer, blue);
+  pointer = WriteByte(pointer, (byte_t)red);
+  pointer = WriteByte(pointer, (byte_t)green);
+  pointer = WriteByte(pointer, (byte_t)blue);
   pointer = POSH_WriteU16ToBig(pointer, x1);
   pointer = POSH_WriteU16ToBig(pointer, y1);
   pointer = POSH_WriteU16ToBig(pointer, x2);
   pointer = POSH_WriteU16ToBig(pointer, y2);
-  pointer = WriteByte(pointer, lj);
-  pointer = WriteByte(pointer, ec);
+  pointer = WriteByte(pointer, (byte_t)lj);
+  pointer = WriteByte(pointer, (byte_t)ec);
   pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(ml));
   pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(dp));
   pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(da[0]));
@@ -2034,21 +2013,21 @@ tellapic_send_fig(tellapic_socket_t socket, int tool, int dcbyte_ext, int idfrom
   pointer = WriteByte(pointer, 1);                                      /* |  endianness   | 1 byte  */
   pointer = WriteByte(pointer, CTL_CL_FIG);                             /* |     cbyte     | 1 byte  */
   pointer = POSH_WriteU32ToLittle(pointer, FIG_STREAM_SIZE);            /* | stream size   | 4 bytes */
-  pointer = WriteByte(pointer, idfrom);                                 /* |    id from    | 1 byte  */
-  pointer = WriteByte(pointer, tool);                                   /* |    dcbyte     | 1 byte  */
-  pointer = WriteByte(pointer, dcbyte_ext);                             /* |  dcbyte ext   | 1 byte  */
+  pointer = WriteByte(pointer, (byte_t)idfrom);                         /* |    id from    | 1 byte  */
+  pointer = WriteByte(pointer, (byte_t)tool);                           /* |    dcbyte     | 1 byte  */
+  pointer = WriteByte(pointer, (byte_t)dcbyte_ext);                     /* |  dcbyte ext   | 1 byte  */
   pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleU32(dnum));       /* | drawingnumber | 4 bytes */
   pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(w));    /* |     width     | 4 bytes */
   pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(op));   /* |    opacity    | 4 bytes */
-  pointer = WriteByte(pointer, red);                                    /* |   color red   | 1 byte  */
-  pointer = WriteByte(pointer, green);                                  /* |   color green | 1 byte  */
-  pointer = WriteByte(pointer, blue);                                   /* |   color blue  | 1 byte  */
+  pointer = WriteByte(pointer, (byte_t)red);                            /* |   color red   | 1 byte  */
+  pointer = WriteByte(pointer, (byte_t)green);                          /* |   color green | 1 byte  */
+  pointer = WriteByte(pointer, (byte_t)blue);                           /* |   color blue  | 1 byte  */
   pointer = POSH_WriteU16ToLittle(pointer, x1);                         /* |    x point 1  | 2 bytes */
   pointer = POSH_WriteU16ToLittle(pointer, y1);                         /* |    y point 1  | 2 bytes */
   pointer = POSH_WriteU16ToLittle(pointer, x2);                         /* |    x point 2  | 2 bytes */
   pointer = POSH_WriteU16ToLittle(pointer, y2);                         /* |    y point 2  | 2 bytes */  
-  pointer = WriteByte(pointer, lj);                                     /* |   line joins  | 1 byte  */
-  pointer = WriteByte(pointer, ec);                                     /* |   end caps    | 1 byte  */  
+  pointer = WriteByte(pointer, (byte_t)lj);                             /* |   line joins  | 1 byte  */
+  pointer = WriteByte(pointer, (byte_t)ec);                             /* |   end caps    | 1 byte  */  
   pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(ml));   /* |   miter limit | 4 bytes */
   pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(dp));   /* |   dash phase  | 4 bytes */
   pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(da[0]));/* |   dash array0 | 4 bytes */
@@ -2059,21 +2038,21 @@ tellapic_send_fig(tellapic_socket_t socket, int tool, int dcbyte_ext, int idfrom
   pointer = WriteByte(pointer, 1);
   pointer = WriteByte(pointer, CTL_CL_FIG);
   pointer = POSH_WriteU32ToBig(pointer, FIG_STREAM_SIZE);
-  pointer = WriteByte(pointer, idfrom);
-  pointer = WriteByte(pointer, tool);
-  pointer = WriteByte(pointer, dcbyte_ext);
+  pointer = WriteByte(pointer, (byte_t)idfrom);
+  pointer = WriteByte(pointer, (byte_t)tool);
+  pointer = WriteByte(pointer, (byte_t)dcbyte_ext);
   pointer = POSH_WriteU32ToBig(pointer, POSH_BigU32(dnum));
   pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(w));
   pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(op));
-  pointer = WriteByte(pointer, red);
-  pointer = WriteByte(pointer, green);
-  pointer = WriteByte(pointer, blue);
+  pointer = WriteByte(pointer, (byte_t)red);
+  pointer = WriteByte(pointer, (byte_t)green);
+  pointer = WriteByte(pointer, (byte_t)blue);
   pointer = POSH_WriteU16ToBig(pointer, x1);
   pointer = POSH_WriteU16ToBig(pointer, y1);
   pointer = POSH_WriteU16ToBig(pointer, x2);
   pointer = POSH_WriteU16ToBig(pointer, y2);
-  pointer = WriteByte(pointer, lj);
-  pointer = WriteByte(pointer, ec);
+  pointer = WriteByte(pointer, (byte_t)lj);
+  pointer = WriteByte(pointer, (byte_t)ec);
   pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(ml));
   pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(dp));
   pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(da[0]));
@@ -2103,16 +2082,16 @@ tellapic_send_chatp(tellapic_socket_t socket, int idfrom, int idto, int textlen,
   pointer = WriteByte(pointer, 1);                                      /* |   endianness     | */
   pointer = WriteByte(pointer, CTL_CL_PMSG);                            /* |     cbyte        | */
   pointer = POSH_WriteU32ToLittle(pointer, ssize);                      /* |   stream size    | */
-  pointer = WriteByte(pointer, idfrom);                                 /* |     id from      | */
-  pointer = WriteByte(pointer, idto);                                   /* |     id to        | */
+  pointer = WriteByte(pointer, (byte_t)idfrom);                         /* |     id from      | */
+  pointer = WriteByte(pointer, (byte_t)idto);                           /* |     id to        | */
   pointer = WriteBytes(pointer, text, textlen);                         /* |       text       | */
                                                                         /* +------------------+ */
 #else
   pointer = WriteByte(pointer, 1);
   pointer = WriteByte(pointer, CTL_CL_PMSG);
   pointer = POSH_WriteU32ToBig(pointer, ssize);
-  pointer = WriteByte(pointer, idfrom);
-  pointer = WriteByte(pointer, idto);
+  pointer = WriteByte(pointer, (byte_t)idfrom);
+  pointer = WriteByte(pointer, (byte_t)idto);
   pointer = WriteBytes(pointer, text, textlen);
 #endif
 
@@ -2139,14 +2118,14 @@ tellapic_send_chatb(tellapic_socket_t socket, int idfrom, int textlen, char* tex
   pointer = WriteByte(pointer, 1);                                      /* |   endianness     | */
   pointer = WriteByte(pointer, CTL_CL_BMSG);                            /* |     cbyte        | */
   pointer = POSH_WriteU32ToLittle(pointer, ssize);                      /* |   stream size    | */
-  pointer = WriteByte(pointer, idfrom);                                 /* |     id from      | */
+  pointer = WriteByte(pointer, (byte_t)idfrom);                         /* |     id from      | */
   pointer = WriteBytes(pointer, text, textlen);                         /* |       text       | */
                                                                         /* +------------------+ */
 #else
   pointer = WriteByte(pointer, 1);
   pointer = WriteByte(pointer, CTL_CL_BMSG);
   pointer = POSH_WriteU32ToBig(pointer, ssize);
-  pointer = WriteByte(pointer, idfrom);
+  pointer = WriteByte(pointer, (byte_t)idfrom);
   pointer = WriteBytes(pointer, text, textlen);
 #endif
 
@@ -2169,18 +2148,18 @@ tellapic_send_ctle(tellapic_socket_t socket, int idfrom, int ctle, int infolen, 
   byte_t         *rawstream = malloc(ssize);
   void           *pointer = rawstream;
 
-#ifdef LITTLE_ENDIAN_VALUE                                             /* +------------------+ */
+#ifdef LITTLE_ENDIAN_VALUE                                              /* +------------------+ */
   pointer = WriteByte(pointer, 1);                                      /* |   endianness     | */
-  pointer = WriteByte(pointer, ctle);                                   /* |     cbyte        | */
+  pointer = WriteByte(pointer, (byte_t)ctle);                           /* |     cbyte        | */
   pointer = POSH_WriteU32ToLittle(pointer, ssize);                      /* |   stream size    | */
-  pointer = WriteByte(pointer, idfrom);                                 /* |     id from      | */
-  pointer = WriteBytes(pointer, (byte_t *)info, infolen);               /* |       text       | */
+  pointer = WriteByte(pointer, (byte_t)idfrom);                         /* |     id from      | */
+  pointer = WriteBytes(pointer, info, infolen);                         /* |       text       | */
 #else
   pointer = WriteByte(pointer, 1);
-  pointer = WriteByte(pointer, ctle);
+  pointer = WriteByte(pointer, (byte_t)ctle);
   pointer = POSH_WriteU32ToBig(pointer, ssize);
-  pointer = WriteByte(pointer, idfrom);
-  pointer = WriteBytes(pointer, (byte_t *)info, infolen);
+  pointer = WriteByte(pointer, (byte_t)idfrom);
+  pointer = WriteBytes(pointer, info, infolen);
 #endif
 
   bytesSent = send(socket, rawstream, ssize, 0);
@@ -2202,16 +2181,16 @@ tellapic_send_ctl(tellapic_socket_t socket, int idfrom, int ctl)
   void           *pointer = rawstream;
 
 #ifdef LITTLE_ENDIAN_VALUE                                             /* +------------------+ */
-  pointer = WriteByte(pointer, 1);                                      /* |   endianness     | */
-  pointer = WriteByte(pointer, ctl);                                    /* |     cbyte        | */
-  pointer = POSH_WriteU32ToLittle(pointer, CTL_STREAM_SIZE);            /* |   stream size    | */
-  pointer = WriteByte(pointer, idfrom);                                 /* |     id from      | */
-                                                                        /* +------------------+ */
+  pointer = WriteByte(pointer, 1);                                     /* |   endianness     | */
+  pointer = WriteByte(pointer, (byte_t)ctl);                           /* |     cbyte        | */
+  pointer = POSH_WriteU32ToLittle(pointer, CTL_STREAM_SIZE);           /* |   stream size    | */
+  pointer = WriteByte(pointer, (byte_t)idfrom);                        /* |     id from      | */
+                                                                       /* +------------------+ */
 #else
   pointer = WriteByte(pointer, 1);
-  pointer = WriteByte(pointer, CTL_CL_BMSG);
+  pointer = WriteByte(pointer, (byte_t)ctl);
   pointer = POSH_WriteU32ToBig(pointer, CTL_STREAM_SIZE);
-  pointer = WriteByte(pointer, idfrom);
+  pointer = WriteByte(pointer, (byte_t)idfrom);
 #endif
   
 
@@ -2288,7 +2267,7 @@ tellapic_build_rawstream(byte_t ctlbyte, ...)
 #       else
 	pointer = POSH_WriteU32ToBig(pointer, CTL_STREAM_SIZE);
 #       endif
-	pointer = WriteByte(pointer, id);
+	pointer = WriteByte(pointer, (byte_t)id);
       }
       break;
 
@@ -2342,7 +2321,7 @@ tellapic_build_rawstream(byte_t ctlbyte, ...)
 #           else
 	    pointer = POSH_WriteU32ToBig(pointer, infolen + HEADER_SIZE + 1);
 #           endif
-	    pointer = WriteByte(pointer, id);
+	    pointer = WriteByte(pointer, (byte_t)id);
 	    memcpy(pointer, info, infolen);
 	  }
 
@@ -2375,8 +2354,8 @@ tellapic_build_ctle(int ctl, int idfrom, int infosize, char *info)
     }
 
   stream.header.endian = 1;
-  stream.header.cbyte  = ctl;
-  stream.data.control.idfrom = idfrom;
+  stream.header.cbyte  = (byte_t)ctl;
+  stream.data.control.idfrom = (byte_t)idfrom;
 
   if (infosize < MAX_INFO_SIZE)
     {
@@ -2405,8 +2384,8 @@ tellapic_build_ctl(int ctl, int idfrom)
   /* TODO: add ctl checks */
 
   stream.header.endian = 0;
-  stream.header.cbyte  = ctl;
-  stream.data.control.idfrom = idfrom;
+  stream.header.cbyte  = (byte_t)ctl;
+  stream.data.control.idfrom = (byte_t)idfrom;
   stream.header.ssize = HEADER_SIZE + 1;
 
   return stream;
@@ -2428,12 +2407,12 @@ tellapic_build_chat(int cbyte, int idfrom, int idto, int textsize,  char *text) 
     }
     
   stream.header.endian = 0; /* TODO: implement the endian function */
-  stream.header.cbyte  = cbyte; 
-  stream.data.chat.idfrom = idfrom;
+  stream.header.cbyte  = (byte_t)cbyte; 
+  stream.data.chat.idfrom = (byte_t)idfrom;
 
   if (cbyte == CTL_CL_PMSG) 
     {
-      stream.data.chat.type.privmsg.idto = idto;
+      stream.data.chat.type.privmsg.idto = (byte_t)idto;
       if (textsize < MAX_TEXT_SIZE)
 	{
 	  memcpy(stream.data.chat.type.privmsg.text, text, textsize);
