@@ -26,9 +26,19 @@
 #include "tellapic/constants.h"
 #include "tellapic/tellapic.h"
 
+#if defined (linux) || defined (LINUX)
+#  include <unistd.h>
+#  include <sys/socket.h>
+#elif defined (_WIN32) || defined (WIN32)
+#  include <windows.h>
+#endif
 
 POSH_PUBLIC_API(size_t)
 _read_b(tellapic_socket_t socket, size_t totalbytes, byte_t *buf);
+
+POSH_PUBLIC_API(size_t)
+_read_nb(tellapic_socket_t socket, size_t totalbytes, byte_t *buf);
+
 
 /**
  *
@@ -88,21 +98,21 @@ _set_header_ssize(header_t *header, tellapic_u32_t size)
 /**
  *
  */
-static byte_t
-_get_header_endian(header_t *header)
-{
-  return header->endian;
-}
+/* static byte_t */
+/* _get_header_endian(header_t *header) */
+/* { */
+/*   return header->endian; */
+/* } */
 
 
-/**
- *
- */
-static byte_t
-_get_header_cbyte(header_t *header)
-{
-  return header->cbyte;
-}
+/* /\** */
+/*  * */
+/*  *\/ */
+/* static byte_t */
+/* _get_header_cbyte(header_t *header) */
+/* { */
+/*   return header->cbyte; */
+/* } */
 
 
 /**
@@ -123,10 +133,12 @@ _get_header_ssize(header_t *header)
  *
  */
 static void *
-WriteBytes(byte_t *p, byte_t *bytes, tellapic_u32_t len)
+WriteBytes(void *p, void *bytes, tellapic_u32_t len)
 {
   memcpy(p, bytes, len);
+
   p += len;
+
   return p;
 }
 
@@ -710,6 +722,20 @@ _read_data_text_style(byte_t * data)
 /**
  *
  */
+static tellapic_u16_t
+_read_data_text_len(byte_t * data)
+{
+#ifdef LITTLE_ENDIAN_VALUE
+  return POSH_ReadU16FromLittle(data + DDATA_TEXTLEN_INDEX);
+#else
+  return POSH_ReadU16FromBig(data + DDATA_TEXTLEN_INDEX);
+#endif
+}
+
+
+/**
+ *
+ */
 static tellapic_u32_t
 _read_stream_size(byte_t * stream)
 {
@@ -772,222 +798,222 @@ _wrap_stream_header(header_t *header, byte_t *stream)
 }
 
 
-/**
- * The best I can do. This is not portable as some systems may
- * represents floating point with 64bit or with a 80bit precision.
- *
- * Despite that, system representations of floating points may
- * differ having the same representation size.
- *
- * This is for create a stream. This library creates a stream, so
- * we will create and pack every number in big endian (MSB First) or network byte order.
- *
- * The value variable will have the most significative byte in its first
- * index for BIG_ENDIAN systems. As streams are sent over the network as
- * a bunch of bytes: [byte0][byte1][byte2][byte3][byte4][byte5] inserting
- * a 32bit floating point starting at stream byte2 will result in copying
- * the MSB to byte2, then the next less significative byte to byte3 and so
- * on until the less copying the LSB into byte5. That is:
- * [byte2] = value[0];
- * [byte3] = value[1];
- * [byte4] = value[2];
- * [byte5] = value[3];
- *
- * For little endian system, we then put the MSB first so to adapt it to
- * the protocol. The first byte es the LSB in little endian systems, so
- * the MSB will be the last index:
- * [byte2] = value[3];
- * [byte3] = value[2];
- * [byte4] = value[1];
- * [byte5] = value[0];
- *
- * This _pack() helper function should be used with caution. It is supposed
- * to be used as a particular helper function with the most generality as it can.
- * 
- * stream must be a valid pointer and size should be the size of the library custom protocol
- * defined type we want to wrap to stream. In particular, size should be the size
- * of the value type. Value actual size could be bigger than size.
- *
- * This helper function can be used to put an unsigned char (byte_t) value in the stream as follows:
- * 
- * byte_t someByte = SOME_VALUE;
- * _pack(stream + SOME_INDEX_IN_THE_STREAM, (void *)&someByte, sizeof(byte_t));
- *
- * NOTE: Try avoiding the use of sizeof(). As we are creating our byte representation in the stream
- * use the proper size of the type you want to pack. For example, coordinates in the stream are
- * 2 bytes long, but can be held in an integer. Then you should do:
- *
- * int x1 = 129;
- * _pack(stream + X1_INDEX, (void *)&x1, 2); // 2 or a defined constant MACRO (e.g. COORDINATE_TYPE_SIZE)
- */
-static void
-_pack(byte_t *stream, void *value, size_t size)
-{
-  byte_t *fval = (byte_t *) value;
-  int i = 0;
+/* /\** */
+/*  * The best I can do. This is not portable as some systems may */
+/*  * represents floating point with 64bit or with a 80bit precision. */
+/*  * */
+/*  * Despite that, system representations of floating points may */
+/*  * differ having the same representation size. */
+/*  * */
+/*  * This is for create a stream. This library creates a stream, so */
+/*  * we will create and pack every number in big endian (MSB First) or network byte order. */
+/*  * */
+/*  * The value variable will have the most significative byte in its first */
+/*  * index for BIG_ENDIAN systems. As streams are sent over the network as */
+/*  * a bunch of bytes: [byte0][byte1][byte2][byte3][byte4][byte5] inserting */
+/*  * a 32bit floating point starting at stream byte2 will result in copying */
+/*  * the MSB to byte2, then the next less significative byte to byte3 and so */
+/*  * on until the less copying the LSB into byte5. That is: */
+/*  * [byte2] = value[0]; */
+/*  * [byte3] = value[1]; */
+/*  * [byte4] = value[2]; */
+/*  * [byte5] = value[3]; */
+/*  * */
+/*  * For little endian system, we then put the MSB first so to adapt it to */
+/*  * the protocol. The first byte es the LSB in little endian systems, so */
+/*  * the MSB will be the last index: */
+/*  * [byte2] = value[3]; */
+/*  * [byte3] = value[2]; */
+/*  * [byte4] = value[1]; */
+/*  * [byte5] = value[0]; */
+/*  * */
+/*  * This _pack() helper function should be used with caution. It is supposed */
+/*  * to be used as a particular helper function with the most generality as it can. */
+/*  *  */
+/*  * stream must be a valid pointer and size should be the size of the library custom protocol */
+/*  * defined type we want to wrap to stream. In particular, size should be the size */
+/*  * of the value type. Value actual size could be bigger than size. */
+/*  * */
+/*  * This helper function can be used to put an unsigned char (byte_t) value in the stream as follows: */
+/*  *  */
+/*  * byte_t someByte = SOME_VALUE; */
+/*  * _pack(stream + SOME_INDEX_IN_THE_STREAM, (void *)&someByte, sizeof(byte_t)); */
+/*  * */
+/*  * NOTE: Try avoiding the use of sizeof(). As we are creating our byte representation in the stream */
+/*  * use the proper size of the type you want to pack. For example, coordinates in the stream are */
+/*  * 2 bytes long, but can be held in an integer. Then you should do: */
+/*  * */
+/*  * int x1 = 129; */
+/*  * _pack(stream + X1_INDEX, (void *)&x1, 2); // 2 or a defined constant MACRO (e.g. COORDINATE_TYPE_SIZE) */
+/*  *\/ */
+/* static void */
+/* _pack(byte_t *stream, void *value, size_t size) */
+/* { */
+/*   byte_t *fval = (byte_t *) value; */
+/*   int i = 0; */
   
-#if (BIG_ENDIAN_VALUE)
+/* #if (BIG_ENDIAN_VALUE) */
 
-  for(i; i < size; i++)
-    stream[i] = fval[i];
+/*   for(i=0; i < size; i++) */
+/*     stream[i] = fval[i]; */
 
-#else
+/* #else */
 
-  for(i; i < size; i++)
-    stream[i] = fval[size - i - 1];
+/*   for(i=0; i < size; i++) */
+/*     stream[i] = fval[size - i - 1]; */
 
-#endif 
+/* #endif  */
 
-}
+/* } */
 
 
-/**
- *
- */
-static void
-_packul(byte_t *stream, unsigned long value, size_t size)
-{
-  byte_t *fval = (byte_t *)&value;
-  int i = 0;
+/* /\** */
+/*  * */
+/*  *\/ */
+/* static void */
+/* _packul(byte_t *stream, unsigned long value, size_t size) */
+/* { */
+/*   byte_t *fval = (byte_t *)&value; */
+/*   int i = 0; */
   
-#if (BIG_ENDIAN_VALUE)
+/* #if (BIG_ENDIAN_VALUE) */
 
-  for(i; i < size; i++)
-    stream[i] = fval[i];
+/*   for(i=0; i < size; i++) */
+/*     stream[i] = fval[i]; */
 
-#else
+/* #else */
 
-  for(i; i < size; i++)
-    stream[i] = fval[size - i - 1];
+/*   for(i=0; i < size; i++) */
+/*     stream[i] = fval[size - i - 1]; */
 
-#endif 
+/* #endif  */
 
-}
+/* } */
 
 
-/**
- *
- */
-static void
-_packf(byte_t *stream, float value, size_t size)
-{
-  byte_t *fval = (byte_t *)&value;
-  int i = 0;
+/* /\** */
+/*  * */
+/*  *\/ */
+/* static void */
+/* _packf(byte_t *stream, float value, size_t size) */
+/* { */
+/*   byte_t *fval = (byte_t *)&value; */
+/*   int i = 0; */
   
-#if (BIG_ENDIAN_VALUE)
+/* #if (BIG_ENDIAN_VALUE) */
 
-  for(i; i < size; i++)
-    stream[i] = fval[i];
+/*   for(i=0; i < size; i++) */
+/*     stream[i] = fval[i]; */
 
-#else
+/* #else */
 
-  for(i; i < size; i++)
-    stream[i] = fval[size - i - 1];
+/*   for(i=0; i < size; i++) */
+/*     stream[i] = fval[size - i - 1]; */
 
-#endif 
+/* #endif  */
 
-}
-
-
-/**
- * So now we have a stream. The stream was created by this library. Numbers were
- * packed with endianness in mind and the stream has in the header.endian section
- * the information that concers about endianness.
- *
- * Decision was to send use MSB in the protocol and not the system native endianness.
- * This will decrease the overhead of consulting the endian byte, and swapping the
- * correspondent bytes.
- *
- * The variable 'stream' here should be a portion of memory where we want to
- * unpack a float from, and not a whole stream. 
- *
- * What we have now in the first index of the stream is a MSB from a 32bit
- * floating point. It depends upon the system endiannes to build a correte floating point number.
- *
- * So, if the system is BIG_ENDIAN we just copy the same order to the floating
- * point number memory. If the system is LITTLE_ENDIAN, we reverse the bytes as
- * we already know that the protocol is implemented with MSB first.
- * 
- * Same WARNINGS apply here as in _pack() function. If you can understand _pack() there is no
- * more to say. If you don't, I can't be more expressive than that.
- *
- * ALWAYS take note that size is a STREAM CUSTOM PROTOCOL TYPE SIZE. That is, not a language
- * standard size. If you want to _unpack() a coordinate from the stream, then you could do:
- *
- * int x1 = *(int *) _unpack(stream + X1_INDEX, COORDINATE_TYPE_SIZE);
- *
- */
-static void *
-_unpack(const byte_t *stream, size_t size)
-{
-  byte_t *buf = malloc(size);
-  int i = 0;
-
-#if (BIG_ENDIAN_VALUE)
-
-  for(i; i < size; i++)
-    buf[i] = stream[i];
-
-#else
-
-  for(i; i < size; i++)
-    buf[i] = stream[size - i - 1];
-
-#endif
-
-  return (void *)buf;
-}
+/* } */
 
 
-/**
- *
- */
-unsigned long
-static _unpackul(const byte_t *stream, size_t size)
-{
-  unsigned int value = 0;
-  int i = 0;
+/* /\** */
+/*  * So now we have a stream. The stream was created by this library. Numbers were */
+/*  * packed with endianness in mind and the stream has in the header.endian section */
+/*  * the information that concers about endianness. */
+/*  * */
+/*  * Decision was to send use MSB in the protocol and not the system native endianness. */
+/*  * This will decrease the overhead of consulting the endian byte, and swapping the */
+/*  * correspondent bytes. */
+/*  * */
+/*  * The variable 'stream' here should be a portion of memory where we want to */
+/*  * unpack a float from, and not a whole stream.  */
+/*  * */
+/*  * What we have now in the first index of the stream is a MSB from a 32bit */
+/*  * floating point. It depends upon the system endiannes to build a correte floating point number. */
+/*  * */
+/*  * So, if the system is BIG_ENDIAN we just copy the same order to the floating */
+/*  * point number memory. If the system is LITTLE_ENDIAN, we reverse the bytes as */
+/*  * we already know that the protocol is implemented with MSB first. */
+/*  *  */
+/*  * Same WARNINGS apply here as in _pack() function. If you can understand _pack() there is no */
+/*  * more to say. If you don't, I can't be more expressive than that. */
+/*  * */
+/*  * ALWAYS take note that size is a STREAM CUSTOM PROTOCOL TYPE SIZE. That is, not a language */
+/*  * standard size. If you want to _unpack() a coordinate from the stream, then you could do: */
+/*  * */
+/*  * int x1 = *(int *) _unpack(stream + X1_INDEX, COORDINATE_TYPE_SIZE); */
+/*  * */
+/*  *\/ */
+/* static void * */
+/* _unpack(const byte_t *stream, size_t size) */
+/* { */
+/*   byte_t *buf = malloc(size); */
+/*   int i = 0; */
 
-  for(i; i < size; i++)
-    value |= stream[i]<<8*(size - i - 1);
+/* #if (BIG_ENDIAN_VALUE) */
 
-  return value;
-}
+/*   for(i=0; i < size; i++) */
+/*     buf[i] = stream[i]; */
 
+/* #else */
 
-/**
- *
- */
-float
-static _unpackf(const byte_t *stream, size_t size)
-{
-  float value;
-  int i = 0;
+/*   for(i=0; i < size; i++) */
+/*     buf[i] = stream[size - i - 1]; */
 
-#if (BIG_ENDIAN_VALUE)
+/* #endif */
 
-  for(i; i < size; i++)
-    *((unsigned char *)&value+i) = stream[i];
-
-#else
-
-  for(i; i < size; i++)
-    *((unsigned char*)&value+i) = stream[size - i - 1];
-
-#endif  
-
-  return value;
-}
+/*   return (void *)buf; */
+/* } */
 
 
-/**
- * Extracts the byte-th byte from the data variable.
- */
-static byte_t
-_extbyte(int byte, unsigned long data)
-{ 
-  return (data>>byte*8) & 0xff;
-}
+/* /\** */
+/*  * */
+/*  *\/ */
+/* unsigned long */
+/* static _unpackul(const byte_t *stream, size_t size) */
+/* { */
+/*   unsigned int value = 0; */
+/*   int i = 0; */
+
+/*   for(i=0; i < size; i++) */
+/*     value |= stream[i]<<8*(size - i - 1); */
+
+/*   return value; */
+/* } */
+
+
+/* /\** */
+/*  * */
+/*  *\/ */
+/* float */
+/* static _unpackf(const byte_t *stream, size_t size) */
+/* { */
+/*   float value; */
+/*   int i = 0; */
+
+/* #if (BIG_ENDIAN_VALUE) */
+
+/*   for(i=0; i < size; i++) */
+/*     *((unsigned char *)&value+i) = stream[i]; */
+
+/* #else */
+
+/*   for(i=0; i < size; i++) */
+/*     *((unsigned char*)&value+i) = stream[size - i - 1]; */
+
+/* #endif   */
+
+/*   return value; */
+/* } */
+
+
+/* /\** */
+/*  * Extracts the byte-th byte from the data variable. */
+/*  *\/ */
+/* static byte_t */
+/* _extbyte(int byte, unsigned long data) */
+/* {  */
+/*   return (data>>byte*8) & 0xff; */
+/* } */
 
 
 /**
@@ -1126,41 +1152,43 @@ _wrap_figure_data(stream_t *dest, byte_t *data, tellapic_u32_t datasize)
 	} 
       else 
 	{
-	  int textsize = 0;
-	  
-	  dest->data.drawing.type.text.style = _read_data_text_style(data);
+	  dest->data.drawing.type.text.infolen = _read_data_text_len(data);
+	  dest->data.drawing.type.text.style   = _read_data_text_style(data);
+	  dest->data.drawing.type.text.facelen = _read_data_facelen(data);
 
 	  /* Do some checks about the "truly" value of facelen to avoid buffer overrun. */
 	  /* data[DDATA_FONTFACELEN_INDEX] is only 1 byte len, don't worry about endiannes. */
-	  if (data[DDATA_FONTFACELEN_INDEX] < 0)
+	  if (dest->data.drawing.type.text.facelen < 0)
 	    dest->data.drawing.type.text.facelen = 0;
 	  
 	  /* Do not assign the maximum value if it will overrun the data buffer. */
-	  else if (data[DDATA_FONTFACELEN_INDEX] > MAX_FONTFACE_LEN && !(datasize - DDATA_FONTFACE_INDEX - MAX_FONTFACE_LEN <= 0))
+	  else if ( dest->data.drawing.type.text.facelen > MAX_FONTFACE_LEN)
 	    dest->data.drawing.type.text.facelen = MAX_FONTFACE_LEN;
 
 	  else
 	    {
-	      /* Assume we exit the above condition with a false in the second term to avoid writting an else. */
-	      dest->data.drawing.type.text.facelen = 0;
-
-	      /* If we assume wrong, this will fix it. */
-	      if(!(datasize - DDATA_FONTFACE_INDEX - data[DDATA_FONTFACELEN_INDEX] <= 0))
-		dest->data.drawing.type.text.facelen = _read_data_facelen(data);
 	    }
-	  
-	  /* We can be safe in assuming (at least I think...) that we won't overrun the buffer.     */
-	  /* Note that, that doesn't mean data integrity. It's your fault if data was inconsistent. */
-	  /* My job is to avoid SIGSEGV in this part of the code when memcopying...                 */
-	  textsize = datasize - DDATA_FONTFACE_INDEX - dest->data.drawing.type.text.facelen ;
+
+	  if (dest->data.drawing.type.text.infolen < 0)
+	    dest->data.drawing.type.text.infolen = 0;
+
+	  /* Do not assign the maximum value if it will overrun the data buffer. */
+	  else if ( dest->data.drawing.type.text.infolen > MAX_TEXT_SIZE)
+	    dest->data.drawing.type.text.infolen = MAX_TEXT_SIZE;
+
+	  else
+	    {
+	    }
+
+	  /* textsize = datasize - DDATA_FONTFACE_INDEX - dest->data.drawing.type.text.facelen ; */
 
 	  memcpy(dest->data.drawing.type.text.face, data + DDATA_FONTFACE_INDEX, dest->data.drawing.type.text.facelen);
 	  if (dest->data.drawing.type.text.facelen < MAX_FONTFACE_LEN)
 	    memset(&dest->data.drawing.type.text.face[dest->data.drawing.type.text.facelen], '\0', MAX_FONTFACE_LEN - dest->data.drawing.type.text.facelen);
 
-	  memcpy(dest->data.drawing.type.text.info, data + (DDATA_TEXT_INDEX(dest->data.drawing.type.text.facelen)), textsize);
-	  if (textsize < MAX_TEXT_SIZE)
-	    memset(&dest->data.drawing.type.text.info[textsize], '\0', MAX_FONTFACE_LEN - textsize);
+	  memcpy(dest->data.drawing.type.text.info, data + DDATA_FONTFACE_INDEX + dest->data.drawing.type.text.facelen, dest->data.drawing.type.text.infolen);
+	  if ( dest->data.drawing.type.text.infolen < MAX_TEXT_SIZE)
+	    memset(&dest->data.drawing.type.text.info[dest->data.drawing.type.text.infolen], '\0', MAX_TEXT_SIZE - dest->data.drawing.type.text.infolen);
 	}
     }
 }
@@ -1604,7 +1632,7 @@ POSH_PUBLIC_API(char *)
 tellapic_read_pwd(tellapic_socket_t socket, char *pwd, int *len)
 {
   byte_t     *header  = malloc(HEADER_SIZE);
-  int        timeout = 0;
+
   tellapic_u32_t nbytes   = _read_b(socket, HEADER_SIZE, header);
   stream_t   stream;  /* This is used only as a placeholder. Avoid it for future release, use instead local variables*/
 
@@ -1621,7 +1649,6 @@ tellapic_read_pwd(tellapic_socket_t socket, char *pwd, int *len)
       if (stream.header.ssize <= MAX_CTLEXT_STREAM_SIZE && stream.header.ssize >= MIN_CTLEXT_STREAM_SIZE)
 	{
 	  byte_t *data = malloc(stream.header.ssize - HEADER_SIZE);
-	  int    error = 0;
 	  nbytes = _read_b(socket, stream.header.ssize - HEADER_SIZE, data);
 
 	  if (nbytes == stream.header.ssize - HEADER_SIZE)
@@ -1783,7 +1810,7 @@ tellapic_send_struct(tellapic_socket_t socket, stream_t *stream)
     {
 
     case CTL_CL_FIG:
-      if (stream->data.drawing.dcbyte == TOOL_TEXT | EVENT_NULL)
+      if (stream->data.drawing.dcbyte == (TOOL_TEXT | EVENT_NULL) )
 	{
 	  tellapic_send_text(socket, 
 			     stream->data.drawing.idfrom, 
@@ -1797,9 +1824,9 @@ tellapic_send_struct(tellapic_socket_t socket, stream_t *stream)
 			     stream->data.drawing.point1.y,
 			     stream->data.drawing.type.text.style,
 			     stream->data.drawing.type.text.facelen,
-			     stream->data.drawing.type.text.face,
+			     (char *) stream->data.drawing.type.text.face,
 			     stream->data.drawing.type.text.infolen,
-			     stream->data.drawing.type.text.info
+			     (char *) stream->data.drawing.type.text.info
 			     );
 	}
     }
@@ -1811,7 +1838,7 @@ tellapic_send_struct(tellapic_socket_t socket, stream_t *stream)
  *
  */
 POSH_PUBLIC_API(int)
-tellapic_send_text(tellapic_socket_t socket, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int style, int facelen, unsigned char *face, int textlen, unsigned char *text)
+tellapic_send_text(tellapic_socket_t socket, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int style, int facelen, char *face, int textlen, char *text)
 {
   tellapic_u32_t bytesSent = 0;
   tellapic_u32_t ssize = MIN_FIGTXT_STREAM_SIZE + facelen + textlen;
@@ -1824,11 +1851,11 @@ tellapic_send_text(tellapic_socket_t socket, int idfrom, int dnum, float w, floa
   pointer = WriteByte(pointer, CTL_CL_FIG);                              /*  |      cbyte        |  1 byte            */
   pointer = POSH_WriteU32ToLittle(pointer, ssize);                       /*  |    stream size    |  4 bytes           */
   pointer = WriteByte(pointer, idfrom);                                  /*  |      idfrom       |  1 byte            */
-  pointer = WriteByte(pointer, CTL_CL_FIG);                              /*  |      dcbyte       |  1 byte            */
-  pointer = WriteByte(pointer, TOOL_TEXT | EVENT_NULL);                  /*  |    dcbyte_ext     |  1 byte            */
+  pointer = WriteByte(pointer, TOOL_TEXT | EVENT_NULL);                  /*  |      dcbyte       |  1 byte            */
+  pointer = WriteByte(pointer, 0);                                       /*  |    dcbyte_ext     |  1 byte            */
   pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleU32(dnum));        /*  |   drawing number  |  4 bytes           */
-  pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleU32(w));           /*  |       width       |  4 bytes           */
-  pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleU32(op));          /*  |      opacity      |  4 bytes           */
+  pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(w));     /*  |       width       |  4 bytes           */
+  pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(op));    /*  |      opacity      |  4 bytes           */
   pointer = WriteByte(pointer, red);                                     /*  |     color red     |  1 byte            */
   pointer = WriteByte(pointer, green);                                   /*  |    color green    |  1 byte            */
   pointer = WriteByte(pointer, blue);                                    /*  |     color blue    |  1 byte            */
@@ -1848,19 +1875,19 @@ tellapic_send_text(tellapic_socket_t socket, int idfrom, int dnum, float w, floa
   pointer = WriteByte(pointer, CTL_CL_FIG);                              /*  |      cbyte        |  1 byte            */
   pointer = POSH_WriteU32ToBig(pointer, ssize);                          /*  |    stream size    |  4 bytes           */
   pointer = WriteByte(pointer, idfrom);                                  /*  |      idfrom       |  1 byte            */
-  pointer = WriteByte(pointer, CTL_CL_FIG);                              /*  |      dcbyte       |  1 byte            */
-  pointer = WriteByte(pointer, TOOL_TEXT | EVENT_NULL);                  /*  |    dcbyte_ext     |  1 byte            */
-  pointer = POSH_WriteU32ToBig(pointer, POSH_LittleU32(dnum));           /*  |   drawing number  |  4 bytes           */
-  pointer = POSH_WriteU32ToBig(pointer, POSH_LittleFloatBits(w));        /*  |       width       |  4 bytes           */
-  pointer = POSH_WriteU32ToBig(pointer, POSH_LittleFloatBits(op));       /*  |      opacity      |  4 bytes           */
+  pointer = WriteByte(pointer, TOOL_TEXT | EVENT_NULL);                  /*  |      dcbyte       |  1 byte            */
+  pointer = WriteByte(pointer, 0);                                       /*  |    dcbyte_ext     |  1 byte            */
+  pointer = POSH_WriteU32ToBig(pointer, POSH_BigU32(dnum));              /*  |   drawing number  |  4 bytes           */
+  pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(w));           /*  |       width       |  4 bytes           */
+  pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(op));          /*  |      opacity      |  4 bytes           */
   pointer = WriteByte(pointer, red);                                     /*  |     color red     |  1 byte            */
   pointer = WriteByte(pointer, green);                                   /*  |    color green    |  1 byte            */
   pointer = WriteByte(pointer, blue);                                    /*  |     color blue    |  1 byte            */
-  pointer = POSH_WriteU16ToBig(pointer, POSH_LittleU16(x1));             /*  |     x point 1     |  2 bytes           */
-  pointer = POSH_WriteU16ToBig(pointer, POSH_LittleU16(y1));             /*  |     y point 1     |  2 bytes           */
+  pointer = POSH_WriteU16ToBig(pointer, POSH_BigU16(x1));                /*  |     x point 1     |  2 bytes           */
+  pointer = POSH_WriteU16ToBig(pointer, POSH_BigU16(y1));                /*  |     y point 1     |  2 bytes           */
   pointer = WriteByte(pointer, style);                                   /*  |    font style     |  1 byte            */
   pointer = WriteByte(pointer, facelen);                                 /*  |   face name len   |  1 byte            */
-  pointer = POSH_WriteU16ToBig(pointer, POSH_LittleU16(textlen));        /*  |      infolen      |  2 bytes           */
+  pointer = POSH_WriteU16ToBig(pointer, POSH_BigU16(textlen));           /*  |      infolen      |  2 bytes           */
   pointer = WriteBytes(pointer, face, facelen);                          /*  |   font face name  |  facenamelen bytes */
   pointer = WriteBytes(pointer, text, textlen);                          /*  |       text        |  infolen bytes     */
                                                                          /*  +-------------------+                    */
@@ -2065,7 +2092,7 @@ tellapic_send_fig(tellapic_socket_t socket, int tool, int dcbyte_ext, int idfrom
  *
  */
 POSH_PUBLIC_API(int)
-tellapic_send_chatp(tellapic_socket_t socket, int idfrom, int idto, int textlen, unsigned char* text)
+tellapic_send_chatp(tellapic_socket_t socket, int idfrom, int idto, int textlen, char* text)
 {
   tellapic_u32_t bytesSent = 0;
   tellapic_u32_t ssize = HEADER_SIZE + textlen + 2;
@@ -2101,7 +2128,7 @@ tellapic_send_chatp(tellapic_socket_t socket, int idfrom, int idto, int textlen,
  *
  */
 POSH_PUBLIC_API(int)
-tellapic_send_chatb(tellapic_socket_t socket, int idfrom, int textlen, unsigned char* text)
+tellapic_send_chatb(tellapic_socket_t socket, int idfrom, int textlen, char* text)
 {
   tellapic_u32_t bytesSent = 0;
   tellapic_u32_t ssize = HEADER_SIZE + textlen + 1;
@@ -2135,7 +2162,7 @@ tellapic_send_chatb(tellapic_socket_t socket, int idfrom, int textlen, unsigned 
  *
  */
 POSH_PUBLIC_API(int)
-tellapic_send_ctle(tellapic_socket_t socket, int idfrom, int ctle, int infolen,  unsigned char *info)
+tellapic_send_ctle(tellapic_socket_t socket, int idfrom, int ctle, int infolen,  char *info)
 {
   tellapic_u32_t bytesSent = 0;
   tellapic_u32_t ssize = HEADER_SIZE + infolen + 1;
@@ -2147,14 +2174,13 @@ tellapic_send_ctle(tellapic_socket_t socket, int idfrom, int ctle, int infolen, 
   pointer = WriteByte(pointer, ctle);                                   /* |     cbyte        | */
   pointer = POSH_WriteU32ToLittle(pointer, ssize);                      /* |   stream size    | */
   pointer = WriteByte(pointer, idfrom);                                 /* |     id from      | */
-  pointer = WriteBytes(pointer, info, infolen);                         /* |       text       | */
-                                                                        /* +------------------+ */
+  pointer = WriteBytes(pointer, (byte_t *)info, infolen);               /* |       text       | */
 #else
   pointer = WriteByte(pointer, 1);
-  pointer = WriteByte(pointer, CTL_CL_BMSG);
+  pointer = WriteByte(pointer, ctle);
   pointer = POSH_WriteU32ToBig(pointer, ssize);
   pointer = WriteByte(pointer, idfrom);
-  pointer = WriteBytes(pointer, info, infolen);
+  pointer = WriteBytes(pointer, (byte_t *)info, infolen);
 #endif
 
   bytesSent = send(socket, rawstream, ssize, 0);
@@ -2337,7 +2363,7 @@ tellapic_build_rawstream(byte_t ctlbyte, ...)
  *
  */
 POSH_PUBLIC_API(stream_t)
-tellapic_build_ctle(int ctl, int idfrom, int infosize, unsigned char *info) 
+tellapic_build_ctle(int ctl, int idfrom, int infosize, char *info) 
 {
   stream_t stream;
 
@@ -2391,7 +2417,7 @@ tellapic_build_ctl(int ctl, int idfrom)
  *
  */
 POSH_PUBLIC_API(stream_t)
-tellapic_build_chat(int cbyte, int idfrom, int idto, int textsize,  unsigned char *text) /* TODO: something is wrong HERE! */
+tellapic_build_chat(int cbyte, int idfrom, int idto, int textsize,  char *text) /* TODO: something is wrong HERE! */
 {
   stream_t stream;
 
