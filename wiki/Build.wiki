@@ -133,16 +133,16 @@ So, in order to run and test the Java GUI, you will need to follow this steps on
 {{{
 ~ $ svn checkout http://tellapic.googlecode.com/svn/trunk/ tellapic-read-only
 ~ $ cd tellapic-read-only/
-~ $ mkdir build-linux
-~ $ cd build-linux/
+~ $ mkdir build-win32
+~ $ cd build-win3/
 ~ $ cmake ..
 ~ $ nmake tellapicjava
 ~ $ cd ..
 ~ $ cd src
 ~ $ cd client
 ~ $ cd java
-~ $ ant -Dbuild.dir=../../../build-linux
-~ $ ant -Dbuild.dir=../../../build-linux create_run_jar
+~ $ ant -Dbuild.dir=../../../build-win32
+~ $ ant -Dbuild.dir=../../../build-win32 create_run_jar
 ~ $ cd ..
 ~ $ cd ..
 ~ $ cd ..
