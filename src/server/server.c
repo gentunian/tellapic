@@ -534,8 +534,8 @@ void
   print_output(buff);
 #endif
 
-  // The client is authed (poorly) with the server now. He/she should ask for the file we are sharing/discussing.
-  tellapic_send_ctl(thread->client->fd, thread->client->fd, CTL_SV_AUTHOK);
+  /* The client is authed (poorly) with the server now. He/she should ask for the file we are sharing/discussing. */
+  tellapic_send_ctl(thread->client->fd, thread->tnum, CTL_SV_AUTHOK);
 
 
 #ifdef DEBUG 
@@ -553,7 +553,7 @@ void
 
 #ifdef DEBUG 
       memset(buff, '\0', 256);
-      sprintf(buff, "[NFO]:\tSending file to client %d.", thread->client->fd);
+      sprintf(buff, "[NFO]:\tSending file to client %d.", thread->tnum);
       print_output(buff);
 #endif
 
@@ -581,7 +581,7 @@ void
       pthread_mutex_lock(&thread[i].stmutex);
       if (thread[i].tstate == THREAD_STATE_ACT)
 	{
-	  tellapic_send_ctle(thread->client->fd, thread[i].client->fd, CTL_SV_CLADD, thread[i].client->namelen, thread[i].client->name);
+	  tellapic_send_ctle(thread->client->fd, thread[i].tnum, CTL_SV_CLADD, thread[i].client->namelen, thread[i].client->name);
 	}
       pthread_mutex_unlock(&thread[i].stmutex);
     }
@@ -599,17 +599,17 @@ void
       // abort?
     }
 
-  msg->stream   = tellapic_build_rawstream(CTL_SV_CLADD, thread->client->fd, thread->client->name, thread->client->namelen);
+  msg->stream   = tellapic_build_rawstream(CTL_SV_CLADD, thread->tnum, thread->client->name, thread->client->namelen);
   msg->tothread = -1; //TODO: #define or something here...
   msg->delivers = 0;
   pthread_mutex_init(&msg->mutex, NULL);
   queue_message(msg, thread);
 
-#ifdef DEBUG 
+# ifdef DEBUG 
   memset(buff, '\0', 256);
   sprintf(buff, "[NFO]:\tMain attendance loop start on thread %d", thread->tnum);
   print_output(buff);
-#endif
+# endif
 
 
   while(thread->tstate != THREAD_STATE_END) 
@@ -691,7 +691,7 @@ authclient(tdata_t *thread)
   int      try   = 0;
   
   // The server is the first to talk. It sends the client id. (fd)
-  int rc = tellapic_send_ctl(thread->client->fd, thread->client->fd, CTL_SV_ID);
+  int rc = tellapic_send_ctl(thread->client->fd, thread->tnum, CTL_SV_ID);
   if (rc <= 0)
     return pwdok;
   
@@ -701,20 +701,20 @@ authclient(tdata_t *thread)
       /* we know we need to read a password. Use this library function for it. */
       pwd = tellapic_read_pwd(thread->client->fd, pwd, &newpwdlen);
 
-#ifdef DEBUG 
+#     ifdef DEBUG 
       char buff[256];
       sprintf(buff, "[NFO]:\tPassword read from client %d was %s. </16>Try number %d<!16>.", thread->client->fd, pwd, try);
       print_output(buff);
-#endif
+#     endif
 
       if (pwd != NULL)
 	{
 
-	  //TODO: CHECK strncmp() !! sigsegv 
+	  /* TODO: CHECK strncmp() !! sigsegv */
 	  pwdok = (args.pwdlen == newpwdlen) && (strncmp(args.pwd, pwd, newpwdlen) == 0);
 	  if (pwdok) 
 	    {
-	      tellapic_send_ctl(thread->client->fd, thread->client->fd, CTL_SV_PWDOK);                                	 /* Send CTL_SV_PWDOK to client */
+	      tellapic_send_ctl(thread->client->fd, thread->tnum, CTL_SV_PWDOK);                                	 /* Send CTL_SV_PWDOK to client */
 
 	      do
 		{
@@ -723,7 +723,7 @@ authclient(tdata_t *thread)
 
 		  stream_t stream = tellapic_read_stream_b(thread->client->fd); 	                                 /* Read client response        */
 
-		  if (stream.header.cbyte == CTL_CL_NAME && stream.data.control.idfrom == thread->client->fd) 
+		  if (stream.header.cbyte == CTL_CL_NAME && stream.data.control.idfrom == thread->tnum) 
 		    {
 		      /* if (thread->client->name != NULL) */
 		      /* 	free(thread->client->name); */
@@ -735,27 +735,27 @@ authclient(tdata_t *thread)
 		    }
 		  else 
 		    {
-#ifdef DEBUG 
-		  char buff[256]; 
-		  sprintf(buff, "[NFO]:\tBad Response from thread %d", thread->tnum);
-		  print_output(buff);
-#endif
+#                     ifdef DEBUG 
+		      char buff[256]; 
+		      sprintf(buff, "[NFO]:\tBad Response from thread %d", thread->tnum);
+		      print_output(buff);
+#                     endif
 		      return 0;         /* If it isn't a CTL_CL_NAME packet is an invalid sequence */
 		    }
 
-#ifdef DEBUG 
+#                 ifdef DEBUG 
 		  char buff[256]; 
 		  sprintf(buff, "[NFO]:\tResponse from was %s (len: %d) on thread %d", thread->client->name, thread->client->namelen, thread->tnum);
 		  print_output(buff);
-#endif	
+#                 endif	
 		}
-	      while(isnameinuse(thread) && tellapic_send_ctl(thread->client->fd, thread->client->fd, CTL_SV_NAMEINUSE));
+	      while(isnameinuse(thread) && tellapic_send_ctl(thread->client->fd, thread->tnum, CTL_SV_NAMEINUSE));
 	    } 
 	  else 
 	    {
 	      try++;
 	      if (try < MAX_PWD_TRIES)
-		tellapic_send_ctl(thread->client->fd, thread->client->fd, CTL_SV_PWDFAIL);
+		tellapic_send_ctl(thread->client->fd, thread->tnum, CTL_SV_PWDFAIL);
 	    }
 	} 
       else
@@ -805,11 +805,11 @@ forward_stream(tdata_t *thread)
   read(thread->readpipe, &msgaddress, sizeof(msgaddress));            /* Read the message address and clear the pipe */
   message = (mitem_t *) msgaddress;                                   /* Cast to mitem_t*  */
 
-#ifdef DEBUG
+#  ifdef DEBUG
   char buff[256];
   sprintf(buff, "[NFO]:\tMessage address was %p. Cbyte is: %d.", message, message->stream[CBYTE_INDEX]);
   print_output(buff);
-#endif
+# endif
 
   //result = tellapic_send(thread->client->fd, &(message->stream));      /* Forward data to this client */
   
@@ -826,12 +826,11 @@ forward_stream(tdata_t *thread)
       
       pthread_mutex_unlock(&message->mutex);
       
-#ifdef DEBUG 
+#     ifdef DEBUG 
       char buff[256];
       sprintf(buff, "[NFO]:\tForwarding ok on thread %d", thread->tnum);
       print_output(buff);
-#endif
-    
+#     endif
     }
 }
 
@@ -897,7 +896,7 @@ fetch_stream(tdata_t *thread)
       free(rawstream);
       free(item);
       printf("Ping packet received\n");
-      tellapic_send_ctl(thread->client->fd, thread->client->fd, CTL_SV_PONG);
+      tellapic_send_ctl(thread->client->fd, thread->tnum, CTL_SV_PONG);
       rc = 1;
       break;
 
@@ -934,55 +933,55 @@ queue_message(mitem_t *msg, tdata_t *thread)
 
   if (alone) 
     {
-      // Destroy the message if we are alone in the server and leave.
+      /* Destroy the message if we are alone in the server and leave. */
       pthread_mutex_destroy(&msg->mutex);
       free(msg);
       return;
     }
   else 
     {
-      // Queue the message and signal other threads
+      /* Queue the message and signal other threads */
       pthread_mutex_lock(&queuemutex);
       list_add_last_item(msgqueue, msg);
       pthread_mutex_unlock(&queuemutex);
     }
 
   int    i;
-  int    current  = thread->tnum;    // We are going to use local data to access the whole tdata_t structure using pointer arithmetics.
+  int    current  = thread->tnum;    /* We are going to use local data to access the whole tdata_t structure using pointer arithmetics. */
   void   *address = msg;
 
-  // Who told you that C won't accept negative indexes such as a[-2]?
+  /* Who told you that C won't accept negative indexes such as a[-2]? */
   for(i = 0 - current; i < MAX_CLIENTS - current; i++) 
     {
-      // Lock the connected clients bit flag. 
+      /* Lock the connected clients bit flag. */
       pthread_mutex_lock(&ccbitsetmutex);
 
-      // If thread[i] is connected with a client and this message is private, ensure that is for him. 
-      // If it isn't for him, then do nothing. Else, if it isn't private, send it anyway.
+      /* If thread[i] is connected with a client and this message is private, ensure that is for him. */
+      /* If it isn't for him, then do nothing. Else, if it isn't private, send it anyway. */
 
       if ( (ccbitset & (1 << thread[i].tnum))  /* Check if thread[i].tnum is connected */
 	   &&
-	   (msg->tothread == -1 || msg->tothread == thread[i].client->fd)
+	   (msg->tothread == -1 || msg->tothread == thread[i].tnum)
 	   && current != thread[i].tnum)       /* Check if we aren't forwarding to the sender */
 	{
 
-	  // msg is sent to N threads. When msg->delivers reachs 0, means that all threads have processed the message msg. If
-	  // a thread is somehow blocked forever, this msg will not ever be processed. But, when the server is shutted down, it
-	  // will removed from the queue in the resource free section. If a thread disconnects a client before the msg address
-	  // arrives at his pipe, the thread cleanup procedure SHOULD decrement msg->delivers field.
+	  /* msg is sent to N threads. When msg->delivers reachs 0, means that all threads have processed the message msg. If */
+	  /* a thread is somehow blocked forever, this msg will not ever be processed. But, when the server is shutted down, it */
+	  /* will removed from the queue in the resource free section. If a thread disconnects a client before the msg address */
+	  /* arrives at his pipe, the thread cleanup procedure SHOULD decrement msg->delivers field. */
 	  pthread_mutex_lock(&msg->mutex);
 	  msg->delivers++;
 	  pthread_mutex_unlock(&msg->mutex);
 
-#ifdef DEBUG 
+#         ifdef DEBUG 
 	  char   buf[256];
 	  sprintf(buf, "Sending msg address </B>%p<!B> to thread </B>%d<!B>. Stream cbyte is: %d", address, thread[i].tnum, msg->stream[CBYTE_INDEX]);
 	  print_output(buf);
-#endif
+#         endif
       
-	  // We are sending a pointer address to the thread i. So, this queue behaves as an array with direct access to it.
-	  // The thread i will read the pipe, will cast the void* to mitem_t* and it will deliver the message to the client
-	  // that is connected to.
+	  /* We are sending a pointer address to the thread i. So, this queue behaves as an array with direct access to it. */
+	  /* The thread i will read the pipe, will cast the void* to mitem_t* and it will deliver the message to the client */
+	  /* that is connected to. */
 	  write(thread[i].writepipe, &address, sizeof(address)); //TODO: care about write() being locked. It will lock the mutexes forever.
 	}
       pthread_mutex_unlock(&ccbitsetmutex);
@@ -1022,13 +1021,13 @@ void manage_client_cleanup(void *arg) {
   if (item != NULL)
     {
       pthread_mutex_init(&item->mutex, NULL);
-      byte_t *rawstream = tellapic_build_rawstream(CTL_SV_CLRM, thread->client->fd);
+      byte_t *rawstream = tellapic_build_rawstream(CTL_SV_CLRM, thread->tnum);
       item->delivers = 0;
       item->stream   = rawstream;
       item->tothread = -1;       /* Set -1 by default so we simplified the switch */
       queue_message(item, thread);
     }
-  tellapic_send_ctl(thread->client->fd, thread->client->fd, CTL_CL_DISC);
+  tellapic_send_ctl(thread->client->fd, thread->tnum, CTL_CL_DISC);
   sprintf(buff, "[</8>WRN<!8>]:\tThread %d is closing link now...", thread->tnum);
   print_output(buff);
   if (thread->client->name != NULL)

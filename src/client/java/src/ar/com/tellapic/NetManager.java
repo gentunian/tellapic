@@ -167,16 +167,17 @@ public class NetManager extends Observable {
 		}
 		
 		System.out.println("Password was ok.");
-
+		int id = stream.getData().getControl().getIdfrom();
+		
 		do {
 			System.out.println("Trying new name: "+name+" with length: "+name.length());
 			/* Send the user name packet to the server */
-			tellapic.tellapic_send_ctle(fd, stream.getData().getControl().getIdfrom(), tellapicConstants.CTL_CL_NAME, name.length(), name);
+			tellapic.tellapic_send_ctle(fd, id, tellapicConstants.CTL_CL_NAME, name.length(), name);
 
 			/* Read server response */
 			stream = tellapic.tellapic_read_stream_b(fd);
 			cbyte = stream.getHeader().getCbyte();
-
+				
 			/* Check for an invalid sequence/packet */
 			if (cbyte == tellapicConstants.CTL_FAIL) {
 				/* Dispose the monitor */
@@ -221,6 +222,8 @@ public class NetManager extends Observable {
 		}
 		SessionUtils.setUsername(name);
 		SessionUtils.setPassword(password);
+		SessionUtils.setId(id);
+		
 		return AUTHENTICATION_OK;
 	}
 	
@@ -315,7 +318,7 @@ public class NetManager extends Observable {
 	 * @return
 	 * @throws WrongPacketException 
 	 */
-	public int connect(String host, int port, String name, String password) throws WrongPacketException {
+	public int connect(String host, String port, String name, String password) throws WrongPacketException {
 		/*
 		 * A successful connection sequence is:
 		 * 
@@ -388,7 +391,6 @@ public class NetManager extends Observable {
 					try {
 						Thread.sleep(2000);
 						if (pongReceived ) {
-							System.out.println("Sending ping...");
 							tellapic.tellapic_send_ctl(fd, SessionUtils.getId(), tellapic.CTL_CL_PING);
 							pongReceived = false;
 							pingTime = System.nanoTime();
@@ -602,7 +604,6 @@ public class NetManager extends Observable {
 					System.out.println("Was text");
 
 				} else if (tellapic.tellapic_ispong(header) == 1) {
-					System.out.println("Was pong");
 					pingTime = (double) ((System.nanoTime() - pingTime) / 1000000);
 					setPing(pingTime);
 					pongReceived = true;
@@ -656,7 +657,7 @@ public class NetManager extends Observable {
 			
 			/* Handle text properties if the used tool was TEXT. Otherwise, handle stroke properties */
 			if ((remoteTool & tellapicConstants.TOOL_TEXT) == tellapicConstants.TOOL_TEXT) {
-				c.handleFontSizeChange((int)drawingData.getWidth());
+				c.handleFontSizeChange(drawingData.getWidth());
 				c.handleFontStyleChange(drawingData.getType().getText().getStyle());
 				c.handleTextChange(drawingData.getType().getText().getInfo());
 				c.handleFontFaceChange(drawingData.getType().getText().getFace());

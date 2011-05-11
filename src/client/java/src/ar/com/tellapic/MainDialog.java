@@ -87,7 +87,7 @@ public class MainDialog extends JDialog {
 	private String host;
 	private String name;
 	private String password;
-	private int port;
+	private String port;
 		
 
 	public MainDialog() {
@@ -311,7 +311,7 @@ public class MainDialog extends JDialog {
 			public void actionPerformed(ActionEvent e) {
 				FavouritesTableModel model = (FavouritesTableModel) favouriteTable.getModel();
 				host = (String) model.getValueAt(favouriteTable.getSelectedRow(), 0);
-				port = Integer.parseInt((String) model.getValueAt(favouriteTable.getSelectedRow(), 1));
+				port = (String) model.getValueAt(favouriteTable.getSelectedRow(), 1);
 				name = (String) model.getValueAt(favouriteTable.getSelectedRow(), 2);
 				password = (String) model.getValueAt(favouriteTable.getSelectedRow(), 3);
 				userInput = true;
@@ -554,7 +554,7 @@ public class MainDialog extends JDialog {
 		host = joinHostField.getText();
 		name = joinUsernameField.getText();
 		password = String.valueOf(joinPasswordField.getPassword());
-		port = Integer.parseInt(joinPortField.getText());
+		port = joinPortField.getText();
 		userInput = true;
 		MainDialog.this.dispose();
 	}
@@ -744,7 +744,7 @@ public class MainDialog extends JDialog {
 	/**
 	 * @return
 	 */
-	public int getRemotePort() {
+	public String getRemotePort() {
 		return port;
 	}
 

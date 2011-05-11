@@ -105,7 +105,7 @@ void
 	      chtype c = getchCDKObject(ObjOf(console->entry), &f);
 	      char *cmd = injectCDKEntry(console->entry, c);
 	      
-	      char b[134];
+	      /* char b[134]; */
 
 	      if (cmd != NULL && cmdlen > 0) 
 		{
@@ -184,7 +184,9 @@ console_create(char *title, char *prompt)
       return NULL;
     }
   
-  int bla, rows, cols;
+  int bla;
+  int rows;
+  int cols;
   chtype *s = char2Chtype(prompt, &console->promptlen, &bla);
   freeChtype(s);
   console->prompt = copyChar(prompt);
