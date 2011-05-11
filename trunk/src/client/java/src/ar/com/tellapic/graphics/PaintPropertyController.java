@@ -82,7 +82,7 @@ public class PaintPropertyController implements IPaintPropertyController {
 	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleFontSizeChange(int)
 	 */
 	@Override
-	public void handleFontSizeChange(int size) {
+	public void handleFontSizeChange(float size) {
 		model.setFontPropertySize(size);
 //		if (drawingController != null)
 //			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());

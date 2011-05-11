@@ -105,7 +105,7 @@ public interface IToolBoxManager {
 	 * 
 	 * @param size
 	 */
-	public void setFontPropertySize(int size);
+	public void setFontPropertySize(float size);
 	
 	/**
 	 * 

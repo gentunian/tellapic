@@ -28,7 +28,7 @@ import java.awt.Font;
 public class PaintPropertyFont extends PaintProperty {
 	private String text;
 	private String face;
-	private int    size;
+	private float    size;
 	private int    style;
 	
 	public PaintPropertyFont() {
@@ -68,7 +68,7 @@ public class PaintPropertyFont extends PaintProperty {
 	/**
 	 * @param size the size to set
 	 */
-	public void setSize(int size) {
+	public void setSize(float size) {
 		this.size = size;
 	}
 
@@ -76,7 +76,7 @@ public class PaintPropertyFont extends PaintProperty {
 	/**
 	 * @return the size
 	 */
-	public int getSize() {
+	public float getSize() {
 		return size;
 	}
 
@@ -102,7 +102,7 @@ public class PaintPropertyFont extends PaintProperty {
 	 * @return
 	 */
 	public Font getFont() {
-		return new Font(face, style, size);
+		return Font.decode(face).deriveFont(style, size);
 	}
 
 
