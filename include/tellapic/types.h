@@ -20,14 +20,15 @@
 #include "tellapic/constants.h"
 #include "posh/posh.h"
 
-#if defined linux
-typedef int tellapic_socket_t;
-#else
-#   if defined WIN32
+#if defined (linux) || defined (LINUX)
+       typedef int tellapic_socket_t;
+#elif defined (WIN32) || defined (_WIN32)
 #      include <winsock2.h>
-       typedef SOCKET tellapic_socket_t;
-#   endif
+       typedef int tellapic_socket_t;
+#else
+#      error "Fuck you"
 #endif
+
 
 
 typedef posh_byte_t byte_t;  /* basic byte unit */
@@ -99,8 +100,8 @@ typedef struct {
   byte_t         style;                     /* byte 22 */
   byte_t         facelen;                   /* byte 23 */
   tellapic_u16_t infolen;                   /* byte 24 */
-  byte_t         face[MAX_FONTFACE_LEN];    /* byte 25 */
-  byte_t         info[MAX_TEXT_SIZE];        
+  byte_t         face[MAX_FONTFACE_LEN];    /* byte 26 */
+  byte_t         info[MAX_TEXT_SIZE];       /* byte 26 + facelen */ 
 } text_t;
 
 
