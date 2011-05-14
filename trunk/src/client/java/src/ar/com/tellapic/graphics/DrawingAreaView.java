@@ -905,10 +905,17 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 		if (usedTool == null)
 			return;
 		
-		
-		if (usedTool.isBeingUsed() && usedTool.isOnDragSupported()) {
-			usedTool.onDrag(xZoomOffset, yZoomOffset, event.getButton(), event.getModifiersEx());
-			
+		if (usedTool.isOnDragSupported()) {
+			/* Do nothing if some coordinate is negative */
+			if (event.getX() < 0 || event.getY() < 0)
+				usedTool.onPause();
+			else {
+				if (usedTool.isBeingUsed())
+					
+					usedTool.onDrag(xZoomOffset, yZoomOffset, event.getButton(), event.getModifiersEx());
+				else
+					usedTool.onRestore();
+			}
 //			if (usedTool instanceof DrawingTool) {
 				// This will trigger an update() to the DrawingAreaView
 //				user.setTemporalDrawing(((DrawingTool)usedTool).getDrawing());
