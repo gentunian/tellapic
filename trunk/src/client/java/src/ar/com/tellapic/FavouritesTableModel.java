@@ -84,6 +84,7 @@ public class FavouritesTableModel extends AbstractTableModel implements TableMod
 	 * 
 	 */
 	public FavouritesTableModel() {
+		rowCount = 0;
 		initDocumentFactory();
 	}
 	
@@ -154,7 +155,7 @@ public class FavouritesTableModel extends AbstractTableModel implements TableMod
 	 */
 	public boolean addFavourite(String host, int port, String name, String password) {
 				
-		FileOutputStream fos = null;
+		//FileOutputStream fos = null;
 		try {
 			File file = new File(FAVOURITE_FILE);
 			if (!file.exists()) {
@@ -183,8 +184,13 @@ public class FavouritesTableModel extends AbstractTableModel implements TableMod
 			favouriteRoot.appendChild(serverElement);
 			
 			saveToFile();
-			rowCount++;
+			if (rowCount == 0)
+				initDocumentFactory();
+			else
+				rowCount++;
+			
 			fireTableRowsInserted(0, rowCount-1);
+			
 			return true;
 		} catch (FileNotFoundException e) {
 			Utils.logMessage("No "+FAVOURITE_FILE+" file found.");
