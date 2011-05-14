@@ -1677,7 +1677,7 @@ tellapic_read_pwd(tellapic_socket_t socket, char *pwd, int *len)
 /**
  *
  */
-PUBLIC_API(tellapic_u32_t)
+POSH_PUBLIC_API(tellapic_u32_t)
 tellapic_rawsend(tellapic_socket_t socket, byte_t *rawstream)
 {
   tellapic_u32_t ssize = _read_stream_size(rawstream);
