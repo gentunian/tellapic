@@ -1677,7 +1677,7 @@ tellapic_read_pwd(tellapic_socket_t socket, char *pwd, int *len)
 /**
  *
  */
-POSH_PUBLIC_API(tellapic_u32_t)
+PUBLIC_API(tellapic_u32_t)
 tellapic_rawsend(tellapic_socket_t socket, byte_t *rawstream)
 {
   tellapic_u32_t ssize = _read_stream_size(rawstream);
@@ -1824,7 +1824,6 @@ tellapic_send_text(tellapic_socket_t socket, int idfrom, int dnum, float w, floa
   byte_t         *rawstream = malloc(ssize);
   void           *pointer = rawstream;
   
-
 #ifdef LITTLE_ENDIAN_VALUE                                              /*  +-------------------+                    */
   pointer = WriteByte(pointer, 1);                                       /*  |    endianness     |  1 byte            */
   pointer = WriteByte(pointer, CTL_CL_FIG);                              /*  |      cbyte        |  1 byte            */
@@ -2078,6 +2077,9 @@ tellapic_send_chatp(tellapic_socket_t socket, int idfrom, int idto, int textlen,
   byte_t         *rawstream = malloc(ssize);
   void           *pointer   = rawstream;
 
+  if (textlen <= 0)
+    return -1;
+
 #ifdef LITTLE_ENDIAN_VALUE                                             /* +------------------+ */
   pointer = WriteByte(pointer, 1);                                      /* |   endianness     | */
   pointer = WriteByte(pointer, CTL_CL_PMSG);                            /* |     cbyte        | */
@@ -2114,6 +2116,9 @@ tellapic_send_chatb(tellapic_socket_t socket, int idfrom, int textlen, char* tex
   byte_t         *rawstream = malloc(ssize);
   void           *pointer   = rawstream;
 
+  if (textlen <= 0)
+    return -1;
+
 #ifdef LITTLE_ENDIAN_VALUE                                             /* +------------------+ */
   pointer = WriteByte(pointer, 1);                                      /* |   endianness     | */
   pointer = WriteByte(pointer, CTL_CL_BMSG);                            /* |     cbyte        | */
@@ -2147,6 +2152,9 @@ tellapic_send_ctle(tellapic_socket_t socket, int idfrom, int ctle, int infolen, 
   tellapic_u32_t ssize = HEADER_SIZE + infolen + 1;
   byte_t         *rawstream = malloc(ssize);
   void           *pointer = rawstream;
+
+  if (infolen <= 0)
+    return -1;
 
 #ifdef LITTLE_ENDIAN_VALUE                                              /* +------------------+ */
   pointer = WriteByte(pointer, 1);                                      /* |   endianness     | */
