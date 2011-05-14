@@ -17,6 +17,8 @@
  */  
 package ar.com.tellapic.graphics;
 
+import java.awt.geom.Line2D;
+
 import ar.com.tellapic.NetManager;
 import ar.com.tellapic.SessionUtils;
 import ar.com.tellapic.lib.tellapic;
@@ -60,7 +62,7 @@ final public class LineNet extends Line {
 			return ;
 		
 		if (NetManager.getInstance().isConnected() && avoidLoopback) {
-			java.awt.Rectangle bounds = drawing.getShape().getBounds();
+			Line2D line = (Line2D) drawing.getShape();
 			
 			tellapic.tellapic_send_fig(
 					NetManager.getInstance().getFd(),
@@ -73,10 +75,10 @@ final public class LineNet extends Line {
 					drawing.getPaintPropertyColor().getRed(),
 					drawing.getPaintPropertyColor().getGreen(),
 					drawing.getPaintPropertyColor().getBlue(),
-					(int)bounds.getX(),
-					(int)bounds.getY(),
-					(int)(bounds.getX() + bounds.getWidth()),
-					(int)(bounds.getY() + bounds.getHeight()),
+					(int)line.getX1(),
+					(int)line.getY1(),
+					(int)line.getX2(),
+					(int)line.getY2(),
 					drawing.getPaintPropertyStroke().getLineJoins(),
 					drawing.getPaintPropertyStroke().getEndCaps(),
 					drawing.getPaintPropertyStroke().getMiterLimit(),
