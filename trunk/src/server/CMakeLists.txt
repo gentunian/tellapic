@@ -18,12 +18,11 @@ include_directories(${INCDIR})
 add_executable(server ${SERVER_FILE})
 
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
-  set(DEBUG_COMPILE_FLAG "-DDEBUG=1")
+  set(DEBUG_COMPILE_FLAG "-DDEBUG=1 -g")
 endif()
 
 #
 set_target_properties(server PROPERTIES COMPILE_FLAGS "${CDK_COMPILE_FLAG} ${DEBUG_COMPILE_FLAG} -DBIG_ENDIAN_VALUE=${BIG_ENDIAN_VALUE}")
-
   
 # 
 target_link_libraries(server tellapic ${CMAKE_REQUIRED_LIBRARIES} ${CDK_LIBRARIES} ${LIBRARIES})

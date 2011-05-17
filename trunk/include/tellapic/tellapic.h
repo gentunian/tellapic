@@ -29,7 +29,7 @@
 
 #include <stdarg.h>
 #include "tellapic/types.h"
-
+#include "tellapic/constants.h"
 
 
 /**
@@ -96,7 +96,7 @@ tellapic_connect_to(const char *hostname, const char *port);
  *
  */
 POSH_PUBLIC_API(void)
-tellapic_close_fd(tellapic_socket_t socket);
+tellapic_close_socket(tellapic_socket_t socket);
 
 /**
  *
@@ -249,5 +249,8 @@ tellapic_isfig(header_t *header);
  */
 POSH_PUBLIC_API(void)
 tellapic_free(stream_t *stream);
+
+POSH_PUBLIC_API(void)
+tellapic_interrupt_socket();
 
 #endif
