@@ -173,7 +173,7 @@ tellapic_connect_to(const char *hostname, const char *port)
  *
  */
 POSH_PUBLIC_API(void)
-tellapic_close_fd(tellapic_socket_t socket) 
+tellapic_close_socket(tellapic_socket_t socket) 
 {
   /* shutdown the send half of the connection since no more data will be sent */
   shutdown(socket, SD_SEND);
