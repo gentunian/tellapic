@@ -6,9 +6,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-
+#include <signal.h>
 #include "tellapic/tellapic.h"
 
+void signal_handler(int sig, siginfo_t *info, void *context);
 
 /**
  * A wrapper from read() C function 
@@ -81,6 +82,15 @@ _read_b(int fd, size_t totalbytes, byte_t *buf)
 POSH_PUBLIC_API(tellapic_socket_t)
 tellapic_connect_to(const char *hostname, const char *port)
 {
+  struct sigaction   sig_action;
+  sig_action.sa_handler = signal_handler;
+  sigemptyset(&sig_action.sa_mask);
+  sigprocmask(SIG_BLOCK, &sig_action.sa_mask, NULL);
+  sig_action.sa_flags = SA_SIGINFO;
+  sig_action.sa_flags &= ~SA_RESTART;
+  //sigaction(SIGINT, &sig_action, NULL);
+  sigaction(SIGALRM, &sig_action, NULL);
+
   int sd;
 
   struct hostent *host;
@@ -111,7 +121,21 @@ tellapic_connect_to(const char *hostname, const char *port)
  *
  */
 POSH_PUBLIC_API(void)
-tellapic_close_fd(tellapic_socket_t socket) 
+tellapic_close_socket(tellapic_socket_t socket) 
 {
   close(socket);
+}
+
+/**
+ *
+ */
+POSH_PUBLIC_API(void)
+tellapic_interrupt_socket()
+{
+  alarm(1);
+}
+
+void signal_handler(int sig, siginfo_t *info, void *context) 
+{
+  printf("Signal caught: %d\n", sig);
 }
