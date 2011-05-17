@@ -21,6 +21,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Frame;
 import java.awt.Image;
 import java.awt.SystemColor;
 import java.awt.event.ActionEvent;
@@ -31,20 +32,26 @@ import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
+import javax.swing.InputMap;
 import javax.swing.InputVerifier;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
+import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.LayoutStyle;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
@@ -90,16 +97,18 @@ public class MainDialog extends JDialog {
 	private String port;
 		
 
-	public MainDialog() {
-		super();
-		initComponents();
+	public MainDialog(JFrame parent) {
+		super(parent);
 		
+		initComponents();
 		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		setTitle(Utils.msg.getString("MainDialog.0")); //$NON-NLS-1$
 		setLocationByPlatform(true);
 		setModal(true);
 		setResizable(true);
-//		setIconImage(Utils.createIconImage(112, 75, "/icons/logo_small.png"));
+		//((Frame)getOwner()).setIconImage(Utils.createIconImage(112, 75, "/icons/logo_small.png"));
+		//((Frame)getParent()).setIconImage(Utils.createIconImage(112, 75, "/icons/logo_small.png"));
+		setModal(true);
 		pack();
 		setLocationRelativeTo(null);
 //		setUndecorated(true);
@@ -110,7 +119,28 @@ public class MainDialog extends JDialog {
 		userSet = false;
 	}
 	
+	
+	/**
+	 * 
+	 */
+	protected JRootPane createRootPane() {
+		JRootPane rootPane = new JRootPane();
+		KeyStroke stroke = KeyStroke.getKeyStroke("ESCAPE");
+		Action actionListener = new AbstractAction() {
+			private static final long serialVersionUID = 1L;
 
+			public void actionPerformed(ActionEvent actionEvent) {
+				setVisible(false);
+			}
+		};
+		InputMap inputMap = rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+		inputMap.put(stroke, "ESCAPE");
+		rootPane.getActionMap().put("ESCAPE", actionListener);
+		
+		return rootPane;
+	}
+	
+	
 	/** This method is called from within the constructor to
 	 * initialize the form.
 	 * WARNING: Do NOT modify this code. The content of this method is
