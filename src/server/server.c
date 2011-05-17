@@ -103,25 +103,25 @@ int main(int argc, char *argv[]) {
   thread_data[SV_THREAD].tstate = THREAD_STATE_ACT;                        /* set server thread state as active */
   setnonblock(args.svfd);
 
-#ifdef CDK_AWARE
+# ifdef CDK_AWARE
   //console = console_create("<C>Server output\0", "</B/24> >>> \0");
   if (console == NULL)
     print_output("Could not start console: \n");
-#else
+# else
   print_output("Could no start console. No cdk library found.");
-#endif
+# endif
 
   int fdmax = args.svfd + 1;
   FD_ZERO(&readset);
   FD_SET(args.svfd, &readset);
 
-#ifdef CDK_AWARE
+# ifdef CDK_AWARE
   if (console != NULL)
     {
       fdmax = MAX(args.svfd, console->infd);
       FD_SET(console->infd, &readset);
     }
-#endif
+# endif
 
   while(CONTINUE) 
     {
@@ -139,10 +139,10 @@ int main(int argc, char *argv[]) {
 	{
 	  /* Is selects exits with <0 then take that error as fatal and end the server */
 	  print_output("</K/16>[ERR]:\tFatal error... Terminating server...<!K!16>");
-#ifdef CDK_AWARE
+#         ifdef CDK_AWARE
 	  if (console != NULL)
 	    console_destroy(console);
-#endif
+#         endif
 	  CONTINUE = 0;
 	}
       else 
@@ -177,7 +177,7 @@ int main(int argc, char *argv[]) {
 		}
 	    }
 	  
-#ifdef CDK_AWARE
+#         ifdef CDK_AWARE
 	  /*************************************************************/
 	  /* Check if select() call exit for reading a console command */
 	  /*************************************************************/
@@ -206,7 +206,7 @@ int main(int argc, char *argv[]) {
 	      /* Set to 0 the command line buffer */
 	      memset(cMsgBuf, 0, 256);
 	    }
-#endif
+#         endif
 	}
     }
 
@@ -223,9 +223,9 @@ int main(int argc, char *argv[]) {
   pthread_attr_destroy(&joinattr);
 
   /* Destroy the console instance. */
-#ifdef CDK_AWARE
+# ifdef CDK_AWARE
   if (console != NULL) console_destroy(console);
-#endif
+# endif
 
   print_output("[NFO]:\tCurses unloaded.");
 
@@ -442,32 +442,32 @@ find_free_thread(tdata_t thread_data[])
   for(i = 0; i < MAX_CLIENTS && notfound; i++)
     {
 
-#ifdef DEBUG
+#     ifdef DEBUG
       sprintf(buff, "[NFO]:\tsearching place on %d and locking", i);
       print_output(buff);
       memset(buff, '\0', 256);
-#endif
+#     endif
 
       pthread_mutex_lock(&thread_data[i].stmutex);
 
       switch(thread_data[i].tstate) 
 	{
 	case THREAD_STATE_NEW:
-#ifdef DEBUG
+#         ifdef DEBUG
 	  sprintf(buff, "[NFO]:\tthread %d was never used", i);
 	  print_output(buff);
 	  memset(buff, '\0', 256);
-#endif
+#         endif
 	  thread_data[i].tstate = THREAD_STATE_INIT;
 	  notfound = 0;
 	  break;
 	  
 	case THREAD_STATE_FREE:
-#ifdef DEBUG
+#         ifdef DEBUG
 	  sprintf(buff, "[NFO]:\tthread %d was used.", i);
 	  print_output(buff);
 	  memset(buff, '\0', 256);
-#endif
+#         endif
 	  pthread_join(thread_data[i].tid, NULL);
 	  thread_data[i].tstate = THREAD_STATE_INIT;
 	  notfound = 0;
@@ -511,14 +511,11 @@ void
   pthread_cleanup_push(manage_client_cleanup, thread);                                /* register cleanup function for this thread */
   set_tstate(thread, THREAD_STATE_INIT);                                              /* set the thread state to INIT */
   inet_ntop(AF_INET, &(thread->client->address.sin_addr), address, INET_ADDRSTRLEN);  /* copy the client IPV6 address */
-  
-
-#ifdef DEBUG 
+# ifdef DEBUG 
   memset(buff, '\0', 256);
   sprintf(buff, "[NFO]:\tConnection attempt from: </B/24>%s<!B!24>. Asigned socket number </B/24>%d<!B!24> on thread number %d",address,  thread->client->fd, thread->tnum);
   print_output(buff);
-#endif
-
+# endif
 
   if(authclient(thread) == 0) 
     {
@@ -527,36 +524,30 @@ void
       print_output(buff);
       pthread_exit(NULL);
     }
-
-#ifdef DEBUG 
+# ifdef DEBUG 
   memset(buff, '\0', 256);
   sprintf(buff, "[NFO]:\tClient %d authed.", thread->client->fd);
   print_output(buff);
-#endif
-
+# endif
   /* The client is authed (poorly) with the server now. He/she should ask for the file we are sharing/discussing. */
   tellapic_send_ctl(thread->client->fd, thread->tnum, CTL_SV_AUTHOK);
-
-
-#ifdef DEBUG 
+# ifdef DEBUG 
   memset(buff, '\0', 256);
   sprintf(buff, "[NFO]:\tWaiting for client %d to ask for file.", thread->client->fd);
   print_output(buff);
-#endif
+# endif
 
-  // Take note to change this behaviour so later releases can extend the server to hold
-  // more than just 1 image per instance. It would be nice to have an arbitrary list of images
-  // dinamically created by the owner of this session
+  /* Take note to change this behaviour so later releases can extend the server to hold */
+  /* more than just 1 image per instance. It would be nice to have an arbitrary list of images */
+  /* dinamically created by the owner of this session */
   stream_t stream = tellapic_read_stream_b(thread->client->fd);
   if (stream.header.cbyte == CTL_CL_FILEASK)
     {
-
-#ifdef DEBUG 
+#     ifdef DEBUG 
       memset(buff, '\0', 256);
       sprintf(buff, "[NFO]:\tSending file to client %d.", thread->tnum);
       print_output(buff);
-#endif
-
+#     endif
       tellapic_send_file(thread->client->fd, args.image, args.filesize);
     }
   else
@@ -565,32 +556,25 @@ void
   FD_ZERO(&readfdset);                     /* initialize file descriptor set */
   FD_SET(thread->client->fd, &readfdset);  /* add client socket to the set   */
   FD_SET(thread->readpipe, &readfdset);    /* add the pipe-event to the set  */
-
-
-#ifdef DEBUG 
+# ifdef DEBUG 
   memset(buff, '\0', 256);
   sprintf(buff, "[NFO]:\tClient connected from </B/24>%s<!B!24> to thread number </B/24>%d<!B!24> on socket number </B/24>%d<!B!24>\n", address, thread->tnum, thread->client->fd);
   print_output(buff);
-#endif
-
-
-  // send the connected clients to this client
+# endif
+  /* send the connected clients to this client */
   int i;
   for(i = 0 - thread->tnum; i < MAX_CLIENTS - thread->tnum; i++)
     {
       pthread_mutex_lock(&thread[i].stmutex);
       if (thread[i].tstate == THREAD_STATE_ACT)
-	{
-	  tellapic_send_ctle(thread->client->fd, thread[i].tnum, CTL_SV_CLADD, thread[i].client->namelen, thread[i].client->name);
-	}
+	tellapic_send_ctle(thread->client->fd, thread[i].tnum, CTL_SV_CLADD, thread[i].client->namelen, thread[i].client->name);
       pthread_mutex_unlock(&thread[i].stmutex);
     }
-
 
   pthread_mutex_lock(&ccbitsetmutex);                  /* Lock the shared resource   */
   ccbitset |= (1 << thread->tnum);                     /* Set the bit flag indicating this client thread number connection */
   pthread_mutex_unlock(&ccbitsetmutex);                /* Unlock the shared resource */
-  set_tstate(thread, THREAD_STATE_ACT);                /* set the thread state to INIT */
+  set_tstate(thread, THREAD_STATE_ACT);                /* set the thread state to ACTIVE */
   pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL); /* set the cancel state of this thread */
 
   mitem_t *msg = malloc(sizeof(mitem_t));
@@ -604,13 +588,11 @@ void
   msg->delivers = 0;
   pthread_mutex_init(&msg->mutex, NULL);
   queue_message(msg, thread);
-
 # ifdef DEBUG 
   memset(buff, '\0', 256);
   sprintf(buff, "[NFO]:\tMain attendance loop start on thread %d", thread->tnum);
   print_output(buff);
 # endif
-
 
   while(thread->tstate != THREAD_STATE_END) 
     {
@@ -690,7 +672,7 @@ authclient(tdata_t *thread)
   int      pwdok = 0;
   int      try   = 0;
   
-  // The server is the first to talk. It sends the client id. (fd)
+  /* The server is the first to talk. It sends the client id. (fd) */
   int rc = tellapic_send_ctl(thread->client->fd, thread->tnum, CTL_SV_ID);
   if (rc <= 0)
     return pwdok;
@@ -719,7 +701,10 @@ authclient(tdata_t *thread)
 	      do
 		{
 		  if (thread->client->name != NULL)
-		    free(thread->client->name);
+		    {
+		      free(thread->client->name);
+		      thread->client->name = NULL;
+		    }
 
 		  stream_t stream = tellapic_read_stream_b(thread->client->fd); 	                                 /* Read client response        */
 
@@ -1011,27 +996,30 @@ void manage_client_cleanup(void *arg) {
   tdata_t *thread = (tdata_t *) arg;
   char    buff[64];
 
-  /* First thing to do set this state to free     */
-  /* so no other thread can access thread->client */
-  /* memmory. thread->client memmory is accesed   */
-  /* or should be accesed only when thread state  */
-  /* is ACTIVE or INIT.                           */
-  set_tstate(thread, THREAD_STATE_FREE);
-  mitem_t *item = malloc(sizeof(mitem_t));
-  if (item != NULL)
+  /* If thread was ACTIVE (connected) or END (ending) send */
+  /* CTL_SV_CLRM so other clients can remove it   */
+  /* from their connected client list.            */
+  if (thread->tstate == THREAD_STATE_ACT || thread->tstate == THREAD_STATE_END)
     {
-      pthread_mutex_init(&item->mutex, NULL);
-      byte_t *rawstream = tellapic_build_rawstream(CTL_SV_CLRM, thread->tnum);
-      item->delivers = 0;
-      item->stream   = rawstream;
-      item->tothread = -1;       /* Set -1 by default so we simplified the switch */
-      queue_message(item, thread);
+      set_tstate(thread, THREAD_STATE_FREE);
+      mitem_t *item = malloc(sizeof(mitem_t));
+      if (item != NULL)
+	{
+	  pthread_mutex_init(&item->mutex, NULL);
+	  byte_t *rawstream = tellapic_build_rawstream(CTL_SV_CLRM, thread->tnum);
+	  item->delivers = 0;
+	  item->stream   = rawstream;
+	  item->tothread = -1;       /* Set -1 by default so we simplified the switch */
+	  queue_message(item, thread);
+	}
+      tellapic_send_ctl(thread->client->fd, thread->tnum, CTL_CL_DISC);
+      free(thread->client->name);
     }
-  tellapic_send_ctl(thread->client->fd, thread->tnum, CTL_CL_DISC);
+  else
+    set_tstate(thread, THREAD_STATE_FREE);
+
   sprintf(buff, "[</8>WRN<!8>]:\tThread %d is closing link now...", thread->tnum);
   print_output(buff);
-  if (thread->client->name != NULL)
-    free(thread->client->name);
   close(thread->client->fd);
   free(thread->client);
 }
@@ -1266,9 +1254,10 @@ void thread_abort() {
 /**
  * signal_handler(int sig):
  * --------------
- * Handle singals
+ * Handle signals
  */
-void signal_handler(int sig) {
+void signal_handler(int sig) 
+{
   switch(sig) {
   case SIGINT:
 #ifdef CDK_AWARE
