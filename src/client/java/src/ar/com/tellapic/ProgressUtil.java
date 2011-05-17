@@ -27,14 +27,15 @@ import javax.swing.event.ChangeListener;
  * Lesser General Public License for more details. 
  */ 
 public class ProgressUtil{ 
-	static class MonitorListener implements ChangeListener, ActionListener{ 
+	public class MonitorListener implements ChangeListener, ActionListener{ 
 		ProgressMonitor monitor; 
 		Window owner; 
 		Timer timer; 
 
 		public MonitorListener(Window owner, ProgressMonitor monitor){ 
 			this.owner = owner; 
-			this.monitor = monitor; 
+			this.monitor = monitor;
+			timer = null;
 		} 
 
 		public void stateChanged(ChangeEvent ce){ 
@@ -52,8 +53,8 @@ public class ProgressUtil{
 			} 
 		} 
 
-		public void actionPerformed(ActionEvent e){ 
-			monitor.removeChangeListener(this); 
+		public void actionPerformed(ActionEvent e){
+			monitor.removeChangeListener(this);
 			ProgressDialog dlg = null;
 			if (owner == null)
 				dlg = new ProgressDialog((Dialog)null, monitor); 
@@ -61,11 +62,11 @@ public class ProgressUtil{
 				dlg = owner instanceof Frame ? new ProgressDialog((Frame)owner, monitor) : new ProgressDialog((Dialog)owner, monitor); 
 			dlg.pack(); 
 			dlg.setLocationRelativeTo(null); 
-			dlg.setVisible(true); 
+			dlg.setVisible(true);
 		} 
 	} 
 
-	public static ProgressMonitor createModalProgressMonitor(Component owner, int total, boolean indeterminate, int milliSecondsToWait){ 
+	public ProgressMonitor createModalProgressMonitor(Component owner, int total, boolean indeterminate, int milliSecondsToWait){ 
 		ProgressMonitor monitor = new ProgressMonitor(total, indeterminate, milliSecondsToWait); 
 		Window window = null;
 		if (owner != null)

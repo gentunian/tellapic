@@ -162,8 +162,8 @@ public class UserManager implements IUserManager, IUserManagerState, TreeTableMo
 			user = users.get(i);
 			found = (user.getUserId() == id);
 		}
-
-		return user;
+		
+		return (found)? user : null;
 	}
 	
 	

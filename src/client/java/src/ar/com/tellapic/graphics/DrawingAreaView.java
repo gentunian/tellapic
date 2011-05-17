@@ -367,9 +367,11 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 		
 		for(AbstractUser user : UserManager.getInstance().getUsers()) {
 			if (!user.isRemoved() && user.isVisible()) {
-				for(Drawing drawing : user.getDrawings()) {
+				for(Drawing drawing : user.getDrawings())
 					drawDrawing(drawingArea, drawing, user.getCustomProperties());
-				}
+				
+				if (user.isDrawing())
+					drawDrawing(drawingArea, user.getDrawing(), user.getCustomProperties());
 			}
 		}
 		
@@ -501,7 +503,7 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 	
 	
 	private void drawDrawing(Graphics2D g, Drawing drawing, PaintProperty[] overridedProperties) {
-		if (drawing.isVisible()) {
+		if (drawing != null && drawing.isVisible()) {
 			g.setRenderingHints(rh);
 			
 			if (drawing.hasAlphaProperty()) {
@@ -804,7 +806,10 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 		if (event.getButton() == MouseEvent.BUTTON1) {
 			if (usedTool instanceof DrawingTool) {
 				DrawingTool drawingTool = (DrawingTool) usedTool;
-				drawingTool.getTemporalDrawing().setUser(user);
+				Drawing temporalDrawing = drawingTool.getTemporalDrawing();
+				
+				temporalDrawing.setUser(user);
+				user.setTemporalDrawing(temporalDrawing);
 				
 				if (drawingTool.hasAlphaCapability())
 					drawingTool.setAlpha(toolBoxState.getOpacityProperty());
@@ -941,7 +946,11 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 		int xZoomOffset = (int)(event.getX() / zoomX);
 		int yZoomOffset = (int)(event.getY() / zoomX);
 		
+		/* Release event won't use temporal drawing anymore */
+		user.setTemporalDrawing(null);
+		
 		if (usedTool.isBeingUsed() && event.getButton() == MouseEvent.BUTTON1) {
+			
 			if (usedTool.isOnReleaseSupported())
 				usedTool.onRelease(xZoomOffset, yZoomOffset, event.getButton(), event.getModifiersEx());
 			
