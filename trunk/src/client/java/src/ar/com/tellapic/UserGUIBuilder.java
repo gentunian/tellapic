@@ -79,7 +79,10 @@ public class UserGUIBuilder {
 //	private JPanel                  buttonCorner;
 //	private JToggleButton           isMetric;
 	
-	public UserGUIBuilder(LocalUser user) {
+	public UserGUIBuilder(LocalUser user) throws NullPointerException{
+		if (user == null)
+			throw new NullPointerException("LocalUser cannot be null.");
+		
 		// Each user has it owns toolbox. This can be a memory overhead issue, but its the bes way to reuse code
 		// and allow concurrency easily.
 		ToolBoxModel                         model = user.getToolBoxModel();
@@ -263,9 +266,13 @@ public class UserGUIBuilder {
 		fileMenu.setMnemonic(KeyEvent.VK_F);
 		
 		reconnect.addActionListener(new ActionListener() {
-			@Override
 			public void actionPerformed(ActionEvent e) {
-				NetManager.getInstance().reconnect();
+				new Thread(new Runnable() {
+					public void run() {
+						/* Dont run this on the EDT */
+						NetManager.getInstance().reconnect();
+					}
+				}).start();
 			}
 		});
 

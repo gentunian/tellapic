@@ -456,4 +456,28 @@ public abstract class AbstractUser extends Observable  {
 		boolean oldValue = isVisible();
 		setVisible(!oldValue);
 	}
+
+
+	/**
+	 * @return
+	 */
+	public boolean isDrawing() {
+		return temporalDrawing != null;
+	}
+
+
+	/**
+	 * @return
+	 */
+	public Drawing getDrawing() {
+		return temporalDrawing;
+	}
+
+
+	/**
+	 * @param temporalDrawing2
+	 */
+	public void setTemporalDrawing(Drawing temporalDrawing) {
+		this.temporalDrawing = temporalDrawing; 
+	}
 }
