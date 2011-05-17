@@ -67,3 +67,4 @@ if (NOT BIG_ENDIAN_VALUE)
 endif()
 
 add_subdirectory(src)
+add_subdirectory(test)
