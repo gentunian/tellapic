@@ -17,6 +17,11 @@
  */  
 package ar.com.tellapic;
 
+import java.awt.Frame;
+import java.lang.reflect.InvocationTargetException;
+
+import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -47,20 +52,18 @@ public class Main {
 
 	static DrawingAreaModel  drawingAreaModel;
 	static DrawingAreaView   dav;
+	static private MainDialog main;
+	static private NetManager netManager;
+	static int result;
 	
 	static {
-		//System.setProperty("java.library.path", ".");
 		System.loadLibrary("tellapicjava");
-		
 	}
 	
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		
-		
-		// UI theme
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (UnsupportedLookAndFeelException e) {
@@ -72,56 +75,56 @@ public class Main {
 		} catch (IllegalAccessException e) {
 			//fallback
 		}
-		
-//		JFrame f = new JFrame();
-//		f.setIconImage(Utils.createIconImage(24,24, "/icons/system/logo.png"));
-//		Window w = new Window(f);
-//		w.setIconImage(Utils.createIconImage(24,24, "/icons/system/logo.png"));
-//		JDialog d = new JDialog(w);
-//		d.setIconImage(Utils.createIconImage(24,24, "/icons/system/logo.png"));
-//		d.setPreferredSize(new Dimension(100,100));
-//		d.setTitle("WTF?");
-//		d.setResizable(true);
-//		f.setPreferredSize(new Dimension(100,100));
-//		f.pack();
-//		d.pack();
-//		d.setVisible(true);
-//		System.out.println(d.getParent());
-//		System.out.println(d.getOwner());
-		
+		netManager = NetManager.getInstance();
 		if (args.length == 0) {
-			MainDialog main = new MainDialog();
-			main.setVisible(true);
-			if (main.isUserInput()) {
-				switch(main.getOption()) {
-				
-				case MainDialog.CREATE_TAB:
-					break;
-					
-				case MainDialog.JOIN_TAB:
-				case MainDialog.FAVOURITE_TAB:
-					System.out.println("Joining to server "+main.getRemoteHost()+":"+main.getRemotePort());
-					int r = -1;
-					try {
-						r = NetManager.getInstance().connect(main.getRemoteHost(), main.getRemotePort(), main.getUsername(), main.getPassword());
-					} catch (WrongPacketException e) {
-						e.printStackTrace();
+			try {
+				SwingUtilities.invokeAndWait(new Runnable() {
+					public void run() {
+						JFrame frame = new JFrame();
+						frame.setIconImage(Utils.createIconImage(112, 75, "/icons/system/logo_small.png"));
+						main = new MainDialog(frame);
+						main.setVisible(true);
+						if (main.isUserInput()) {
+							switch(main.getOption()) {
+
+							case MainDialog.CREATE_TAB:
+								break;
+							case MainDialog.JOIN_TAB:
+							case MainDialog.FAVOURITE_TAB:
+								System.out.println("Joining to server "+main.getRemoteHost()+":"+main.getRemotePort());
+								/* Dont run this on the EDT */
+								new Thread(new Runnable() {
+									public void run() {
+										try {
+											result = netManager.connect(main.getRemoteHost(), main.getRemotePort(), main.getUsername(), main.getPassword());
+											if (result > 0)
+												initiate(SessionUtils.getId(), SessionUtils.getUsername());
+											else {
+												JOptionPane.showMessageDialog(null, Utils.msg.getString("errorconnect"), Utils.msg.getString("errorconnecttitle"), JOptionPane.ERROR_MESSAGE);
+												System.exit(1);
+											}
+										} catch(WrongPacketException e) {
+											e.printStackTrace();
+										}
+									}
+								}).start();
+								break;
+
+							default:
+								break;
+							}
+
+						} else {
+							//TODO
+						}
 					}
-					if (r > 0)
-						initiate(SessionUtils.getId(), SessionUtils.getUsername());
-					else {
-						JOptionPane.showMessageDialog(null, Utils.msg.getString("errorconnect"), Utils.msg.getString("errorconnecttitle"), JOptionPane.ERROR_MESSAGE);
-						System.exit(1);
-					}
-					break;
-					
-				default:
-					break;
-				}
-				
-			} else {
-				//TODO
+				});
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
+			} catch (InvocationTargetException e1) {
+				e1.printStackTrace();
 			}
+
 		} else if (args.length == 4){
 			int r=-1;
 			try {
@@ -147,21 +150,19 @@ public class Main {
 	
 	
 	public static void initiate(final int id, final String name) {
+		ToolFactory.registerToolClassName(99, Zoom.class.getName());
 		ToolFactory.registerToolClassName(tellapicConstants.TOOL_ELLIPSE, EllipseNet.class.getName());
 		ToolFactory.registerToolClassName(tellapicConstants.TOOL_LINE, LineNet.class.getName());
-		ToolFactory.registerToolClassName(99, Zoom.class.getName());
 		ToolFactory.registerToolClassName(tellapicConstants.TOOL_RECT, RectangleNet.class.getName());
 		ToolFactory.registerToolClassName(tellapicConstants.TOOL_TEXT, TextNet.class.getName());
 		ToolFactory.registerToolClassName(tellapicConstants.TOOL_MARKER, MarkerNet.class.getName());
 		ToolFactory.registerToolClassName(tellapicConstants.TOOL_PATH, PenNet.class.getName());
-		
 		
 		final UserManager userManager = UserManager.getInstance();
 		final LocalUser luser = (LocalUser) userManager.createUser(id, name, false);
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 //				UserManager userManager = UserManager.getInstance();
-				
 				new UserGUIBuilder(luser);
 			}
 		});
