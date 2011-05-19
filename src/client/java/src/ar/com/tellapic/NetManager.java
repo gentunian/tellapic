@@ -72,6 +72,7 @@ public class NetManager extends Observable implements Runnable {
 	private static final int CONNECTION_ERROR = -4; 
 	private static final int AUTHENTICATION_OK = 0;
 	private static final int FILE_OK = 1;
+	static final int CONNECTION_OK = 1;
 	
 	
 	private int               monitorStep;
@@ -130,7 +131,7 @@ public class NetManager extends Observable implements Runnable {
 			}
 		}
 		
-		if (pinger.isAlive()) {
+		if (pinger != null && pinger.isAlive()) {
 			pinger.interrupt();
 			try {
 				pinger.join(5000);
@@ -416,6 +417,7 @@ public class NetManager extends Observable implements Runnable {
 		if (tellapic.tellapic_valid_socket(socket) == 0) {
 			/* Dispose the Dialog */
 			monitor.setCurrent(null, monitor.getTotal());
+			stop();
 			return CONNECTION_ERROR;
 		}
 		stream = tellapic.tellapic_read_stream_b(socket);
@@ -424,7 +426,7 @@ public class NetManager extends Observable implements Runnable {
 			/* Dispose the Dialog */
 			monitor.setCurrent(null, monitor.getTotal());
 			/* Close the connection */
-			tellapic.tellapic_close_socket(socket);
+			stop();
 			throw new WrongPacketException("Wrong response by server upon connection packet.");
 		}
 		/* Set the session id */
@@ -434,11 +436,17 @@ public class NetManager extends Observable implements Runnable {
 		SessionUtils.setPort(port);
 
 		/* Authenticate with the server */
-		if ((error = authenticate(password, name)) < 0)
+		if ((error = authenticate(password, name)) < 0) {
+			stop();
 			return error;
+		}
+		
 		/* Ask for file */
-		if ((error = askForFile()) < 0)
+		if ((error = askForFile()) < 0) {
+			stop();
 			return error;
+		}
+		
 		monitor.setCurrent("Downloading done!", monitorStep++);
 		setConnected(true);
 		
@@ -464,7 +472,15 @@ public class NetManager extends Observable implements Runnable {
 		pinger.start();
 		monitor.setCurrent("Starting network thread", monitorStep++);
 		
-		return tellapic.tellapic_valid_socket(socket);
+		/* JNI library will return a non-zero to inform True. We use negative numbers */
+		/* to inform an error and we can't assure that the function bellow will return */
+		/* a positive number. We just know that if it's not zero, then everything went fine */
+		if (tellapic.tellapic_valid_socket(socket) != 0)
+			return CONNECTION_OK;
+		else {
+			stop();
+			return CONNECTION_ERROR;
+		}
 	}
 	
 	
