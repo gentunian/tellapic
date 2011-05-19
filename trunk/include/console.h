@@ -63,4 +63,7 @@ console_enable(console_t *console);
 int
 console_isenabled(console_t *console);
 
+void
+console_destroy(console_t *console);
+
 #endif

@@ -19,6 +19,12 @@
 #include "tellapic/types.h"
 
 
+#define PORT_ARG 1
+#define FILE_ARG 2
+#define INVALID_PORT -1
+#define INVALID_FILE -2
+#define FILE_ERR     -3
+
 /***************************/
 /* approach for portability */
 /***************************/
@@ -64,7 +70,7 @@ const char *tstatus[5] = { "New", "Free", "Init", "Active", "End" };
 /* Client hold structure */
 typedef struct cl {
   int                clidx;
-  int                fd;
+  tellapic_socket_t  socket;
   char               *name;
   int                namelen;
   struct sockaddr_in address;
@@ -278,5 +284,26 @@ send_pwdok(client_t *client);
  */
 ssize_t
 my_getpass (void *pwd);
+
+
+/**
+ *
+ */
+int
+authclient(tdata_t *thread);
+
+
+/**
+ *
+ */
+int
+isnameinuse(tdata_t *thread);
+
+/**
+ *
+ */
+int
+args_check(int arc, char **argv);
+
 
 #endif
