@@ -66,7 +66,7 @@ final public class MarkerNet extends Marker {
 			else
 				wrappedEvent |= tellapicConstants.EVENT_PMIDDLE;
 			tellapic.tellapic_send_drw_init(
-					NetManager.getInstance().getFd(),
+					NetManager.getInstance().getSocket(),
 					wrappedEvent,
 					0,
 					SessionUtils.getId(), 
@@ -114,7 +114,7 @@ final public class MarkerNet extends Marker {
 					
 				Drawing drawing = super.getTemporalDrawing();
 				tellapic.tellapic_send_drw_using(
-						NetManager.getInstance().getFd(),
+						NetManager.getInstance().getSocket(),
 						wrappedEvent,
 						eventExtMod,
 						SessionUtils.getId(), 
@@ -155,7 +155,7 @@ final public class MarkerNet extends Marker {
 				wrappedEvent |= tellapicConstants.EVENT_RMIDDLE;
 
 			tellapic.tellapic_send_drw_using(
-					NetManager.getInstance().getFd(),
+					NetManager.getInstance().getSocket(),
 					wrappedEvent,
 					0,
 					SessionUtils.getId(), 

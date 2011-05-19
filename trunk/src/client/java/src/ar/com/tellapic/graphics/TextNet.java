@@ -57,7 +57,7 @@ final public class TextNet extends Text {
 		if (NetManager.getInstance().isConnected() && avoidLoopback) {
 			
 			tellapic.tellapic_send_text(
-					NetManager.getInstance().getFd(),
+					NetManager.getInstance().getSocket(),
 					SessionUtils.getId(),
 					1,
 					drawing.getPaintPropertyFont().getFont().getSize2D(),

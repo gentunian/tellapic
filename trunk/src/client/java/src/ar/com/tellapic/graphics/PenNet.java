@@ -66,7 +66,7 @@ final public class PenNet extends Pen {
 			else
 				wrappedEvent |= tellapicConstants.EVENT_PMIDDLE;
 			tellapic.tellapic_send_drw_init(
-					NetManager.getInstance().getFd(),
+					NetManager.getInstance().getSocket(),
 					wrappedEvent,
 					0,
 					SessionUtils.getId(),
@@ -113,7 +113,7 @@ final public class PenNet extends Pen {
 					
 				Drawing drawing = super.getTemporalDrawing();
 				tellapic.tellapic_send_drw_using(
-						NetManager.getInstance().getFd(),
+						NetManager.getInstance().getSocket(),
 						wrappedEvent,
 						eventExtMod,
 						SessionUtils.getId(), 
@@ -154,7 +154,7 @@ final public class PenNet extends Pen {
 				wrappedEvent |= tellapicConstants.EVENT_RMIDDLE;
 
 			tellapic.tellapic_send_drw_using(
-					NetManager.getInstance().getFd(),
+					NetManager.getInstance().getSocket(),
 					wrappedEvent,
 					0,
 					SessionUtils.getId(), 
