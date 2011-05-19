@@ -27,7 +27,8 @@ public class ProgressMonitor{
 	boolean indeterminate; 
 	int milliSecondsToWait = 500; // half second 
 	String status; 
-
+	boolean totalChanged = false;
+	
 	public ProgressMonitor(int total, boolean indeterminate, int milliSecondsToWait){ 
 		this.total = total; 
 		this.indeterminate = indeterminate; 
@@ -81,6 +82,8 @@ public class ProgressMonitor{
 	public void changeTotal(int newTotal) {
 		Utils.logMessage("Changing total to: "+newTotal);
 		this.total = newTotal;
+		this.totalChanged = true;
+		this.fireChangeEvent();
 	}
 	
 	/*--------------------------------[ ListenerSupport ]--------------------------------*/ 
@@ -108,5 +111,12 @@ public class ProgressMonitor{
 //			ChangeListener l = ((ChangeListener)iter.next());
 //			l.stateChanged(ce); 
 //		} 
+	}
+
+	/**
+	 * @return
+	 */
+	public boolean isTotalChanged() {
+		return totalChanged;
 	} 
 }

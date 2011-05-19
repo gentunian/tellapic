@@ -44,20 +44,19 @@ public class ProgressDialog extends JDialog implements ChangeListener{
 
 	public ProgressDialog(Frame owner, ProgressMonitor monitor) throws HeadlessException{ 
 		super(owner, "Progress", true); 
-		setIconImage(Utils.createIconImage(112, 75, "/icons/logo_small.png"));
 		init(monitor); 
 	} 
 
 	public ProgressDialog(Dialog owner, ProgressMonitor monitor) throws HeadlessException{ 
 		super(owner);
-		setIconImage(Utils.createIconImage(112, 75, "/icons/logo_small.png"));
 		init(monitor); 
 	} 
 
 	private void init(ProgressMonitor monitor){ 
 		this.monitor = monitor; 
 
-		progressBar = new JProgressBar(0, monitor.getTotal()); 
+		progressBar = new JProgressBar(0, monitor.getTotal());
+
 		if(monitor.isIndeterminate()) 
 			progressBar.setIndeterminate(true); 
 		else 
@@ -89,7 +88,9 @@ public class ProgressDialog extends JDialog implements ChangeListener{
 			}); 
 			return; 
 		} 
-
+		if (monitor.isTotalChanged())
+			progressBar.setMaximum(monitor.getTotal());
+		
 		if(monitor.getCurrent()!=monitor.getTotal()){ 
 			statusLabel.setText(monitor.getStatus()); 
 			if(!monitor.isIndeterminate()) 
