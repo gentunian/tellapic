@@ -64,13 +64,11 @@ _read_b(tellapic_socket_t socket, size_t totalbytes, byte_t *buf)
 
       if (bytes > 0)
 	{
-	  printf(">0 bytes: %Zd\n", bytes);
 	  bytesleft -= bytes;
 	  bytesread += bytes;
 	}
       else
 	{
-	  printf("<= 0bytes: %Zd\n", bytes);
 	  bytesleft = 0;
 	}
       fflush(stdout);
