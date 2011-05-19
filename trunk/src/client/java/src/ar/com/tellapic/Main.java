@@ -165,7 +165,7 @@ public class Main {
 		try {
 			/* Send a message to the network manager to connect to a known server. */
 			result = netManager.connect(host, port, name, pwd);
-			return (result != 0);
+			return (result == NetManager.CONNECTION_OK);
 		} catch(WrongPacketException e) {
 			e.printStackTrace();
 		}
