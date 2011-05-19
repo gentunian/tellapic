@@ -21,10 +21,18 @@
 #include "posh/posh.h"
 
 #if defined (linux) || defined (LINUX)
-       typedef int tellapic_socket_t;
+        typedef struct socket_t{
+	  int s_socket;
+	} tellapic_socket_t;
 #elif defined (WIN32) || defined (_WIN32)
-#      include <winsock2.h>
-       typedef int tellapic_socket_t;
+#       include <winsock2.h>
+#       include <ws2tcpip.h>
+#       pragma comment(lib, "Ws2_32.lib")
+        typedef struct socket_t {
+	  SOCKET   s_socket;
+	  int      s_interrupt;
+       }tellapic_socket_t;
+
 #else
 #      error "Fuck you"
 #endif
