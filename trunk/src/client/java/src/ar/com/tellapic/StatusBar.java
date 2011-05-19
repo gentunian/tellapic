@@ -22,6 +22,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Image;
+import java.util.HashMap;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -48,10 +49,7 @@ public class StatusBar extends JPanel implements Observer {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private static final String CONNECTING_STRING = "connecting";
-	private static final String DISCONNECTED_STRING = "disconnected";
-	private static final String CONNECTED_STRING = "connected";
-
+	private HashMap<String, Color> colors;
 	private JLabel connectionStatusLabel;
 	private JLabel connectionStatus;
 	private JLabel toolInfo;
@@ -138,6 +136,10 @@ public class StatusBar extends JPanel implements Observer {
 		//		add(connectionStatus, BorderLayout.LINE_END);
 		//		add(toolInfo, BorderLayout.CENTER);
 		//		add(new JLabel("test"), BorderLayout.LINE_END);
+		colors = new HashMap<String, Color>();
+		colors.put("Connected", Color.blue);
+		colors.put("Connecting...", Color.yellow);
+		colors.put("Disconnected", Color.red);
 		setVisible(true);
 	}
 
@@ -157,15 +159,15 @@ public class StatusBar extends JPanel implements Observer {
 	 * @param color
 	 */
 	public void setStatus(String text, Color color) {
-		if (text.matches(CONNECTING_STRING)) {
+		if (text.matches(NetManager.CONNECTING_STRING)) {
 			
 			if (t != null) {
 				if (!t.isRunning()) {
-					t = new IsConnectingLabel(connectionStatus, CONNECTING_STRING, color, '.', 3);
+					t = new IsConnectingLabel(connectionStatus, NetManager.CONNECTING_STRING, color, '.', 3);
 					t.start();
 				}
 			} else {
-				t = new IsConnectingLabel(connectionStatus, CONNECTING_STRING, color, '.', 3);
+				t = new IsConnectingLabel(connectionStatus, NetManager.CONNECTING_STRING, color, '.', 3);
 				t.start();
 			}
 		} else {
@@ -205,17 +207,10 @@ public class StatusBar extends JPanel implements Observer {
 	@Override
 	public void update(Observable o, Object arg) {
 		if (o instanceof NetManager) {
-			
 			double ping = ((NetManager)o).getPing();
-
-			if (((NetManager)o).isConnected()) {
-				setStatus(CONNECTED_STRING, Color.blue);
-				setPing(ping);
-			}
-			else if (((NetManager)o).isConnecting())
-				setStatus(CONNECTING_STRING, Color.yellow);
-			else
-				setStatus(DISCONNECTED_STRING, Color.red);
+			String status = (((NetManager)o).getStatus());
+			setStatus(status, colors.get(status));
+			setPing(ping);
 		}
 	}
 
