@@ -27,6 +27,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <stdarg.h>
+#include <math.h>
 //#include <openssl/sha.h>
 #include <termios.h>
 #ifdef CDK_AWARE
@@ -89,10 +90,10 @@ int main(int argc, char *argv[]) {
 
 
   //args.imglist = list_make_empty(args.imglist);                          /* initialize image list. TODO (24/05/10): ?!? */
-  if (args_check(argc, argv) != 1)                                         /* check program arguments and fill args_t structure in args */
+  if (args_check(argc, argv) < 0)                                         /* check program arguments and fill args_t structure in args */
     exit(1);
 
-  args.svfd = start_server(atoi(argv[1]), &serveraddr);                    /* Prepare the server for listen */
+  args.svfd = start_server(atoi(argv[PORT_ARG]), &serveraddr);             /* Prepare the server for listen */
 
   for(i = 0; i < MAX_CLIENTS; i++)                                         /* Initialize main data structures and global variables */
     data_init_thread(&thread_data[i], i);
@@ -125,8 +126,7 @@ int main(int argc, char *argv[]) {
 
   while(CONTINUE) 
     {
-      int notfound = 1;                  
-      int addrlen  = sizeof(clientaddr); /* the address structure length */
+      socklen_t addrlen  = sizeof(clientaddr); /* the address structure length */
 
       copyset = readset;                 /* copy the read file descriptor set to be used and modified by select() call */
 
@@ -262,7 +262,7 @@ allocate_and_launch(tdata_t *thread, int fd, struct sockaddr_in addr, pthread_at
 
       if (THREAD_get_error(rv, WARN, thread->tnum)) 
 	{
-	  close(thread->client->fd);
+	  close(thread->client->socket.s_socket);
 	  free(thread->client);
 	  set_tstate(thread, THREAD_STATE_FREE);
 	}
@@ -336,7 +336,7 @@ process_command(char *cmd, tdata_t *thread_data)
     {
       int i = 0;
       pthread_mutex_lock(&ccbitsetmutex);
-      for(i; i < MAX_CLIENTS; i++) 
+      for(i = 0; i < MAX_CLIENTS; i++) 
 	{
 	  if (ccbitset & (1 << i)) 
 	    {
@@ -379,7 +379,7 @@ process_command(char *cmd, tdata_t *thread_data)
 	    {
 	      char str[INET_ADDRSTRLEN];
 	      inet_ntop(AF_INET, &(thread_data[tnum].client->address.sin_addr), str, INET_ADDRSTRLEN);
-	      sprintf(buff, "command output: </B>Thread </24>%d<!24> socket number: </24>%d<!24>", tnum, thread_data[tnum].client->fd);
+	      sprintf(buff, "command output: </B>Thread </24>%d<!24> socket number: </24>%d<!24>", tnum, thread_data[tnum].client->socket.s_socket);
 	      print_output(buff);
 	      sprintf(buff, "command output: </B>Thread </24>%d<!24> client name: </24>%s<!24>", tnum, thread_data[tnum].client->name);
 	      print_output(buff);
@@ -472,6 +472,14 @@ find_free_thread(tdata_t thread_data[])
 	  thread_data[i].tstate = THREAD_STATE_INIT;
 	  notfound = 0;
 	  break;
+
+	default:
+#         ifdef DEBUG
+	  sprintf(buff, "[NFO]:\tthread %d is busy.", i);
+	  print_output(buff);
+	  memset(buff, '\0', 256);
+#         endif
+	  break;
 	}
       /**
        * MAN PAGE:
@@ -503,7 +511,7 @@ void
   char      buff[256]; //TODO: #define MAX_BUFMSG_SIZE 256
   char      address[INET_ADDRSTRLEN];          /* this will hold the IP address                   */
   tdata_t   *thread = (tdata_t *) arg;         /* a thread data structure                         */
-  int       fdmax   = thread->client->fd + 1;  /* max file descriptor number to be used by select */
+  int       fdmax   = thread->client->socket.s_socket + 1;  /* max file descriptor number to be used by select */
   fd_set    readfdset;                         /* this will hold client->fd                       */
   fd_set    fdsetcopy;                         /* this is a required copy                         */
   struct    timeval to;
@@ -513,7 +521,7 @@ void
   inet_ntop(AF_INET, &(thread->client->address.sin_addr), address, INET_ADDRSTRLEN);  /* copy the client IPV6 address */
 # ifdef DEBUG 
   memset(buff, '\0', 256);
-  sprintf(buff, "[NFO]:\tConnection attempt from: </B/24>%s<!B!24>. Asigned socket number </B/24>%d<!B!24> on thread number %d",address,  thread->client->fd, thread->tnum);
+  sprintf(buff, "[NFO]:\tConnection attempt from: </B/24>%s<!B!24>. Asigned socket number </B/24>%d<!B!24> on thread number %d",address,  thread->client->socket.s_socket, thread->tnum);
   print_output(buff);
 # endif
 
@@ -526,21 +534,21 @@ void
     }
 # ifdef DEBUG 
   memset(buff, '\0', 256);
-  sprintf(buff, "[NFO]:\tClient %d authed.", thread->client->fd);
+  sprintf(buff, "[NFO]:\tClient %d authed.", thread->client->socket.s_socket);
   print_output(buff);
 # endif
   /* The client is authed (poorly) with the server now. He/she should ask for the file we are sharing/discussing. */
-  tellapic_send_ctl(thread->client->fd, thread->tnum, CTL_SV_AUTHOK);
+  tellapic_send_ctl(thread->client->socket, thread->tnum, CTL_SV_AUTHOK);
 # ifdef DEBUG 
   memset(buff, '\0', 256);
-  sprintf(buff, "[NFO]:\tWaiting for client %d to ask for file.", thread->client->fd);
+  sprintf(buff, "[NFO]:\tWaiting for client %d to ask for file.", thread->client->socket.s_socket);
   print_output(buff);
 # endif
 
   /* Take note to change this behaviour so later releases can extend the server to hold */
   /* more than just 1 image per instance. It would be nice to have an arbitrary list of images */
   /* dinamically created by the owner of this session */
-  stream_t stream = tellapic_read_stream_b(thread->client->fd);
+  stream_t stream = tellapic_read_stream_b(thread->client->socket);
   if (stream.header.cbyte == CTL_CL_FILEASK)
     {
 #     ifdef DEBUG 
@@ -548,17 +556,17 @@ void
       sprintf(buff, "[NFO]:\tSending file to client %d.", thread->tnum);
       print_output(buff);
 #     endif
-      tellapic_send_file(thread->client->fd, args.image, args.filesize);
+      tellapic_send_file(thread->client->socket, args.image, args.filesize);
     }
   else
     pthread_exit(NULL); //it is supposed to be a CTL_CL_FILEASK stream
 
   FD_ZERO(&readfdset);                     /* initialize file descriptor set */
-  FD_SET(thread->client->fd, &readfdset);  /* add client socket to the set   */
+  FD_SET(thread->client->socket.s_socket, &readfdset);  /* add client socket to the set   */
   FD_SET(thread->readpipe, &readfdset);    /* add the pipe-event to the set  */
 # ifdef DEBUG 
   memset(buff, '\0', 256);
-  sprintf(buff, "[NFO]:\tClient connected from </B/24>%s<!B!24> to thread number </B/24>%d<!B!24> on socket number </B/24>%d<!B!24>\n", address, thread->tnum, thread->client->fd);
+  sprintf(buff, "[NFO]:\tClient connected from </B/24>%s<!B!24> to thread number </B/24>%d<!B!24> on socket number </B/24>%d<!B!24>\n", address, thread->tnum, thread->client->socket.s_socket);
   print_output(buff);
 # endif
   /* send the connected clients to this client */
@@ -567,7 +575,7 @@ void
     {
       pthread_mutex_lock(&thread[i].stmutex);
       if (thread[i].tstate == THREAD_STATE_ACT)
-	tellapic_send_ctle(thread->client->fd, thread[i].tnum, CTL_SV_CLADD, thread[i].client->namelen, thread[i].client->name);
+	tellapic_send_ctle(thread->client->socket, thread[i].tnum, CTL_SV_CLADD, thread[i].client->namelen, thread[i].client->name);
       pthread_mutex_unlock(&thread[i].stmutex);
     }
 
@@ -635,7 +643,7 @@ void
 
 	  /* Check if select() has set the socket ready for reading. */
 	  /* If so, get the stream.                                  */
-	  if (FD_ISSET(thread->client->fd, &fdsetcopy))
+	  if (FD_ISSET(thread->client->socket.s_socket, &fdsetcopy))
 	    fetchresult = fetch_stream(thread);
 
 
@@ -673,7 +681,7 @@ authclient(tdata_t *thread)
   int      try   = 0;
   
   /* The server is the first to talk. It sends the client id. (fd) */
-  int rc = tellapic_send_ctl(thread->client->fd, thread->tnum, CTL_SV_ID);
+  int rc = tellapic_send_ctl(thread->client->socket, thread->tnum, CTL_SV_ID);
   if (rc <= 0)
     return pwdok;
   
@@ -681,11 +689,11 @@ authclient(tdata_t *thread)
     {
       
       /* we know we need to read a password. Use this library function for it. */
-      pwd = tellapic_read_pwd(thread->client->fd, pwd, &newpwdlen);
+      pwd = tellapic_read_pwd(thread->client->socket, pwd, &newpwdlen);
 
 #     ifdef DEBUG 
       char buff[256];
-      sprintf(buff, "[NFO]:\tPassword read from client %d was %s. </16>Try number %d<!16>.", thread->client->fd, pwd, try);
+      sprintf(buff, "[NFO]:\tPassword read from client %d was %s. </16>Try number %d<!16>.", thread->client->socket.s_socket, pwd, try);
       print_output(buff);
 #     endif
 
@@ -696,7 +704,7 @@ authclient(tdata_t *thread)
 	  pwdok = (args.pwdlen == newpwdlen) && (strncmp(args.pwd, pwd, newpwdlen) == 0);
 	  if (pwdok) 
 	    {
-	      tellapic_send_ctl(thread->client->fd, thread->tnum, CTL_SV_PWDOK);                                	 /* Send CTL_SV_PWDOK to client */
+	      tellapic_send_ctl(thread->client->socket, thread->tnum, CTL_SV_PWDOK);                                	 /* Send CTL_SV_PWDOK to client */
 
 	      do
 		{
@@ -706,7 +714,7 @@ authclient(tdata_t *thread)
 		      thread->client->name = NULL;
 		    }
 
-		  stream_t stream = tellapic_read_stream_b(thread->client->fd); 	                                 /* Read client response        */
+		  stream_t stream = tellapic_read_stream_b(thread->client->socket); 	                                 /* Read client response        */
 
 		  if (stream.header.cbyte == CTL_CL_NAME && stream.data.control.idfrom == thread->tnum) 
 		    {
@@ -734,13 +742,13 @@ authclient(tdata_t *thread)
 		  print_output(buff);
 #                 endif	
 		}
-	      while(isnameinuse(thread) && tellapic_send_ctl(thread->client->fd, thread->tnum, CTL_SV_NAMEINUSE));
+	      while(isnameinuse(thread) && tellapic_send_ctl(thread->client->socket, thread->tnum, CTL_SV_NAMEINUSE));
 	    } 
 	  else 
 	    {
 	      try++;
 	      if (try < MAX_PWD_TRIES)
-		tellapic_send_ctl(thread->client->fd, thread->tnum, CTL_SV_PWDFAIL);
+		tellapic_send_ctl(thread->client->socket, thread->tnum, CTL_SV_PWDFAIL);
 	    }
 	} 
       else
@@ -796,9 +804,9 @@ forward_stream(tdata_t *thread)
   print_output(buff);
 # endif
 
-  //result = tellapic_send(thread->client->fd, &(message->stream));      /* Forward data to this client */
+  //result = tellapic_send(thread->client->socket.s_socket, &(message->stream));      /* Forward data to this client */
   
-  result = tellapic_rawsend(thread->client->fd, message->stream);
+  result = tellapic_rawsend(thread->client->socket, message->stream);
 
   if (result)
     {
@@ -829,8 +837,8 @@ fetch_stream(tdata_t *thread)
   int          rc = 0;
   mitem_t      *item = NULL;
   //stream_t     stream;
-  //stream = tellapic_read_stream_b(thread->client->fd);
-  byte_t       *rawstream = tellapic_rawread_b(thread->client->fd);
+  //stream = tellapic_read_stream_b(thread->client->socket);
+  byte_t       *rawstream = tellapic_rawread_b(thread->client->socket);
 
   if (rawstream == NULL)
     return rc;
@@ -857,7 +865,7 @@ fetch_stream(tdata_t *thread)
       break;
 
     case CTL_CL_FILEASK:
-      //send_file(thread->client->fd); as CTL_CL_DISC but with item->tothread = (1 << stream.data.type.control.idfrom);
+      //send_file(thread->client->socket); as CTL_CL_DISC but with item->tothread = (1 << stream.data.type.control.idfrom);
       rc = 1;
       break;
 
@@ -865,7 +873,7 @@ fetch_stream(tdata_t *thread)
     case CTL_NOPIPE:
       free(rawstream);
       free(item);
-      //rawstream = tellapic_build_rawstream(CTL_SV_CLRM, thread->client->fd);
+      //rawstream = tellapic_build_rawstream(CTL_SV_CLRM, thread->client->socket.s_socket);
       //queue_message(item, thread);
       set_tstate(thread, THREAD_STATE_END);
       rc = 1;
@@ -881,7 +889,7 @@ fetch_stream(tdata_t *thread)
       free(rawstream);
       free(item);
       printf("Ping packet received\n");
-      tellapic_send_ctl(thread->client->fd, thread->tnum, CTL_SV_PONG);
+      tellapic_send_ctl(thread->client->socket, thread->tnum, CTL_SV_PONG);
       rc = 1;
       break;
 
@@ -1012,7 +1020,7 @@ void manage_client_cleanup(void *arg) {
 	  item->tothread = -1;       /* Set -1 by default so we simplified the switch */
 	  queue_message(item, thread);
 	}
-      tellapic_send_ctl(thread->client->fd, thread->tnum, CTL_CL_DISC);
+      tellapic_send_ctl(thread->client->socket, thread->tnum, CTL_CL_DISC);
       free(thread->client->name);
     }
   else
@@ -1020,7 +1028,7 @@ void manage_client_cleanup(void *arg) {
 
   sprintf(buff, "[</8>WRN<!8>]:\tThread %d is closing link now...", thread->tnum);
   print_output(buff);
-  close(thread->client->fd);
+  close(thread->client->socket.s_socket);
   free(thread->client);
 }
 
@@ -1154,19 +1162,23 @@ int THREAD_get_error(int value, int severity, int tid) {
  * No error checking is needed on calling this function as it
  * exits the main program. No socket created, no server running.
  */
-int start_server(int port, struct sockaddr_in *addr) {   
+int 
+start_server(int port, struct sockaddr_in *addr) 
+{   
   int sd = 0;
   int val = 1;
-  if ((sd = socket( AF_INET, SOCK_STREAM, 0 )) == -1) {
-    perror("Server Initialization error: cannot create socket().\n");
-    exit(1);
-  }
+  if ((sd = socket( AF_INET, SOCK_STREAM, 0 )) == -1) 
+    {
+      perror("Server Initialization error: cannot create socket().\n");
+      exit(1);
+    }
   
-  if (setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(int)) == -1) {
-    perror("Server Socket Options: error.\n");
-    close(sd);
-    exit(1);
-  }
+  if (setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(int)) == -1) 
+    {
+      perror("Server Socket Options: error.\n");
+      close(sd);
+      exit(1);
+    }
 
   /* set addr memory to zero */
   memset(addr, 0, sizeof(*addr));
@@ -1177,17 +1189,19 @@ int start_server(int port, struct sockaddr_in *addr) {
   addr->sin_addr.s_addr = htonl(INADDR_ANY);
 
   /* bind socket file descriptor to sctructure */
-  if (bind(sd, (struct sockaddr *)addr, sizeof(*addr)) != 0) {
-    perror("Server Initialization error: can't bind() port.\n");
-    close(sd);
-    abort();
-  }
+  if (bind(sd, (struct sockaddr *)addr, sizeof(*addr)) != 0) 
+    {
+      perror("Server Initialization error: can't bind() port.\n");
+      close(sd);
+      abort();
+    }
 
-  if (listen(sd, 10) != 0) {
-    perror("Server Initialization error: cannot listen().\n");
-    close(sd);
-    abort();
-  }
+  if (listen(sd, 10) != 0) 
+    {
+      perror("Server Initialization error: cannot listen().\n");
+      close(sd);
+      abort();
+    }
 
   //printf("[NFO]:\tServer Initialization: OK...\n");
 
@@ -1218,25 +1232,6 @@ void clccountdec() {
 }
 */
 
-
-/**
- *
- *
-int check_pwd(void *arg) {
-  // arg is a byte_t pointer and should be verified before with STREAM_is_stream()
-  static int    pwdf = 0;
-  const byte_t  *pwd = STREAM_get_pwd((byte_t *) arg);
-
-  if (memcmp(args.pwd, pwd, STREAM_PWD_SIZE)) {
-      pwdf++;
-      if ( pwdf == MAX_PWD_TRIES )
-	return SEQ_CANT_CONTINUE;
-      else
-	return SEQ_NEEDS_RETRY;
-  } else
-    return SEQ_OK;
-}
-*/
 
 /**
 /* thread_abort():
@@ -1286,7 +1281,6 @@ int
 args_check(int argc, char *argv[]) 
 {
   FILE      *file = NULL;
-  int       i     = 0;
 
   /* Check if the program was called correctly */
   if (argc != 3) 
@@ -1297,17 +1291,15 @@ args_check(int argc, char *argv[])
   else 
     {
       /* Port number must be higher thanb 1024 */
-      if (atoi(argv[1]) < 1024) 
+      if (atoi(argv[PORT_ARG]) < 1024) 
 	{
 	  printf("Invalid port number. Must be higher than 1024\n");
-	  //return INVALID_PORT;
-	  return 0;
+	  return INVALID_PORT;
 	}
-      if ((file = fopen(argv[2], "r")) == NULL) 
+      if ((file = fopen(argv[FILE_ARG], "r")) == NULL) 
 	{
-	  printf("Failed to open file: %s\n",argv[2]);
-	  //return FILE_ERR;
-	  return 0;
+	  printf("Failed to open file: %s\n",argv[FILE_ARG]);
+	  return FILE_ERR;
 	}
       // for(i = 0; argv[3][i] != '\0'; i++);
       /* if ( i != SHA_DIGEST_LENGTH * 2) { */
@@ -1317,8 +1309,8 @@ args_check(int argc, char *argv[])
       /* } */
   }
 
-  /* at this point args are ok */
-  args.port = atoi(argv[1]);  
+  /* at this point args seems to be ok */
+  args.port = atoi(argv[PORT_ARG]);  
   args.image = file;
   fseek(file, 0L, SEEK_END);
   args.filesize = ftell(file);
@@ -1326,7 +1318,7 @@ args_check(int argc, char *argv[])
   if (args.filesize > powl(2, 32))
     {
       print_output("File size to large.");
-      return 0;
+      return INVALID_FILE;
     }
   
   printf("Password: ");
@@ -1381,7 +1373,7 @@ int new_client_thread(tdata_t *thread, int clfd, struct sockaddr_in clientaddr) 
   if ( thread->client == NULL ) return 0;
 
   thread->client->clidx   = thread->tnum;
-  thread->client->fd      = clfd;
+  thread->client->socket.s_socket = clfd;
   thread->client->address = clientaddr;
   thread->client->name    = NULL;
   return 1;

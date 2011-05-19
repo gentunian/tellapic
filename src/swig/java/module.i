@@ -34,7 +34,6 @@
   JCALL2(ReleaseStringChars, jenv, $input, (const jchar *)$1);
  }
 
-
 %typemap(jni) tellapic_float[2] "jfloatArray"
 %typemap(jtype) tellapic_float[2] "float[]"
 %typemap(jstype) tellapic_float[2] "float[]"
@@ -97,20 +96,17 @@
 #endif
  }
 
+
 %typemap(jni) char *BYTE "jbyteArray"
 %typemap(jtype) char *BYTE "byte[]"
 %typemap(jstype) char *BYTE "byte[]"
-
 %typemap(in) char *BYTE {
     $1 = (char *) JCALL2(GetByteArrayElements, jenv, $input, 0); 
 }
-
 %typemap(argout) char *BYTE {
     JCALL3(ReleaseByteArrayElements, jenv, $input, (jbyte *) $1, 0); 
 }
-
 %typemap(javain) char *BYTE "$javainput"
-
 /* Prevent default freearg typemap from being used */
 %typemap(freearg) char *BYTE ""
 
@@ -118,21 +114,8 @@
   void custom_wrap(byte_t *rawfile, char *BYTE, unsigned long size)
   {
     int i;
-    /*
-    int j;
-
-    for(j = 0; j < 10; j++) 
-      {
-	printf("byte %d = %c\n", j, rawfile[j]);
-	for(i = 0; i < 8; i++)
-	  printf("bit %d = %d\n", i, (rawfile[j]>>i) & 1);
-
-      }
-    */
-
     for(i = 0; i < size; i++)
       BYTE[i] = rawfile[i];
-
   }
   %}
 

@@ -1682,7 +1682,7 @@ tellapic_rawsend(tellapic_socket_t socket, byte_t *rawstream)
 {
   tellapic_u32_t ssize = _read_stream_size(rawstream);
 
-  tellapic_u32_t r = send(socket, rawstream, ssize, 0);
+  tellapic_u32_t r = send(socket.s_socket, rawstream, ssize, 0);
   
   return r;
 }
@@ -1756,7 +1756,7 @@ tellapic_send(tellapic_socket_t socket, stream_t *stream)
       return 0;
     }
 
-  bytesSent = send(socket, rawstream, stream->header.ssize, 0);
+  bytesSent = send(socket.s_socket, rawstream, stream->header.ssize, 0);
 
   free(rawstream);
   return bytesSent;
@@ -1786,7 +1786,7 @@ tellapic_send_file(tellapic_socket_t socket, FILE *file, tellapic_u32_t filesize
 
   rewind(file);
 
-  bytesSent = send(socket, rawstream, filesize + HEADER_SIZE, 0);
+  bytesSent = send(socket.s_socket, rawstream, filesize + HEADER_SIZE, 0);
 
   free(rawstream);
 
@@ -1872,7 +1872,7 @@ tellapic_send_text(tellapic_socket_t socket, int idfrom, int dnum, float w, floa
                                                                          /*  total bytes = 32 + facenamelen + infolen */
 #endif
 
-  bytesSent = send(socket, rawstream, ssize, 0);
+  bytesSent = send(socket.s_socket, rawstream, ssize, 0);
 
   free(rawstream);
 
@@ -1923,7 +1923,7 @@ tellapic_send_drw_using(tellapic_socket_t socket, int tool, int dcbyte_ext, int 
   pointer = POSH_WriteU16ToBig(pointer, y1);
 #endif  
 
-  bytesSent = send(socket, rawstream, DRW_USING_STREAM_SIZE, 0);
+  bytesSent = send(socket.s_socket, rawstream, DRW_USING_STREAM_SIZE, 0);
 
   free(rawstream);
 
@@ -1991,7 +1991,7 @@ tellapic_send_drw_init(tellapic_socket_t socket, int tool, int dcbyte_ext, int i
   pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(da[1]));
 #endif
   
-  bytesSent = send(socket, rawstream, DRW_INIT_STREAM_SIZE, 0);
+  bytesSent = send(socket.s_socket, rawstream, DRW_INIT_STREAM_SIZE, 0);
 
   free(rawstream);
 
@@ -2058,7 +2058,7 @@ tellapic_send_fig(tellapic_socket_t socket, int tool, int dcbyte_ext, int idfrom
   pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(da[1]));
 #endif
 
-  bytesSent = send(socket, rawstream, FIG_STREAM_SIZE, 0);
+  bytesSent = send(socket.s_socket, rawstream, FIG_STREAM_SIZE, 0);
 
   free(rawstream);
 
@@ -2097,7 +2097,7 @@ tellapic_send_chatp(tellapic_socket_t socket, int idfrom, int idto, int textlen,
   pointer = WriteBytes(pointer, text, textlen);
 #endif
 
-  bytesSent = send(socket, rawstream, ssize, 0);
+  bytesSent = send(socket.s_socket, rawstream, ssize, 0);
 
   free(rawstream);
 
@@ -2134,7 +2134,7 @@ tellapic_send_chatb(tellapic_socket_t socket, int idfrom, int textlen, char* tex
   pointer = WriteBytes(pointer, text, textlen);
 #endif
 
-  bytesSent = send(socket, rawstream, ssize, 0);
+  bytesSent = send(socket.s_socket, rawstream, ssize, 0);
 
   free(rawstream);
 
@@ -2170,7 +2170,7 @@ tellapic_send_ctle(tellapic_socket_t socket, int idfrom, int ctle, int infolen, 
   pointer = WriteBytes(pointer, info, infolen);
 #endif
 
-  bytesSent = send(socket, rawstream, ssize, 0);
+  bytesSent = send(socket.s_socket, rawstream, ssize, 0);
 
   free(rawstream);
 
@@ -2202,7 +2202,7 @@ tellapic_send_ctl(tellapic_socket_t socket, int idfrom, int ctl)
 #endif
   
 
-  bytesSent = send(socket, rawstream, CTL_STREAM_SIZE, 0);
+  bytesSent = send(socket.s_socket, rawstream, CTL_STREAM_SIZE, 0);
 
   free(rawstream);
 
