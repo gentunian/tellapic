@@ -18,6 +18,7 @@
 package ar.com.tellapic.graphics;
 
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Point2D;
 
@@ -57,11 +58,11 @@ public class Pen extends DrawingTool {
 	 * @param name
 	 */
 	public Pen(String name) {
-		super(tellapicConstants.TOOL_PATH, name, PEN_ICON_PATH, Utils.msg.getString("pentooltip"));
+		super(tellapicConstants.TOOL_PATH, name, PEN_ICON_PATH, Utils.msg.getString("pentooltip") ,Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 		firstPoint = new Point2D.Double();
 		inUse = false;
 		temporalDrawing = new Drawing(getName());
-		setToolCursor(PEN_ICON_PATH, 0, 15);
+//		setToolCursor(PEN_ICON_PATH, 0, 15);
 	}
 	
 

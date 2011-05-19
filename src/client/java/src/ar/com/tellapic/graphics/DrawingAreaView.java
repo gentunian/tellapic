@@ -23,9 +23,11 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.util.Observable;
 import java.util.Observer;
 
+import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.InputMap;
@@ -37,6 +39,7 @@ import javax.swing.JViewport;
 import javax.swing.KeyStroke;
 import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 
@@ -261,27 +264,27 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 	 */
 	public void setImage(BufferedImage img) {
 		backimage = img;
-//		foreground = null;
-		System.out.println("w: "+backimage.getWidth()+" h:"+backimage.getHeight());
-		
-//		background = gc.createCompatibleImage(backimage.getWidth(), backimage.getHeight(), Transparency.TRANSLUCENT);
-//		foreground = gc.createCompatibleImage(backimage.getWidth(), backimage.getHeight(), Transparency.TRANSLUCENT);
-//		drawBackgroundOff();
 		
 		int screenWidth  = gd.getDisplayMode().getWidth();
 		int screenHeight = gd.getDisplayMode().getHeight();
 		int startingWidth  = (int) (screenWidth  * .7f);
 		int startingHeight = (int) (screenHeight * .9f);
 		
+		if (backimage == null) {
+			Utils.logMessage("No image loaded, wtf?");
+			try {
+				backimage = ImageIO.read(getClass().getResourceAsStream("/icons/system/noimage.jpg"));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}	
+		}
 		setMaximumSize(new Dimension(backimage.getWidth(), backimage.getHeight()));
 		setPreferredSize(new Dimension(backimage.getWidth(), backimage.getHeight()));
 		foreground = gc.createCompatibleImage(backimage.getWidth(), backimage.getHeight(), Transparency.TRANSLUCENT);
 		background = gc.createCompatibleImage(backimage.getWidth(), backimage.getHeight(), Transparency.TRANSLUCENT);
-//		grid = new Grid(backimage.getWidth(), backimage.getHeight());
-//		permanentArea = (Graphics2D) background.getGraphics();
 		Graphics2D  drawingArea = (Graphics2D) background.getGraphics();
 		drawingArea.drawImage(backimage, 0, 0, null);
-//		drawBackimage(foreground.getGraphics());
+		
 		repaint();
 	}
 	
@@ -936,7 +939,7 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 	@Override
 	public void mouseReleased(MouseEvent event) {
 		//Utils.printEventInfo(event);
-		
+		Utils.logMessage("IS EVENT DISPATCH THREAD?: "+SwingUtilities.isEventDispatchThread());
 		Tool         usedTool = user.getToolBoxModel().getLastUsedTool();
 		
 		/* Do nothing with an empty tool */

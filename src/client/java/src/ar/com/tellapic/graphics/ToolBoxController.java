@@ -3,7 +3,6 @@
  */
 package ar.com.tellapic.graphics;
 
-import java.util.Iterator;
 
 /**
  * 

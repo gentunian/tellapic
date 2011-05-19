@@ -30,7 +30,7 @@ public class Marker extends DrawingTool {
 		firstPoint = new Point2D.Double();
 		inUse = false;
 		temporalDrawing = new Drawing(getName());
-		setToolCursor(MARKER_ICON_PATH, 2, 14);
+		//setToolCursor(MARKER_ICON_PATH, 2, 14);
 	}
 	
 	public Marker() {

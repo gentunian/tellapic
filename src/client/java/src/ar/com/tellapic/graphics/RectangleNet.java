@@ -62,7 +62,7 @@ final public class RectangleNet extends Rectangle {
 		if (NetManager.getInstance().isConnected() && avoidLoopback) {
 			java.awt.Rectangle bounds = drawing.getShape().getBounds();
 			tellapic.tellapic_send_fig(
-					NetManager.getInstance().getFd(),
+					NetManager.getInstance().getSocket(),
 					getToolId(), 
 					0,
 					SessionUtils.getId(), 

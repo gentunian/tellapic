@@ -65,7 +65,7 @@ final public class LineNet extends Line {
 			Line2D line = (Line2D) drawing.getShape();
 			
 			tellapic.tellapic_send_fig(
-					NetManager.getInstance().getFd(),
+					NetManager.getInstance().getSocket(),
 					getToolId(), 
 					0,
 					SessionUtils.getId(), 
