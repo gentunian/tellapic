@@ -54,20 +54,23 @@ import ar.com.tellapic.utils.Utils;
  *
  */
 public class CustomPropertiesDialog extends JDialog {
+	private static final long serialVersionUID = 1L;
+	public static final int   RET_CANCEL = 0;
+	public static final int   RET_OK = 1;
+	
+	private Color             defaultColor = Color.white;
+	private boolean           customColor = false;
+	private AbstractUser      user;
+	private JCheckBox         enablePreview;
+	
+
 	/**
 	 * 
+	 * @param parent
+	 * @param modal
+	 * @param user
+	 * @param color
 	 */
-	private static final long serialVersionUID = 1L;
-	/** A return status code - returned if Cancel button has been pressed */
-	public static final int RET_CANCEL = 0;
-	/** A return status code - returned if OK button has been pressed */
-	public static final int RET_OK = 1;
-	private Color defaultColor = Color.white;
-	private boolean customColor = false;
-	private AbstractUser user;
-	private JCheckBox enablePreview;
-	
-	/** Creates new form NewOkCancelDialog */
 	public CustomPropertiesDialog(Frame parent, boolean modal, AbstractUser user, PaintPropertyColor color) {
 		super(parent, modal);
 		this.user = user;
@@ -102,14 +105,14 @@ public class CustomPropertiesDialog extends JDialog {
 		final JLabel tip = new JLabel("<html><i>"+Utils.msg.getString("colorlabeltooltip")+"</i></html>");
 		tip.setIcon(new ImageIcon(Utils.createIconImage(12, 12, "/icons/system/information-balloon.png")));
 		
-		okButton = new JButton();
-		cancelButton = new JButton();
-		enableColor = new JCheckBox();
+		okButton      = new JButton();
+		cancelButton  = new JButton();
+		enableColor   = new JCheckBox();
 		enablePreview = new JCheckBox();
 		enableOpacity = new JCheckBox(); 
-		colorSlider = new JSlider(0, 16777216);
+		colorSlider   = new JSlider(0, 16777216);
 		opacitySlider = new JSlider(0, 100);
-		colorLabel = new JLabel();
+		colorLabel    = new JLabel();
 		
 		enablePreview.setToolTipText(Utils.msg.getString("enablepreviewtooltip"));
 		enableColor.setToolTipText(Utils.msg.getString("enablecolortooltip"));
@@ -199,6 +202,7 @@ public class CustomPropertiesDialog extends JDialog {
 				colorLabel.setEnabled(value);
 				colorSlider.setEnabled(value);
 				tip.setVisible(value);
+				CustomPropertiesDialog.this.pack();
 			}
 		});
 		enableOpacity.addItemListener(new ItemListener(){
@@ -223,7 +227,7 @@ public class CustomPropertiesDialog extends JDialog {
 			}
 		});
 
-		cancelButton.setText("Cancel");
+		cancelButton.setText("Reset");
 		cancelButton.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
 				cancelButtonActionPerformed(evt);

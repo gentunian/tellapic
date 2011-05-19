@@ -19,6 +19,7 @@ package ar.com.tellapic;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
@@ -65,9 +66,6 @@ import ar.com.tellapic.utils.Utils;
 public class UserView extends JPanel implements Observer {
 
 	private static final long serialVersionUID = 1L;
-//	private JTree                  usersTree;
-//	private DefaultMutableTreeNode rootNode;
-//	private DefaultTreeModel       treeModel;
 	private JScrollPane            treeView;
 	private UserOptionsController  userOptionsController;
 	private JXTreeTable            tree;
@@ -80,12 +78,8 @@ public class UserView extends JPanel implements Observer {
 	private UserView() {
 		super(new GridLayout(1,0));
 		setName(Utils.msg.getString("userview"));
-		
 		tree = new JXTreeTable(UserManager.getInstance());
-		//tree.getTreeTableModel().addTreeModelListener(new TreeModelListener(){});
-
 		addKeyShortcuts();
-		
 		tree.addMouseListener(new MouseAdapter(){
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -127,7 +121,6 @@ public class UserView extends JPanel implements Observer {
 				}
 			}
 			public void mousePressed(MouseEvent e) {
-				// TODO Auto-generated method stub
 				if (e.isPopupTrigger()) {
 					TreePath path = tree.getPathForLocation(e.getX(), e.getY());
 					if (path != null) {
@@ -138,29 +131,20 @@ public class UserView extends JPanel implements Observer {
 				}
 			}
 		});
-//		tree.addTreeSelectionListener(new TreeSelectionListener(){
-//			@Override
-//			public void valueChanged(TreeSelectionEvent e) {
-//				System.out.println("valueChanged: "+e.getPath());
-//				
-//			}
-//		});
-		//tree.setDefaultCellRenderer(MyEyeCheckBox.class, new MyEyeCheckBoxRenderer());
 		tree.setRootVisible(true);
 		tree.setBackground(Color.white);
 		tree.setTableHeader(null);
 		tree.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		tree.setSortable(false);
-		
 //		tree.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-
 		ComponentProvider<AbstractButton> visibilityProvider = new CheckBoxProvider("/icons/system/eye.png", "/icons/system/eye-close.png");
-		ComponentProvider<JLabel> userProvider = new LabelProvider(new UserValue(), (int)JLabel.CENTER_ALIGNMENT);
+		ComponentProvider<JLabel> userProvider = new CustomLabelProvider(new UserValue(), (int)JLabel.CENTER_ALIGNMENT);
 		tree.setDefaultRenderer(MyEyeCheckBox.class, new DefaultTableRenderer(visibilityProvider));
 		tree.setDefaultRenderer(String.class, new DefaultTableRenderer(userProvider));
 		tree.setTreeCellRenderer(new DefaultTreeRenderer(userProvider));
 		tree.setAutoCreateColumnsFromModel(false);
 		
+		tree.getColumn(0).setMaxWidth(222);
 		tree.getColumn(1).setMaxWidth(22);
 		tree.getColumn(2).setMaxWidth(22);
 		tree.getColumn(3).setMaxWidth(22);
@@ -169,7 +153,7 @@ public class UserView extends JPanel implements Observer {
 		tree.getColumn(2).setMinWidth(12);
 		tree.getColumn(3).setMinWidth(12);
 		
-		tree.getColumn(0).setPreferredWidth(50);
+		tree.getColumn(0).setPreferredWidth(100);
 		tree.getColumn(1).setPreferredWidth(16);
 		tree.getColumn(2).setPreferredWidth(16);
 		tree.getColumn(3).setPreferredWidth(16);
@@ -255,7 +239,57 @@ public class UserView extends JPanel implements Observer {
 	}
 	
 	
+	/**
+	 * 
+	 * @author 
+	 *          Sebastian Treu
+	 *          sebastian.treu(at)gmail.com
+	 *
+	 */
+	private class CustomLabelProvider extends LabelProvider {
+		private static final long serialVersionUID = 1L;
+		
+		/**
+		 * @param userValue
+		 * @param centerAlignment
+		 */
+		public CustomLabelProvider(UserValue userValue, int centerAlignment) {
+			super(userValue, centerAlignment);
+		}
+
+		/* (non-Javadoc)
+		 * @see org.jdesktop.swingx.renderer.ComponentProvider#format(org.jdesktop.swingx.renderer.CellContext)
+		 */
+		@Override
+		protected void format(CellContext context) {
+			super.format(context);
+			Object value = context.getValue();
+			if (value instanceof AbstractUser) {
+				AbstractUser user = (AbstractUser) value;
+				PaintPropertyColor customColor = (PaintPropertyColor) user.getCustomColor();
+				Font usedFont = null;
+				if (customColor != null) {
+					rendererComponent.setForeground(customColor.getColor());
+					usedFont = rendererComponent.getFont().deriveFont(Font.BOLD);
+				} else {
+					usedFont = rendererComponent.getFont().deriveFont(Font.PLAIN); 
+				}
+				rendererComponent.setFont(usedFont);
+				int newWidth  = rendererComponent.getFontMetrics(usedFont).stringWidth(rendererComponent.getText());
+				int iconWidth = rendererComponent.getIcon().getIconWidth();
+				rendererComponent.setPreferredSize(new Dimension(newWidth + iconWidth + 10, 22));
+			}
+		}
+	}
 	
+	
+	/**
+	 * 
+	 * @author 
+	 *          Sebastian Treu
+	 *          sebastian.treu(at)gmail.com
+	 *
+	 */
 	private class CheckBoxProvider extends ComponentProvider<AbstractButton> {
 		private static final long serialVersionUID = 1L;
 		private Icon selectedIcon;
@@ -266,10 +300,6 @@ public class UserView extends JPanel implements Observer {
 			deselectedIcon = new ImageIcon(Utils.createIconImage(12, 12, deselIconPath));
 		}
 		
-//		CheckBoxProvider(Icon selIcon, Icon deselIcon) {
-//			selectedIcon = selIcon;
-//			deselectedIcon = deselIcon;
-//		}
 		
 		/* (non-Javadoc)
 		 * @see org.jdesktop.swingx.renderer.ComponentProvider#configureState(org.jdesktop.swingx.renderer.CellContext)
@@ -441,53 +471,4 @@ public class UserView extends JPanel implements Observer {
 //			}
 //		}
 	}
-	
-
-	
-//	private class ToggleVisibilityCellRenderer extends JCheckBox implements TableCellRenderer {
-//		private static final long serialVersionUID = 1L;
-//		private final Icon showIcon = new ImageIcon(getClass().getResource("/icons/new/eye.png"));
-//		private final Icon hideIcon = new ImageIcon(getClass().getResource("/icons/new/eye-close.png"));
-//		private boolean show;
-//		
-//		public ToggleVisibilityCellRenderer() {
-//			show = true;		
-////			setSelectedIcon(eyeIcon);
-////			setIcon(eyeIcon);
-////			setDisabledIcon(closedEyeIcon);
-////			setDisabledSelectedIcon(closedEyeIcon);
-////			setSelected(true);
-//		}
-//		
-//		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-//			setSelected(isSelected);
-//			return this;
-//		}
-//	}
-	
-//	private class CheckBoxEditor extends AbstractCellEditor  implements TableCellEditor {
-//
-//		/* (non-Javadoc)
-//		 * @see javax.swing.table.TableCellEditor#getTableCellEditorComponent(javax.swing.JTable, java.lang.Object, boolean, int, int)
-//		 */
-//		@Override
-//		public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-//			return r;
-//		} 
-//		
-//		public boolean isCellEditable(EventObject e) { 
-//			if (e instanceof MouseEvent) {
-//				Utils.logMessage("isCellEditable: mouse event");
-//				MouseEvent me = (MouseEvent)e;
-////				MouseEvent newME = new MouseEvent(r, me.getID(),
-////						me.getWhen(), me.getModifiers(),
-////						me.getX(),
-////						me.getY(), me.getClickCount(),
-////						me.isPopupTrigger());
-//				r.dispatchEvent(me);
-//			} else
-//				Utils.logMessage("isCellEditable: not a mouse event");
-//			return false;
-//		}
-//	}
 }
