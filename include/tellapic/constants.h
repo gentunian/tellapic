@@ -15,7 +15,7 @@
  */
 
 #ifndef CONSTANTS_H_
-#define CONSTANTS_H_
+#define CONSTANTS_H
 
 #define MAX_TEXT_SIZE    512
 #define MAX_INFO_SIZE    128
