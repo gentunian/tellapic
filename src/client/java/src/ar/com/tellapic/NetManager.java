@@ -31,12 +31,11 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.imageio.ImageIO;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import ar.com.tellapic.chat.ChatClientModel;
-import ar.com.tellapic.chat.ChatController;
-import ar.com.tellapic.chat.IChatController;
 import ar.com.tellapic.chat.Message;
 import ar.com.tellapic.graphics.Drawing;
 import ar.com.tellapic.graphics.DrawingTool;
@@ -53,6 +52,7 @@ import ar.com.tellapic.lib.stream_t_data;
 import ar.com.tellapic.lib.svcontrol_t;
 import ar.com.tellapic.lib.tellapic;
 import ar.com.tellapic.lib.tellapicConstants;
+import ar.com.tellapic.lib.tellapic_socket_t;
 import ar.com.tellapic.utils.Utils;
 
 /**
@@ -62,6 +62,9 @@ import ar.com.tellapic.utils.Utils;
  *
  */
 public class NetManager extends Observable implements Runnable {
+	public static final String CONNECTING_STRING = "Connecting";
+	public static final String DISCONNECTED_STRING = "Disconnected";
+	public static final String CONNECTED_STRING = "Connected";
 	private static final int CONNECTION_STEPS = 3;
 	private static final int USER_CANCELLED_ERROR = -1;
 	private static final int AUTHENTICATION_ERROR = -2;
@@ -71,21 +74,21 @@ public class NetManager extends Observable implements Runnable {
 	private static final int FILE_OK = 1;
 	
 	
-	private int             monitorStep;
-	private double          ping;
-	private double          pingSentTime;
-	private boolean         connected;
-	private boolean         isRunning;
-	private int             fd;
-	private int             id;
-	private boolean         connecting;
-	private ProgressMonitor monitor;
-	private Thread          netManager;
-	private Thread          pinger;
-	final private Lock      lock;
-	final private Lock      pingerLock;
-	final private Condition pingCondition;
-	final private Condition connectedCondition;
+	private int               monitorStep;
+	private double            ping;
+	private double            pingSentTime;
+	private boolean           connected;
+	private boolean           isRunning;
+	private tellapic_socket_t socket;
+	private int               id;
+	private boolean           connecting;
+	private ProgressMonitor   monitor;
+	private Thread            netManager;
+	private Thread            pinger;
+	final private Lock        lock;
+	final private Lock        pingerLock;
+	final private Condition   pingCondition;
+	final private Condition   connectedCondition;
 	
 	private static class Holder {
 		private final static NetManager INSTANCE = new NetManager();
@@ -93,7 +96,6 @@ public class NetManager extends Observable implements Runnable {
 	
 	private NetManager() {
 		addObserver(StatusBar.getInstance());
-		setFd(0);
 		connected = false;
 		isRunning = false;
 		connecting = false;
@@ -111,21 +113,32 @@ public class NetManager extends Observable implements Runnable {
 	 */
 	public void run() {
 		isRunning = true;
-
 		while(isRunning) {
 			try {
+				Utils.logMessage("RUNNING NETMANAGER THREAD");
 				lock.lock();
 				if (isConnected()) {
 					receiveAndProcess();
 				} else {
+					Utils.logMessage("WAITING NETMANAGER THREAD");
 					connectedCondition.await();
 				}
 			} catch(InterruptedException e) {
-				
+				Utils.logMessage("netmanager thread interrupted");
 			} finally {
 				lock.unlock();
 			}
 		}
+		
+		if (pinger.isAlive()) {
+			pinger.interrupt();
+			try {
+				pinger.join(5000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		Utils.logMessage("DYING NETMANAGER THREAD");
 	}
 	
 	
@@ -154,10 +167,10 @@ public class NetManager extends Observable implements Runnable {
 		
 		do {
 			/* Send the password to the server */
-			tellapic.tellapic_send_ctle(fd, id, tellapicConstants.CTL_CL_PWD, password.length(), password);
+			tellapic.tellapic_send_ctle(socket, id, tellapicConstants.CTL_CL_PWD, password.length(), password);
 
 			/* Read server response */
-			stream = tellapic.tellapic_read_stream_b(fd);
+			stream = tellapic.tellapic_read_stream_b(socket);
 			cbyte  = stream.getHeader().getCbyte();
 
 			/* Check for an invalid sequence/packet */
@@ -166,7 +179,7 @@ public class NetManager extends Observable implements Runnable {
 				monitor.setCurrent(null,  monitor.getTotal());
 
 				/* Close the connection */
-				tellapic.tellapic_close_socket(fd);
+				tellapic.tellapic_close_socket(socket);
 
 				throw new WrongPacketException("Response fail by server. Packet shouln't be CTL_FAIL.");
 			}
@@ -187,7 +200,7 @@ public class NetManager extends Observable implements Runnable {
 						monitor.setCurrent(null,  monitor.getTotal());
 
 						/* Close the connection */
-						tellapic.tellapic_close_socket(fd);
+						tellapic.tellapic_close_socket(socket);
 
 						/* Return the error */
 						return USER_CANCELLED_ERROR;
@@ -204,7 +217,7 @@ public class NetManager extends Observable implements Runnable {
 			monitor.setCurrent(null, monitor.getTotal());
 			
 			/* Close the connection */
-			tellapic.tellapic_close_socket(fd);
+			tellapic.tellapic_close_socket(socket);
 			
 			/* Inform the error */
 			return AUTHENTICATION_ERROR;
@@ -216,10 +229,10 @@ public class NetManager extends Observable implements Runnable {
 		do {
 			System.out.println("Trying new name: "+name+" with length: "+name.length());
 			/* Send the user name packet to the server */
-			tellapic.tellapic_send_ctle(fd, id, tellapicConstants.CTL_CL_NAME, name.length(), name);
+			tellapic.tellapic_send_ctle(socket, id, tellapicConstants.CTL_CL_NAME, name.length(), name);
 
 			/* Read server response */
-			stream = tellapic.tellapic_read_stream_b(fd);
+			stream = tellapic.tellapic_read_stream_b(socket);
 			cbyte = stream.getHeader().getCbyte();
 				
 			/* Check for an invalid sequence/packet */
@@ -228,7 +241,7 @@ public class NetManager extends Observable implements Runnable {
 				monitor.setCurrent(null, monitor.getTotal());
 
 				/* Close the connection */
-				tellapic.tellapic_close_socket(fd);
+				tellapic.tellapic_close_socket(socket);
 				throw new WrongPacketException("Wrong packet sequence. Shouldn't be CTL_FAIL.");
 			}
 			
@@ -245,7 +258,7 @@ public class NetManager extends Observable implements Runnable {
 						monitor.setCurrent(null, monitor.getTotal());
 
 						/* and close the connection */
-						tellapic.tellapic_close_socket(fd);
+						tellapic.tellapic_close_socket(socket);
 
 						/* Inform the error. */
 						return USER_CANCELLED_ERROR;
@@ -262,7 +275,7 @@ public class NetManager extends Observable implements Runnable {
 			monitor.setCurrent(null, monitor.getTotal());
 			
 			/* Close the connection */
-			tellapic.tellapic_close_socket(fd);
+			tellapic.tellapic_close_socket(socket);
 			
 			/* Inform the error */
 			return AUTHENTICATION_ERROR;
@@ -287,10 +300,10 @@ public class NetManager extends Observable implements Runnable {
 		monitor.setCurrent("Asking image file...", monitorStep++);
 		
 		/* Send the packet */
-		tellapic.tellapic_send_ctl(fd, id, tellapicConstants.CTL_CL_FILEASK);
+		tellapic.tellapic_send_ctl(socket, id, tellapicConstants.CTL_CL_FILEASK);
 		
 		/* Read server response */
-		header = tellapic.tellapic_read_header_b(fd);
+		header = tellapic.tellapic_read_header_b(socket);
 		cbyte  = header.getCbyte();
 		
 		/* Check for an invalid sequence/packet */
@@ -299,7 +312,7 @@ public class NetManager extends Observable implements Runnable {
 			monitor.setCurrent(null, monitor.getTotal());
 			
 			/* Close the connection */
-			tellapic.tellapic_close_socket(fd);
+			tellapic.tellapic_close_socket(socket);
 			throw new WrongPacketException("Wrong sequence while asking file.");
 		}
 		
@@ -322,7 +335,7 @@ public class NetManager extends Observable implements Runnable {
 			int    size = (read + chunkSize < dataSize) ? chunkSize : dataSize - read;
 			byte[] temp = new byte[size];
 			
-			tellapic.custom_wrap(tellapic.tellapic_read_bytes_b(fd, size), temp, size);
+			tellapic.custom_wrap(tellapic.tellapic_read_bytes_b(socket, size), temp, size);
 
 			for(j = 0; j < size; j++) {
 				data[i * chunkSize + j] = temp[j];
@@ -347,7 +360,7 @@ public class NetManager extends Observable implements Runnable {
 			monitor.setCurrent(null, monitor.getTotal());
 			
 			/* Close the connection */
-			tellapic.tellapic_close_socket(fd);
+			tellapic.tellapic_close_socket(socket);
 			
 			return FILE_ERROR;
 		}
@@ -380,42 +393,38 @@ public class NetManager extends Observable implements Runnable {
 		int      error;
 		stream_t stream;
 		System.out.println(SwingUtilities.isEventDispatchThread());
-		try {
-			SwingUtilities.invokeAndWait(new Runnable() {
-				public void run() {
-					monitor = new ProgressMonitor(CONNECTION_STEPS, true, 500);
-					ProgressDialog dialog = new ProgressDialog((Dialog)null, monitor);
-					dialog.pack();
-					dialog.setLocationRelativeTo(null); 
-					dialog.setVisible(true);
-				}
-			});
-		} catch (InterruptedException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (InvocationTargetException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
+		
+		monitor = new ProgressMonitor(CONNECTION_STEPS, false, 500);
+		
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				JFrame frame = new JFrame();
+				frame.setIconImage(Utils.createIconImage(112, 75, "/icons/system/logo_small.png"));
+				ProgressDialog dialog = new ProgressDialog(frame, monitor);
+				dialog.pack();
+				dialog.setLocationRelativeTo(null); 
+				dialog.setVisible(true);
+			}
+		});
 		
 		monitorStep = 0;
 		
 		/* We are connecting, set this state */
-		setConnecting(true);
+		connecting = true;
 		monitor.start("Connecting to '"+host+":"+port);
-		fd = tellapic.tellapic_connect_to(host, port);
-		if (fd <= 0) {
+		socket = tellapic.tellapic_connect_to(host, port);
+		if (tellapic.tellapic_valid_socket(socket) == 0) {
 			/* Dispose the Dialog */
 			monitor.setCurrent(null, monitor.getTotal());
 			return CONNECTION_ERROR;
 		}
-		stream = tellapic.tellapic_read_stream_b(fd);
+		stream = tellapic.tellapic_read_stream_b(socket);
 		cbyte  = stream.getHeader().getCbyte();
 		if (cbyte == tellapicConstants.CTL_FAIL || cbyte != tellapicConstants.CTL_SV_ID) {
 			/* Dispose the Dialog */
 			monitor.setCurrent(null, monitor.getTotal());
 			/* Close the connection */
-			tellapic.tellapic_close_socket(fd);
+			tellapic.tellapic_close_socket(socket);
 			throw new WrongPacketException("Wrong response by server upon connection packet.");
 		}
 		/* Set the session id */
@@ -439,22 +448,23 @@ public class NetManager extends Observable implements Runnable {
 				while(isConnected()) {
 					try {
 						pingerLock.lock();
-						tellapic.tellapic_send_ctl(fd, SessionUtils.getId(), tellapic.CTL_CL_PING);
+						tellapic.tellapic_send_ctl(socket, SessionUtils.getId(), tellapic.CTL_CL_PING);
 						pingSentTime = System.nanoTime();
 						pingCondition.await();
 						Thread.sleep(2000);
 					} catch (InterruptedException e) {
-						e.printStackTrace();
+						System.out.println("Pinger Thread Interrupted, it will die if netmanager not connected.");
 					} finally {
 						pingerLock.unlock();
 					}
 				}
+				System.out.println("Pinger thread dying...");
 			}
 		});
 		pinger.start();
 		monitor.setCurrent("Starting network thread", monitorStep++);
 		
-		return fd;
+		return tellapic.tellapic_valid_socket(socket);
 	}
 	
 	
@@ -466,6 +476,20 @@ public class NetManager extends Observable implements Runnable {
 	}
 
 	/**
+	 * 
+	 * @return
+	 */
+	public String getStatus() {
+		if (connected)
+			return CONNECTED_STRING;
+		else if (connecting)
+			return CONNECTING_STRING;
+		else
+			return DISCONNECTED_STRING;
+	}
+	
+	
+	/**
 	 * @param pingTime the ping to set
 	 */
 	public void setPing(double pingTime) {
@@ -475,45 +499,23 @@ public class NetManager extends Observable implements Runnable {
 	}
 
 	/**
-	 * @return
-	 */
-	public boolean isConnecting() {
-		return connecting;
-	}
-	
-	/**
-	 * @param b
-	 */
-	private void setConnecting(boolean isConnecting) {
-		
-		if (isConnecting)
-			setConnected(false);
-		
-		if (isConnecting != connecting) {
-			connecting = isConnecting;
-			setChanged();
-			notifyObservers();
-		}
-	}
-
-	/**
 	 * 
 	 * @param value
 	 */
 	private void setConnected(boolean isConnected) {
-		if (isConnected) {
-			setConnecting(false);
-			try {
-				lock.lock();
-				connectedCondition.signal();
-			} finally {
-				lock.unlock();
-			}
-		}
 		if (isConnected != connected) {
 			connected = isConnected;
 			setChanged();
 			notifyObservers();
+			if (isConnected) {
+				connecting = false;
+				try {
+					lock.lock();
+					connectedCondition.signal();
+				} finally {
+					lock.unlock();
+				}
+			}
 		}
 	}
 	
@@ -539,18 +541,18 @@ public class NetManager extends Observable implements Runnable {
 	}
 
 	/**
-	 * @param fd the fd to set
+	 * @param socket the socket to set
 	 */
-	public void setFd(int fd) {
-		this.fd = fd;
+	public void setSocket(tellapic_socket_t socket) {
+		this.socket = socket;
 	}
 	
 	
 	/**
-	 * @return the fd
+	 * @return the socket
 	 */
-	public int getFd() {
-		return fd;
+	public tellapic_socket_t getSocket() {
+		return socket;
 	}
 	
 	
@@ -560,20 +562,20 @@ public class NetManager extends Observable implements Runnable {
 	public synchronized void reconnect() {
 		disconnect();
 		try {
-			Utils.logMessage("Interrupting...");
-			netManager.interrupt();
-			tellapic.tellapic_interrupt_socket();
 			Utils.logMessage("Joining pinger...");
-			pinger.join();
-			Utils.logMessage("Joined");
+			pinger.join(5000);
+			Utils.logMessage("Pinger joined.");
 			connect(SessionUtils.getServer(), SessionUtils.getPort(), SessionUtils.getUsername(), SessionUtils.getPassword());
 		} catch (WrongPacketException e) {
 			e.printStackTrace();
-			setConnecting(false);
+			connecting = false;
 			setConnected(false);
+			stop();
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			connecting = false;
+			setConnected(false);
+			stop();
 		}
 	}
 	
@@ -582,27 +584,28 @@ public class NetManager extends Observable implements Runnable {
 	 * 
 	 */
 	public synchronized void disconnect() {
-		tellapic.tellapic_send_ctl(fd, SessionUtils.getId(), tellapicConstants.CTL_CL_DISC);
-		tellapic.tellapic_close_socket(fd);
+		tellapic.tellapic_send_ctl(socket, SessionUtils.getId(), tellapicConstants.CTL_CL_DISC);
+		tellapic.tellapic_close_socket(socket);
 		setConnected(false);
 	}
 	
 	
-	
+	/**
+	 * 
+	 */
 	private void receiveAndProcess() {
 		stream_t stream = null;
 		header_t header = null;
-		stream = tellapic.tellapic_read_stream_b(fd);
+		Utils.logMessage("receiveAnProcess block..");
+		stream = tellapic.tellapic_read_stream_b(socket);
 		header = stream.getHeader();
-		//System.out.println("Something read");
-
+	
 		if (header.getCbyte() == tellapicConstants.CTL_FAIL || header.getCbyte() == tellapicConstants.CTL_NOPIPE) {
 			setConnected(false);
 			
 		} else if (tellapic.tellapic_isfile(header) == 1) {
-			System.out.println("Was file: "+header.getCbyte());
+			Utils.logMessage("Was file: "+header.getCbyte());
 			stream_t_data d = stream.getData();
-			System.out.println("Was file1: "+header.getSsize());
 			byte[] data = new byte[(int)header.getSsize()];
 			tellapic.custom_wrap(d.getFile(), data, header.getSsize());
 
@@ -610,8 +613,8 @@ public class NetManager extends Observable implements Runnable {
 			try {
 				SessionUtils.setSharedImage(ImageIO.read(in));
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
+				disconnect();
 			}
 			tellapic.tellapic_free(stream);
 
@@ -652,7 +655,6 @@ public class NetManager extends Observable implements Runnable {
 			AbstractUser userFrom = UserManager.getInstance().getUser(idFrom);
 			String text    = chatmsg.getType().getBroadmsg();
 			Message message = new Message(userFrom.getName(), null, text);
-//			chatController.handleInput(message, false);
 			ChatClientModel.getInstance().addMessage(message);
 			System.out.println("Was broadcast chat");
 
@@ -669,7 +671,6 @@ public class NetManager extends Observable implements Runnable {
 					text
 			);
 			ChatClientModel.getInstance().addMessage(message);
-			//chatController.handleInput(message, false);
 			System.out.println("Was private chat");
 
 		} else if (tellapic.tellapic_isdrw(header) == 1 ) {
@@ -714,6 +715,10 @@ public class NetManager extends Observable implements Runnable {
 		/* Get the remote user who has drawn this figure */
 		RemoteUser remoteUser = (RemoteUser) UserManager.getInstance().getUser(drawingData.getIdfrom());
 
+		if (remoteUser == null) {
+			Utils.logMessage("Warning: Received packet from an unexisting user yet.");
+			return;
+		}
 		/* Get the drawing control byte from protocol */
 		int dcbyte = drawingData.getDcbyte();
 
@@ -855,7 +860,12 @@ public class NetManager extends Observable implements Runnable {
 	private void createAndAddDrawing(ddata_t drawingData) {
 		/* Get the remote user who is drawing */
 		RemoteUser remoteUser = (RemoteUser) UserManager.getInstance().getUser(drawingData.getIdfrom());
-
+		
+		if (remoteUser == null) {
+			Utils.logMessage("Warning: Received packet from an unexisting user yet.");
+			return;
+		}
+		
 		/* Get the Drawing Control Byte from the stream */
 		int dcbyte = drawingData.getDcbyte();
 
@@ -1024,5 +1034,22 @@ public class NetManager extends Observable implements Runnable {
 		}
 
 		private static final long serialVersionUID = 1L;
+	}
+
+	/**
+	 * 
+	 */
+	public void stop() {
+		this.isRunning = false;
+		if (isConnected()) {
+			setConnected(false);
+			tellapic.tellapic_close_socket(socket);
+		}
+		try {
+			netManager.interrupt();
+			netManager.join();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 }
