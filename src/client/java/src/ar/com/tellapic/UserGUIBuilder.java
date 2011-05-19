@@ -152,7 +152,7 @@ public class UserGUIBuilder {
 		/****************************************/
 		/* Creates the dockable station and gui */
 		/****************************************/
-		mainWindow = new JFrame(user.getName());
+		mainWindow = new JFrame("Tellapic - "+user.getName());
 		mainWindow.setIconImage(Utils.createIconImage(112, 75, "/icons/system/logo_small.png"));
 		mainWindow.getContentPane().add(StatusBar.getInstance(), BorderLayout.SOUTH);
 		mainWindow.getContentPane().add(propertyView, BorderLayout.NORTH);
@@ -280,8 +280,7 @@ public class UserGUIBuilder {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				mainWindow.dispose();
-				// TODO: make a shutdown routine.
-				System.exit(0);
+				Utils.shutdown();
 			}
 		});
 		

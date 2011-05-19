@@ -20,6 +20,7 @@ package ar.com.tellapic.chat;
 import ar.com.tellapic.NetManager;
 import ar.com.tellapic.UserManager;
 import ar.com.tellapic.lib.tellapic;
+import ar.com.tellapic.lib.tellapic_socket_t;
 
 
 /**
@@ -48,14 +49,14 @@ public class ChatController implements IChatController {
 		model.addMessage(message);
 		if (fromView) {
 			//connection.sendMessage(message);
-			int fd = netManager.getFd();
+			tellapic_socket_t socket = netManager.getSocket();
 			int idFrom = UserManager.getInstance().getLocalUser().getUserId();
 			String text = message.getText();
 			if (message.isPrivate()) {
 				int idTo = UserManager.getInstance().getUser(message.getReceiver()).getUserId();
-				tellapic.tellapic_send_chatp(fd, idFrom, idTo, text.length(), text);
+				tellapic.tellapic_send_chatp(socket, idFrom, idTo, text.length(), text);
 			} else {
-				tellapic.tellapic_send_chatb(fd, idFrom, text.length(), text);
+				tellapic.tellapic_send_chatb(socket, idFrom, text.length(), text);
 			}
 		}
 	}
