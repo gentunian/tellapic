@@ -1,6 +1,6 @@
 <wiki:toc max_depth="3" />
 
-To build this package you will need cmake installed (2.8 preferred), and svn for download the sources. *Only linux build is supported.*
+To build this package you will need cmake installed (2.8 preferred), and svn for download the sources. *Only linux build is completely supported. Windows build is just for Java GUI client.*
 
 == Downloading the sources ==
 
@@ -31,6 +31,7 @@ And this tools:
   * [http://www.swig.org SWIG wrapper] (2.0.1).
   * [http://www.oracle.com/technetwork/java/javase/downloads/index.html Java Development Kit] (JDK 1.5 or above).
   * [http://www.python.org/download/ Python] 2.7.1.
+  * [http://www.microsoft.com/downloads/en/details.aspx?FamilyID=6b6c21d2-2006-4afa-9702-529fa782d63b Microsoft Windows SDK for Windows 7 and .NET Framework 4] for win32 building.
 
 {{{
 ~ $ cd tellapic-read-only/
@@ -41,6 +42,7 @@ And this tools:
 }}}
 
 You can build just the wrapper. The next sections shows how to do it.
+
 
 == Building wrappers ==
 
@@ -95,6 +97,14 @@ For building the windows native library (_tellapicjava.dll_) in conjuction with 
 }}}
 
 The last two steps will compile the Java GUI code, and then will create a runnable jar file called *tellapic-executable.jar* on your build dir (in the example above the build dir is: _build-win32/_).
+
+This will build a debug release and it can't be redistributable as it uses windows debug libraries. For building a redistributable package change the cmake line to this one:
+
+{{{
+~ $ cmake -DCMAKE_BUILD_TYPE="Release" ..
+}}}
+
+That will use m$ redistributable libraries.
 
 === Building under Linux ===
 
