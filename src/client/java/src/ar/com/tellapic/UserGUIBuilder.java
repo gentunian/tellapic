@@ -28,6 +28,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBoxMenuItem;
@@ -178,7 +180,20 @@ public class UserGUIBuilder {
 		content.deploy(grid);
 		
 		mainWindow.getContentPane().add(content, BorderLayout.CENTER);
-		mainWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		mainWindow.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		mainWindow.addWindowListener(new WindowListener(){
+			public void windowActivated(WindowEvent e) {}
+			public void windowClosed(WindowEvent e) {
+				Utils.shutdown();
+			}
+			public void windowClosing(WindowEvent e) {
+				mainWindow.dispose();
+			}
+			public void windowDeactivated(WindowEvent e) {}
+			public void windowDeiconified(WindowEvent e) {}
+			public void windowIconified(WindowEvent e) {}
+			public void windowOpened(WindowEvent e) {}
+		});
 		//mainWindow.setLayout(new GridLayout(2,1));
 		mainWindow.setJMenuBar(createMenuBar());
 		mainWindow.pack();
