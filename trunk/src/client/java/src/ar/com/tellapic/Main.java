@@ -17,10 +17,6 @@
  */  
 package ar.com.tellapic;
 
-import java.awt.Frame;
-import java.lang.reflect.InvocationTargetException;
-
-import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -28,8 +24,6 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
 import ar.com.tellapic.NetManager.WrongPacketException;
-import ar.com.tellapic.graphics.DrawingAreaModel;
-import ar.com.tellapic.graphics.DrawingAreaView;
 import ar.com.tellapic.graphics.EllipseNet;
 import ar.com.tellapic.graphics.LineNet;
 import ar.com.tellapic.graphics.MarkerNet;
@@ -41,6 +35,8 @@ import ar.com.tellapic.graphics.Zoom;
 import ar.com.tellapic.lib.tellapicConstants;
 import ar.com.tellapic.utils.Utils;
 
+import com.sun.xml.internal.bind.v2.runtime.property.Property;
+
 
 /**
  * @author 
@@ -49,12 +45,14 @@ import ar.com.tellapic.utils.Utils;
  *
  */
 public class Main {
-
-	static DrawingAreaModel  drawingAreaModel;
-	static DrawingAreaView   dav;
-	static private MainDialog main;
-	static private NetManager netManager;
-	static int result;
+	private static final int HOST_ARG = 0;
+	private static final int PORT_ARG = 1;
+	private static final int NAME_ARG = 2;
+	private static final int PWD_ARG  = 3;
+	private static int result;
+	private static MainDialog main;
+	private static NetManager netManager;
+	
 	
 	static {
 		System.loadLibrary("tellapicjava");
@@ -64,92 +62,136 @@ public class Main {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		} catch (UnsupportedLookAndFeelException e) {
-			//fallback
-		} catch (ClassNotFoundException e) {
-			//fallback
-		} catch (InstantiationException e) {
-			//fallback
-		} catch (IllegalAccessException e) {
-			//fallback
-		}
+		/* Start network manager by getting and instance */
 		netManager = NetManager.getInstance();
+		
+		/* Set the look and feel */
+		setLookAndFeel();
+		
 		if (args.length == 0) {
-			try {
-				SwingUtilities.invokeAndWait(new Runnable() {
+			/* We were invoked without arguments, show the Main Dialog. */
+			SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+					/* Dialog is modal, so wait until it's disposed */
+					MainDialog main = showMainDialog();
+					verifyDialogInput(main);
+				}
+			});
+		} else if (args.length == 4){
+			/* We were invoked with, maybe, the correct arguments. */
+			if (argumentsCheck(args)) {
+				if (tryJoin(args))
+					initiate(SessionUtils.getId(), SessionUtils.getUsername());
+				else {
+					SwingUtilities.invokeLater(new Runnable() {
+						public void run() {
+							JOptionPane.showMessageDialog(null, Utils.msg.getString("errorconnect"), Utils.msg.getString("errorconnecttitle"), JOptionPane.ERROR_MESSAGE);
+							Utils.shutdown();
+						}
+					});
+				}
+			}
+		}
+	}
+
+
+
+	/**
+	 * @param args
+	 * @return
+	 */
+	private static boolean argumentsCheck(String[] args) {
+		return true;
+	}
+
+
+
+	private static void verifyDialogInput(final MainDialog main) {
+		if (main.isUserInput()) {
+			switch(main.getOption()) {
+
+			case MainDialog.CREATE_TAB:
+				/* We should create a server instance */
+				break;
+				
+			case MainDialog.JOIN_TAB:
+			case MainDialog.FAVOURITE_TAB:
+				/* We connect/join to a known server */
+				System.out.println("Joining to server "+main.getRemoteHost()+":"+main.getRemotePort());
+				/* Dont run this on the EDT */
+				new Thread(new Runnable() {
 					public void run() {
-						JFrame frame = new JFrame();
-						frame.setIconImage(Utils.createIconImage(112, 75, "/icons/system/logo_small.png"));
-						main = new MainDialog(frame);
-						main.setVisible(true);
-						if (main.isUserInput()) {
-							switch(main.getOption()) {
-
-							case MainDialog.CREATE_TAB:
-								break;
-							case MainDialog.JOIN_TAB:
-							case MainDialog.FAVOURITE_TAB:
-								System.out.println("Joining to server "+main.getRemoteHost()+":"+main.getRemotePort());
-								/* Dont run this on the EDT */
-								new Thread(new Runnable() {
-									public void run() {
-										try {
-											result = netManager.connect(main.getRemoteHost(), main.getRemotePort(), main.getUsername(), main.getPassword());
-											if (result > 0)
-												initiate(SessionUtils.getId(), SessionUtils.getUsername());
-											else {
-												JOptionPane.showMessageDialog(null, Utils.msg.getString("errorconnect"), Utils.msg.getString("errorconnecttitle"), JOptionPane.ERROR_MESSAGE);
-												System.exit(1);
-											}
-										} catch(WrongPacketException e) {
-											e.printStackTrace();
-										}
-									}
-								}).start();
-								break;
-
-							default:
-								break;
-							}
-
-						} else {
-							//TODO
+						if (tryJoin(null))
+							initiate(SessionUtils.getId(), SessionUtils.getUsername());
+						else {
+							SwingUtilities.invokeLater(new Runnable() {
+								public void run() {
+									JOptionPane.showMessageDialog(null, Utils.msg.getString("errorconnect"), Utils.msg.getString("errorconnecttitle"), JOptionPane.ERROR_MESSAGE);
+									Utils.shutdown();
+								}
+							});
 						}
 					}
-				});
-			} catch (InterruptedException e1) {
-				e1.printStackTrace();
-			} catch (InvocationTargetException e1) {
-				e1.printStackTrace();
+				}).start();
+				break;
 			}
 
-		} else if (args.length == 4){
-			int r=-1;
-			try {
-				r = NetManager.getInstance().connect(args[0], args[1], args[2], args[3]);
-			} catch (NumberFormatException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (WrongPacketException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			if (r > 0)
-				initiate(SessionUtils.getId(), SessionUtils.getUsername());
-			else
-				JOptionPane.showMessageDialog(null, Utils.msg.getString("errorconnect"), Utils.msg.getString("errorconnecttitle"), JOptionPane.ERROR_MESSAGE);
+		} else {
+			//TODO: if not user option
 		}
 	}
 	
-	public static int verifyDialogInput(MainDialog main) {
-		//TODO: do what this method is mentioned to be
-		return main.getOption();
+	
+	/**
+	 * Try connecting to the server. If we succeded, return true. False otherwise.
+	 */
+	private static boolean tryJoin(String[] args) {
+		String name = null;
+		String pwd = null;
+		String host = null;
+		String port = null;
+		if (args != null) {
+			host = args[HOST_ARG];
+			port = args[PORT_ARG];
+			name = args[NAME_ARG];
+			pwd = args[PWD_ARG];
+			
+		} else {
+			host = main.getRemoteHost();
+			port = main.getRemotePort();
+			name = main.getUsername();
+			pwd = main.getPassword();
+		}
+		try {
+			/* Send a message to the network manager to connect to a known server. */
+			result = netManager.connect(host, port, name, pwd);
+			return (result != 0);
+		} catch(WrongPacketException e) {
+			e.printStackTrace();
+		}
+		return false;
 	}
 	
 	
-	public static void initiate(final int id, final String name) {
+	/**
+	 * 
+	 * @return
+	 */
+	private static MainDialog showMainDialog() {
+		JFrame frame = new JFrame();
+		frame.setIconImage(Utils.createIconImage(112, 75, "/icons/system/logo_small.png"));
+		main = new MainDialog(frame);
+		main.setVisible(true);
+		return main;
+	}
+	
+	
+	/**
+	 * 
+	 * @param id
+	 * @param name
+	 */
+	private static void initiate(final int id, final String name) {
 		ToolFactory.registerToolClassName(99, Zoom.class.getName());
 		ToolFactory.registerToolClassName(tellapicConstants.TOOL_ELLIPSE, EllipseNet.class.getName());
 		ToolFactory.registerToolClassName(tellapicConstants.TOOL_LINE, LineNet.class.getName());
@@ -169,129 +211,21 @@ public class Main {
 		
 	}
 	
-		//UserGUIBuilder gui = new UserGUIBuilder((LocalUser)userManager.getLocalUser());
-//		JFrame frame = new JFrame("test");
-//		UserView view = new UserView();
-//		frame.add(view);
-//		frame.pack();
-//		frame.setVisible(true);
-//		
-//		ToolBoxModel           model  = new ToolBoxModel();
-//		ToolView           toolsView  = new ToolView();
-//		model.addObserver(toolsView);
-//		
-//		ToolViewController      toolViewController = new ToolViewController(model);
-//		PaintPropertyView       propertyView       = new PaintPropertyView();
-//		PaintPropertyController propertyController = new PaintPropertyController(model, propertyView);
-//
-//		model.addObserver(propertyView);
-//		
-//		toolsView.setController(toolViewController);
-//		propertyView.setController(propertyController);
-		
-		//ToolBoxWindow t = new ToolBoxWindow(toolsView, propertyView);
-		//ToolBoxWindow t = new ToolBoxWindow();
-		//t.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//		CControl control1 = new CControl(t);
-//		t.setLayout(new GridLayout(1,1));
-//		t.add(control1.getContentArea());
-//		drawingAreaModel = DrawingAreaModel.getInstance();
-//		ChatView     chatView = new ChatView();
-//		JFrame  drawingWindow = new JFrame("drawing window");
-//		CControl     control1 = new CControl(drawingWindow);
-//		dav = DrawingAreaView.getInstance();
-//		SingleCDockable dock1 = wrapToDockable(toolsView);
-//		SingleCDockable dock2 = wrapToDockable(propertyView);
-//		SingleCDockable dock3 = wrapToDockable(dav);
-//		SingleCDockable dock4 = wrapToDockable(chatView);
-//		CGrid grid = new CGrid(control1);
-//		drawingWindow.setPreferredSize(new Dimension(400,400));
-//		grid.add(0,   0, 50,  50, dock1);
-//		grid.add(0, 50, 50, 100, dock2);
-//		grid.add(50, 0, 300, 400, dock3);
-//		grid.add(350, 0, 50, 100, dock4);
-//		CContentArea  content = control1.getContentArea();
-//		content.deploy(grid);
-//		drawingWindow.add(content);
-//		drawingWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//		drawingWindow.setLayout(new GridLayout(1,1));
-//		drawingWindow.pack();
-//		drawingWindow.setVisible(true);
-//		
-//		
-//		DrawingLocalController drawingController = new DrawingLocalController(model, drawingAreaModel, dav);
-//		
-//		propertyController.setDrawingController(drawingController);
-//		drawingController.setController(propertyController);
-//		drawingAreaModel.addObserver(dav);
-//		dav.addMouseMotionListener(drawingController);
-//		dav.addMouseListener(drawingController);
-//		dav.addMouseWheelListener(drawingController);
-		
-//		CControl control2 = new CControl(dav);
-//		dav.add(control2.getContentArea());
-//		SingleCDockable dock3 = wrapToDockable(new ChatView());
-//		control2.add(dock3);
-//		dock3.setVisible(true);
-//		ChatClientModel chatModel = new ChatClientModel();
-//		ChatController chatController = new ChatController(chatModel, chatView);
-//		chatView.setController(chatController);
-//		chatModel.addObserver(chatView);
-//		try {
-//			Thread.sleep(5000);
-//		} catch (InterruptedException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//		new Thread(new Runnable() {
-//			public void run() {
-//				test(10);
-//			}
-//		}).start();
-//		new Thread(new Runnable() {
-//			public void run() {
-//				test(30);
-//			}
-//		}).start();
-//		new Thread(new Runnable() {
-//			public void run() {
-//				test(50);
-//			}
-//		}).start();
-//		new Thread(new Runnable() {
-//			public void run() {
-//				test(80);
-//			}
-//		}).start();
-
-
-   
-//	private static void test(int x) {
-//		ToolBoxModel            model = new ToolBoxModel();
-//		ToolViewController      controller = new ToolViewController(model);
-//		PaintPropertyController propertyController = new PaintPropertyController(model);
-//		//DrawingLocalController  drawingController  = new DrawingLocalController(model, drawingAreaModel, dav);
-//		
-//		controller.selectToolEvent("Line");
-//		propertyController.handleEndCapsChange(0);
-//		propertyController.handleLineJoinsChange(0);
-//		propertyController.handleOpacityChange(1.0f);
-//		propertyController.handleWidthChange(10);
-//		
-//		JTextField dummy = new JTextField();
-//		MouseEvent event1 = new MouseEvent(dummy, 0, System.currentTimeMillis(), 0, x, 10, 0, false, MouseEvent.BUTTON1);
-//		drawingController.mousePressed(event1);
-//		int i = 0;
-//		for(i = 0; i < 200; i++) {
-//			MouseEvent event = new MouseEvent(dummy, i+1, System.currentTimeMillis(), 0, x, 10+i, 0, false);
-//			try {
-//				Thread.sleep(100);
-//				drawingController.mouseDragged(event);
-//			} catch (InterruptedException e) {
-//				e.printStackTrace();
-//			}
-//		}
-//		MouseEvent event = new MouseEvent(dummy, i+1, System.currentTimeMillis(), 0, x, i, 0, false, MouseEvent.BUTTON1);
-//		drawingController.mouseReleased(event);
-//	}
+	
+	/**
+	 * 
+	 */
+	private static void setLookAndFeel() {
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (UnsupportedLookAndFeelException e) {
+			//fallback
+		} catch (ClassNotFoundException e) {
+			//fallback
+		} catch (InstantiationException e) {
+			//fallback
+		} catch (IllegalAccessException e) {
+			//fallback
+		}
+	}
 }
