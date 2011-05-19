@@ -21,7 +21,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.Frame;
 import java.awt.Image;
 import java.awt.SystemColor;
 import java.awt.event.ActionEvent;
@@ -75,10 +74,6 @@ import ar.com.tellapic.utils.Utils;
  *
  */
 public class MainDialog extends JDialog {
-
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
 
 	public static final int CREATE_TAB    = 0;
@@ -90,24 +85,28 @@ public class MainDialog extends JDialog {
 	private boolean hostSet;
 	private boolean portSet;
 	private boolean userSet;
+	private String  host;
+	private String  name;
+	private String  password;
+	private String  port;
+	private ActionListener deleteFavouriteListener;
+	private ActionListener createPortFieldListener;
+	private ActionListener favouriteJoinListener;
+	private ActionListener favouriteExitListener;
+	private ActionListener joinExitListener;
+	private ActionListener joinJoinListener;
+	private ActionListener joinAddFavouriteListener;
 
-	private String host;
-	private String name;
-	private String password;
-	private String port;
-		
-
+	
 	public MainDialog(JFrame parent) {
 		super(parent);
-		
+		createListeners();
 		initComponents();
 		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		setTitle(Utils.msg.getString("MainDialog.0")); //$NON-NLS-1$
 		setLocationByPlatform(true);
 		setModal(true);
 		setResizable(true);
-		//((Frame)getOwner()).setIconImage(Utils.createIconImage(112, 75, "/icons/logo_small.png"));
-		//((Frame)getParent()).setIconImage(Utils.createIconImage(112, 75, "/icons/logo_small.png"));
 		setModal(true);
 		pack();
 		setLocationRelativeTo(null);
@@ -130,7 +129,8 @@ public class MainDialog extends JDialog {
 			private static final long serialVersionUID = 1L;
 
 			public void actionPerformed(ActionEvent actionEvent) {
-				setVisible(false);
+				MainDialog.this.dispose();
+				Utils.shutdown();
 			}
 		};
 		InputMap inputMap = rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -138,6 +138,71 @@ public class MainDialog extends JDialog {
 		rootPane.getActionMap().put("ESCAPE", actionListener);
 		
 		return rootPane;
+	}
+	
+	
+	/**
+	 * 
+	 */
+	private void createListeners() {
+		joinJoinListener = new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				joinJoinButtonActionPerformed(evt);
+			}
+		};
+		
+		joinAddFavouriteListener = new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				if (joinAddFavouriteButtonActionPerformed(evt)) {
+					joinAddOkLabel.setText(Utils.msg.getString("favadded"));
+					joinAddOkLabel.setVisible(true);
+				} else {
+					
+				}
+					
+			}
+		};
+		
+		deleteFavouriteListener = new ActionListener(){
+			public void actionPerformed(ActionEvent e) {
+				FavouritesTableModel model = (FavouritesTableModel) favouriteTable.getModel();
+				int[] index = favouriteTable.getSelectedRows();
+				Arrays.sort(index);
+				for(int i = index.length - 1; i >= 0; i--)
+					model.removeFavourite(index[i]);
+			}
+		};
+		
+		createPortFieldListener = new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				createPortFieldActionPerformed(evt);
+			}
+		};
+		
+		favouriteExitListener = new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				favouriteExitButtonActionPerformed(evt);
+			}
+		};
+		
+		favouriteJoinListener = new ActionListener(){
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				FavouritesTableModel model = (FavouritesTableModel) favouriteTable.getModel();
+				host = (String) model.getValueAt(favouriteTable.getSelectedRow(), 0);
+				port = (String) model.getValueAt(favouriteTable.getSelectedRow(), 1);
+				name = (String) model.getValueAt(favouriteTable.getSelectedRow(), 2);
+				password = (String) model.getValueAt(favouriteTable.getSelectedRow(), 3);
+				userInput = true;
+				MainDialog.this.dispose();
+			}
+		};
+		
+		joinExitListener = new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				joinExitButtonexit(evt);
+			}
+		};
 	}
 	
 	
@@ -183,16 +248,9 @@ public class MainDialog extends JDialog {
 		joinAddOkLabel.setIcon(new ImageIcon(Utils.createIconImage(16, 16, "/icons/system/information-balloon.png")));
 		joinAddOkLabel.setVisible(false);
 		
-		favouriteDeleteButton.addActionListener(new ActionListener(){
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				FavouritesTableModel model = (FavouritesTableModel) favouriteTable.getModel();
-				int[] index = favouriteTable.getSelectedRows();
-				Arrays.sort(index);
-				for(int i = index.length - 1; i >= 0; i--)
-					model.removeFavourite(index[i]);
-			}
-		});
+		/* Listeners */
+		favouriteDeleteButton.addActionListener(deleteFavouriteListener);
+		createPortField.addActionListener(createPortFieldListener);
 		
 		jTabbedPane1.setBackground(SystemColor.inactiveCaption);
 		jTabbedPane1.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
@@ -214,7 +272,6 @@ public class MainDialog extends JDialog {
 
 		createCreateButton.setText(Utils.msg.getString("MainDialog.2")); //$NON-NLS-1$
 		createCreateButton.setEnabled(false);
-		
 		createExitButton.setText(Utils.msg.getString("MainDialog.3")); //$NON-NLS-1$
 		createExitButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
@@ -235,30 +292,18 @@ public class MainDialog extends JDialog {
 
 		createFileLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 		createFileLabel.setText(Utils.msg.getString("MainDialog.5")); //$NON-NLS-1$
-
 		createPasswordLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 		createPasswordLabel.setText(Utils.msg.getString("MainDialog.6")); //$NON-NLS-1$
-
 		createPasswordField.setToolTipText(Utils.msg.getString("MainDialog.7")); //$NON-NLS-1$
-
 		createUsernameField.setToolTipText(Utils.msg.getString("MainDialog.8")); //$NON-NLS-1$
 		createUsernameField.setInputVerifier(new NonEmptyVerifier());
 		createUsernameField.setName(Utils.msg.getString("MainDialog.9")); // NOI18N //$NON-NLS-1$
-
 		createUsernameLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 		createUsernameLabel.setText(Utils.msg.getString("MainDialog.10")); //$NON-NLS-1$
-
 		createPortLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 		createPortLabel.setText(Utils.msg.getString("MainDialog.11")); //$NON-NLS-1$
-
 		createPortField.setToolTipText(Utils.msg.getString("MainDialog.12")); //$NON-NLS-1$
 		createPortField.setInputVerifier(new PortVerifier());
-		createPortField.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				createPortFieldActionPerformed(evt);
-			}
-		});
-
 		GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
 		jPanel1.setLayout(jPanel1Layout);
 		jPanel1Layout.setHorizontalGroup(
@@ -314,7 +359,6 @@ public class MainDialog extends JDialog {
 		);
 
 		jTabbedPane1.addTab(Utils.msg.getString("MainDialog.13"), jPanel1); //$NON-NLS-1$
-
 		jPanel3.setMinimumSize(new Dimension(221, 390));
 		favouriteTable.setModel(new FavouritesTableModel());
 		favouriteTable.setEditable(true);
@@ -336,29 +380,10 @@ public class MainDialog extends JDialog {
 		jScrollPane1.setViewportView(favouriteTable);
 		favouriteJoinButton.setText(Utils.msg.getString("MainDialog.18")); //$NON-NLS-1$
 		favouriteJoinButton.setEnabled(false);
-		favouriteJoinButton.addActionListener(new ActionListener(){
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				FavouritesTableModel model = (FavouritesTableModel) favouriteTable.getModel();
-				host = (String) model.getValueAt(favouriteTable.getSelectedRow(), 0);
-				port = (String) model.getValueAt(favouriteTable.getSelectedRow(), 1);
-				name = (String) model.getValueAt(favouriteTable.getSelectedRow(), 2);
-				password = (String) model.getValueAt(favouriteTable.getSelectedRow(), 3);
-				userInput = true;
-				MainDialog.this.dispose();
-			}
-		});
-		
-		
+		favouriteJoinButton.addActionListener(favouriteJoinListener);
 		favouriteExitButton.setText(Utils.msg.getString("MainDialog.19")); //$NON-NLS-1$
-		favouriteExitButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				favouriteExitButtonActionPerformed(evt);
-			}
-		});
-
+		favouriteExitButton.addActionListener(favouriteExitListener);
 		favouriteDeleteButton.setText(Utils.msg.getString("MainDialog.20")); //$NON-NLS-1$
-
 
 		GroupLayout jPanel3Layout = new GroupLayout(jPanel3);
 		jPanel3.setLayout(jPanel3Layout);
@@ -390,26 +415,18 @@ public class MainDialog extends JDialog {
 		);
 
 		jTabbedPane1.addTab(Utils.msg.getString("MainDialog.21"), jPanel3); //$NON-NLS-1$
-
 		jPanel2.setMinimumSize(new Dimension(221, 390));
-
 		joinPasswordLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 		joinPasswordLabel.setText(Utils.msg.getString("MainDialog.22")); //$NON-NLS-1$
-
 		joinUsernameLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 		joinUsernameLabel.setText(Utils.msg.getString("MainDialog.23")); //$NON-NLS-1$
-
 		joinUsernameField.setInputVerifier(new NonEmptyVerifier());
 		joinUsernameField.setName(Utils.msg.getString("MainDialog.24")); // NOI18N //$NON-NLS-1$
-
 		joinPortField.setInputVerifier(new PortVerifier());
-
 		joinPortLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 		joinPortLabel.setText(Utils.msg.getString("MainDialog.25")); //$NON-NLS-1$
-
 		joinHostLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 		joinHostLabel.setText(Utils.msg.getString("MainDialog.26")); //$NON-NLS-1$
-
 		joinHostField.setInputVerifier(new NonEmptyVerifier());
 		joinHostField.setName(Utils.msg.getString("MainDialog.27")); // NOI18N //$NON-NLS-1$
 		joinHostField.addCaretListener(new CaretListener(){
@@ -418,13 +435,8 @@ public class MainDialog extends JDialog {
 				joinAddOkLabel.setVisible(false);
 			}
 		});
-
 		joinExitButton.setText(Utils.msg.getString("MainDialog.28")); //$NON-NLS-1$
-		joinExitButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				joinExitButtonexit(evt);
-			}
-		});
+		joinExitButton.addActionListener(joinExitListener);
 		joinPortField.addCaretListener(new CaretListener(){
 			@Override
 			public void caretUpdate(CaretEvent e) {
@@ -445,25 +457,10 @@ public class MainDialog extends JDialog {
 		});
 		joinJoinButton.setText(Utils.msg.getString("MainDialog.29")); //$NON-NLS-1$
 		joinJoinButton.setEnabled(false);
-		joinJoinButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				joinJoinButtonActionPerformed(evt);
-			}
-		});
-
+		joinJoinButton.addActionListener(joinJoinListener);
 		joinAddFavouriteButton.setText(Utils.msg.getString("MainDialog.30")); //$NON-NLS-1$
 		joinAddFavouriteButton.setEnabled(false);
-		joinAddFavouriteButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				if (joinAddFavouriteButtonActionPerformed(evt)) {
-					joinAddOkLabel.setText(Utils.msg.getString("favadded"));
-					joinAddOkLabel.setVisible(true);
-				} else {
-					
-				}
-					
-			}
-		});
+		joinAddFavouriteButton.addActionListener(joinAddFavouriteListener);
 
 		GroupLayout jPanel2Layout = new GroupLayout(jPanel2);
 		jPanel2.setLayout(jPanel2Layout);
@@ -538,8 +535,6 @@ public class MainDialog extends JDialog {
 				}
 			}
 		});
-		
-		
 		getContentPane().add(jTabbedPane1, BorderLayout.CENTER);
 	}
 
@@ -587,6 +582,7 @@ public class MainDialog extends JDialog {
 		port = joinPortField.getText();
 		userInput = true;
 		MainDialog.this.dispose();
+		
 	}
 
 	
