@@ -45,7 +45,7 @@ _read_s(SOCKET socket, size_t totalbytes, byte_t *buf)
 
   while(bytesleft > 0) 
     {
-      size_t bytes = recv(socket, buf + bytesread, bytesleft, 0);
+      long bytes = recv(socket, buf + bytesread, bytesleft, 0);
 
       if (bytes > 0)
 	{
