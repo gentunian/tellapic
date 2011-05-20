@@ -32,7 +32,6 @@ import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JColorChooser;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JSlider;
@@ -44,6 +43,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.basic.BasicSliderUI;
 
+import ar.com.tellapic.graphics.ColorSelector;
 import ar.com.tellapic.graphics.PaintPropertyColor;
 import ar.com.tellapic.utils.Utils;
 
@@ -144,8 +144,8 @@ public class CustomPropertiesDialog extends JDialog {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				if (enableColor.isSelected()) {
-					Color color = JColorChooser.showDialog(CustomPropertiesDialog.this, Utils.msg.getString("pickcolor"), Color.black);
-					colorLabel.setBackground(color);
+					ColorSelector color = new ColorSelector(colorLabel.getBackground(), colorLabel.getLocationOnScreen().x + colorLabel.getWidth(), colorLabel.getLocationOnScreen().y + colorLabel.getHeight(), false);
+					colorLabel.setBackground(color.getSelectedColor());
 				}
 			}
 			@Override

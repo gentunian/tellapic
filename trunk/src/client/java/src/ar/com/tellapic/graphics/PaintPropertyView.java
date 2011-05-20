@@ -405,11 +405,9 @@ public class PaintPropertyView extends JPanel implements Observer {
 		colorLabel.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				Color c = JColorChooser.showDialog(PaintPropertyView.this, "Pick a Color", colorField.getBackground()); 
-				if (c != null) {
-					controller.handleColorChange(c);
-					colorField.setBackground(c);
-				}
+				ColorSelector c = new ColorSelector(colorField.getBackground(), colorLabel.getX(), colorLabel.getLocationOnScreen().y +24, true);
+				controller.handleColorChange(c.getSelectedColor());
+				colorField.setBackground(c.getSelectedColor());
 			}
 		});
 		colorField.setPreferredSize(new Dimension(Tool.ICON_SIZE + GAP, Tool.ICON_SIZE + GAP));
@@ -422,11 +420,9 @@ public class PaintPropertyView extends JPanel implements Observer {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				JLabel label = (JLabel)e.getSource();
-				Color c = JColorChooser.showDialog(PaintPropertyView.this, "Pick a Color", label.getBackground()); 
-				if (c != null) {
-					controller.handleColorChange(c);
-					label.setBackground(c);
-				}
+				ColorSelector c = new ColorSelector(colorField.getBackground(), label.getX(), label.getLocationOnScreen().y +24, true);
+				controller.handleColorChange(c.getSelectedColor());
+				label.setBackground(c.getSelectedColor());
 			}
 		});
 	}
