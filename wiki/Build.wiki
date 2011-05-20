@@ -24,7 +24,7 @@ You will need this libraries installed on your system:
 And this tools:
 
   * A C compiler for your operating system (Linux or Windows supported).
-  * [http://ant.apache.org/bindownload.cgi Apache Ant].
+  * [http://ant.apache.org/bindownload.cgi Apache Ant 1.8.2].
   * [http://download.microsoft.com/download/vc15/patch/1.52/w95/en-us/nmake15.exe NMake] for *Windows*.
   * [http://ftp.gnu.org/gnu/make/make-3.82.tar.gz Make] 3.82 for *Linux*.
   * [http://www.cmake.org/cmake/resources/software.html CMake] 2.8 preferred.
@@ -106,6 +106,8 @@ This will build a debug release and it can't be redistributable as it uses windo
 
 That will use m$ redistributable libraries.
 
+*NOTE:* Apache Ant 1.8.2 is needed to build the Java Client GUI. Prior versions does not support 'skipexisting' attribute for the Get task. If you are using a previous version, update it to 1.8.2 or just make your way your own.
+
 === Building under Linux ===
 
 For building the linux native library (_libtellapicjava.so_) in conjunction with the SWIG wrapper and Java GUI, follow this steps:
@@ -125,6 +127,8 @@ For building the linux native library (_libtellapicjava.so_) in conjunction with
 }}}
 
 The last two steps will compile the Java GUI code, and then will create a runnable jar file called *tellapic-executable.jar* on your build dir (in the example above the build dir is: _build-linux/_).
+
+*NOTE:* Apache Ant 1.8.2 is needed to build the Java Client GUI. Prior versions does not support 'skipexisting' attribute for the Get task. If you are using a previous version, update it to 1.8.2 or just make your way your own.
 
 === Running and Testing the Java GUI ==
 
@@ -161,6 +165,7 @@ So, in order to run and test the Java GUI, you will need to follow this steps on
 ~ $ java -Djava.library.path=src\swig\java -jar tellapic-executable.jar
 }}}
 
+*NOTE:* Apache Ant 1.8.2 is needed to build the Java Client GUI. Prior versions does not support 'skipexisting' attribute for the Get task. If you are using a previous version, update it to 1.8.2 or just make your way your own.
 
 == Details ==
 
