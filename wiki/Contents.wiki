@@ -1,4 +1,4 @@
-#summary Sidebar
+#summary Contents
   * [Tellapic Tellapic]
     * [WhatsThis What is it?]
     * [WhatsNot What is it not?]
