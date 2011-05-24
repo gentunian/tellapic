@@ -18,26 +18,28 @@ When building, you should change to the tellapic-read-only directory.
 
 You will need this libraries installed on your system:
 
-  * [http://invisible-island.net/cdk/ Curses Development Kit] (CDK library version 5.0). Optional, but you won't be able to 'debug' on-the-fly the server instance.
-  * pthread (currently used version 2.12.2).
+  * [http://invisible-island.net/cdk/ Curses Development Kit 5.0] _(Optional, but you won't be able to 'debug' on-the-fly the server instance)_
+  * pthreads _(currently used version 2.12.2)_
+
 
 And this tools:
 
-  * A C compiler for your operating system (Linux or Windows supported).
-  * [http://ant.apache.org/bindownload.cgi Apache Ant 1.8.2].
-  * [http://download.microsoft.com/download/vc15/patch/1.52/w95/en-us/nmake15.exe NMake] for *Windows*.
-  * [http://ftp.gnu.org/gnu/make/make-3.82.tar.gz Make] 3.82 for *Linux*.
-  * [http://www.cmake.org/cmake/resources/software.html CMake] 2.8 preferred.
-  * [http://www.swig.org SWIG wrapper] (2.0.1).
-  * [http://www.oracle.com/technetwork/java/javase/downloads/index.html Java Development Kit] (JDK 1.5 or above).
-  * [http://www.python.org/download/ Python] 2.7.1.
-  * [http://www.microsoft.com/downloads/en/details.aspx?FamilyID=6b6c21d2-2006-4afa-9702-529fa782d63b Microsoft Windows SDK for Windows 7 and .NET Framework 4] for win32 building.
+  * A C compiler for your operating system (Linux or Windows supported)
+  * [http://ant.apache.org/bindownload.cgi Apache Ant 1.8.2]
+  * [http://download.microsoft.com/download/vc15/patch/1.52/w95/en-us/nmake15.exe NMake] for *Windows build*
+  * [http://ftp.gnu.org/gnu/make/make-3.82.tar.gz Make 3.82] for *Linux build*
+  * [http://www.cmake.org/cmake/resources/software.html CMake 2.8]
+  * [http://www.swig.org SWIG 2.0.1]
+  * [http://www.oracle.com/technetwork/java/javase/downloads/index.html Java Development Kit 1.5 or above]  _(optional for Java bindings and client GUI building)_
+  * [http://www.python.org/download/ Python 2.7.1] _(optional for python bindings)_
+  * [http://www.microsoft.com/downloads/en/details.aspx?FamilyID=6b6c21d2-2006-4afa-9702-529fa782d63b Microsoft Windows SDK for Windows 7 and .NET Framework 4 for win32 building].
+
 
 {{{
 ~ $ cd tellapic-read-only/
 ~ $ mkdir build
 ~ $ cd build/
-~ $ cmake ..
+~ $ cmake -DCMAKE_BUILD_TYPE="Release" ..
 ~ $ make
 }}}
 
@@ -46,19 +48,21 @@ You can build just the wrapper. The next sections shows how to do it.
 
 == Building wrappers ==
 
-For all wrappers you will need:
-  * SWIG wrapper (2.0.1).
+This section describes how to build bindings for Java and Python. Bindings are optional. Tellapic protocol is implemented by a C library. SWIG wraps this library and creates specific language bindings. Currently, two language bindings are supported, Java and Python. Anyone can write a SWIG module to easily wrap the protocol library to create bindings for their preferred language. This wrappers lets you use the implemented protocol (the C library) through custom bindings, and that way use those bindings in another language such as: Perl, Java, Python, etc... If you are building a client in C, just use the native C library (libtellapic).
+
+For all wrappers (only Python and Java are implemented) you will need:
+  * [http://www.swig.org SWIG 2.0.1]
   * The correspondent language compiler or development kit.
 
 Building for *java* library:
 
-No extra dependency is needed more than jdk. Version of jdk used was openjdk6.
+No extra dependency is needed more than JDK.
 
 {{{
 ~ $ cd tellapic-read-only/
 ~ $ mkdir build
 ~ $ cd build/
-~ $ cmake ..
+~ $ cmake -DCMAKE_BUILD_TYPE="Release" ..
 ~ $ make tellapicjava
 }}}
 
@@ -70,13 +74,13 @@ No extra dependency is needed.
 ~ $ cd tellapic-read-only/
 ~ $ mkdir build
 ~ $ cd build/
-~ $ cmake ..
+~ $ cmake -DCMAKE_BUILD_TYPE="Release" ..
 ~ $ make pytellapic
 }}}
 
 == Building Java GUI ==
 
-There's only a GUI written in Java that uses the native library. Java is portable and almost _write once run everywhere_, but the internal library that specifies tellapic protocol is not. You will need to build the java wrapper first (that is, pass SWIG layer) for windows or linux, depending which OS you are running.
+There's only a GUI written in Java that uses the native library. Java is portable and almost _write once run everywhere_, but the internal library that specifies tellapic protocol is not. You will need to build the java wrapper first (that is, pass SWIG layer) for windows or linux, depending which OS are you running.
 
 === Building under Windows ===
 
@@ -86,7 +90,7 @@ For building the windows native library (_tellapicjava.dll_) in conjuction with 
 ~ $ cd tellapic-read-only/
 ~ $ mkdir build-win32
 ~ $ cd build-win32/
-~ $ cmake ..
+~ $ cmake -DCMAKE_BUILD_TYPE="Debug" ..
 ~ $ nmake tellapicjava
 ~ $ cd ..
 ~ $ cd src
@@ -96,7 +100,10 @@ For building the windows native library (_tellapicjava.dll_) in conjuction with 
 ~ $ ant -Dbuild.dir=../../../build-win32 create_run_jar
 }}}
 
-The last two steps will compile the Java GUI code, and then will create a runnable jar file called *tellapic-executable.jar* on your build dir (in the example above the build dir is: _build-win32/_).
+The last two steps will compile the Java GUI code, and then will create a runnable jar file called *tellapic-executable.jar* on your build dir (in the example above the build dir is: _build-win32/_). Note that this process will *download* required libraries. Libraries used in the Java GUI client were:
+  * Docking Frames
+  * Guava
+  * SwingX
 
 This will build a debug release and it can't be redistributable as it uses windows debug libraries. For building a redistributable package change the cmake line to this one:
 
@@ -106,7 +113,7 @@ This will build a debug release and it can't be redistributable as it uses windo
 
 That will use m$ redistributable libraries.
 
-*NOTE:* Apache Ant 1.8.2 is needed to build the Java Client GUI. Prior versions does not support 'skipexisting' attribute for the Get task. If you are using a previous version, update it to 1.8.2 or just make your way your own.
+*NOTE:* Apache Ant 1.8.2 is needed to build the Java Client GUI. Prior versions don't support 'skipexisting' attribute for the Get task. If you are using a previous version, update it to 1.8.2 or just make your way your own.
 
 === Building under Linux ===
 
@@ -116,7 +123,7 @@ For building the linux native library (_libtellapicjava.so_) in conjunction with
 ~ $ cd tellapic-read-only/
 ~ $ mkdir build-linux
 ~ $ cd build-linux/
-~ $ cmake ..
+~ $ cmake -DCMAKE_BUILD_TYPE="Release" ..
 ~ $ make tellapicjava
 ~ $ cd ..
 ~ $ cd src
@@ -126,7 +133,10 @@ For building the linux native library (_libtellapicjava.so_) in conjunction with
 ~ $ ant -Dbuild.dir=../../../build-linux create_run_jar
 }}}
 
-The last two steps will compile the Java GUI code, and then will create a runnable jar file called *tellapic-executable.jar* on your build dir (in the example above the build dir is: _build-linux/_).
+The last two steps will compile the Java GUI code, and then will create a runnable jar file called *tellapic-executable.jar* on your build dir (in the example above the build dir is: _build-linux/_). Note that this process will *download* required libraries. Libraries used in the Java GUI client were:
+  * Docking Frames
+  * Guava
+  * SwingX
 
 *NOTE:* Apache Ant 1.8.2 is needed to build the Java Client GUI. Prior versions does not support 'skipexisting' attribute for the Get task. If you are using a previous version, update it to 1.8.2 or just make your way your own.
 
@@ -193,10 +203,10 @@ Build output will be placed in <source-root>:
 
 == List of files ==
 
-|| *tellapic.so* || _is the native protocol library written in c._ ||
+|| *tellapic.so* || _is the native protocol library written in C._ ||
 || *server* || _is the server executable instance._ ||
 || *`_`pytellapic.so* || _is the SWIG generated library to interact with python programs._ ||
-|| *pytellapic.py* || _is the SWIG generated python file for use within python programs._ ||
-|| *tellapijava.jar* ||   _is the SWIG generated java JNI classes._ ||
-|| *libtellapicjava.so* || _is the linux java native library._ ||
-|| *tellapicjava.dll* || _is the windows java native library._ ||
+|| *pytellapic.py* || _is the SWIG generated Python file for use within python programs._ ||
+|| *tellapijava.jar* ||   _is the SWIG generated Java JNI classes._ ||
+|| *libtellapicjava.so* || _is the Linux Java native library._ ||
+|| *tellapicjava.dll* || _is the Windows Java native library._ ||
