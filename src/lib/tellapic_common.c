@@ -569,7 +569,7 @@ _read_data_number(byte_t *data)
 /**
  *
  */
-static tellapic_u32_t
+static tellapic_float
 _read_data_width(byte_t *data)
 {
 #ifdef LITTLE_ENDIAN_VALUE
@@ -583,7 +583,7 @@ _read_data_width(byte_t *data)
 /**
  *
  */
-static tellapic_u32_t
+static tellapic_float
 _read_data_opacity(byte_t *data)
 {
 #ifdef LITTLE_ENDIAN_VALUE
@@ -627,7 +627,7 @@ _read_data_color_blue(byte_t *data)
 /**
  *
  */
-static tellapic_u32_t
+static tellapic_float
 _read_data_miter_limit(byte_t * data)
 {
 #ifdef LITTLE_ENDIAN_VALUE
@@ -641,7 +641,7 @@ _read_data_miter_limit(byte_t * data)
 /**
  *
  */
-static tellapic_u32_t
+static tellapic_float
 _read_data_dash_phase(byte_t * data)
 {
 #ifdef LITTLE_ENDIAN_VALUE
@@ -655,7 +655,7 @@ _read_data_dash_phase(byte_t * data)
 /**
  *
  */
-static tellapic_u32_t
+static tellapic_float
 _read_data_dash_array0(byte_t * data)
 {
 #ifdef LITTLE_ENDIAN_VALUE
@@ -669,7 +669,7 @@ _read_data_dash_array0(byte_t * data)
 /**
  *
  */
-static tellapic_u32_t
+static tellapic_float
 _read_data_dash_array1(byte_t * data)
 {
 #ifdef LITTLE_ENDIAN_VALUE
@@ -1677,7 +1677,7 @@ tellapic_read_pwd(tellapic_socket_t socket, char *pwd, int *len)
 /**
  *
  */
-POSH_PUBLIC_API(tellapic_u32_t)
+POSH_PUBLIC_API(ssize_t)
 tellapic_rawsend(tellapic_socket_t socket, byte_t *rawstream)
 {
   tellapic_u32_t ssize = _read_stream_size(rawstream);
@@ -1766,10 +1766,10 @@ tellapic_send(tellapic_socket_t socket, stream_t *stream)
 /**
  *
  */
-POSH_PUBLIC_API(int)
+POSH_PUBLIC_API(ssize_t)
 tellapic_send_file(tellapic_socket_t socket, FILE *file, tellapic_u32_t filesize)
 {
-  tellapic_u32_t bytesSent = 0;
+  ssize_t bytesSent = 0;
   byte_t         *rawstream = malloc(filesize + HEADER_SIZE);
   void           *pointer = rawstream;
 
@@ -1797,30 +1797,228 @@ tellapic_send_file(tellapic_socket_t socket, FILE *file, tellapic_u32_t filesize
 /**
  *
  */
-POSH_PUBLIC_API(int)
+POSH_PUBLIC_API(ssize_t)
 tellapic_send_struct(tellapic_socket_t socket, stream_t *stream)
 {
-  switch(stream->header.cbyte) 
+  ssize_t       result = 0;
+  unsigned int  textlen = 0;
+  
+  /* If stream was a broadcast chat message */
+  if (tellapic_ischatb(&(stream->header)))
     {
+      for (textlen = 0; textlen < MAX_TEXT_SIZE && stream->data.chat.type.broadmsg[textlen] != '\0'; textlen++);
+      result  = tellapic_send_chatb(
+				    socket,
+				    stream->data.chat.idfrom,
+				    textlen,
+				    (char *)stream->data.chat.type.broadmsg
+				    );
+    }
 
-    case CTL_CL_FIG:
-      if (stream->data.drawing.dcbyte == (TOOL_TEXT | EVENT_NULL) )
+
+
+  /* If stream was a private chat message */
+  else if (tellapic_ischatp(&(stream->header)))
+    {
+      for (textlen = 0; textlen < MAX_TEXT_SIZE && stream->data.chat.type.privmsg.text[textlen] != '\0'; textlen++);
+      result  = tellapic_send_chatp(
+				    socket,
+				    stream->data.chat.idfrom,
+				    stream->data.chat.type.privmsg.idto,
+				    textlen,
+				    (char *)stream->data.chat.type.privmsg.text
+				    );
+    }
+
+
+  /* If stream was a control message */
+  else if (tellapic_isctl(&(stream->header)))
+    {
+      result = tellapic_send_ctl(
+				 socket,
+				 stream->data.control.idfrom,
+				 stream->header.cbyte
+				 );
+				 
+    }
+
+
+  /* If stream was an extended control message */
+  else if (tellapic_isctle(&(stream->header)))
+    {
+      for (textlen = 0; textlen < MAX_INFO_SIZE && stream->data.control.info[textlen] != '\0'; textlen++);
+      result = tellapic_send_ctle(
+				  socket,
+				  stream->data.control.idfrom,
+				  stream->header.cbyte,
+				  textlen,
+				  (char *)stream->data.control.info
+				  );
+    }
+
+
+  /* If stream was a file message */
+  else if (tellapic_isfile(&(stream->header)))
+    {
+    }
+
+
+
+  /* If stream was a drawing message */
+  else if (tellapic_isdrw(&(stream->header)))
+    {
+      if ( (stream->data.drawing.dcbyte & EVENT_PRESS) == EVENT_PRESS)
 	{
-
+	  float dash_array[2];
+#         ifdef LITTLE_ENDIAN_VALUE
+	  dash_array[0] = POSH_FloatFromLittleBits(stream->data.drawing.type.figure.dash_array[0]);
+	  dash_array[1] = POSH_FloatFromLittleBits(stream->data.drawing.type.figure.dash_array[1]);
+#         else
+	  dash_array[0] = POSH_FloatFromBigBits(stream->data.drawing.type.figure.dash_array[0]);
+	  dash_array[1] = POSH_FloatFromBigBits(stream->data.drawing.type.figure.dash_array[1]);
+#         endif
+	  result = tellapic_send_drw_init(
+					  socket,
+					  stream->data.drawing.dcbyte,
+					  stream->data.drawing.dcbyte_ext,
+					  stream->data.drawing.idfrom,
+					  stream->data.drawing.number,
+#                                         ifdef LITTLE_ENDIAN_VALUE
+					  POSH_FloatFromLittleBits(stream->data.drawing.width),
+					  POSH_FloatFromLittleBits(stream->data.drawing.opacity),
+#                                         else
+					  POSH_FloatFromBigBits(stream->data.drawing.width),
+					  POSH_FloatFromBigBits(stream->data.drawing.opacity),
+#                                         endif
+					  stream->data.drawing.color.red,
+					  stream->data.drawing.color.green,
+					  stream->data.drawing.color.blue,
+					  stream->data.drawing.point1.x,
+					  stream->data.drawing.point1.y,
+					  stream->data.drawing.type.figure.point2.x,
+					  stream->data.drawing.type.figure.point2.y,
+					  stream->data.drawing.type.figure.linejoin,
+					  stream->data.drawing.type.figure.endcaps,
+#                                         ifdef LITTLE_ENDIAN_VALUE
+					  POSH_FloatFromLittleBits(stream->data.drawing.type.figure.miterlimit),
+					  POSH_FloatFromLittleBits(stream->data.drawing.type.figure.dash_phase),
+#                                         else
+					  POSH_FloatFromBigBits(stream->data.drawing.type.figure.miterlimit),
+					  POSH_FloatFromBigBits(stream->data.drawing.type.figure.dash_phase),
+#                                         endif
+					  dash_array
+					  );
+	}
+      else
+	{
+	  result = tellapic_send_drw_using(
+					   socket,
+					   stream->data.drawing.dcbyte,
+					   stream->data.drawing.dcbyte_ext,
+					   stream->data.drawing.idfrom,
+					   stream->data.drawing.number,
+#                                          ifdef LITTLE_ENDIAN_VALUE
+					   POSH_FloatFromLittleBits(stream->data.drawing.width),
+					   POSH_FloatFromLittleBits(stream->data.drawing.opacity),
+#                                          else
+					   POSH_FloatFromBigBits(stream->data.drawing.width),
+					   POSH_FloatFromBigBits(stream->data.drawing.opacity),
+#                                          endif
+					   stream->data.drawing.color.red,
+					   stream->data.drawing.color.green,
+					   stream->data.drawing.color.blue,
+					   stream->data.drawing.point1.x,
+					   stream->data.drawing.point1.y
+					   );
 	}
     }
-    return 0;
+
+
+
+  /* If stream was a figure message */
+  else if (tellapic_isfig(&(stream->header)))
+    {
+      if (tellapic_isfigtxt(stream))
+	{
+	  result = tellapic_send_text(
+				      socket,
+				      stream->data.drawing.idfrom,
+				      stream->data.drawing.number,
+#                                     ifdef LITTLE_ENDIAN_VALUE 
+				      POSH_FloatFromLittleBits(stream->data.drawing.width),
+				      POSH_FloatFromLittleBits(stream->data.drawing.opacity),
+#                                     else 
+				      POSH_FloatFromBigBits(stream->data.drawing.width),
+				      POSH_FloatFromBigBits(stream->data.drawing.opacity),
+#                                     endif
+				      stream->data.drawing.color.red,
+				      stream->data.drawing.color.green,
+				      stream->data.drawing.color.blue,
+				      stream->data.drawing.point1.x,
+				      stream->data.drawing.point1.y,
+				      stream->data.drawing.type.text.style,
+				      stream->data.drawing.type.text.facelen,
+				      (char *)stream->data.drawing.type.text.face,
+				      stream->data.drawing.type.text.infolen,
+				      (char *)stream->data.drawing.type.text.info
+				      );
+	}
+      else
+	{
+	  float dash_array[2];
+#         ifdef LITTLE_ENDIAN_VALUE
+	  dash_array[0] = POSH_FloatFromLittleBits(stream->data.drawing.type.figure.dash_array[0]);
+	  dash_array[1] = POSH_FloatFromLittleBits(stream->data.drawing.type.figure.dash_array[1]);
+#         else
+	  dash_array[0] = POSH_FloatFromBigBits(stream->data.drawing.type.figure.dash_array[0]);
+	  dash_array[1] = POSH_FloatFromBigBits(stream->data.drawing.type.figure.dash_array[1]);
+#         endif 
+	  result = tellapic_send_fig(
+				     socket,
+				     stream->data.drawing.dcbyte,
+				     stream->data.drawing.dcbyte_ext,
+				     stream->data.drawing.idfrom,
+				     stream->data.drawing.number,
+#                                ifdef LITTLE_ENDIAN_VALUE 
+				     POSH_FloatFromLittleBits(stream->data.drawing.width),
+				     POSH_FloatFromLittleBits(stream->data.drawing.opacity),
+#                                else 
+				     POSH_FloatFromBigBits(stream->data.drawing.width),
+				     POSH_FloatFromBigBits(stream->data.drawing.opacity),
+#                                endif
+				     stream->data.drawing.color.red,
+				     stream->data.drawing.color.green,
+				     stream->data.drawing.color.blue,
+				     stream->data.drawing.point1.x,
+				     stream->data.drawing.point1.y,
+				     stream->data.drawing.type.figure.point2.x,
+				     stream->data.drawing.type.figure.point2.y,
+				     stream->data.drawing.type.figure.linejoin,
+				     stream->data.drawing.type.figure.endcaps,
+#                                ifdef LITTLE_ENDIAN_VALUE 
+				     POSH_FloatFromLittleBits(stream->data.drawing.type.figure.miterlimit),
+				     POSH_FloatFromLittleBits(stream->data.drawing.type.figure.dash_phase),
+#                                else
+				     POSH_FloatFromBigBits(stream->data.drawing.type.figure.miterlimit),
+				     POSH_FloatFromBigBits(stream->data.drawing.type.figure.dash_phase),
+#                                endif
+				     dash_array
+				     ); 
+	}
+    }
+
+  return result;
 }
 
 
 /**
  *
  */
-POSH_PUBLIC_API(int)
-tellapic_send_text(tellapic_socket_t socket, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int style, int facelen, char *face, int textlen, char *text)
+POSH_PUBLIC_API(ssize_t)
+tellapic_send_text(tellapic_socket_t socket, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int style, int facelen, char *face, int infolen, char *info)
 {
-  tellapic_u32_t bytesSent = 0;
-  tellapic_u32_t ssize = MIN_FIGTXT_STREAM_SIZE + facelen + textlen;
+  ssize_t         bytesSent = 0;
+  tellapic_u32_t ssize = MIN_FIGTXT_STREAM_SIZE + facelen + infolen;
   byte_t         *rawstream = malloc(ssize);
   void           *pointer = rawstream;
   
@@ -1841,9 +2039,9 @@ tellapic_send_text(tellapic_socket_t socket, int idfrom, int dnum, float w, floa
   pointer = POSH_WriteU16ToLittle(pointer, POSH_LittleU16(y1));          /*  |     y point 1     |  2 bytes           */
   pointer = WriteByte(pointer, (byte_t)style);                           /*  |    font style     |  1 byte            */
   pointer = WriteByte(pointer, (byte_t)facelen);                         /*  |   face name len   |  1 byte            */
-  pointer = POSH_WriteU16ToLittle(pointer, POSH_LittleU16(textlen));     /*  |      infolen      |  2 bytes           */
+  pointer = POSH_WriteU16ToLittle(pointer, POSH_LittleU16(infolen));     /*  |      infolen      |  2 bytes           */
   pointer = WriteBytes(pointer, face, facelen);                          /*  |   font face name  |  facenamelen bytes */
-  pointer = WriteBytes(pointer, text, textlen);                          /*  |       text        |  infolen bytes     */
+  pointer = WriteBytes(pointer, info, infolen);                          /*  |       text        |  infolen bytes     */
                                                                          /*  +-------------------+                    */
                                                                          /*  total bytes = 32 + facenamelen + infolen */
                                                                          
@@ -1865,9 +2063,9 @@ tellapic_send_text(tellapic_socket_t socket, int idfrom, int dnum, float w, floa
   pointer = POSH_WriteU16ToBig(pointer, POSH_BigU16(y1));                /*  |     y point 1     |  2 bytes           */
   pointer = WriteByte(pointer, (byte_t)style);                           /*  |    font style     |  1 byte            */
   pointer = WriteByte(pointer, (byte_t)facelen);                         /*  |   face name len   |  1 byte            */
-  pointer = POSH_WriteU16ToBig(pointer, POSH_BigU16(textlen));           /*  |      infolen      |  2 bytes           */
+  pointer = POSH_WriteU16ToBig(pointer, POSH_BigU16(infolen));           /*  |      infolen      |  2 bytes           */
   pointer = WriteBytes(pointer, face, facelen);                          /*  |   font face name  |  facenamelen bytes */
-  pointer = WriteBytes(pointer, text, textlen);                          /*  |       text        |  infolen bytes     */
+  pointer = WriteBytes(pointer, info, infolen);                          /*  |       text        |  infolen bytes     */
                                                                          /*  +-------------------+                    */
                                                                          /*  total bytes = 32 + facenamelen + infolen */
 #endif
@@ -1883,10 +2081,10 @@ tellapic_send_text(tellapic_socket_t socket, int idfrom, int dnum, float w, floa
 /**
  *
  */
-POSH_PUBLIC_API(int)
+POSH_PUBLIC_API(ssize_t)
 tellapic_send_drw_using(tellapic_socket_t socket, int tool, int dcbyte_ext, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1)
 {
-  tellapic_u32_t bytesSent = 0;
+  ssize_t         bytesSent = 0;
   byte_t         *rawstream = malloc(DRW_USING_STREAM_SIZE);
   void           *pointer   = rawstream;
 
@@ -1934,10 +2132,10 @@ tellapic_send_drw_using(tellapic_socket_t socket, int tool, int dcbyte_ext, int 
 /**
  *
  */
-POSH_PUBLIC_API(int)
+POSH_PUBLIC_API(ssize_t)
 tellapic_send_drw_init(tellapic_socket_t socket, int tool, int dcbyte_ext, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int x2, int y2, int lj, int ec, float ml, float dp, float da[])
 {
-  tellapic_u32_t bytesSent = 0;
+  ssize_t        bytesSent = 0;
   byte_t         *rawstream = malloc(DRW_INIT_STREAM_SIZE);
   void           *pointer   = rawstream;
   
@@ -2001,10 +2199,28 @@ tellapic_send_drw_init(tellapic_socket_t socket, int tool, int dcbyte_ext, int i
 /**
  *
  */
-POSH_PUBLIC_API(int)
-tellapic_send_fig(tellapic_socket_t socket, int tool, int dcbyte_ext, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int x2, int y2, int lj, int ec, float ml, float dp, float da[])
+POSH_PUBLIC_API(ssize_t)
+tellapic_send_fig(tellapic_socket_t socket,
+		  int tool,
+		  int dcbyte_ext,
+		  int idfrom,
+		  int dnum,
+		  float w,
+		  float op,
+		  int red,
+		  int green,
+		  int blue,
+		  int x1,
+		  int y1,
+		  int x2,
+		  int y2,
+		  int lj,
+		  int ec,
+		  float ml,
+		  float dp,
+		  float da[])
 {
-  tellapic_u32_t bytesSent = 0;
+  ssize_t         bytesSent = 0;
   byte_t         *rawstream = malloc(FIG_STREAM_SIZE);
   void           *pointer   = rawstream;
   
@@ -2069,10 +2285,10 @@ tellapic_send_fig(tellapic_socket_t socket, int tool, int dcbyte_ext, int idfrom
 /**
  *
  */
-POSH_PUBLIC_API(int)
+POSH_PUBLIC_API(ssize_t)
 tellapic_send_chatp(tellapic_socket_t socket, int idfrom, int idto, int textlen, char* text)
 {
-  tellapic_u32_t bytesSent = 0;
+  ssize_t        bytesSent = 0;
   tellapic_u32_t ssize = HEADER_SIZE + textlen + 2;
   byte_t         *rawstream = malloc(ssize);
   void           *pointer   = rawstream;
@@ -2108,10 +2324,10 @@ tellapic_send_chatp(tellapic_socket_t socket, int idfrom, int idto, int textlen,
 /**
  *
  */
-POSH_PUBLIC_API(int)
+POSH_PUBLIC_API(ssize_t)
 tellapic_send_chatb(tellapic_socket_t socket, int idfrom, int textlen, char* text)
 {
-  tellapic_u32_t bytesSent = 0;
+  ssize_t        bytesSent = 0;
   tellapic_u32_t ssize = HEADER_SIZE + textlen + 1;
   byte_t         *rawstream = malloc(ssize);
   void           *pointer   = rawstream;
@@ -2145,10 +2361,10 @@ tellapic_send_chatb(tellapic_socket_t socket, int idfrom, int textlen, char* tex
 /**
  *
  */
-POSH_PUBLIC_API(int)
+POSH_PUBLIC_API(ssize_t)
 tellapic_send_ctle(tellapic_socket_t socket, int idfrom, int ctle, int infolen,  char *info)
 {
-  tellapic_u32_t bytesSent = 0;
+  ssize_t bytesSent = 0;
   tellapic_u32_t ssize = HEADER_SIZE + infolen + 1;
   byte_t         *rawstream = malloc(ssize);
   void           *pointer = rawstream;
@@ -2181,10 +2397,10 @@ tellapic_send_ctle(tellapic_socket_t socket, int idfrom, int ctle, int infolen, 
 /**
  *
  */
-POSH_PUBLIC_API(int)
+POSH_PUBLIC_API(ssize_t)
 tellapic_send_ctl(tellapic_socket_t socket, int idfrom, int ctl)
 {
-  tellapic_u32_t bytesSent = 0;
+  ssize_t bytesSent = 0;
   byte_t         *rawstream = malloc(CTL_STREAM_SIZE);
   void           *pointer = rawstream;
 
