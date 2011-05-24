@@ -1,4 +1,5 @@
 <wiki:toc max_depth="3" />
+#summary Build instructions
 
 *Only linux build is completely supported. Windows build is just for Java GUI client.*
 
