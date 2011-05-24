@@ -1,6 +1,6 @@
 <wiki:toc max_depth="3" />
 
-To build this package you will need cmake installed (2.8 preferred), and svn for download the sources. *Only linux build is completely supported. Windows build is just for Java GUI client.*
+*Only linux build is completely supported. Windows build is just for Java GUI client.*
 
 == Downloading the sources ==
 
@@ -19,7 +19,7 @@ When building, you should change to the tellapic-read-only directory.
 You will need this libraries installed on your system:
 
   * [http://invisible-island.net/cdk/ Curses Development Kit 5.0] _(Optional, but you won't be able to 'debug' on-the-fly the server instance)_
-  * pthreads _(currently used version 2.12.2)_
+  * pthreads _(for building linux server, currently used version 2.12.2)_
 
 
 And this tools:
@@ -34,6 +34,7 @@ And this tools:
   * [http://www.python.org/download/ Python 2.7.1] _(optional for python bindings)_
   * [http://www.microsoft.com/downloads/en/details.aspx?FamilyID=6b6c21d2-2006-4afa-9702-529fa782d63b Microsoft Windows SDK for Windows 7 and .NET Framework 4 for win32 building].
 
+*The procedure below ONLY works on Linux. Windows server is not supported yet.*
 
 {{{
 ~ $ cd tellapic-read-only/
@@ -43,8 +44,15 @@ And this tools:
 ~ $ make
 }}}
 
-You can build just the wrapper. The next sections shows how to do it.
+This will build:
+  * Linux server
+  * Tellapic C library
+  * Java bindings for tellapic C library
+  * Python bindings for tellapic C library
 
+You can build just the wrappers. The next sections describes how to do it.
+
+See the [Build#Details] and [Build#List_of_files] section on how to use the files.
 
 == Building wrappers ==
 
@@ -77,6 +85,8 @@ No extra dependency is needed.
 ~ $ cmake -DCMAKE_BUILD_TYPE="Release" ..
 ~ $ make pytellapic
 }}}
+
+See the [Build#Details] and [Build#List_of_files] section on how to use the files.
 
 == Building Java GUI ==
 
@@ -113,6 +123,8 @@ This will build a debug release and it can't be redistributable as it uses windo
 
 That will use m$ redistributable libraries.
 
+See the [Build#Details] and [Build#List_of_files] section on how to use the files.
+
 *NOTE:* Apache Ant 1.8.2 is needed to build the Java Client GUI. Prior versions don't support 'skipexisting' attribute for the Get task. If you are using a previous version, update it to 1.8.2 or just make your way your own.
 
 === Building under Linux ===
@@ -137,6 +149,8 @@ The last two steps will compile the Java GUI code, and then will create a runnab
   * Docking Frames
   * Guava
   * SwingX
+
+See the [Build#Details] and [Build#List_of_files] section on how to use the files.
 
 *NOTE:* Apache Ant 1.8.2 is needed to build the Java Client GUI. Prior versions does not support 'skipexisting' attribute for the Get task. If you are using a previous version, update it to 1.8.2 or just make your way your own.
 
@@ -174,6 +188,8 @@ So, in order to run and test the Java GUI, you will need to follow this steps on
 ~ $ cd build-win32
 ~ $ java -Djava.library.path=src\swig\java -jar tellapic-executable.jar
 }}}
+
+See the [Build#Details] and [Build#List_of_files] section on how to use the files.
 
 *NOTE:* Apache Ant 1.8.2 is needed to build the Java Client GUI. Prior versions does not support 'skipexisting' attribute for the Get task. If you are using a previous version, update it to 1.8.2 or just make your way your own.
 
