@@ -169,7 +169,7 @@ So, in order to run and test the Java GUI, you will need to follow this steps on
 
 *NOTE*: Windows users will probably need to change the '/' slash to '\'.
 
-=== Complete Windows procedure build and run Java GUI ===
+=== Complete Windows build and test procedure for Java GUI ===
 
 {{{
 ~ $ svn checkout http://tellapic.googlecode.com/svn/trunk/ tellapic-read-only
