@@ -33,3 +33,5 @@ Tellapic is mainly a protocol and a C library that implements it. It defines bas
 }}}
 
 That is, server uses native tellapic library for packet construction, reception, and delivery. Clients, use tellapic bindings from the language they are implemented, or native library if they are written in C.
+
+Extending the default set of bindings can be done easily. Writting your own SWIG module for your preferred programming language can be an easy task, just read [http://www.swig.org/doc.html SWIG documentation] and things should go fine without big modifications.
