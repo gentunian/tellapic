@@ -1,0 +1,37 @@
+#summary ¿Qué es tellapic?
+
+Tellapic es un conjunto de herramientas que su objetivo principal es discutir, describir, hablar sobre, y demás acciones relacionadas con mirar una imagen sin estar en el mismo lugar físico.
+
+Principalmente, tellapic es un protocolo, con una librería (libtellapic) que lo implementa. Define datos básicos de flujo binario para distribuirlo por red, con llamadas a sistemas personalizadas _read()/write()/connect()_ que se abstraen de la plataforma. Entre el conjunto de herramientas, se encuentra un servidor escrito en C, y un cliente Java con interfaz gráfica, que demuestran cómo tellapic puede ser usado ampliamente, de manera independiente del lenguaje que se esté usando. Esto se debe a que la biblioteca es multiplataforma (Windows/Linux) y además, a la capa intermedia en la compilación, dónde se hace una pasada del código fuente por SWIG para generar bindings para un lenguaje específico. El esquema que se muestra a continuación denota lo mencionado en estos párrafos:
+
+
+{{{
+                                        +----------------------------+
+                    .··················>|         SERVIDOR (C)       |
+                    ·                   +-----^----------------^-----+
+                    :                         |                |      
+                    :                         |                |      
+                    :                         |                |      
+                    :                         |    paquetes    |      
+                    :                         |      de        |      
+           +--------·-------+                 |     red        |
+           | libtellapic.so |                 |                |
+           +--------.-------+                 |                |
+                    :                         |                |
+                    :                         |                |
+                    :                         |                |
+               SWIG Wrapper                   |                |
+                    :                         |                |
+                    :                   +-----v-----+   +------v-----+
+                    ·...................|  CLIENTE1 |   |  CLIENTE2  |
+                    :  java bindings    |   (java)  |   |  (python)  |
+                    :(tellapicjava.so)  +-----------+   +------.-----+
+                    :                                          :
+                    :                                          :
+                    ·..........................................·
+                       python bindings (pytellapic.py)
+}}}
+
+Esto es, el servidor utiliza la biblioteca nativamente, escrita en C, para la construcción, recepción y distribución de mensajes entre sus clientes. Los clientes, utilizan bindings específicos para un lenguaje determinado que son generados por un módulo SWIG, o en su defecto, si están implementados en C, utilizarán la biblioteca nativa.
+
+Extender el conjunto de bindings es una tarea sencilla. Escribir un módulo SWIG para el lenguaje de preferencia no lleva mucho trabajo y leyendo la [http://www.swig.org/doc.html SWIG documentacion] el trabajo se hace mucho más sencillo.

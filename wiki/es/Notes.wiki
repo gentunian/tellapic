@@ -1,0 +1,1215 @@
+TODO!!!: UPDATE!!! HACE FALTA CAMBIAR ESTA DOCUMENTACION
+----
+<wiki:toc max_depth="4" />
+= 1. PROTOCOLO =
+  
+
+
+Algunas consideraciones. La idea principal del proyecto es la flexibilidad y modularización del todo. Se entiende por el 'todo', al
+esquema global que comprende a cada herramienta y su función en el desarrollo. El esquema global consta de una aplicación servidor
+y N aplicaciones clientes, y el término flexibilidad hace referencia a que cada cliente es una interpretación gráfica o una interfaz
+de usuario escrita en un lenguaje a elección. Flexibilidad no en términos de programación, sino de elección. Para ello, se debe
+lograr una abstracción adecuada y exponer la funcionalidad e interfaz de los clientes.
+
+Estructuralmente, el esquema global de la herramienta suponiendo 2 clientes conectados, uno escrito en Java y otro en Python,
+puede verse de la siguiente manera:
+
+{{{
+                                        +----------------------------+
+                    .··················>|          SERVIDOR          |
+                    ·                   +-----^----------------^-----+
+                    :                         |                |      
+                    :                         |                |      
+                    :                         |                |      
+                    :                         |    paquetes    |      
+                    :                         |       de       |      
+           +--------·-------+                 |      red       |
+           | libtellapic.so |                 |                |
+           +--------.-------+                 |                |
+                    :                         |                |
+                    :                         |                |
+                    :                         |                |
+               SWIG Wrapper                   |                |
+                    :                         |                |
+                    :                   +-----v-----+   +------v-----+
+                    ·...................|  CLIENTE1 |   |  CLIENTE2  |
+                    :                   |   (java)  |   |  (python)  |
+                    :                   +-----------+   +------.-----+
+                    :                                          :
+                    :                                          :
+                    ·..........................................·
+                            construcción de paquetes
+                            desemsamblaje de paquetes
+}}}
+
+
+----
+
+*¿Qué vamos a enviar desde un cliente?*
+
+
+  *1. imagen a compartir
+  *2. información de nueva conexión
+  *3. un dibujo completo
+  *4. información mientras se dibuja
+  *5. chat
+  *6. contraseña de sesión
+
+----
+
+*¿Qué vamos a recibir desde el servidor?*
+
+
+  *1. la imagen compartida
+  *2. peteción de contraseña
+  *3. información de nuevo cliente conectado
+  *4. información de cliente desconectado
+  *5. información de todos los clientes conectados
+  *6. un dibujo completo
+  *7. un dibujo que se está dibujando
+  *8. chat
+  *9. peteción de contraseña incorrecta
+  *10. petición de contraseña correcta
+
+----
+
+*¿Qué herramientas de dibujo va a soportar el protocolo? *
+
+
+(*NOTA*: los dibujos posibles serán determinados por el protocolo. Esto es una desventaja en lo que respecta a extensibilidad. Proponer como trabajo futuro
+diseñar el protocolo más flexible de manera que agregar una nueva herramienta sea sencillo. Como por ejemplo, pensar que en la biblioteca se tienen métodos,
+estructuras y tipos específicos para cada herramienta, dónde cada una sabe como dibujarse a sí misma dentro de la misma biblioteca y exponer la funcionalidad
+usando SWIG. De esta manera, las interfaces gráficas deberían interpretar esa información para dibujar)
+
+  *1. Marcador (resaltador)
+  *2. Camino
+  *3. Elipse
+  *4. Rectángulo
+  *5. Texto
+  *6. Goma
+  *7. Lápiz
+  *8. Línea
+
+----
+
+*¿Cómo vamos a organizar la información?*
+
+
+Con bytes de datos y bytes de control. Los bytes de control son bytes de información sobre los datos e información sobre qué se está recibiendo. Un paquete de información lleva consigo
+1 sola acción o información, y cada nueva acción o información debe enviarse en un paquete nuevo.
+
+        El paquete de información se compone de una cabecera y datos. La cabecera contiene el byte de control, un byte de endianness y 4 bytes que informan el tamaño del paquete que se está enviando.
+
+        Byte de endianness + byte de control + bytes de tamaño = CABECERA
+
+A la CABECERA le deben suceder los datos: CABECERA + DATOS = stream
+
+{{{
+
+                                                 STREAM
+            _______________________________________^_______________________________________
+           /                                                                               \
+             byte      byte             bytes de           
+              de        de               tamaño         
+          endianness  control   ____________^_____________ 
+               ^         ^     /                          \
+          +---------+---------+------+------+------+------+-------------------------------+
+          |         |         |      |      |      |      |                               |
+          +---------+---------+------+------+------+------+-------------------------------+
+          \_______________________________________________/\______________________________/
+
+                               CABECERA                                DATOS
+}}}
+El byte de control va a determinar el tipo de información que habrá en la sección DATOS. Puede ser una de las siguientes:
+   
+  * Datos de un dibujo ya dibujado.
+  * Datos de un dibujo mientras se dibuja.
+  * Datos de mensajes de chat.
+  * Datos de control y diálogo entre cliente y servidor.
+
+
+----
+
+*¿Cómo va a ser la información a enviar de cada dibujo?*
+
+
+Cada vez que se mande un dibujo, ya sea completo o dibujandosé, la sección DATOS tendrá un byte de dibujo y una sección de bytes de datos sobre el dibujo:
+
+
+
+
+{{{
+                                         STREAM
+        ________________________________________________________________________________
+       /                                                                                \
+
+             CABECERA                                 DATOS
+        _________________  ______________________________________________________________
+       /                 \/                                                              \
+       +--+--+--+--+--+--+------+-----------+-------+-------+-------+ ... +-------+------+
+       |  |  |  |  |  |  | <id> | <byte de dibujo>  |  <bytes de datos sobre el dibujo>  |
+       +--+--+--+--+--+--+------+-----------+-------+-------+-------+ ... +-------+------+
+
+
+}}}
+
+----
+
+= 1.2 CABECERA =
+    
+
+== 1.2.1 Byte de endianness: ==
+      
+
+
+
+
+== 1.2.2 Byte de control: ==
+
+
+El byte de control indica la acción o información que se va a recibir. Los datos de esa acción o información se encuentran en la sección datos del paquete.
+
+Dependiendo la acción o información recibida, se debe entonces examinar la sección datos del paquete.
+
+El byte de control puede indicar todas estas cosas:
+  * CTL_CL_PMSG o CTL_CL_BMSG: el paquete se trata de un mensaje de chat
+  * CTL_CL_FIG: el paquete es un dibujo completo
+  * CTL_CL_DRW: el paquete es un dibujo que se está dibujando
+  * CTL_SV_CLADD: el paquete es información de un cliente que se conectó
+  * CTL_SV_CLRM: el paquete es información de un cliente que se desconectó
+  * CTL_SV_CLIST: el paquete es información de todos los clientes que están conectados
+  * CTL_CL_CLIST: el paquete es una petición de los clientes que están conectados
+  * CTL_SV_PWDASK: el paquete es una solicitud de contraseña
+  * CTL_CL_PWD: el paquete es una contraseña
+  * CTL_SV_PWDOK: el paquete es una indicación de que se recibió correctamente la contraseña
+  * CTL_SV_PWDFAIL: el paquete es una indicación de que la contraseña fue incorrecta
+  * CTL_CL_FILEASK: el paquete es una petición de un archivo de imagen
+  * CTL_CL_FILEOK: el paquete es una indicación que el archivo no llegó correctamente
+  * CTL_SV_FILE: el paquete es una indicación que se trata de un archivo
+
+
+*TODO 29-11-2010:* CTL_CL_NAME, CTL_SV_NAMEINUSE
+
+*TODO 16-12-2010:* FIXED DATA CHUNK SIZE. NO MORE MALLOCS
+
+*14-01-2011 ADDED CTL_NOPIPE*
+
+
+
+  Se podría indicar los bytes de control que son de la forma CTL_SV_ como pares y los que son de la forma CTL_CL_ como impares, es decir:
+
+{{{
+            7   6   5   4   3   2   1   0
+          +---+---+---+---+---+---+---+---+
+          | ? | ? | ? | ? | ? | ? | ? | 0 |    ---> CTL_SV_
+          +---+---+---+---+---+---+---+---+
+
+
+
+            7   6   5   4   3   2   1   0
+          +---+---+---+---+---+---+---+---+
+          | ? | ? | ? | ? | ? | ? | ? | 1 |    ---> CTL_CL_
+          +---+---+---+---+---+---+---+---+
+
+}}}
+
+----
+        =CTL_CL_BMSG       0x11 (17)=
+
+        * Descripción:
+                Mensaje global de un usuario hacia todos los demás usuarios conectados. (broadcast message)
+
+        * Valor: 
+                0x11 (17)
+
+        * Byte de control:
+{{{
+                         _____high_____  ______low______
+                        /              \/               \   
+                        +---+---+---+---+---+---+---+---+
+                        | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 1 |
+                        +---+---+---+---+---+---+---+---+
+}}}
+        * Bytes de tamaño: 
+                Tamaño del STREAM.
+
+        * Bytes de datos:
+                - id: byte que identifica a quién pertenece el mensaje enviado.
+                - Texto: Tamaño del texto igual a (bytes de tamaño - tamaño de CABECERA - byte de id).
+{{{
+                +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+----+
+                | <id>| 'H' | 'O' | 'L' | 'A' | ' ' | 'M' | 'U' | 'N' | 'D' | 'O' |'\0'|
+                +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+----+
+
+}}}
+         * Ejemplo:
+{{{
+                                             STREAM
+ _________________________________________________________________________________________________________
+/                                                                                                         \ 
+              CABECERA                                             DATOS
+ ___________________________________  _____________________________________________________________________
+/                                   \/                                                                     \
++-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+----+
+|  0  | 17  |  0  |  0  |  0  | 17  | <id>| 'H' | 'O' | 'L' | 'A' | ' ' | 'M' | 'U' | 'N' | 'D' | 'O' |'\0'|
++-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+----+
+
+}}}
+
+----
+
+        =CTL_CL_PMSG       0x21 (33)=
+        
+        * Descripción:
+                Mensaje privado de un usuario hacia uno particular que esté conectado. (private message)
+        * Valor: 
+                0x21 (33)
+        * Byte de control:
+{{{
+                             _____high_____  ______low______
+                            /              \/               \   
+                            +---+---+---+---+---+---+---+---+
+                            | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 |
+                            +---+---+---+---+---+---+---+---+
+}}}
+        * Bytes de tamaño: 
+                Tamaño del STREAM.
+        * Bytes de datos:
+                - id: byte que identifica a quién pertenece el mensaje enviado.
+                - to: byte que identifica para quién es el mensaje enviado.
+                - Texto: Tamaño del texto igual a (*actualizar*).
+{{{
+                   +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+                   | <id>| <to>| 'H' | 'O' | 'L' | 'A' | ' ' | 'M' | 'A' | 'R' | 'T' | 'A' |  = 12 bytes
+                   +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+
+}}}
+               * Ejemplo:
+{{{
+                                             STREAM
+ __________________________________________________________________________________________________________
+/                                                                                                          \
+            CABECERA                                                  DATOS
+ ___________________________________  ______________________________________________________________________
+/                                   \/                                                                      \
++-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+|  0  | 33  |  0  |  0  |  0  | 18  | <id>| <to>| 'H' | 'O' | 'L' | 'A' | ' ' | 'M' | 'A' | 'R' | 'T' | 'A' |
++-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+
+}}}
+
+----
+
+        =CTL_CL_FIG        0x31 (49)=
+
+        * Descripción:
+                Una "figura" que se ha dibujado por algún cliente.
+
+        * Valor: 
+                0x31 (49)
+
+        * Byte de control:
+{{{
+                             _____high_____  ______low______
+                            /              \/               \   
+                            +---+---+---+---+---+---+---+---+
+                            | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 1 |
+                            +---+---+---+---+---+---+---+---+
+
+}}}
+        * Bytes de tamaño:
+                Tamaño el STREAM.
+
+        * Bytes de datos:
+                - <id>: byte que identifica a quién pertenece el dibujo o figura.
+                - byte de dibujo: que determina qué herramienta se usó para dibujar y que evento lo generó:
+                        + Marcador (null event | drag event | press event | release event)
+                        + Camino
+                        + Elipse (null event)
+                        + Rectángulo (null event)
+                        + Texto
+                        + Lápiz (null event | drag event | press event | release event)
+                - datos del dibujo y cómo representarlo. Depende de la herramienta usada.
+{{{
+
+                        +---------------------------+
+                        |             <id>          |   byte de id
+                        +--------------+------------+
+                        | herramienta  |   evento   |   byte de dibujo
+                        +--------------+------------+
+                        |        datos de dibujo    |   bytes de datos del dibujo
+                        +---------------------------+
+
+}}}
+
+        * Ejemplo: Se dibuja un rectángulo con esquina superior izquierda (100,119) y esquina inferior derecha (265,190), línea de 7 puntos de grosor, transparencia de 0.7, color rojo, line join miter, end caps round.
+
+{{{
+
+        _         +-----+-----+-----+-----+-----+-----+  
+       /          |  0  | 49  |  0  |  0  |  0  | 49  |  
+       |       _  +-----+-----+-----+-----+-----+-----+  
+       |      /   |                <id>               |   byte de id                 
+       |     |    +-----------------+-----------------+
+       |     |    |         5       |        0        |   byte de dibujo.High: 0x5 Low: 0x0. Valor 0x3c (60)
+       |     |    +--------+--------+--------+--------+
+       |     |    |   ?    |   ?    |    ?   |    ?   |   4 bytes de número de dibujo. (incremental)
+       |     |    +--------+--------+--------+--------+   
+       |     |    |   ?    |   ?    |    ?   |    ?   |   4 bytes de grosor.
+       |     |    +--------+--------+--------+--------+
+       |     |    |   ?    |   ?    |    ?   |    ?   |   4 bytes de transparencia
+       |     |    +--------+---+----+------+-+--------+
+       |     |    |    255     |     0     |    0     |   3 bytes de color. RGB
+       |     |    +-----------------+-----------------+
+       |     |    |         0       |       100       |   2 bytes de coordenada x1 \
+       |     |    +-----------------+-----------------+                             } Esquina superior izquierda
+       |     |    |         0       |       119       |   2 bytes de coordenada y1 /
+       |     |    +-----------------+-----------------+
+       |     |    |        256      |        9        |   2 bytes de coordenada x2 \
+       |     |    +-----------------+-----------------+                             } Esquina inferior derecha
+       |     |    |         0       |       190       |   2 bytes de coordenada y2 /
+       |     |    +------------+-----------+----------+
+       |     |    |                 0                 |   byte de line join: miter (0), round (1) bevel (2)
+       |     |    +-----------------------------------+
+       |     |    |                 1                 |   byte de end caps: butt (0), round(1), square (2)
+       |     |    +-----------------------------------+
+       |     |    |                 ?                 |   4 bytes de miter limit
+       |     |    +-----------------------------------+
+       |     |    |                 ?                 |   4 bytes de dash_phase
+       |     |    +-----------------------------------+
+       |     |    |                 ?                 |   8 bytes de dash array
+        \     \   +-----------------------------------+
+
+
+}}}
+
+----
+
+        =CTL_CL_DRW        0x41 (65)=
+        
+        * Descripción: 
+                Un "dibujo" que está siendo dibujado (live mode)
+
+        * Valor: 
+                0x41 (65)
+  
+        * Byte de control:
+{{{
+
+     _____high_____  ______low______
+    /              \/               \   
+   +---+---+---+---+---+---+---+---+
+   | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 1 |
+   +---+---+---+---+---+---+---+---+
+
+}}}
+
+       * Bytes de tamaño:
+                Tamaño del STREAM.
+
+       * Bytes de datos:
+                - <id>: byte que identifica a quién pertenece el dibujo.
+                - byte de dibujo: que determina qué herramienta se usó para dibujar y que evento lo generó:
+                       + Marcador
+                       + Camino
+                       + Lápiz
+                - datos del dibujo y cómo ir representandoló a medida que arriban este tipo de paquetes. Depende de la herramienta usada y del evento que lo generó.
+{{{
+
++---------------------------+                              
+|             <id>          |   byte de id                 
++--------------+------------+
+| herramienta  |   evento   |   byte de dibujo (el evento puede ser alguno de {null event | drag event | press event | release event})
++--------------+------------+
+|        datos de dibujo    |   bytes de datos del dibujo de acuerdo al evento y herramienta seleccionada.
++---------------------------+
+
+}}}
+
+    *Ejemplo:  Se dibuja un trazo que comienza en el punto (10,10) y termina en el punto (59, 90). El primer punto y las propiedades del dibujo se envían
+    en el paquete que contiene al evento P (press event). El último punto, se encuentra en el paquete que contiene el evento R (release event).
+   Y los puntos intermedios, como así también una posible modificación de las propiedades del dibujo, se encuentran en el paquete que contiene
+    el evento D (drag event). Si no se modifican las propiedades del dibujo mientras se dibuja, en el evento D sólo habrá coordenadas de
+   actualización.
+
+{{{
+
+
+    /         +-----+-----+-----+-----+-----+-----+  
+   |          |  0  | 65  |  0  |  0  |  0  | 49  |  
+   |          +-----+-----+-----+-----+-----+-----+  
+   |      /   |                <id>               |   byte de id                 
+   |     |    +-----------------+-----------------+
+   |     |    |         1       |        5        |   byte de dibujo. Marcador: 0x1 (1) Press Event: 0x5 (5) Valor byte entero:  0x15 (21)
+   |     |    +--------+--------+--------+--------+
+   |     |    |   ?    |   ?    |    ?   |    ?   |   4 bytes de número de dibujo. (incremental)
+   |     |    +--------+--------+--------+--------+   
+   |     |    |   ?    |   ?    |    ?   |    ?   |   4 bytes de grosor.
+   |     |    +--------+--------+--------+--------+
+   |     |    |   ?    |   ?    |    ?   |    ?   |   4 bytes de transparencia
+   |     |    +--------+---+----+------+-+--------+
+   |     |    |    255     |     0     |    0     |   3 bytes de color. RGB
+   |     |    +------------+-----+-----+----------+
+   |     |    |         0       |       10        |   2 bytes de coordenada x1 \
+   |     |    +-----------------+-----------------+                             } Primer Punto
+   |     |    |         0       |       10        |   2 bytes de coordenada y1 /
+   |     |    +-----------------+-----------------+
+   |     |    |    no se usa    |   no se usa     |   2 bytes de coordenada \
+   |     |    +-----------------+-----------------+                          } NO SE USAN
+   |     |    |    no se usa    |   no se usa     |   2 bytes de coordenada /
+   |     |    +-----------------+-----------------+
+   |     |    |                 0                 |   byte de line join: miter (0), round (1), bevel (2)
+   |     |    +-----------------------------------+
+   |     |    |                 1                 |   byte de end caps: butt (0), round(1), square (2)
+   |     |    +-----------------------------------+
+   |     |    |                 ?                 |   4 bytes de miter limit
+   |     |    +-----------------------------------+
+   |     |    |                 ?                 |   4 bytes de dash_phase
+   |     |    +-----------------+-----------------+
+   |     |    |                 |                 |   8 bytes de dash array (4 bytes + 4 bytes de floats)
+    \     \   +-----------------+-----------------+
+
+
+
+
+    /         +-----+-----+-----+-----+-----+-----+  
+   |          |  0  | 65  |  0  |  0  |  0  | 27  |  
+   |          +-----+-----+-----+-----+-----+-----+  
+   |      /   |                <id>               |   byte de id                 
+   |     |    +-----------------+-----------------+
+   |     |    |         1       |        9        |   byte de dibujo. Marcador: 0x1 (1) Drag Event: 0x9 (9) valor byte entero:  0x19 (25)
+   |     |    +--------+--------+--------+--------+
+   |     |    |   ?    |   ?    |    ?   |    ?   |   4 bytes de número de dibujo. (incremental)
+   |     |    +--------+--------+--------+--------+   
+   |     |    |   ?    |   ?    |    ?   |    ?   |   4 bytes de grosor.
+   |     |    +--------+--------+--------+--------+
+   |     |    |   ?    |   ?    |    ?   |    ?   |   4 bytes de transparencia
+   |     |    +--------+---+----+------+-+--------+
+   |     |    |    255     |     0     |    0     |   3 bytes de color. RGB
+   |     |    +------------+-----+-----+----------+
+   |     |    |         0       |       100       |   2 bytes de coordenada x1 \
+   |     |    +-----------------+-----------------+                             } Nuevo Punto
+   |     |    |         0       |       119       |   2 bytes de coordenada y1 /
+    \     \   +-----------------+-----------------+
+
+
+
+    /         +-----+-----+-----+-----+-----+-----+  
+   |          |  0  | 65  |  0  |  0  |  0  | 27  |  
+   |      /   +-----+-----+-----+-----+-----+-----+  
+   |     |    |                <id>               |   byte de id                 
+   |     |    +-----------------+-----------------+
+   |     |    |         1       |        13       |   byte de dibujo. Marcador: 0x1 (1) Release Event: 0xd (13) Valor byte entero:  0x1d (29)
+   |     |    +-----------------+-----------------+
+   |     |    |   ?    |   ?    |    ?   |    ?   |   4 bytes de número de dibujo. (incremental)
+   |     |    +--------+--------+--------+--------+   
+   |     |    |   ?    |   ?    |    ?   |    ?   |   4 bytes de grosor.
+   |     |    +--------+--------+--------+--------+
+   |     |    |   ?    |   ?    |    ?   |    ?   |   4 bytes de transparencia
+   |     |    +--------+---+----+------+-+--------+
+   |     |    |    255     |     0     |    0     |   3 bytes de color. RGB
+   |     |    +------------+-----+-----+----------+
+   |     |    |         0       |       100       |   2 bytes de coordenada x1 \
+   |     |    +-----------------+-----------------+                             } Nuevo Punto
+   |     |    |         0       |       119       |   2 bytes de coordenada y1 /
+    \     \   +-----------------+-----------------+
+
+
+}}}
+
+----
+
+   =CTL_SV_CLADD      0x10 (16)=
+
+  * Descripción:
+Indica que un nuevo cliente se a conectado al servidor. Provee el id y el nombre del cliente que se acaba de conectar. De esta forma,
+existe una relación unívoca entre id y nombre, y por ello es que no pueden existir 2 clientes con el mismo nombre en el servidor. El id,
+es información que puede viajar en un 1 byte, sin embargo el nombre puede ser abritrariamente largo y a los fines prácticos es sólo útil
+informarlo una vez o bien cuando se haga un cambio de nombre.
+
+  * Valor:  
+ 0x10 (16)
+  
+  * Byte de control:
+{{{
+    _____high_____  ______low______
+   /              \/               \   
+   +---+---+---+---+---+---+---+---+
+   | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
+   +---+---+---+---+---+---+---+---+
+}}}
+  * Bytes de tamaño:
+Tamaño del STREAM.
+
+  * Bytes de datos:
+ <id>: el nuevo id del cliente que se acaba de conectar.
+- bytes de nombre: el nombre que tiene asignado el cliente que se acaba de conectar
+
+  * Ejemplo: Un cliente se conecta. Se le asigna el id 19 y éste indica que su nombre es "Alberto".
+{{{
+                                          STREAM
+      __________________________________________________________________________________
+     /                                                                                  \
+                CABECERA                                          DATOS
+     ___________________________________  ______________________________________________
+    /                                   \/                                              \
+    +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+    |  0  | 16  |  0  |  0  |  0  | 14  | 19  | 'A' | 'l' | 'b' | 'e' | 'r' | 't' | 'o' | = 14 bytes
+    +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+
+}}}
+
+----
+
+        =CTL_SV_CLRM       0x20 (32)=
+
+  * Descripción:
+Informa la desconexión de un cliente.
+
+  * Valor:  
+  0x20 (32)
+  
+  * Byte de control:
+{{{
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
+    +---+---+---+---+---+---+---+---+
+}}}
+  * Bytes de tamaño:
+  Tamaño del STREAM.
+
+  * Bytes de datos:
+  - <id>: el id del cliente que se acaba de desconectar.
+
+
+  * Ejemplo: Un cliente con id 8 se desconecta.
+{{{
+                      STREAM
+     _________________________________________
+    /                                         \
+                  CABECERA               DATOS
+     ___________________________________  ____
+    /                                   \/    \
+    +-----+-----+-----+-----+-----+-----+-----+
+    |  0  | 16  |  0  |  0  |  0  |  7  |  8  |
+    +-----+-----+-----+-----+-----+-----+-----+
+
+}}}
+
+----
+
+    =CTL_SV_CLIST      0x30 (48)=
+
+  * Descripción:
+Una lista de los clientes que se encuentran actualmente conectados al servidor. El tamaño del paquete es variable, dependiendo 
+cuantos clientes están actualmente conectados.
+
+
+  * Valor:  
+  0x30 (48)
+  
+  * Byte de control:
+{{{
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 |
+    +---+---+---+---+---+---+---+---+
+}}}
+  * Bytes de tamaño:
+Tamaño del STREAM.
+
+  * Bytes de datos:
+- L[<id>]: lista de id's que están conectados al servidor.
+
+
+  * Ejemplo: Un cliente solicita la lista de ids al servidor. El servidor responde con el id del cliente que solicitó la información
+seguido de una lista de (id, nombre) donde nombre es una cadena null terminated.
+{{{
+                                                 STREAM
+      ________________________________________________________________________________________
+     /                                                                                        \
+                     CABECERA                            DATOS
+      ___________________________________  ____________________________________________________
+     /                                   \/                                                    \
+     +-----+-----+-----+-----+-----+-----+-----+---+---+---+---+---+---+---+---+---+---+---+---+
+     |  0  | 48  |  0  |  0  |  0  |  10 |  8  | 9 |'H'|'u'|'g'|'o'| 0 | 11|'P'|'e'|'p'|'e'| 0 |
+     +-----+-----+-----+-----+-----+-----+-----+---+---+---+---+---+---+---+---+---+---+---+---+
+
+}}}
+
+----
+
+    =CTL_CL_CLIST      0x51 (81)=
+
+  * Descripción:
+Solicitar al servidor la lista de clientes conectados.
+
+  * Valor:  
+    0x51 (81)
+  
+  * Byte de control:
+{{{
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 1 |
+    +---+---+---+---+---+---+---+---+
+}}}
+  * Bytes de tamaño:
+Tamaño del STREAM.
+
+  * Bytes de datos:
+- <id>: id del cliente que solicita la información.
+
+
+  * Ejemplo: Un cliente con id 9 solicita la lista de ids al servidor.
+{{{
+                          STREAM
+      ________________________________________
+     /                                        \
+                    CABECERA              DATOS
+      ___________________________________  ____
+     /                                   \/    \
+     +-----+-----+-----+-----+-----+-----+-----+
+     |  0  | 48  |  0  |  0  |  0  |  7  |  9  | = 7 bytes
+     +-----+-----+-----+-----+-----+-----+-----+
+}}}
+
+----
+
+     =CTL_SV_PWDASK     0x40 (64)=
+
+  * Descripción:
+Solicitar la contraseña de sesión al cliente que intenta comunicarse.
+
+  * Valor:
+0x40 (64)
+
+  * Byte de control:
+{{{
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+    +---+---+---+---+---+---+---+---+
+}}}
+  * Bytes de tamaño:
+  Tamaño del STREAM.
+
+  * Bytes de datos:
+  - <id>: id del cliente al que se le solicita la contraseña.
+
+
+  * Ejemplo: El servidor le solicita la contraseña de sesión a un cliente con id 9.
+{{{
+                        STREAM
+      _________________________________________
+     /                                         \
+                    CABECERA              DATOS
+      ___________________________________  ____
+     /                                   \/    \
+     +-----+-----+-----+-----+-----+-----+-----+
+     |  0  | 64  |  0  |  0  |  0  |  7  |  9  | = 7 bytes
+     +-----+-----+-----+-----+-----+-----+-----+
+}}}
+
+----
+
+    =CTL_CL_PWD        0x61 (97)=
+
+  * Descripción:
+Un paquete con la contraseña de sesión enviado por un cliente.
+  * Valor:
+0x61 (97)
+
+  * Byte de control:
+{{{
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 1 |
+    +---+---+---+---+---+---+---+---+
+}}}
+  * Bytes de tamaño:
+  Tamaño del STREAM.
+
+  * Bytes de datos:
+  - <id>: el id del cliente que envía la contraseña.
+  - <contraseña>: los bytes correspondientes a la contraseña enviada.
+
+
+  * Ejemplo: El servidor le envía a un cliente con id 9 CTL_SV_PWDASK. El cliente responde con CTL_CL_PWD.
+{{{
+                                       STREAM
+      ______________________________________________________________________
+     /                                                                      \
+                  CABECERA                                DATOS
+      ___________________________________  __________________________________
+     /                                   \/                                  \
+     +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+     |  0  | 97  |  0  |  0  |  0  |  12 |  9  |      <contraseña>           | = 12 bytes
+     +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+
+}}}
+
+----
+
+    =CTL_SV_PWDOK      0x50 (80)=
+
+  * Descripción:
+Informa que la contraseña de sesión enviada por el cliente es correcta.
+  * Valor:
+0x50  (80)
+
+  * Byte de control:
+{{{
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 0 |
+    +---+---+---+---+---+---+---+---+
+}}}
+  * Bytes de tamaño:
+  Tamaño del STREAM.
+
+  * Bytes de datos:
+  - <id>: el id del cliente que envió la contraseña.
+
+----
+
+   =CTL_SV_PWDFAIL    0x60 (96)=
+
+  * Descripción:
+Informa que la contraseña de sesión enviada por el cliente es incorrecta.
+
+  * Valor:
+0x60  (96)
+
+  * Byte de control:
+{{{
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
+    +---+---+---+---+---+---+---+---+
+}}}
+  * Bytes de tamaño:
+  Tamaño del STREAM.
+
+  * Bytes de datos:
+  - <id>: el id del cliente que envió la contraseña.
+
+
+----
+
+    =CTL_CL_FILEASK    0x71 (113)=
+
+  * Descripción:
+Petición del archivo de imagen que se está "observando" corrientemente. Un cliente recién conectado puede solicitar
+al servidor que le pase el archivo que el cliente que inició la sesión (o el dueño de sesión) está compartiendo.
+
+  * Valor:
+0x71 (113)
+
+  * Byte de control:
+{{{
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 0 | 1 | 1 | 1 | 0 | 0 | 0 | 1 |
+    +---+---+---+---+---+---+---+---+
+}}}
+  * Bytes de datos:
+  - <id>: id del cliente que solicita el archivo.
+
+----
+
+    =CTL_CL_FILEOK     0x81 (129)=
+
+  * Descripción:
+Informa que el archivo de imagen se recibió correctamente.
+
+  * Valor:
+0x81   (129)
+ 
+  * Byte de control:
+{{{
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
+    +---+---+---+---+---+---+---+---+
+}}}
+  * Bytes de datos:
+  - <id>: id del cliente que solicita el archivo.
+
+----
+
+   =CTL_SV_FILE       0x70 (112)=
+
+  * Descripción:
+Archivo de imagen a enviar a un cliente que lo solicitó.
+
+  * Valor:
+0x70  (112)
+
+  * Byte de control:
+{{{
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 0 | 1 | 1 | 1 | 0 | 0 | 0 | 0 |
+    +---+---+---+---+---+---+---+---+
+ }}}
+  * Bytes de datos:
+  - <id>: id del cliente que solicitó el archivo.
+  - <archivo de imagen>: bytes correspondiente al archivo de imagen. El tamaño del archivo está limitado a 2^32
+
+  * Ejemplo: El cliente con id 9 solicitó el archivo de imagen de sesión.
+{{{
+                                       STREAM
+      ______________________________________________________________________
+     /                                                                      \
+                 CABECERA                               DATOS
+      ___________________________________  __________________________________
+     /                                   \/                                  \
+     +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+     |  0  | 112 |  0  |  0  |  0  | 7+N |  9  |      <archivo binario>      | = 7+N bytes (siendo N el tamaño del archivo de imagen)
+     +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+}}}
+
+----
+
+== 1.2.3 Bytes de tamaño. ==
+      
+
+      Estos bytes determinan el tamaño de todo el stream. A medida que se va leyendo las secciones fijas en bytes, se puede usar esta información para saber en qué
+      parte del stream nos encontramos. De esta forma, se pone especial cuidado en ubicar las secciones de tamaño desconocidas al final de la sección datos pudiendo
+      conocer el tamaño gracias a los bytes de tamaño. Por ejemplo, si enviamos un archivo como se observa arriba, el tamaño del archivo será N, dado que el archivo
+      comienza en el byte 7 (u 8 si enumeramos desde 1) y el stream tiene un tamaño total de 7+N. Lo mismo sucede cuando se envía información de un dibujo. Para obtener
+      el tamaño del arreglo 'dash_array' hacemos lo siguiente: 41 - <tamaño indicado en bytes de tamaño>, ya que en el byte 41 comienza la sección de dicho arreglo
+      contando desde 0.
+
+
+
+
+= 1.3 DATOS =
+
+== 1.3.1 Byte de id. ==
+
+
+      Un byte que determina el id del cliente que envía la información del dibujo. Puede ser un valor entre 0 y 255.
+
+
+== 1.3.2 Byte de dibujo. ==
+
+
+  # Marcador (resaltador)
+  * Descripción:
+El resaltador es una herramienta que tiene como fin remarcar texto, zonas, lugares, etc. Es una línea completamenet recta que puede ser
+vertical u horizontal. Por defecto tiene una transparencia del 60% y un color claro. Esto no impide que se pueda poner 100% opaca con un
+color oscuro como el negro.
+
+  * Valor de la parte alta del byte: 0x1 (1)
+
+  * Valores de la parte baja del byte: Estos dependen del evento generador y del modo (directo o diferido).
+{{{
+      herramienta         evento
+     _____high_____  ______low______
+    /              \/               \   
+   +---+---+---+---+---+---+---+---+
+   | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |  Null Event (Solamente para el byte de control CTL_CL_FIG)
+   +---+---+---+---+---+---+---+---+
+   | 0 | 0 | 0 | 1 | 0 | 1 | 0 | 1 |  Press Event Left Button (Solamente para el byte de control CTL_CL_DRW)
+   +---+---+---+---+---+---+---+---+
+   | 0 | 0 | 0 | 1 | 0 | 1 | 1 | 0 |  Press Event Right Button (Solamente para el byte de control CTL_CL_DRW)
+   +---+---+---+---+---+---+---+---+
+   | 0 | 0 | 0 | 1 | 0 | 1 | 1 | 1 |  Press Event Middle Button   (Solamente para el byte de control CTL_CL_DRW)  
+   +---+---+---+---+---+---+---+---+
+   | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 1 |  Drag Event Left Button (Solamente para el byte de control CTL_CL_DRW)
+   +---+---+---+---+---+---+---+---+
+   | 0 | 0 | 0 | 1 | 1 | 0 | 1 | 0 |  Drag Event Right Button (Solamente para el byte de control CTL_CL_DRW)
+   +---+---+---+---+---+---+---+---+
+   | 0 | 0 | 0 | 1 | 1 | 0 | 1 | 1 |  Drag Event Middle Button (Solamente para el byte de control CTL_CL_DRW)
+   +---+---+---+---+---+---+---+---+
+   | 0 | 0 | 0 | 1 | 1 | 1 | 0 | 1 |  Release Event Left Button (Solamente para el byte de control CTL_CL_DRW)
+   +---+---+---+---+---+---+---+---+
+   | 0 | 0 | 0 | 1 | 1 | 1 | 1 | 0 |  Release Event Right Button (Solamente para el byte de control CTL_CL_DRW)
+   +---+---+---+---+---+---+---+---+
+   | 0 | 0 | 0 | 1 | 1 | 1 | 1 | 1 |  Release Event Middle Button (Solamente para el byte de control CTL_CL_DRW)
+   +---+---+---+---+---+---+---+---+
+}}}
+
+  # Camino
+  * Descripción:
+Esta herramienta traza líneas rectas entre puntos que se van eligiendo mientras se usa la herramienta.
+
+  * Valor de la parte alta del byte: 0x2 (2)
+
+  * Valores de la parte baja del byte: 0x0 Solamente disponible en modo diferido a traves del byte de control CTL_CL_DRW
+{{{
+      herramienta         evento
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |  Null Event
+    +---+---+---+---+---+---+---+---+
+}}}
+
+  # Elipse
+  * Descripción:
+La elipse nos permite realizar círculos o elipses.
+
+  * Valor de la parte alta del byte: 0x3 (3)
+
+  * Valores de la parte baja del byte: 0x0 Solamente disponible en modo diferido a traves del byte de control CTL_CL_DRW
+{{{
+      herramienta         evento
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 |  Null Event
+    +---+---+---+---+---+---+---+---+
+}}}
+
+  # Rectángulo
+  * Descripción:
+Nos permite realizar cuadrados y rectángulos.
+
+  * Valor de la parte alta del byte: 0x4 (4)
+
+  * Valores de la parte baja del byte: 0x0 Solamente disponible en modo diferido a traves del byte de control CTL_CL_DRW
+{{{
+      herramienta         evento
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |  Null Event
+    +---+---+---+---+---+---+---+---+
+}}}
+
+  # Texto
+  * Descripción:
+Posiciona cierto texto deseado sobre la pantalla.
+
+  * Valor de la parte alta del byte: 0x5 (5)
+
+  * Valores de la parte baja del byte: 0x0 Solamente disponible en modo diferido a traves del byte de control CTL_CL_DRW
+{{{
+      herramienta         evento
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 0 |  Null Event
+    +---+---+---+---+---+---+---+---+
+}}}
+
+  # Goma
+  * Descripción:
+
+  * Valor de la parte alta del byte:
+
+  * Valores de la parte baja del byte: 
+{{{
+      herramienta         evento
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |  Null Event
+    +---+---+---+---+---+---+---+---+
+}}}
+
+  # Lápiz
+  * Descripción:
+Nos permite realizar un dibujo a mano alzada.
+
+  * Valor de la parte alta del byte: 0x7 (7)
+
+  * Valores de la parte baja del byte: Depende del evento generador y del byte de control
+{{{
+      herramienta         evento
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 0 | 1 | 1 | 1 | 0 | 0 | 0 | 0 |  Null Event (Solamente para el byte de control CTL_CL_FIG) 
+    +---+---+---+---+---+---+---+---+
+    | 0 | 1 | 1 | 1 | 0 | 1 | 0 | 1 |  Press Event Left Button (Solamente para el byte de control CTL_CL_DRW) 
+    +---+---+---+---+---+---+---+---+
+    | 0 | 1 | 1 | 1 | 0 | 1 | 1 | 0 |  Press Event Right Button (Solamente para el byte de control CTL_CL_DRW)
+    +---+---+---+---+---+---+---+---+
+    | 0 | 1 | 1 | 1 | 0 | 1 | 1 | 1 |  Press Event Middle Button (Solamente para el byte de control CTL_CL_DRW)  
+    +---+---+---+---+---+---+---+---+
+    | 0 | 1 | 1 | 1 | 1 | 0 | 0 | 1 |  Drag Event Left Button (Solamente para el byte de control CTL_CL_DRW)
+    +---+---+---+---+---+---+---+---+
+    | 0 | 1 | 1 | 1 | 1 | 0 | 1 | 0 |  Drag Event Right Button (Solamente para el byte de control CTL_CL_DRW)
+    +---+---+---+---+---+---+---+---+
+    | 0 | 1 | 1 | 1 | 1 | 0 | 1 | 1 |  Drag Event Middle Button (Solamente para el byte de control CTL_CL_DRW)
+    +---+---+---+---+---+---+---+---+
+    | 0 | 1 | 1 | 1 | 1 | 1 | 0 | 1 |  Release Event Left Button (Solamente para el byte de control CTL_CL_DRW)
+    +---+---+---+---+---+---+---+---+
+    | 0 | 1 | 1 | 1 | 1 | 1 | 1 | 0 |  Release Event Right Button (Solamente para el byte de control CTL_CL_DRW)
+    +---+---+---+---+---+---+---+---+
+    | 0 | 1 | 1 | 1 | 1 | 1 | 1 | 1 |  Release Event Middle Button (Solamente para el byte de control CTL_CL_DRW)
+    +---+---+---+---+---+---+---+---+
+}}}
+
+  # Línea
+  * Descripción:
+Traza una línea recta entre 2 puntos arbitrarios.
+
+  * Valor de la parte alta del byte: 0x8 (8)
+
+  * Valores de la parte baja del byte: 0x0 Solamente disponible en modo diferido a traves del byte de control CTL_CL_DRW
+{{{
+      herramienta         evento
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |  Null Event
+    +---+---+---+---+---+---+---+---+
+}}}
+
+== 1.3.3 Bytes de datos de dibujo. ==
+
+      
+      Ya se mencionó que la sección DATOS contendrán al byte de dibujo. El byte de dibujo es una especia de byte de control sobre los bytes datos del dibujo, cómo lo es en efecto
+      el byte de control sobre la sección DATOS del STREAM. El byte de dibujo va a determinar qué contienen los bytes de datos. Esto, dependerá de cada herramienta y a su vez, del evento
+      generador.
+
+  * Herramienta enviada en modo diferido (CTL_CL_FIG):
+
+
+Se va a enviar toda la información necesaria para replicar el uso de la herramienta en todos los clientes conectados. A excepción del Texto, los bytes de datos
+serán:
+
+{{{
+          /  +-----------------+-----------------+
+         /   | coordenada x1   | coordenada x1   |   2 bytes.
+        |    +-----------------+-----------------+                           
+        |    | coordenada y1   | coordenada y1   |   2 bytes.
+        |    +-----------------+-----------------+
+        |    | coordenada x2   | coordenada x2   |   2 bytes.
+BYTES   |    +-----------------+-----------------+                           
+ DE     |    | coordenada y2   | coordenada y2   |   2 bytes.
+DATOS   |    +--------+--------+--------+--------+
+        |    |   ?    |   ?    |    ?   |    ?   |   4 bytes de número de dibujo. (incremental)
+        |    +--------+--------+--------+--------+   
+SOBRE   |    |   ?    |   ?    |    ?   |    ?   |   4 bytes de grosor.
+ EL     |    +--------+--------+--------+--------+
+DIBUJO  |    |   ?    |   ?    |    ?   |    ?   |   4 bytes de transparencia.
+        |    +--------+---+----+------+-+--------+
+        |    |      R     |     G     |    B     |   3 bytes de color.
+        |    +------------+-----------+----------+
+        |    | line join byte = {0, 1, 2}        |   miter (0), round (1), bevel (2).
+        |    +-----------------------------------+
+        |    | end caps bytes = {0, 1, 2}        |   butt (0), round(1), square (2).
+        |    +-----------------------------------+
+        |    |     miter limit bytes (float)     |   4 bytes.
+        |    +-----------------------------------+
+        |    |     dash phase bytes (float)      |   4 bytes.
+        |    +-----------------------------------+
+         \   |            dash array *           |   N bytes de dash array.
+          \  +-----------------------------------+
+
+
+        Para el caso del Texto:
+
+          /  +-----------------+-----------------+
+         /   | coordenada x1   | coordenada x1   |   2 bytes.
+        |    +-----------------+-----------------+                           
+        |    | coordenada y1   | coordenada y1   |   2 bytes.
+        |    +--------+--------+--------+--------+
+        |    |   ?    |   ?    |    ?   |    ?   |   4 bytes de número de dibujo. (incremental)
+        |    +--------+--------+--------+--------+   
+SOBRE   |    |   ?    |   ?    |    ?   |    ?   |   4 bytes de grosor (tamaño de fuente)
+ EL     |    +--------+--------+--------+--------+
+DIBUJO  |    |   ?    |   ?    |    ?   |    ?   |   4 bytes de transparencia.
+        |    +--------+---+----+------+-+--------+
+        |    |      R     |     G     |    B     |   3 bytes de color.
+        |    +------------+-----------+----------+
+        |    | font style byte = {0, 1, 2, 3}    |   Normal (0), Negrita (1), Itálica (2), Itálica y Negrita (3)
+        |    +------------+-----------+----------+
+        |    | font face name len                |   1 byte
+        |    +-----------------------------------+
+        |    |    bytes de nombre de la fuente   |   Ejemplo: "Sans Serif"
+        |    +-----------------------------------+
+         \   |            texto  *               |   256 bytes de texto. Ejemplo: "hola mundo\0"
+          \  +-----------------------------------+
+
+
+}}}
+
+  * Herramienta enviada en modo directo:
+      
+        
+	TODO : CREAR UN BYTE DE CONTROL PARA LA GOMA. NO ES NI TEXTO NI DIBUJO (CTL_CL_FIGRM)
+	
+
+        Para el caso de la Goma (directo o diferido da igual):
+{{{
+            +-----------------------------------+
+            |           byte de <id>            |   1 byte. El <id> del cliente dueño del dibujo a borrar
+            +-----------------+-----------------+                           
+            |   ?    |   ?    |    ?   |    ?   |   4 bytes de número de dibujo. Es el número que identifica
+            +--------+--------+--------+--------+   a un dibujo que dibujó el cliente con id <id>.
+}}}
+    El borrado satisfactorio dependerá de los permisos que se empleen en las aplicaciones cliente.
+
+
+        Las únicas herramientas que soportan el modo directo son: Marcador, Camino y Lápiz.
+
+
+  * Evento PE:
+      {{{
+            +-----------------+-----------------+
+            |  herramienta    | PE = { 5, 6, 7} |   byte de dibujo. High bits: herramienta. Low bits: left press: 0x5 (5), right press: 0x6 (6), middle press: 0x7 (7)
+            +-----------------+-----------------+
+            | coordenada x1   | coordenada x1   |   2 bytes de coordenada x1 \
+            +-----------------+-----------------+                             } Primer Punto
+            | coordenada y1   | coordenada y1   |   2 bytes de coordenada y1 /
+            +--------+--------+--------+--------+
+            |   ?    |   ?    |    ?   |    ?   |   4 bytes de número de dibujo. (incremental)
+            +--------+--------+--------+--------+   
+            |   ?    |   ?    |    ?   |    ?   |   4 bytes de grosor.
+            +--------+--------+--------+--------+
+            |   ?    |   ?    |    ?   |    ?   |   4 bytes de transparencia
+            +--------+---+----+------+-+--------+
+            |      R     |     G     |    B     |   3 bytes de color. 
+            +------------+-----------+----------+
+            |  byte de line join = {0, 1, 2}    |   miter (0), round (1), bevel (2)
+            +-----------------------------------+
+            |  byte de end caps = {0, 1, 2}     |   butt (0), round(1), square (2)
+            +-----------------------------------+
+            |   bytes de miter limit (float)    |   4 bytes
+            +-----------------------------------+
+            |   bytes de dash_phase (float)     |   4 bytes
+            +-----------------------------------+
+            |       bytes de dash array *       |   2 bytes
+            +-----------------------------------+
+ 
+    *Evento DE:
+
+          +-----------------+-----------------+
+          |   herramienta   | DE = {9, 10, 11}|   byte de dibujo. High bits: herramienta. Low bits: left drag: 0x9 (9), right drag: 0xa (10), middle drag: 0xb (11)
+          +-----------------+-----------------+
+          |  coordenada x1  | coordenada x1   |   2 bytes de coordenada x1 \
+          +-----------------+-----------------+                             } Nuevo Punto
+          |  coordenada y1  | coordenada y1   |   2 bytes de coordenada y1 /
+          +-----------------+-----------------+
+
+
+
+  * Evento RE (sólamente cambia la semántica del punto):
+
+          +-----------------+-----------------+
+          |   herramienta   | RE= {13, 14, 15}|   byte de dibujo. High bits: herramienta. Low bits: left release: 0xd (13), right release: 0xe (14), middle release: 0xf (15)
+          +-----------------+-----------------+
+          |   coordenada x1 |  coordenada x1  |   2 bytes de coordenada x1 \
+          +-----------------+-----------------+                             } Punto Final
+          |   coordenada y1 |  coordenada y1  |   2 bytes de coordenada y1 /
+          +-----------------+-----------------+
+
+}}}

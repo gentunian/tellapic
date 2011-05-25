@@ -1,0 +1,11 @@
+#summary Qué no es tellapic
+
+Tellapic no es:
+
+  * Un programa de dibujo. Tampoco es un programa de edición de imágenes y no tiene ninguna intención de serlo. Es simplemente utilizado para hablar/describir una imagen, como se menciona en [WhatsThis ¿Qué es tellapic?]
+
+  * Un programa que te permita modificar una imagen. La imagen que se discute/describe jamás es modificada y reside principalmente en el servidor.
+
+  * Tellapic no es un servidor, y tellapic no está escrito en Java.
+
+  * Tellapic no es una aplicación. No se puede ejecutar tellapic, ya que es sólo un protocolo y una biblioteca que lo implementa.
