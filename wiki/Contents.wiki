@@ -13,4 +13,4 @@
         * [Build#Complete_Windows_build_and_test_procedure_for_Java_GUI Complete Windows build and test procedure for Java GUI]
       * [Build#Details Details]
       * [Build#List_of_files List of files]
-    * [Notas Tellapic protocol implementation]
+    * [Notes Tellapic protocol implementation]
