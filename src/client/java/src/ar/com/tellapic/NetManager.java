@@ -18,7 +18,6 @@
 package ar.com.tellapic;
 
 import java.awt.Color;
-import java.awt.Dialog;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.io.ByteArrayInputStream;
@@ -90,6 +89,7 @@ public class NetManager extends Observable implements Runnable {
 	final private Lock        pingerLock;
 	final private Condition   pingCondition;
 	final private Condition   connectedCondition;
+	protected ProgressDialog  progressDialog;
 	
 	private static class Holder {
 		private final static NetManager INSTANCE = new NetManager();
@@ -116,7 +116,7 @@ public class NetManager extends Observable implements Runnable {
 		isRunning = true;
 		while(isRunning) {
 			try {
-				Utils.logMessage("RUNNING NETMANAGER THREAD");
+				//Utils.logMessage("RUNNING NETMANAGER THREAD");
 				lock.lock();
 				if (isConnected()) {
 					receiveAndProcess();
@@ -191,7 +191,7 @@ public class NetManager extends Observable implements Runnable {
 				/* Show a retry dialog for the password */ 
 				String dialogInput = null;
 				do {
-					dialogInput = JOptionPane.showInputDialog(Utils.msg.getString("wrongpassword"), null);
+					dialogInput = JOptionPane.showInputDialog(progressDialog, Utils.msg.getString("wrongpassword"), null);
 
 					System.out.println("Password was wrong. New pwd: "+dialogInput);
 
@@ -251,8 +251,8 @@ public class NetManager extends Observable implements Runnable {
 				System.out.println("Name "+name+" is in use.");
 				String dialogInput = null;
 				do {
-					dialogInput = JOptionPane.showInputDialog(Utils.msg.getString("nameinuse"), null);
-
+					dialogInput = JOptionPane.showInputDialog(progressDialog, Utils.msg.getString("nameinuse"), null);
+					
 					/* If the user has cancelled the dialog... */
 					if (dialogInput == null) {
 						/* Dispose the monitor */
@@ -395,16 +395,16 @@ public class NetManager extends Observable implements Runnable {
 		stream_t stream;
 		System.out.println(SwingUtilities.isEventDispatchThread());
 		
-		monitor = new ProgressMonitor(CONNECTION_STEPS, false, 500);
+		monitor = new ProgressMonitor(CONNECTION_STEPS, false, 200);
 		
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				JFrame frame = new JFrame();
 				frame.setIconImage(Utils.createIconImage(112, 75, "/icons/system/logo_small.png"));
-				ProgressDialog dialog = new ProgressDialog(frame, monitor);
-				dialog.pack();
-				dialog.setLocationRelativeTo(null); 
-				dialog.setVisible(true);
+				progressDialog = new ProgressDialog(frame, monitor);
+				progressDialog.pack();
+				progressDialog.setLocationRelativeTo(null); 
+				progressDialog.setVisible(true);
 			}
 		});
 		
@@ -612,7 +612,7 @@ public class NetManager extends Observable implements Runnable {
 	private void receiveAndProcess() {
 		stream_t stream = null;
 		header_t header = null;
-		Utils.logMessage("receiveAnProcess block..");
+//		Utils.logMessage("receiveAnProcess block..");
 		stream = tellapic.tellapic_read_stream_b(socket);
 		header = stream.getHeader();
 	
@@ -649,19 +649,31 @@ public class NetManager extends Observable implements Runnable {
 			
 		} else if (tellapic.tellapic_isctle(header) == 1) {
 			System.out.println("Was ctl extended");
+			svcontrol_t ctlExtended = stream.getData().getControl();
+			int         userId      = ctlExtended.getIdfrom();
+			short[]     userInfo    = ctlExtended.getInfo();
+			long        userInfoLen = stream.getHeader().getSsize() - tellapicConstants.HEADER_SIZE - 1;
+			
 			switch(header.getCbyte()) {
 			case tellapicConstants.CTL_SV_CLADD:
-				svcontrol_t ctlExtended = stream.getData().getControl();
-				int         newUserId   = ctlExtended.getIdfrom();
-				short[]     userInfo    = ctlExtended.getInfo();
-				long        userNameLen = stream.getHeader().getSsize() - tellapicConstants.HEADER_SIZE - 1;
-				String      userName = "";
-				for(int i =0 ; i < userNameLen; i++)
-					userName += (char)userInfo[i];
-				UserManager.getInstance().createUser(newUserId, userName, true);
+				if (userId != SessionUtils.getId()) {
+					String      userName = "";
+					for(int i =0 ; i < userInfoLen; i++)
+						userName += (char)userInfo[i];
+					UserManager.getInstance().createUser(userId, userName, true);
+				}
 				break;
 
 			case tellapicConstants.CTL_SV_FILE:
+				break;
+				
+			case tellapicConstants.CTL_CL_RMFIG:
+				String number = "";
+				for(int i =0 ; i < userInfoLen; i++)
+					number += (char)userInfo[i];
+				AbstractUser user = UserManager.getInstance().getUser(userId);
+				if (user != null && user.isRemote())
+					user.removeDrawing(number);
 				break;
 			}
 
@@ -729,7 +741,7 @@ public class NetManager extends Observable implements Runnable {
 	 */
 	private void createAndAddFigure(ddata_t drawingData) {
 		/* Get the remote user who has drawn this figure */
-		RemoteUser remoteUser = (RemoteUser) UserManager.getInstance().getUser(drawingData.getIdfrom());
+		AbstractUser remoteUser = UserManager.getInstance().getUser(drawingData.getIdfrom());
 
 		if (remoteUser == null) {
 			Utils.logMessage("Warning: Received packet from an unexisting user yet.");
@@ -789,7 +801,7 @@ public class NetManager extends Observable implements Runnable {
 		/* Both text and stroke has color properties */
 		c.handleColorChange(color);
 
-
+		
 		if (usedTool.hasAlphaCapability())
 			usedTool.setAlpha(toolBoxState.getOpacityProperty());
 
@@ -818,8 +830,6 @@ public class NetManager extends Observable implements Runnable {
 					swingMask
 			);
 
-		//			remoteUser.setTemporalDrawing(usedTool.getDrawing());
-
 		if (usedTool.isOnReleaseSupported())
 			usedTool.onRelease(
 					(int)drawingData.getType().getFigure().getPoint2().getX(),
@@ -832,12 +842,9 @@ public class NetManager extends Observable implements Runnable {
 
 		if (drawing == null) 
 			return;
-
+		
+		drawing.setNumber(drawingData.getNumber());
 		remoteUser.addDrawing(drawing);
-
-		//			createAndDispatchPressEvent(remoteUser, drawing, eventAndButton, eventExt);
-		//			createAndDispatchDragEvent(remoteUser, drawing, eventAndButton, eventExt);
-		//			createAndDispatchReleaseEvent(remoteUser, drawing, eventAndButton, eventExt);
 
 		/* TODO: JUST FOR DEBUG */
 		int x1 = (int)drawingData.getPoint1().getX();
@@ -875,7 +882,7 @@ public class NetManager extends Observable implements Runnable {
 	 */
 	private void createAndAddDrawing(ddata_t drawingData) {
 		/* Get the remote user who is drawing */
-		RemoteUser remoteUser = (RemoteUser) UserManager.getInstance().getUser(drawingData.getIdfrom());
+		AbstractUser remoteUser = UserManager.getInstance().getUser(drawingData.getIdfrom());
 		
 		if (remoteUser == null) {
 			Utils.logMessage("Warning: Received packet from an unexisting user yet.");
@@ -956,8 +963,6 @@ public class NetManager extends Observable implements Runnable {
 			if (usedTool.hasColorCapability())
 				usedTool.setColor(toolBoxState.getColorProperty());
 
-			//				usedTool.getTemporalDrawing().setUser(remoteUser);
-
 			usedTool.onPress(
 					(int)drawingData.getPoint1().getX(),
 					(int)drawingData.getPoint1().getY(),
@@ -965,7 +970,6 @@ public class NetManager extends Observable implements Runnable {
 					swingMask
 			);
 
-			//createAndDispatchPressEvent(remoteUser, drawingData, eventAndButton, eventExtMod);
 			break;
 
 		case tellapicConstants.EVENT_DRAG:
@@ -990,10 +994,10 @@ public class NetManager extends Observable implements Runnable {
 
 			if (drawing == null) 
 				return;
-
+			
+			drawing.setNumber(drawingData.getNumber());
 			remoteUser.addDrawing(drawing);
 
-			//createAndDispatchReleaseEvent(remoteUser, drawingData, eventAndButton, eventExtMod);
 			break;
 		}
 	}

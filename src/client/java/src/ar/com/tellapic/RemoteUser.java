@@ -17,8 +17,6 @@
  */  
 package ar.com.tellapic;
 
-import ar.com.tellapic.graphics.IPaintPropertyController;
-import ar.com.tellapic.graphics.IToolBoxController;
 import ar.com.tellapic.graphics.PaintPropertyController;
 import ar.com.tellapic.graphics.ToolBoxController;
 
@@ -29,9 +27,6 @@ import ar.com.tellapic.graphics.ToolBoxController;
  *
  */
 public class RemoteUser extends AbstractUser {
-
-	private IToolBoxController       toolboxController;
-	private IPaintPropertyController paintController;
 	
 	public RemoteUser() {
 		super();
@@ -78,33 +73,5 @@ public class RemoteUser extends AbstractUser {
 	public boolean isSpecial() {
 		// TODO Auto-generated method stub
 		return false;
-	}
-
-	/**
-	 * @param toolboxController the toolboxController to set
-	 */
-	public void setToolboxController(IToolBoxController toolboxController) {
-		this.toolboxController = toolboxController;
-	}
-
-	/**
-	 * @return the toolboxController
-	 */
-	public IToolBoxController getToolboxController() {
-		return toolboxController;
-	}
-
-	/**
-	 * @param paintController the paintController to set
-	 */
-	public void setPaintController(IPaintPropertyController paintController) {
-		this.paintController = paintController;
-	}
-
-	/**
-	 * @return the paintController
-	 */
-	public IPaintPropertyController getPaintController() {
-		return paintController;
 	}
 }

@@ -33,9 +33,9 @@ public interface IChatModelState {
 	
 	public abstract Message getLastMessage();
 	
-	public abstract User getUser(String name);
-	
-	public abstract List<User> getUsers();
-	
-	public abstract User getUser(int userId);
+//	public abstract User getUser(String name);
+//	
+//	public abstract List<User> getUsers();
+//	
+//	public abstract User getUser(int userId);
 }

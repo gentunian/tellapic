@@ -284,7 +284,6 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 		background = gc.createCompatibleImage(backimage.getWidth(), backimage.getHeight(), Transparency.TRANSLUCENT);
 		Graphics2D  drawingArea = (Graphics2D) background.getGraphics();
 		drawingArea.drawImage(backimage, 0, 0, null);
-		
 		repaint();
 	}
 	
@@ -415,7 +414,7 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 		
 		if (backimage == null)
 			return;
-		
+
 		Graphics2D g = (Graphics2D) g1;
 //		Graphics2D frontArea = (Graphics2D) background.getGraphics();
 		
@@ -939,7 +938,6 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 	@Override
 	public void mouseReleased(MouseEvent event) {
 		//Utils.printEventInfo(event);
-		Utils.logMessage("IS EVENT DISPATCH THREAD?: "+SwingUtilities.isEventDispatchThread());
 		Tool         usedTool = user.getToolBoxModel().getLastUsedTool();
 		
 		/* Do nothing with an empty tool */
@@ -959,12 +957,12 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 			
 			if (usedTool instanceof DrawingTool) {
 			
-				Drawing drawing = ((DrawingTool)usedTool).finishDrawing();
-				if (drawing == null) 
-					return;
+//				Drawing drawing = ((DrawingTool)usedTool).finishDrawing();
+//				if (drawing == null) 
+//					return;
 			
 				// This will trigger an update() to the DrawingAreaView
-				user.addDrawing(drawing);
+				//user.addDrawing(drawing);
 			
 				return;
 			}

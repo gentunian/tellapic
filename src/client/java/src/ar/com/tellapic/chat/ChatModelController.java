@@ -29,12 +29,12 @@ import ar.com.tellapic.lib.tellapic_socket_t;
  *          sebastian.treu(at)gmail.com
  *
  */
-public class ChatController implements IChatController {
+public class ChatModelController implements IChatController {
 	private IChatModelManager model;
 	private NetManager netManager;
 	//private IChatConnection   connection;
 
-	public ChatController() {
+	public ChatModelController() {
 		model = ChatClientModel.getInstance();
 		netManager = NetManager.getInstance();
 	}

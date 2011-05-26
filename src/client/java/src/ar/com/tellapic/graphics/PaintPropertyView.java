@@ -12,6 +12,8 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
@@ -28,7 +30,6 @@ import javax.swing.GroupLayout;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JColorChooser;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -397,34 +398,73 @@ public class PaintPropertyView extends JPanel implements Observer {
 	private void createColorOptions() {
 		colorLabel = new JLabel(Utils.msg.getString("color")+":");
 		colorField = new JLabel();
-
+		
+		
 		colorLabel.setIcon(new ImageIcon(Utils.createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, "/icons/tools/color1.png")));
 		colorLabel.setLabelFor(colorField);
 		colorLabel.setFont(defaultTitleFont);
 		colorLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-		colorLabel.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				ColorSelector c = new ColorSelector(colorField.getBackground(), colorLabel.getX(), colorLabel.getLocationOnScreen().y +24, true);
-				controller.handleColorChange(c.getSelectedColor());
-				colorField.setBackground(c.getSelectedColor());
-			}
-		});
+		colorLabel.addMouseListener(new ColorSelectionListener(colorLabel));
+		
 		colorField.setPreferredSize(new Dimension(Tool.ICON_SIZE + GAP, Tool.ICON_SIZE + GAP));
 		colorField.setOpaque(true);
 		colorField.setBorder(BorderFactory.createCompoundBorder(new LineBorder(new Color(209, 209, 209), 1, true), new SoftBevelBorder(BevelBorder.LOWERED)));
 		colorField.setBackground(DEFAULT_COLOR);
 		colorField.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		colorField.setToolTipText(Utils.msg.getString("colorfieldtooltip"));
-		colorField.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				JLabel label = (JLabel)e.getSource();
-				ColorSelector c = new ColorSelector(colorField.getBackground(), label.getX(), label.getLocationOnScreen().y +24, true);
-				controller.handleColorChange(c.getSelectedColor());
-				label.setBackground(c.getSelectedColor());
-			}
-		});
+		colorField.addMouseListener(new ColorSelectionListener(colorField));
+	}
+	
+	
+	/**
+	 * 
+	 * @param colorSelector
+	 * @param component
+	 */
+	private void manageColorChange(ColorSelector colorSelector, JComponent component) {
+		/* Get the selected color */
+		Color color = colorSelector.getSelectedColor();
+		
+		/* Set the current color in the toolbox */
+		controller.handleColorChange(color);
+		
+		/* Set the current color in the component view */
+		component.setBackground(color);
+		
+		/* We don't need it anymore */
+		colorSelector.dispose();
+	}
+	
+	/**
+	 * 
+	 * @author 
+	 *          Sebastian Treu
+	 *          sebastian.treu(at)gmail.com
+	 *
+	 */
+	private class ColorSelectionListener extends MouseAdapter {
+		private JComponent    component;
+		
+		public ColorSelectionListener(JComponent c) {
+			component     = c;
+		}
+		
+		public void mouseClicked(MouseEvent e) {
+			final ColorSelector colorSelector = new ColorSelector(
+					component.getBackground(),
+					component.getLocationOnScreen().x,
+					component.getLocationOnScreen().y + 24,
+					true
+			);
+			colorSelector.addComponentListener(new ComponentListener(){
+				public void componentHidden(ComponentEvent e) {
+					manageColorChange(colorSelector, component);
+				}
+				public void componentMoved(ComponentEvent e) {}
+				public void componentResized(ComponentEvent e) {}
+				public void componentShown(ComponentEvent e) {}
+			});
+		}
 	}
 	
 	

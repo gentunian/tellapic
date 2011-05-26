@@ -105,10 +105,10 @@ public class Line extends DrawingTool {
 	public void onRelease(int x, int y, int button, int mask) {
 		if (inUse && line.getP1().distance(line.getP2()) > 0.0) {
 //			temporalDrawing.cloneProperties();
-			inUse = false;
 			setChanged();
 			notifyObservers(temporalDrawing);
 		}
+		inUse = false;
 	}
 	
 	

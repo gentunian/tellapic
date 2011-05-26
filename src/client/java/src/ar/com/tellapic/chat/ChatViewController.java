@@ -17,12 +17,33 @@
  */  
 package ar.com.tellapic.chat;
 
+import ar.com.tellapic.AbstractUser;
+
 /**
  * @author 
  *          Sebastian Treu
  *          sebastian.treu(at)gmail.com
  *
  */
-public abstract class User {
-
+public class ChatViewController {
+	
+	private ChatView chatView;
+	
+	
+	/**
+	 * 
+	 * @param view
+	 */
+	public ChatViewController(ChatView view) {
+		chatView = view;
+	}
+	
+	
+	/**
+	 * 
+	 * @param user
+	 */
+	public void initiateChat(AbstractUser user) {
+		chatView.createNewChatTab(user.getName());
+	}
 }

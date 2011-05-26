@@ -7,11 +7,9 @@ public class Drawing extends AbstractDrawing implements Cloneable {
 	private PaintPropertyColor  colorProperty;
 	private PaintPropertyAlpha  alphaProperty;
 	private PaintPropertyFont   fontProperty;
-//	private PaintPropertyZoom   zoomProperty;
 	private Shape               shape;
 	
 	
-	//private boolean   notDrawnYet;
 	private String    name;
 	private int       textX;
 	private int       textY;
@@ -154,17 +152,8 @@ public class Drawing extends AbstractDrawing implements Cloneable {
 		
 		if (hasColorProperty())
 			colorProperty  = (PaintPropertyColor) colorProperty.clone();
-		
-//		if (hasZoomProperty())
-//			zoomProperty = (PaintPropertyZoom) zoomProperty.clone();
 	}
 	
-	
-//	@Override
-//	public boolean hasZoomProperty() {
-//		return zoomProperty != null;
-//	}
-
 	@Override
 	public boolean hasAlphaProperty() {
 		return alphaProperty != null;
@@ -213,20 +202,6 @@ public class Drawing extends AbstractDrawing implements Cloneable {
 		return name;
 	}
 
-//	/**
-//	 * @param zoomProperty the zoomProperty to set
-//	 */
-//	public void setPaintPropertyZoom(PaintPropertyZoom zoomProperty) {
-//		this.zoomProperty = zoomProperty;
-//	}
-//
-//	/**
-//	 * @return the zoomProperty
-//	 */
-//	public PaintPropertyZoom getPaintPropertyZoom() {
-//		return zoomProperty;
-//	}
-
 	
 	@Override
 	public Object clone() {
@@ -239,18 +214,4 @@ public class Drawing extends AbstractDrawing implements Cloneable {
 			throw new InternalError(e.toString());
 		}
 	}
-	
-	/**
-	 * @param notDrawnYet the notDrawnYet to set
-	 */
-//	public void setNotDrawnYet(boolean notDrawnYet) {
-//		this.notDrawnYet = notDrawnYet;
-//	}
-
-	/**
-	 * @return the notDrawnYet
-	 */
-//	public boolean isNotDrawnYet() {
-//		return notDrawnYet;
-//	}
 }

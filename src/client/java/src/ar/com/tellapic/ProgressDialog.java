@@ -43,7 +43,7 @@ public class ProgressDialog extends JDialog implements ChangeListener{
 	ProgressMonitor monitor; 
 
 	public ProgressDialog(Frame owner, ProgressMonitor monitor) throws HeadlessException{ 
-		super(owner, "Progress", true); 
+		super(owner, "Progress", false); 
 		init(monitor); 
 	} 
 

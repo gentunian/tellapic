@@ -112,10 +112,7 @@ public class UserManager implements IUserManager, IUserManagerState, TreeTableMo
 		
 		if (userWasAdded) {
 			user.addObserver(this);
-//			tms.fireChildrenAdded(new TreePath(new Object[] {users}), indices, children);
-//			tms.fireChildAdded(new TreePath(new Object[]{getRoot()}), users.indexOf(user), user);
 			tms.fireTreeStructureChanged(new TreePath(users));
-//			tms.fireChildAdded(new TreePath(new Object[]{getRoot()}), users.indexOf(user), user);
 		}
 		
 		return userWasAdded;
@@ -528,54 +525,30 @@ public class UserManager implements IUserManager, IUserManagerState, TreeTableMo
 		DrawingAreaView.getInstance().update(null, null);
 	}
 
-	
-
-//	private class MyTreeListener implements TreeModelListener {
-		
-		/* (non-Javadoc)
-		 * @see javax.swing.event.TreeModelListener#treeNodesChanged(javax.swing.event.TreeModelEvent)
-		 */
-		@Override
-		public void treeNodesChanged(TreeModelEvent e) {
-			// TODO Auto-generated method stub
-//			System.out.println("TreeNodesChanged");
-		}
+	/* (non-Javadoc)
+	 * @see javax.swing.event.TreeModelListener#treeNodesChanged(javax.swing.event.TreeModelEvent)
+	 */
+	@Override
+	public void treeNodesChanged(TreeModelEvent e) {}
 
 
-		/* (non-Javadoc)
-		 * @see javax.swing.event.TreeModelListener#treeNodesInserted(javax.swing.event.TreeModelEvent)
-		 */
-		@Override
-		public void treeNodesInserted(TreeModelEvent e) {
-			// TODO Auto-generated method stub
-//			System.out.println("TreeNodesInserted "+e.getSource());
-			
-			for(Object o : e.getChildren()) {
-				System.out.println("child: "+o);
-				
-			}
-		}
+	/* (non-Javadoc)
+	 * @see javax.swing.event.TreeModelListener#treeNodesInserted(javax.swing.event.TreeModelEvent)
+	 */
+	@Override
+	public void treeNodesInserted(TreeModelEvent e) {}
 
 
-		/* (non-Javadoc)
-		 * @see javax.swing.event.TreeModelListener#treeNodesRemoved(javax.swing.event.TreeModelEvent)
-		 */
-		@Override
-		public void treeNodesRemoved(TreeModelEvent e) {
-			// TODO Auto-generated method stub
-//			System.out.println("TreeNodesRemoved");
-		}
+	/* (non-Javadoc)
+	 * @see javax.swing.event.TreeModelListener#treeNodesRemoved(javax.swing.event.TreeModelEvent)
+	 */
+	@Override
+	public void treeNodesRemoved(TreeModelEvent e) {}
 
 
-		/* (non-Javadoc)
-		 * @see javax.swing.event.TreeModelListener#treeStructureChanged(javax.swing.event.TreeModelEvent)
-		 */
-		@Override
-		public void treeStructureChanged(TreeModelEvent e) {
-			// TODO Auto-generated method stub
-//			System.out.println("TreeStructureChange "+e.getSource());
-			
-			
-		}
-//	}
+	/* (non-Javadoc)
+	 * @see javax.swing.event.TreeModelListener#treeStructureChanged(javax.swing.event.TreeModelEvent)
+	 */
+	@Override
+	public void treeStructureChanged(TreeModelEvent e) {}
 }

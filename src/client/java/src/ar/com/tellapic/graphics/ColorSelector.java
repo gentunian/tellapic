@@ -26,12 +26,11 @@ import java.awt.Font;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Image;
 import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Robot;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -42,10 +41,13 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
+
+import ar.com.tellapic.utils.Utils;
 
 /**
  * @author 
@@ -55,132 +57,90 @@ import javax.swing.border.LineBorder;
  */
 public class ColorSelector extends JDialog {
 	private static final long serialVersionUID = 1L;
+	private static final int SELECT_BUTTON_WIDTH = 200;
+	private static final int BACK_BUTTON_WIDTH   = 150;
 	private JLabel oldColor;
 	private JLabel selectColor;
 	private boolean newColor;
 	boolean animating = false;
 	
-	public ColorSelector(Color color, int xPosition, int yPosition, final boolean alignLeft) {
-		oldColor = new JLabel("Previous Color");
+	
+	/**
+	 * 
+	 * @param parent
+	 * @param color
+	 * @param xPosition
+	 * @param yPosition
+	 * @param alignLeft
+	 */
+	public ColorSelector(JDialog parent, Color color, int xPosition, int yPosition, boolean alignLeft) {
+		super(parent);
+		oldColor    = new JLabel("Previous Color");
 		selectColor = new JLabel("New Color");
+		
 		selectColor.setFont(Font.decode("Droid-10-bold"));
 		oldColor.setFont(Font.decode("Droid-10-bold"));
 		selectColor.setOpaque(true);
 		oldColor.setOpaque(true);
 		selectColor.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		oldColor.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-		selectColor.setPreferredSize(new Dimension(200, 30));
+		selectColor.setPreferredSize(new Dimension(SELECT_BUTTON_WIDTH, 30));
 		selectColor.setHorizontalTextPosition((int)JLabel.CENTER_ALIGNMENT);
 		selectColor.setHorizontalAlignment(JLabel.CENTER);
-		oldColor.setPreferredSize(new Dimension(150, 30));
+		oldColor.setPreferredSize(new Dimension(BACK_BUTTON_WIDTH, 30));
 		oldColor.setHorizontalTextPosition((int)JLabel.CENTER_ALIGNMENT);
 		oldColor.setHorizontalAlignment(JLabel.CENTER);
 		oldColor.setBorder(BorderFactory.createRaisedBevelBorder());
 		oldColor.setBackground(color);
-		oldColor.setForeground(
-				new Color(
-						((color.getRed() < 128)? 255 : 0),
-						((color.getGreen() < 128)? 255 : 0),
-						((color.getBlue()< 128)? 255:0)
-				)
-		);
+		oldColor.setForeground(reverseColor(color));
 		selectColor.setBorder(new LineBorder(Color.black, 2, true));
 		selectColor.setDoubleBuffered(true);
 		oldColor.setDoubleBuffered(true);
 		selectColor.addMouseListener(new MouseAdapter(){
 			public void mouseClicked(MouseEvent e) {
 				newColor = true;
-				new Thread(new Runnable() {
-					public void run() {
-						int i = (int) getSize().getHeight();
-						setSize(new Dimension(ColorSelectorPanel.PANEL_WIDTH, i--));
-						Point loc = getLocation();
-						if (!alignLeft)
-							setLocation(loc.x + 150, loc.y);
-						animating = true;
-						while(i > 0) {
-							try {
-								Thread.sleep(0,10);
-								setSize(new Dimension(ColorSelectorPanel.PANEL_WIDTH, i--));
-							} catch (InterruptedException e) {
-								e.printStackTrace();
-							}
-						}
-						animating = false;
-						dispose();
-					}
-				}).start();
+				setVisible(false);
 			}
 		});
 		oldColor.addMouseListener(new MouseAdapter(){
 			public void mouseClicked(MouseEvent e) {
 				newColor = false;
-				new Thread(new Runnable() {
-					public void run() {
-						int i = (int) getSize().getHeight();
-						setSize(new Dimension(ColorSelectorPanel.PANEL_WIDTH, i--));
-						Point loc = getLocation();
-						if (!alignLeft)
-							setLocation(loc.x + 150, loc.y);
-						animating = true;
-						while(i > 0){
-							try {
-								Thread.sleep(0,10);
-								setSize(new Dimension(ColorSelectorPanel.PANEL_WIDTH, i--));
-							} catch (InterruptedException e) {
-								e.printStackTrace();
-							}
-						}
-						animating = false;
-						
-						dispose();
-					}
-				}).start();
+				setVisible(false);
 			}
 		});
-		ColorSelectorPanel colorPanel = new ColorSelectorPanel();
 		
+		ColorSelectorPanel colorPanel = new ColorSelectorPanel();
+		setIconImage(Utils.createIconImage(12, 12, "/icons/tools/color1.png"));
+		setTitle("Tellapic -"+Utils.msg.getString("pickcolor"));
+		addFocusListener(new FocusListener(){
+			public void focusGained(FocusEvent e) {}
+			public void focusLost(FocusEvent e) {
+				ColorSelector.this.setVisible(false);
+			}
+		});
 		add(colorPanel, BorderLayout.NORTH);
 		add(oldColor, BorderLayout.LINE_START);
 		add(selectColor, BorderLayout.LINE_END);
 		setUndecorated(true);
 		setResizable(false);
-		addComponentListener(new ComponentListener(){
-			public void componentHidden(ComponentEvent e) {}
-			public void componentMoved(ComponentEvent e) {}
-			public void componentResized(ComponentEvent e) {}
-			public void componentShown(ComponentEvent e) {
-				new Thread(new Runnable() {
-					public void run() {
-						int i = 0;
-						setSize(new Dimension(ColorSelectorPanel.PANEL_WIDTH, i));
-						animating = true;
-						while(getSize().getHeight() < ColorSelectorPanel.PANEL_HEIGHT +40) {
-							try {
-								Thread.sleep(0, 10);
-								setSize(new Dimension(ColorSelectorPanel.PANEL_WIDTH, i++));
-							} catch (InterruptedException e) {
-								e.printStackTrace();
-							}
-						}
-						animating = false;
-						Point loc = getLocation();
-						if (!alignLeft)
-							setLocation(loc.x - 145, loc.y);
-						repaint();
-						pack();
-					}
-				}).start();
-			}
-		});
-		
-		
-		setModal(true);
 		if (alignLeft)
 			setLocation(xPosition, yPosition);
 		else
-			setLocation(xPosition - ColorSelectorPanel.PANEL_WIDTH, yPosition);
+			setLocation(xPosition - SELECT_BUTTON_WIDTH - BACK_BUTTON_WIDTH, yPosition);
 		setVisible(true);
+		pack();	
+	}
+	
+	
+	/**
+	 * 
+	 * @param color
+	 * @param xPosition
+	 * @param yPosition
+	 * @param alignLeft
+	 */
+	public ColorSelector(Color color, int xPosition, int yPosition, boolean alignLeft) {
+		this(null, color, xPosition, yPosition, alignLeft);
 	}
 	
 	
@@ -189,19 +149,19 @@ public class ColorSelector extends JDialog {
 	 * @param g
 	 */
 	public void paint(Graphics g) {
-		Graphics2D g2 = (Graphics2D) g;
-		Image image = createImage(ColorSelectorPanel.PANEL_WIDTH, 250);
-		Graphics2D i = (Graphics2D) image.getGraphics();
-		if (newColor)
-			i.setColor(selectColor.getBackground());
-		else
-			i.setColor(oldColor.getBackground());
-		i.fillRect(0, 0, ColorSelectorPanel.PANEL_WIDTH, 250);
-		i.setColor(Color.black);
-		i.drawRect(0, 0, ColorSelectorPanel.PANEL_WIDTH - 1, getHeight());
-		g2.drawImage(image, 0, 0, null);
-		if (!animating)
-			super.paint(g);
+		super.paint(g);
+//		Image image = createImage(ColorSelectorPanel.PANEL_WIDTH, 250);
+//		Graphics2D i = (Graphics2D) image.getGraphics();
+//		if (newColor)
+//			i.setColor(selectColor.getBackground());
+//		else
+//			i.setColor(oldColor.getBackground());
+//		i.fillRect(0, 0, ColorSelectorPanel.PANEL_WIDTH, 250);
+//		i.setColor(Color.black);
+//		i.drawRect(0, 0, ColorSelectorPanel.PANEL_WIDTH - 1, getHeight());
+//		g2.drawImage(image, 0, 0, null);
+//		Paint p = new GradientPaint(0.0f, 0.0f, new Color(200, 200, 200, 0), 0.0f, getHeight(), new Color(200, 200, 200, 255), true);
+//		g2.setPaint(p);
 	}
 	
 	
@@ -214,6 +174,20 @@ public class ColorSelector extends JDialog {
 			return selectColor.getBackground();
 		else
 			return oldColor.getBackground();
+	}
+	
+	
+	/**
+	 * 
+	 * @param color
+	 * @return
+	 */
+	private Color reverseColor(Color color) {
+		return new Color(
+				((color.getRed() < 128)? 255 : 0),
+				((color.getGreen() < 128)? 255 : 0),
+				((color.getBlue()< 128)? 255:0)
+		);
 	}
 	
 	
@@ -249,7 +223,7 @@ public class ColorSelector extends JDialog {
 		private int squareMarkY;
 		private int wheelMarkX;
 		private int wheelMarkY;
-		private boolean squareMarkSet = false;
+		//private boolean squareMarkSet = false;
 		private boolean wheelMarkSet  = false;
 		private boolean dragingWheel  = false;
 		private boolean dragingSquare = false;
@@ -289,24 +263,23 @@ public class ColorSelector extends JDialog {
 		 */
 		public void paintComponent(Graphics g) {
 			super.paintComponent(g);
-			if(!animating) {
-				Graphics2D g2 = (Graphics2D) g;
-				g2.setRenderingHints(rh);
-				g2.drawImage(wheel, 5, 0,null);
-				if (wheelMarkSet)
-					g2.drawImage(marker, wheelMarkX - 8, wheelMarkY - 10, null);
-				if (color == null) {
-					color = oldColor.getBackground();
-					squareMarkX = BOX_X + COLOR_BOX_SIZE/2;
-					squareMarkY = BOX_X + COLOR_BOX_SIZE/2;
-				}
-				gradient = new GradientPaint(BOX_X + COLOR_BOX_SIZE / 2, BOX_X, Color.white, BOX_X + COLOR_BOX_SIZE/2, GAP + COLOR_BOX_SIZE, color);
-				g2.setPaint(gradient);
-				g2.fillRect(BOX_X + GAP, BOX_X, COLOR_BOX_SIZE, COLOR_BOX_SIZE);
-				g2.drawImage(mask, BOX_X + GAP, BOX_X, null);
-				g2.drawImage(marker, squareMarkX-8, squareMarkY-8, null);
+			Graphics2D g2 = (Graphics2D) g;
+			g2.setRenderingHints(rh);
+			g2.drawImage(wheel, 5, 0,null);
+			if (wheelMarkSet)
+				g2.drawImage(marker, wheelMarkX - 8, wheelMarkY - 10, null);
+			if (color == null) {
+				color = oldColor.getBackground();
+				squareMarkX = BOX_X + COLOR_BOX_SIZE/2;
+				squareMarkY = BOX_X + COLOR_BOX_SIZE/2;
 			}
+			gradient = new GradientPaint(BOX_X + COLOR_BOX_SIZE / 2, BOX_X, Color.white, BOX_X + COLOR_BOX_SIZE/2, GAP + COLOR_BOX_SIZE, color);
+			g2.setPaint(gradient);
+			g2.fillRect(BOX_X + GAP, BOX_X, COLOR_BOX_SIZE, COLOR_BOX_SIZE);
+			g2.drawImage(mask, BOX_X + GAP, BOX_X, null);
+			g2.drawImage(marker, squareMarkX-8, squareMarkY-8, null);
 		}
+
 		
 		
 		/**
@@ -314,19 +287,13 @@ public class ColorSelector extends JDialog {
 		 */
 		public void paint(Graphics g) {
 			super.paint(g);
-			Graphics2D g2 = (Graphics2D) g;
+			//Graphics2D g2 = (Graphics2D) g;
 		
 			Point point = new Point(squareMarkX, squareMarkY);
 			SwingUtilities.convertPointToScreen(point, this);
 			Color newColor = robot.getPixelColor(point.x, point.y);
 			selectColor.setBackground(newColor);
-			selectColor.setForeground(
-				new Color(
-						((newColor.getRed() < 128)? 255 : 0),
-						((newColor.getGreen() < 128)? 255 : 0),
-						((newColor.getBlue()< 128)? 255:0)
-				)
-			);
+			selectColor.setForeground(reverseColor(newColor));
 		}
 		
 		
@@ -413,7 +380,6 @@ public class ColorSelector extends JDialog {
 				dragingSquare = true;
 				squareMarkX = x;
 				squareMarkY = y;
-				squareMarkSet = true;
 			} else if (!dragingSquare){
 				dragingWheel = true;
 				int xCenter = BOX_X + GAP + COLOR_BOX_SIZE/2;

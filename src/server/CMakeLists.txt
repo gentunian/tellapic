@@ -18,7 +18,7 @@ include_directories(${INCDIR})
 add_executable(server ${SERVER_FILE})
 
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
-  set(DEBUG_COMPILE_FLAG "-DDEBUG=1 -g")
+  set(DEBUG_COMPILE_FLAG "-DDEBUG=1 -g3")
 endif()
 
 #
