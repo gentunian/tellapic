@@ -22,12 +22,16 @@ import java.util.NoSuchElementException;
 import java.util.Observable;
 
 import ar.com.tellapic.graphics.Drawing;
+import ar.com.tellapic.graphics.IPaintPropertyController;
+import ar.com.tellapic.graphics.IToolBoxController;
 import ar.com.tellapic.graphics.PaintProperty;
 import ar.com.tellapic.graphics.PaintPropertyAlpha;
 import ar.com.tellapic.graphics.PaintPropertyColor;
 import ar.com.tellapic.graphics.PaintPropertyFont;
 import ar.com.tellapic.graphics.PaintPropertyStroke;
 import ar.com.tellapic.graphics.ToolBoxModel;
+import ar.com.tellapic.lib.tellapic;
+import ar.com.tellapic.lib.tellapicConstants;
 
 /**
  * @author 
@@ -45,7 +49,9 @@ public abstract class AbstractUser extends Observable  {
 	//Each user will have control over its own tool box. The tool box model, for remote users
 	//will be updated from wrapped remote events dispatched to the actual model controller.
 	//Local user will update its model from mouse events.
-	private ToolBoxModel            toolBox;
+	private ToolBoxModel             toolBox;
+	private IToolBoxController       toolboxController;
+	private IPaintPropertyController paintController;
 	
 	//Each user, will also have a list of drawing objects. Each of this objects holds the
 	//complete information to be drawn on the screen. This objects will live as long as the
@@ -120,7 +126,12 @@ public abstract class AbstractUser extends Observable  {
 	}
 	
 	
-	public void addDrawing(Drawing drawing) throws NullPointerException {
+	/**
+	 * 
+	 * @param drawing
+	 * @throws NullPointerException
+	 */
+	public synchronized void addDrawing(Drawing drawing) throws NullPointerException {
 		if (drawing == null)
 			throw new NullPointerException("Drawing should not be null");
 		
@@ -130,7 +141,7 @@ public abstract class AbstractUser extends Observable  {
 		
 		drawingList.add(drawing);
 		
-		/* Should we set this line outside this object??? */
+		/* Shouldn't we set this line outside this object??? */
 		drawing.setUser(this);
 		
 		/* Report the view only if we are visible */
@@ -321,6 +332,22 @@ public abstract class AbstractUser extends Observable  {
 	/**
 	 * 
 	 * @param type
+	 * @throws NoSuchPropertyTypeException
+	 * @throws WrongPropertyTypeException
+	 */
+	public void removeCustomProperty(int type) throws NoSuchPropertyTypeException {
+		if (type != CUSTOM_PAINT_PROPERTY_COLOR && type != CUSTOM_PAINT_PROPERTY_STROKE && type != CUSTOM_PAINT_PROPERTY_FONT && type != CUSTOM_PAINT_PROPERTY_ALPHA )
+			throw new NoSuchPropertyTypeException("Cannot find type "+type);
+		
+		customProperties[type] = null;
+		setChanged();
+		notifyObservers();
+	}
+	
+	
+	/**
+	 * 
+	 * @param type
 	 * @return
 	 * @throws NoSuchPropertyType
 	 */
@@ -329,42 +356,6 @@ public abstract class AbstractUser extends Observable  {
 			throw new NoSuchPropertyTypeException("Cannot find type "+type);
 		
 		return customProperties[type];
-	}
-
-	
-	/**
-	 * 
-	 * @return
-	 */
-	public PaintProperty getCustomColor() {
-		return customProperties[CUSTOM_PAINT_PROPERTY_COLOR];
-	}
-	
-	
-	/**
-	 * 
-	 * @return
-	 */
-	public PaintProperty getCustomStroke() {
-		return customProperties[CUSTOM_PAINT_PROPERTY_STROKE];
-	}
-	
-	
-	/**
-	 * 
-	 * @return
-	 */
-	public PaintProperty getCustomFont() {
-		return customProperties[CUSTOM_PAINT_PROPERTY_FONT];
-	}
-	
-	
-	/**
-	 * 
-	 * @return
-	 */
-	public PaintProperty getCustomAlpha() {
-		return customProperties[CUSTOM_PAINT_PROPERTY_ALPHA];
 	}
 	
 	
@@ -377,49 +368,9 @@ public abstract class AbstractUser extends Observable  {
 
 
 	/**
-	 * 
-	 */
-	public void removeCustomColor() {
-		customProperties[CUSTOM_PAINT_PROPERTY_COLOR] = null;
-		setChanged();
-		notifyObservers();
-	}	
-
-
-	/**
-	 * 
-	 */
-	public void removeCustomAlpha() {
-		customProperties[CUSTOM_PAINT_PROPERTY_ALPHA] = null;
-		setChanged();
-		notifyObservers();
-	}	
-
-
-	/**
-	 * 
-	 */
-	public void removeCustomFont() {
-		customProperties[CUSTOM_PAINT_PROPERTY_FONT] = null;
-		setChanged();
-		notifyObservers();
-	}	
-
-
-	/**
-	 * 
-	 */
-	public void removeCustomStroke() {
-		customProperties[CUSTOM_PAINT_PROPERTY_STROKE] = null;
-		setChanged();
-		notifyObservers();
-	}
-
-
-	/**
 	 * @param drawing
 	 */
-	public boolean removeDrawing(Drawing drawing) {
+	public synchronized boolean removeDrawing(Drawing drawing) {
 		if (drawing == null)
 			return false;
 		
@@ -429,6 +380,9 @@ public abstract class AbstractUser extends Observable  {
 		if (removed) {
 			setChanged();
 			notifyObservers(new Object[]{drawing, index});
+			String number = String.valueOf(drawing.getNumber());
+			if (!isRemote())
+				tellapic.tellapic_send_ctle(NetManager.getInstance().getSocket(), SessionUtils.getId(), tellapicConstants.CTL_CL_RMFIG, number.length(), number);
 		}
 		
 		return removed;
@@ -439,7 +393,7 @@ public abstract class AbstractUser extends Observable  {
 	 * 
 	 * @return
 	 */
-	public boolean removeLastDrawing() {
+	public synchronized boolean removeLastDrawing() {
 		if (drawingList.isEmpty())
 			return false;
 		
@@ -479,5 +433,71 @@ public abstract class AbstractUser extends Observable  {
 	 */
 	public void setTemporalDrawing(Drawing temporalDrawing) {
 		this.temporalDrawing = temporalDrawing; 
+	}
+
+
+	/**
+	 * @param number
+	 */
+	public synchronized boolean removeDrawing(String number) {
+		return removeDrawing(Long.parseLong(number));
+	}
+	
+	/**
+	 * 
+	 * @param number
+	 */
+	public synchronized boolean removeDrawing(long number) {
+		Drawing drawing = findDrawing(number);
+		
+		if (drawing == null)
+			return false;
+		
+		return removeDrawing(drawing);
+	}
+	
+	/**
+	 * 
+	 * @param number
+	 * @return
+	 */
+	private Drawing findDrawing(long number) {
+		boolean found   = false;
+		Drawing drawing = null;
+		
+		for(int i = 0; i < drawingList.size() && !found; i++) {
+			if (found = (drawingList.get(i).getNumber() == number))
+				drawing = drawingList.get(i);
+		}
+		
+		return drawing;
+	}
+	
+	/**
+	 * @param toolboxController the toolboxController to set
+	 */
+	public void setToolboxController(IToolBoxController toolboxController) {
+		this.toolboxController = toolboxController;
+	}
+
+	/**
+	 * @return the toolboxController
+	 */
+	public IToolBoxController getToolboxController() {
+		return toolboxController;
+	}
+
+	/**
+	 * @param paintController the paintController to set
+	 */
+	public void setPaintController(IPaintPropertyController paintController) {
+		this.paintController = paintController;
+	}
+
+	/**
+	 * @return the paintController
+	 */
+	public IPaintPropertyController getPaintController() {
+		return paintController;
 	}
 }

@@ -30,8 +30,26 @@ import ar.com.tellapic.AbstractUser;
 public abstract class AbstractDrawing {
 
 	
+	private long                number;
 	private boolean             isVisible;
 	private AbstractUser        user;
+	
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public long getNumber() {
+		return number;
+	}
+	
+	/**
+	 * 
+	 * @param n
+	 */
+	public void setNumber(long n) {
+		number = n;
+	}
 	
 	/**
 	 * @return the text

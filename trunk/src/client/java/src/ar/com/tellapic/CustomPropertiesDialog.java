@@ -21,6 +21,8 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Frame;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
@@ -144,8 +146,38 @@ public class CustomPropertiesDialog extends JDialog {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				if (enableColor.isSelected()) {
-					ColorSelector color = new ColorSelector(colorLabel.getBackground(), colorLabel.getLocationOnScreen().x + colorLabel.getWidth(), colorLabel.getLocationOnScreen().y + colorLabel.getHeight(), false);
-					colorLabel.setBackground(color.getSelectedColor());
+					final ColorSelector color = new ColorSelector(
+							CustomPropertiesDialog.this,
+							colorLabel.getBackground(),
+							colorLabel.getLocationOnScreen().x + colorLabel.getWidth(),
+							colorLabel.getLocationOnScreen().y + colorLabel.getHeight(),
+							false
+					);
+					color.addComponentListener(new ComponentListener(){
+
+						@Override
+						public void componentHidden(ComponentEvent e) {
+							colorLabel.setBackground(color.getSelectedColor());
+						}
+
+						@Override
+						public void componentMoved(ComponentEvent e) {
+							// TODO Auto-generated method stub
+							
+						}
+
+						@Override
+						public void componentResized(ComponentEvent e) {
+							// TODO Auto-generated method stub
+							
+						}
+
+						@Override
+						public void componentShown(ComponentEvent e) {
+							// TODO Auto-generated method stub
+							
+						}});
+					
 				}
 			}
 			@Override

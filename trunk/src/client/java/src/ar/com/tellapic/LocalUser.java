@@ -71,7 +71,6 @@ public class LocalUser extends AbstractUser {
 	 */
 	@Override
 	public boolean isSelected() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
@@ -80,15 +79,6 @@ public class LocalUser extends AbstractUser {
 	 */
 	@Override
 	public boolean isSpecial() {
-		// TODO Auto-generated method stub
 		return false;
 	}
-
-//	/* (non-Javadoc)
-//	 * @see com.tellapic.AbstractUser#isVisible()
-//	 */
-//	@Override
-//	public boolean isVisible() {
-//		return true;
-//	}
 }

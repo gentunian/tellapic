@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<breakpoints>
+<breakpoint enabled="true" persistant="true" registered="true">
+<resource path="/tellapic/src/ar/com/tellapic/graphics/ToolBoxModel.java" type="1"/>
+<marker charStart="1963" lineNumber="94" type="org.eclipse.jdt.debug.javaLineBreakpointMarker">
+<attrib name="message" value="Line breakpoint:ToolBoxModel [line: 94] - setCurrentTool(Tool)"/>
+<attrib name="org.eclipse.debug.core.id" value="org.eclipse.jdt.debug"/>
+<attrib name="org.eclipse.jdt.debug.ui.JAVA_ELEMENT_HANDLE_ID" value="=tellapic/src&lt;ar.com.tellapic.graphics{ToolBoxModel.java[ToolBoxModel"/>
+<attrib name="org.eclipse.jdt.debug.core.suspendPolicy" value="2"/>
+<attrib name="charStart" value="1963"/>
+<attrib name="charEnd" value="2024"/>
+<attrib name="org.eclipse.debug.core.enabled" value="true"/>
+<attrib name="org.eclipse.jdt.debug.core.typeName" value="ar.com.tellapic.graphics.ToolBoxModel"/>
+<attrib name="workingset_name" value=""/>
+<attrib name="workingset_id" value="org.eclipse.debug.ui.breakpointWorkingSet"/>
+</marker>
+</breakpoint>
+<breakpoint enabled="true" persistant="true" registered="true">
+<resource path="/tellapic/src/ar/com/tellapic/graphics/ToolBoxModel.java" type="1"/>
+<marker charStart="2689" lineNumber="131" type="org.eclipse.jdt.debug.javaLineBreakpointMarker">
+<attrib name="message" value="Line breakpoint:ToolBoxModel [line: 131] - addTool(Tool)"/>
+<attrib name="org.eclipse.debug.core.id" value="org.eclipse.jdt.debug"/>
+<attrib name="org.eclipse.jdt.debug.ui.JAVA_ELEMENT_HANDLE_ID" value="=tellapic/src&lt;ar.com.tellapic.graphics{ToolBoxModel.java[ToolBoxModel"/>
+<attrib name="org.eclipse.jdt.debug.core.suspendPolicy" value="2"/>
+<attrib name="charStart" value="2689"/>
+<attrib name="charEnd" value="2750"/>
+<attrib name="org.eclipse.debug.core.enabled" value="true"/>
+<attrib name="org.eclipse.jdt.debug.core.typeName" value="ar.com.tellapic.graphics.ToolBoxModel"/>
+<attrib name="workingset_name" value=""/>
+<attrib name="workingset_id" value="org.eclipse.debug.ui.breakpointWorkingSet"/>
+</marker>
+</breakpoint>
+<breakpoint enabled="true" persistant="true" registered="true">
+<resource path="/tellapic/src/ar/com/tellapic/graphics/ToolBoxModel.java" type="1"/>
+<marker charStart="3283" lineNumber="147" type="org.eclipse.jdt.debug.javaLineBreakpointMarker">
+<attrib name="message" value="Line breakpoint:ToolBoxModel [line: 147] - setStrokePropertyCaps(int)"/>
+<attrib name="org.eclipse.debug.core.id" value="org.eclipse.jdt.debug"/>
+<attrib name="org.eclipse.jdt.debug.ui.JAVA_ELEMENT_HANDLE_ID" value="=tellapic/src&lt;ar.com.tellapic.graphics{ToolBoxModel.java[ToolBoxModel"/>
+<attrib name="org.eclipse.jdt.debug.core.suspendPolicy" value="2"/>
+<attrib name="charStart" value="3283"/>
+<attrib name="charEnd" value="3383"/>
+<attrib name="org.eclipse.debug.core.enabled" value="true"/>
+<attrib name="org.eclipse.jdt.debug.core.typeName" value="ar.com.tellapic.graphics.ToolBoxModel"/>
+<attrib name="workingset_name" value=""/>
+<attrib name="workingset_id" value="org.eclipse.debug.ui.breakpointWorkingSet"/>
+</marker>
+</breakpoint>
+<breakpoint enabled="true" persistant="true" registered="true">
+<resource path="/tellapic/src/ar/com/tellapic/graphics/ToolBoxModel.java" type="1"/>
+<marker charStart="3863" lineNumber="163" type="org.eclipse.jdt.debug.javaLineBreakpointMarker">
+<attrib name="message" value="Line breakpoint:ToolBoxModel [line: 163] - setStrokePropertyDash(float[], float)"/>
+<attrib name="org.eclipse.debug.core.id" value="org.eclipse.jdt.debug"/>
+<attrib name="org.eclipse.jdt.debug.ui.JAVA_ELEMENT_HANDLE_ID" value="=tellapic/src&lt;ar.com.tellapic.graphics{ToolBoxModel.java[ToolBoxModel"/>
+<attrib name="org.eclipse.jdt.debug.core.suspendPolicy" value="2"/>
+<attrib name="charStart" value="3863"/>
+<attrib name="charEnd" value="3925"/>
+<attrib name="org.eclipse.debug.core.enabled" value="true"/>
+<attrib name="org.eclipse.jdt.debug.core.typeName" value="ar.com.tellapic.graphics.ToolBoxModel"/>
+<attrib name="workingset_name" value=""/>
+<attrib name="workingset_id" value="org.eclipse.debug.ui.breakpointWorkingSet"/>
+</marker>
+</breakpoint>
+<breakpoint enabled="true" persistant="true" registered="true">
+<resource path="/tellapic/src/ar/com/tellapic/graphics/ToolBoxModel.java" type="1"/>
+<marker charStart="3950" lineNumber="165" type="org.eclipse.jdt.debug.javaLineBreakpointMarker">
+<attrib name="message" value="Line breakpoint:ToolBoxModel [line: 165] - setStrokePropertyDash(float[], float)"/>
+<attrib name="org.eclipse.debug.core.id" value="org.eclipse.jdt.debug"/>
+<attrib name="org.eclipse.jdt.debug.ui.JAVA_ELEMENT_HANDLE_ID" value="=tellapic/src&lt;ar.com.tellapic.graphics{ToolBoxModel.java[ToolBoxModel"/>
+<attrib name="org.eclipse.jdt.debug.core.suspendPolicy" value="2"/>
+<attrib name="charStart" value="3950"/>
+<attrib name="charEnd" value="4023"/>
+<attrib name="org.eclipse.debug.core.enabled" value="true"/>
+<attrib name="org.eclipse.jdt.debug.core.typeName" value="ar.com.tellapic.graphics.ToolBoxModel"/>
+<attrib name="workingset_name" value=""/>
+<attrib name="workingset_id" value="org.eclipse.debug.ui.breakpointWorkingSet"/>
+</marker>
+</breakpoint>
+<breakpoint enabled="true" persistant="true" registered="true">
+<resource path="/tellapic/src/ar/com/tellapic/graphics/ToolBoxModel.java" type="1"/>
+<marker charStart="4045" lineNumber="167" type="org.eclipse.jdt.debug.javaLineBreakpointMarker">
+<attrib name="message" value="Line breakpoint:ToolBoxModel [line: 167] - setStrokePropertyDash(float[], float)"/>
+<attrib name="org.eclipse.debug.core.id" value="org.eclipse.jdt.debug"/>
+<attrib name="org.eclipse.jdt.debug.ui.JAVA_ELEMENT_HANDLE_ID" value="=tellapic/src&lt;ar.com.tellapic.graphics{ToolBoxModel.java[ToolBoxModel"/>
+<attrib name="org.eclipse.jdt.debug.core.suspendPolicy" value="2"/>
+<attrib name="charStart" value="4045"/>
+<attrib name="charEnd" value="4127"/>
+<attrib name="org.eclipse.debug.core.enabled" value="true"/>
+<attrib name="org.eclipse.jdt.debug.core.typeName" value="ar.com.tellapic.graphics.ToolBoxModel"/>
+<attrib name="workingset_name" value=""/>
+<attrib name="workingset_id" value="org.eclipse.debug.ui.breakpointWorkingSet"/>
+</marker>
+</breakpoint>
+<breakpoint enabled="true" persistant="true" registered="true">
+<resource path="/tellapic/src/ar/com/tellapic/graphics/ToolBoxModel.java" type="1"/>
+<marker charStart="4617" lineNumber="183" type="org.eclipse.jdt.debug.javaLineBreakpointMarker">
+<attrib name="message" value="Line breakpoint:ToolBoxModel [line: 183] - setStrokePropertyJoins(int)"/>
+<attrib name="org.eclipse.debug.core.id" value="org.eclipse.jdt.debug"/>
+<attrib name="org.eclipse.jdt.debug.ui.JAVA_ELEMENT_HANDLE_ID" value="=tellapic/src&lt;ar.com.tellapic.graphics{ToolBoxModel.java[ToolBoxModel"/>
+<attrib name="org.eclipse.jdt.debug.core.suspendPolicy" value="2"/>
+<attrib name="charStart" value="4617"/>
+<attrib name="charEnd" value="4721"/>
+<attrib name="org.eclipse.debug.core.enabled" value="true"/>
+<attrib name="org.eclipse.jdt.debug.core.typeName" value="ar.com.tellapic.graphics.ToolBoxModel"/>
+<attrib name="workingset_name" value=""/>
+<attrib name="workingset_id" value="org.eclipse.debug.ui.breakpointWorkingSet"/>
+</marker>
+</breakpoint>
+<breakpoint enabled="true" persistant="true" registered="true">
+<resource path="/tellapic/src/ar/com/tellapic/graphics/ToolBoxModel.java" type="1"/>
+<marker charStart="9585" lineNumber="371" type="org.eclipse.jdt.debug.javaLineBreakpointMarker">
+<attrib name="message" value="Line breakpoint:ToolBoxModel [line: 371] - setCurrentTool(String)"/>
+<attrib name="org.eclipse.debug.core.id" value="org.eclipse.jdt.debug"/>
+<attrib name="org.eclipse.jdt.debug.ui.JAVA_ELEMENT_HANDLE_ID" value="=tellapic/src&lt;ar.com.tellapic.graphics{ToolBoxModel.java[ToolBoxModel"/>
+<attrib name="org.eclipse.jdt.debug.core.suspendPolicy" value="2"/>
+<attrib name="charStart" value="9585"/>
+<attrib name="charEnd" value="9650"/>
+<attrib name="org.eclipse.debug.core.enabled" value="true"/>
+<attrib name="org.eclipse.jdt.debug.core.typeName" value="ar.com.tellapic.graphics.ToolBoxModel"/>
+<attrib name="workingset_name" value=""/>
+<attrib name="workingset_id" value="org.eclipse.debug.ui.breakpointWorkingSet"/>
+</marker>
+</breakpoint>
+<breakpoint enabled="true" persistant="true" registered="true">
+<resource path="/tellapic/src/ar/com/tellapic/graphics/ToolBoxModel.java" type="1"/>
+<marker charStart="9712" lineNumber="376" type="org.eclipse.jdt.debug.javaLineBreakpointMarker">
+<attrib name="message" value="Line breakpoint:ToolBoxModel [line: 376] - setCurrentTool(String)"/>
+<attrib name="org.eclipse.debug.core.id" value="org.eclipse.jdt.debug"/>
+<attrib name="org.eclipse.jdt.debug.ui.JAVA_ELEMENT_HANDLE_ID" value="=tellapic/src&lt;ar.com.tellapic.graphics{ToolBoxModel.java[ToolBoxModel"/>
+<attrib name="org.eclipse.jdt.debug.core.suspendPolicy" value="2"/>
+<attrib name="charStart" value="9712"/>
+<attrib name="charEnd" value="9789"/>
+<attrib name="org.eclipse.debug.core.enabled" value="true"/>
+<attrib name="org.eclipse.jdt.debug.core.typeName" value="ar.com.tellapic.graphics.ToolBoxModel"/>
+<attrib name="workingset_name" value=""/>
+<attrib name="workingset_id" value="org.eclipse.debug.ui.breakpointWorkingSet"/>
+</marker>
+</breakpoint>
+</breakpoints>

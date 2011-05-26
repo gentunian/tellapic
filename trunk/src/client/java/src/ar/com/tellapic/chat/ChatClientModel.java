@@ -32,7 +32,7 @@ import ar.com.tellapic.utils.Utils;
 public class ChatClientModel extends Observable implements IChatModelManager, IChatModelState {
 
 	private ArrayList<Message> messages;
-	private ArrayList<User>    users;
+//	private ArrayList<User>    users;
 	
 	private static class Holder {
 		private static final ChatClientModel INSTANCE = new ChatClientModel();
@@ -40,7 +40,7 @@ public class ChatClientModel extends Observable implements IChatModelManager, IC
 	
 	private ChatClientModel() {
 		messages = new ArrayList<Message>();
-		users    = new ArrayList<User>();
+//		users    = new ArrayList<User>();
 	}
 	
 	public static ChatClientModel getInstance() {
@@ -61,18 +61,18 @@ public class ChatClientModel extends Observable implements IChatModelManager, IC
 		notifyObservers(message);
 	}
 
-	/* (non-Javadoc)
-	 * @see com.tellapic.chat.IChatModelManager#addUser(com.tellapic.chat.User)
-	 */
-	@Override
-	public void addUser(User user) {
-		if (user == null)
-			return;
-		
-		users.add(user);
-		setChanged();
-		notifyObservers();
-	}
+//	/* (non-Javadoc)
+//	 * @see com.tellapic.chat.IChatModelManager#addUser(com.tellapic.chat.User)
+//	 */
+//	@Override
+//	public void addUser(User user) {
+//		if (user == null)
+//			return;
+//		
+//		users.add(user);
+//		setChanged();
+//		notifyObservers();
+//	}
 
 	/* (non-Javadoc)
 	 * @see com.tellapic.chat.IChatModelManager#removeFirstMessage()
@@ -116,18 +116,18 @@ public class ChatClientModel extends Observable implements IChatModelManager, IC
 		return true;
 	}
 
-	/* (non-Javadoc)
-	 * @see com.tellapic.chat.IChatModelManager#removeMessageFrom(com.tellapic.chat.User)
-	 */
-	@Override
-	public boolean removeMessageFrom(User user) {
-		if (user == null)
-			return false;
-		
-		setChanged();
-		notifyObservers();
-		return false;
-	}
+//	/* (non-Javadoc)
+//	 * @see com.tellapic.chat.IChatModelManager#removeMessageFrom(com.tellapic.chat.User)
+//	 */
+//	@Override
+//	public boolean removeMessageFrom(User user) {
+//		if (user == null)
+//			return false;
+//		
+//		setChanged();
+//		notifyObservers();
+//		return false;
+//	}
 
 	/* (non-Javadoc)
 	 * @see com.tellapic.chat.IChatModelManager#removeMessageFrom(int)
@@ -169,33 +169,33 @@ public class ChatClientModel extends Observable implements IChatModelManager, IC
 		return messages;
 	}
 
-	/* (non-Javadoc)
-	 * @see com.tellapic.chat.IChatModelState#getUser(java.lang.String)
-	 */
-	@Override
-	public User getUser(String name) {
+//	/* (non-Javadoc)
+//	 * @see com.tellapic.chat.IChatModelState#getUser(java.lang.String)
+//	 */
+//	@Override
+//	public User getUser(String name) {
 //		for(User user : users) {
 //			
 //		}
-		return null;
-	}
-
-	/* (non-Javadoc)
-	 * @see com.tellapic.chat.IChatModelState#getUser(int)
-	 */
-	@Override
-	public User getUser(int userId) {
+//		return null;
+//	}
+//
+//	/* (non-Javadoc)
+//	 * @see com.tellapic.chat.IChatModelState#getUser(int)
+//	 */
+//	@Override
+//	public User getUser(int userId) {
 //		for(User user : users) {
 //			
 //		}
-		return null;
-	}
-
-	/* (non-Javadoc)
-	 * @see com.tellapic.chat.IChatModelState#getUsers()
-	 */
-	@Override
-	public List<User> getUsers() {
-		return users;
-	}
+//		return null;
+//	}
+//
+//	/* (non-Javadoc)
+//	 * @see com.tellapic.chat.IChatModelState#getUsers()
+//	 */
+//	@Override
+//	public List<User> getUsers() {
+//		return users;
+//	}
 }

@@ -45,8 +45,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
-import ar.com.tellapic.chat.ChatController;
+import ar.com.tellapic.chat.ChatModelController;
 import ar.com.tellapic.chat.ChatView;
+import ar.com.tellapic.chat.ChatViewController;
 import ar.com.tellapic.graphics.DrawingAreaView;
 import ar.com.tellapic.graphics.IToolBoxController;
 import ar.com.tellapic.graphics.PaintPropertyController;
@@ -70,7 +71,7 @@ import bibliothek.gui.dock.common.theme.ThemeMap;
  */
 public class UserGUIBuilder {
   
-	private UserView                userView;
+	private UsersView               userView;
 	private ToolView                toolView;
 	private PaintPropertyView       propertyView;
 	private ChatView                chatView;
@@ -100,16 +101,19 @@ public class UserGUIBuilder {
 		//DrawingLocalController  drawingController  = new DrawingLocalController();
 		IToolBoxController      toolViewController = new ToolBoxController(model);
 		
+		user.setToolboxController(toolViewController);
+		user.setPaintController(propertyController);
+		
 		// Instantiates all the GUIs.
-		userView     = UserView.getInstance();
+		userView     = UsersView.getInstance();
 		toolView     = new ToolView(model);
 		propertyView = new PaintPropertyView();	
-		chatView     = new ChatView(new ChatController());
+		chatView     = new ChatView(new ChatModelController());
 		
 		model.addObserver(propertyView);
 		model.addObserver(toolView);
-		UserOptionsController c = new UserOptionsController(chatView);
-		userView.setUserOptionsController(c);
+		ChatViewController c = new ChatViewController(chatView);
+		userView.setChatViewController(c);
 		
 		
 		// Get the drawing area model instance. Its where all Drawing objects will live.
@@ -172,10 +176,14 @@ public class UserGUIBuilder {
 		
 		mainWindow.setPreferredSize(new Dimension(800,600));
 		
-		grid.add(0, 0, 20, 20, dock1);
-		grid.add(2, 0, 200, 40, dock3);
-		grid.add(200, 1, 30, 50, dock5);
-		grid.add(200, 2, 30, 50, dock4);
+		grid.add(0, 0, 10, 200, dock1);
+		grid.add(10, 0, 350, 200, dock3);
+		grid.add(360, 0, 100, 100, dock5);
+		grid.add(360, 100, 100, 100, dock4);
+//		grid.add(0, 0, 20, 20, dock1);
+//		grid.add(2, 0, 200, 40, dock3);
+//		grid.add(200, 1, 30, 50, dock5);
+//		grid.add(200, 2, 30, 50, dock4);
 		
 		content.deploy(grid);
 		

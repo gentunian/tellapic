@@ -27,7 +27,7 @@ public interface IChatModelManager {
 
 	public abstract boolean removeMessage(int i);
 	
-	public abstract boolean removeMessageFrom(User user);
+//	public abstract boolean removeMessageFrom(User user);
 	
 	public abstract boolean removeMessageFrom(int userId);
 	
@@ -37,7 +37,7 @@ public interface IChatModelManager {
 	
 	public abstract void addMessage(Message message) throws NullPointerException;
 	
-	public abstract void addUser(User user) throws NullPointerException;
+//	public abstract void addUser(User user) throws NullPointerException;
 	
 	
 }

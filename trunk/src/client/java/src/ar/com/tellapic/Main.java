@@ -35,8 +35,6 @@ import ar.com.tellapic.graphics.Zoom;
 import ar.com.tellapic.lib.tellapicConstants;
 import ar.com.tellapic.utils.Utils;
 
-import com.sun.xml.internal.bind.v2.runtime.property.Property;
-
 
 /**
  * @author 
@@ -67,6 +65,7 @@ public class Main {
 		
 		/* Set the look and feel */
 		setLookAndFeel();
+
 		
 		if (args.length == 0) {
 			/* We were invoked without arguments, show the Main Dialog. */
@@ -204,7 +203,6 @@ public class Main {
 		final LocalUser luser = (LocalUser) userManager.createUser(id, name, false);
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-//				UserManager userManager = UserManager.getInstance();
 				new UserGUIBuilder(luser);
 			}
 		});

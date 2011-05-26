@@ -32,6 +32,7 @@ import javax.swing.KeyStroke;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 
+import ar.com.tellapic.chat.ChatViewController;
 import ar.com.tellapic.graphics.Drawing;
 import ar.com.tellapic.graphics.PaintPropertyColor;
 import ar.com.tellapic.utils.Utils;
@@ -42,7 +43,7 @@ import ar.com.tellapic.utils.Utils;
  *          sebastian.treu(at)gmail.com
  *
  */
-public class TreePopupOptions extends JPopupMenu {
+public class UsersViewPopupOptions extends JPopupMenu {
 
 	
 	private static final String USER_FONT = "Droid-10-italic";
@@ -50,12 +51,12 @@ public class TreePopupOptions extends JPopupMenu {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private UserOptionsController controller;
+	private ChatViewController controller;
 	protected int x;
 	protected int y;
 	
 	
-	public TreePopupOptions(Object data, UserOptionsController c) throws NullPointerException {
+	public UsersViewPopupOptions(Object data, ChatViewController c) throws NullPointerException {
 		if (data == null)
 			throw new NullPointerException("data cannot be null.");
 
@@ -116,7 +117,9 @@ public class TreePopupOptions extends JPopupMenu {
 		name.setAlignmentX(JPopupMenu.CENTER_ALIGNMENT);
 		add(name);
 		addSeparator();
-		add(delete);
+		/* Only allow removing from local user */
+		if (!drawing.getUser().isRemote())
+			add(delete);
 		add(hide);
 	}
 
@@ -149,7 +152,12 @@ public class TreePopupOptions extends JPopupMenu {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				CustomPropertiesDialog popup = null;
-				PaintPropertyColor c = (PaintPropertyColor) user.getCustomColor();
+				PaintPropertyColor c = null;
+				try {
+					c = (PaintPropertyColor) user.getCustomProperty(AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
+				} catch (NoSuchPropertyTypeException e2) {
+					e2.printStackTrace();
+				}
 				popup = new CustomPropertiesDialog(null, true, user, c);
 				popup.setLocation(x - popup.getSize().width, y);
 				popup.setVisible(true);
@@ -159,14 +167,18 @@ public class TreePopupOptions extends JPopupMenu {
 						if (color != null)
 							user.setCustomProperty(new PaintPropertyColor(color), AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
 						else
-							user.removeCustomColor();
+							user.removeCustomProperty(AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
 					} catch (NoSuchPropertyTypeException e1) {
 						e1.printStackTrace();
 					} catch (WrongPropertyTypeException e1) {
 						e1.printStackTrace();
 					}
 				} else
-					user.removeCustomColor();
+					try {
+						user.removeCustomProperty(AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
+					} catch (NoSuchPropertyTypeException e1) {
+						e1.printStackTrace();
+					}
 			}
 		});
 		doChat.addActionListener(new ActionListener() {

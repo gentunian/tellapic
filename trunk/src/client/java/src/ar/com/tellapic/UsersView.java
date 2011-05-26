@@ -25,8 +25,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Observable;
-import java.util.Observer;
 
 import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
@@ -38,6 +36,7 @@ import javax.swing.InputMap;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.tree.TreePath;
@@ -53,6 +52,7 @@ import org.jdesktop.swingx.renderer.JRendererCheckBox;
 import org.jdesktop.swingx.renderer.LabelProvider;
 import org.jdesktop.swingx.renderer.StringValue;
 
+import ar.com.tellapic.chat.ChatViewController;
 import ar.com.tellapic.graphics.Drawing;
 import ar.com.tellapic.graphics.PaintPropertyColor;
 import ar.com.tellapic.utils.Utils;
@@ -63,23 +63,33 @@ import ar.com.tellapic.utils.Utils;
  *          sebastian.treu(at)gmail.com
  *
  */
-public class UserView extends JPanel implements Observer {
+public class UsersView extends JPanel {
 
 	private static final long serialVersionUID = 1L;
-	private JScrollPane            treeView;
-	private UserOptionsController  userOptionsController;
-	private JXTreeTable            tree;
+	private ChatViewController     chatViewController;
 	
+	
+	/**
+	 * 
+	 * @author 
+	 *          Sebastian Treu
+	 *          sebastian.treu(at)gmail.com
+	 *
+	 */
 	private static class Holder {
-		private static final UserView INSTANCE = new UserView();
+		private static final UsersView INSTANCE = new UsersView();
 	}
 
 	
-	private UserView() {
+	/**
+	 * 
+	 */
+	private UsersView() {
 		super(new GridLayout(1,0));
-		setName(Utils.msg.getString("userview"));
-		tree = new JXTreeTable(UserManager.getInstance());
-		addKeyShortcuts();
+		setName(Utils.msg.getString("usersview"));
+		JScrollPane treeView;
+		final JXTreeTable tree = new JXTreeTable(UserManager.getInstance());;
+		addKeyShortcuts(tree);
 		tree.addMouseListener(new MouseAdapter(){
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -89,7 +99,7 @@ public class UserView extends JPanel implements Observer {
 					return;
 				
 				Object o = path.getLastPathComponent();
-				if (userOptionsController != null) {
+				if (chatViewController != null) {
 					if (o instanceof AbstractUser) {
 						AbstractUser user = (AbstractUser) o;
 						switch(colSel) {
@@ -102,7 +112,7 @@ public class UserView extends JPanel implements Observer {
 							showCustomColorPopup(user, e.getXOnScreen(), e.getYOnScreen());
 							break;
 						case 3:
-							userOptionsController.initiateChat(user);
+							chatViewController.initiateChat(user);
 							break;
 						}
 					} else if (o instanceof Drawing) {
@@ -125,8 +135,8 @@ public class UserView extends JPanel implements Observer {
 					TreePath path = tree.getPathForLocation(e.getX(), e.getY());
 					if (path != null) {
 						tree.getTreeSelectionModel().addSelectionPath(path);
-						TreePopupOptions popup = new TreePopupOptions(path.getLastPathComponent(), userOptionsController);
-						popup.show(UserView.this, e.getX(), e.getY());
+						UsersViewPopupOptions popup = new UsersViewPopupOptions(path.getLastPathComponent(), chatViewController);
+						popup.show(UsersView.this, e.getX(), e.getY());
 					}
 				}
 			}
@@ -136,7 +146,7 @@ public class UserView extends JPanel implements Observer {
 		tree.setTableHeader(null);
 		tree.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		tree.setSortable(false);
-//		tree.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+		tree.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		ComponentProvider<AbstractButton> visibilityProvider = new CheckBoxProvider("/icons/system/eye.png", "/icons/system/eye-close.png");
 		ComponentProvider<JLabel> userProvider = new CustomLabelProvider(new UserValue(), (int)JLabel.CENTER_ALIGNMENT);
 		tree.setDefaultRenderer(MyEyeCheckBox.class, new DefaultTableRenderer(visibilityProvider));
@@ -149,16 +159,18 @@ public class UserView extends JPanel implements Observer {
 		tree.getColumn(2).setMaxWidth(22);
 		tree.getColumn(3).setMaxWidth(22);
 		
+		tree.getColumn(0).setMinWidth(190);
 		tree.getColumn(1).setMinWidth(12);
 		tree.getColumn(2).setMinWidth(12);
 		tree.getColumn(3).setMinWidth(12);
 		
-		tree.getColumn(0).setPreferredWidth(100);
+		tree.getColumn(0).setPreferredWidth(190);
 		tree.getColumn(1).setPreferredWidth(16);
 		tree.getColumn(2).setPreferredWidth(16);
 		tree.getColumn(3).setPreferredWidth(16);
 
-		tree.packTable(2);
+//		tree.packTable(2);
+		tree.setHorizontalScrollEnabled(true);
 		treeView = new JScrollPane(tree);
 		treeView.setBorder(BorderFactory.createEmptyBorder());
 		setBackground(Color.white);
@@ -167,9 +179,10 @@ public class UserView extends JPanel implements Observer {
 
 	
 	/**
+	 * @param tree 
 	 * 
 	 */
-	private void addKeyShortcuts() {
+	private void addKeyShortcuts(final JXTreeTable tree) {
 		InputMap  inputMap  = tree.getInputMap();
 		ActionMap actionMap = tree.getActionMap();
 		inputMap.put(KeyStroke.getKeyStroke("DELETE"), "deleteDrawing");
@@ -198,7 +211,7 @@ public class UserView extends JPanel implements Observer {
 				int row = tree.getSelectedRow();
 				Object value = tree.getValueAt(row, tree.getHierarchicalColumn());
 				if (value instanceof AbstractUser)
-					userOptionsController.initiateChat((AbstractUser) value);
+					chatViewController.initiateChat((AbstractUser) value);
 			}
 			
 		});
@@ -234,8 +247,8 @@ public class UserView extends JPanel implements Observer {
 	 * 
 	 * @param c
 	 */
-	public void setUserOptionsController(UserOptionsController c) {
-		userOptionsController = c;
+	public void setChatViewController(ChatViewController c) {
+		chatViewController = c;
 	}
 	
 	
@@ -266,12 +279,17 @@ public class UserView extends JPanel implements Observer {
 			Object value = context.getValue();
 			if (value instanceof AbstractUser) {
 				AbstractUser user = (AbstractUser) value;
-				PaintPropertyColor customColor = (PaintPropertyColor) user.getCustomColor();
+				PaintPropertyColor customColor = null;
 				Font usedFont = null;
-				if (customColor != null) {
-					rendererComponent.setForeground(customColor.getColor());
-					usedFont = rendererComponent.getFont().deriveFont(Font.BOLD);
-				} else {
+				try {
+					customColor = (PaintPropertyColor) user.getCustomProperty(AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
+					if (customColor != null) {
+						rendererComponent.setForeground(customColor.getColor());
+						usedFont = rendererComponent.getFont().deriveFont(Font.BOLD);
+					} else {
+						usedFont = rendererComponent.getFont().deriveFont(Font.PLAIN); 
+					}
+				} catch (NoSuchPropertyTypeException e) {
 					usedFont = rendererComponent.getFont().deriveFont(Font.PLAIN); 
 				}
 				rendererComponent.setFont(usedFont);
@@ -349,7 +367,12 @@ public class UserView extends JPanel implements Observer {
 	 */
 	private void showCustomColorPopup(AbstractUser user, int x, int y) {
 		CustomPropertiesDialog popup = null;
-		PaintPropertyColor c = (PaintPropertyColor) user.getCustomColor();
+		PaintPropertyColor c = null;
+		try {
+			c = (PaintPropertyColor) user.getCustomProperty(AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
+		} catch (NoSuchPropertyTypeException e) {
+			e.printStackTrace();
+		}
 		popup = new CustomPropertiesDialog(null, true, user, c);
 		popup.setLocation(x - popup.getSize().width, y);
 		popup.setVisible(true);
@@ -359,14 +382,18 @@ public class UserView extends JPanel implements Observer {
 				if (color != null)
 					user.setCustomProperty(new PaintPropertyColor(color), AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
 				else
-					user.removeCustomColor();
+					user.removeCustomProperty(AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
 			} catch (NoSuchPropertyTypeException e1) {
 				e1.printStackTrace();
 			} catch (WrongPropertyTypeException e1) {
 				e1.printStackTrace();
 			}
 		} else
-			user.removeCustomColor();
+			try {
+				user.removeCustomProperty(AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
+			} catch (NoSuchPropertyTypeException e) {
+				e.printStackTrace();
+			}
 	}
 	
 	
@@ -432,14 +459,13 @@ public class UserView extends JPanel implements Observer {
 	 * 
 	 * @return
 	 */
-	public static UserView getInstance() {
+	public static UsersView getInstance() {
 		return Holder.INSTANCE;
 	}
 	
 
-	@Override
-	public void update(Observable o, Object data) {
-		//Utils.logMessage("Updating user view. Data received: "+data);
+//	@Override
+//	public void update(Observable o, Object data) {
 //		
 //		if (data != null) {
 //			AbstractUser user = (AbstractUser) o;
@@ -470,5 +496,5 @@ public class UserView extends JPanel implements Observer {
 //				usersTree.scrollPathToVisible(new TreePath(child.getPath()));
 //			}
 //		}
-	}
+//	}
 }
