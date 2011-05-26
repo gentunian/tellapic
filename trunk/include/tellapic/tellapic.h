@@ -114,63 +114,69 @@ tellapic_read_stream_nb(tellapic_socket_t socket);
 /**
  *
  */
-POSH_PUBLIC_API(int)
+POSH_PUBLIC_API(ssize_t)
+tellapic_send_struct(tellapic_socket_t socket, stream_t *stream);
+
+/**
+ *
+ */
+POSH_PUBLIC_API(ssize_t)
 tellapic_send_text(tellapic_socket_t socket, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int style, int facelen, char *face, int textlen, char *text);
 
 /**
  *
  */
-POSH_PUBLIC_API(int)
+POSH_PUBLIC_API(ssize_t)
 tellapic_send_fig(tellapic_socket_t socket, int tool, int dcbyte_ext, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int x2, int y2, int lj, int ec, float ml, float dp, float da[]);
 
 
 /**
  *
  */
-POSH_PUBLIC_API(int)
+POSH_PUBLIC_API(ssize_t)
 tellapic_send_file(tellapic_socket_t socket, FILE *file, tellapic_u32_t filesize);
 
 /**
  *
  */
-POSH_PUBLIC_API(tellapic_u32_t)
+POSH_PUBLIC_API(ssize_t)
 tellapic_rawsend(tellapic_socket_t socket, byte_t *rawstream);
 
 /**
  *
  */
-POSH_PUBLIC_API(int)
+POSH_PUBLIC_API(ssize_t)
 tellapic_send_drw_using(tellapic_socket_t socket, int tool, int dcbyte_ext, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1);
 
 
 /**
  *
  */
-POSH_PUBLIC_API(int)
+POSH_PUBLIC_API(ssize_t)
 tellapic_send_drw_init(tellapic_socket_t socket, int tool, int dcbyte_ext, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int x2, int y2, int lj, int ec, float ml, float dp, float da[]);
 
 /**
  *
  */
-POSH_PUBLIC_API(int)
+POSH_PUBLIC_API(ssize_t)
 tellapic_send_chatp(tellapic_socket_t socket, int idfrom, int idto, int textlen, char* text);
 
 /**
  *
  */
-POSH_PUBLIC_API(int)
+POSH_PUBLIC_API(ssize_t)
 tellapic_send_chatb(tellapic_socket_t socket, int idfrom, int textlen, char* text);
 
 /**
  *
  */
-POSH_PUBLIC_API(int)
+POSH_PUBLIC_API(ssize_t)
 tellapic_send_ctle(tellapic_socket_t socket, int idfrom, int ctle, int infolen, char *info);
 
 /**
  *
  */
-POSH_PUBLIC_API(int)
+POSH_PUBLIC_API(ssize_t)
 tellapic_send_ctl(tellapic_socket_t socket, int idfrom, int ctl);
 
 /**
