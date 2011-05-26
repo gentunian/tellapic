@@ -137,6 +137,7 @@
 #define CTL_NOSTREAM    0xc1
 #define CTL_CL_PING     0xd1
 #define CTL_CL_TIMEOUT  0xe1
+#define CTL_CL_RMFIG    0xf1   /* is ctl  */
 #define CTL_FAIL        0x00
 
 
