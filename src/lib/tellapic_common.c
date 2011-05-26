@@ -1322,6 +1322,7 @@ tellapic_read_data_b(tellapic_socket_t socket, header_t header)
 	case CTL_SV_CLADD:
 	case CTL_CL_PWD:
 	case CTL_CL_NAME:
+	case CTL_CL_RMFIG:
 	  _wrap_ctle_data(&stream, data, datasize);
 	  break;
 
@@ -1882,11 +1883,12 @@ tellapic_send_struct(tellapic_socket_t socket, stream_t *stream)
 					  stream->data.drawing.dcbyte,
 					  stream->data.drawing.dcbyte_ext,
 					  stream->data.drawing.idfrom,
-					  stream->data.drawing.number,
 #                                         ifdef LITTLE_ENDIAN_VALUE
+					  POSH_LittleU32(stream->data.drawing.number),
 					  POSH_FloatFromLittleBits(stream->data.drawing.width),
 					  POSH_FloatFromLittleBits(stream->data.drawing.opacity),
 #                                         else
+					  POSH_BigU32(stream->data.drawing.number),
 					  POSH_FloatFromBigBits(stream->data.drawing.width),
 					  POSH_FloatFromBigBits(stream->data.drawing.opacity),
 #                                         endif
@@ -1916,11 +1918,12 @@ tellapic_send_struct(tellapic_socket_t socket, stream_t *stream)
 					   stream->data.drawing.dcbyte,
 					   stream->data.drawing.dcbyte_ext,
 					   stream->data.drawing.idfrom,
-					   stream->data.drawing.number,
 #                                          ifdef LITTLE_ENDIAN_VALUE
+					   POSH_LittleU32(stream->data.drawing.number),
 					   POSH_FloatFromLittleBits(stream->data.drawing.width),
 					   POSH_FloatFromLittleBits(stream->data.drawing.opacity),
 #                                          else
+					   POSH_BigU32(stream->data.drawing.number),
 					   POSH_FloatFromBigBits(stream->data.drawing.width),
 					   POSH_FloatFromBigBits(stream->data.drawing.opacity),
 #                                          endif
@@ -1943,11 +1946,12 @@ tellapic_send_struct(tellapic_socket_t socket, stream_t *stream)
 	  result = tellapic_send_text(
 				      socket,
 				      stream->data.drawing.idfrom,
-				      stream->data.drawing.number,
 #                                     ifdef LITTLE_ENDIAN_VALUE 
+				      POSH_LittleU32(stream->data.drawing.number),
 				      POSH_FloatFromLittleBits(stream->data.drawing.width),
 				      POSH_FloatFromLittleBits(stream->data.drawing.opacity),
 #                                     else 
+				      POSH_BigU32(stream->data.drawing.number),
 				      POSH_FloatFromBigBits(stream->data.drawing.width),
 				      POSH_FloatFromBigBits(stream->data.drawing.opacity),
 #                                     endif
@@ -1978,11 +1982,12 @@ tellapic_send_struct(tellapic_socket_t socket, stream_t *stream)
 				     stream->data.drawing.dcbyte,
 				     stream->data.drawing.dcbyte_ext,
 				     stream->data.drawing.idfrom,
-				     stream->data.drawing.number,
 #                                ifdef LITTLE_ENDIAN_VALUE 
+				     POSH_LittleU32(stream->data.drawing.number),
 				     POSH_FloatFromLittleBits(stream->data.drawing.width),
 				     POSH_FloatFromLittleBits(stream->data.drawing.opacity),
 #                                else 
+				     POSH_BigU32(stream->data.drawing.number),
 				     POSH_FloatFromBigBits(stream->data.drawing.width),
 				     POSH_FloatFromBigBits(stream->data.drawing.opacity),
 #                                endif
@@ -2756,6 +2761,7 @@ tellapic_isctle(header_t *header)
 {
   return ((header->cbyte == CTL_CL_PWD   ||
 	   header->cbyte == CTL_CL_NAME  ||
+	   header->cbyte == CTL_CL_RMFIG ||
 	   header->cbyte == CTL_SV_CLADD) && header->ssize <= MAX_CTLEXT_STREAM_SIZE && header->ssize >= MIN_CTLEXT_STREAM_SIZE) ;
 }
 
