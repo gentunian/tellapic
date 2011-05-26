@@ -24,6 +24,7 @@
 #define INVALID_PORT -1
 #define INVALID_FILE -2
 #define FILE_ERR     -3
+#define TO_ALL       -1
 
 /***************************/
 /* approach for portability */
@@ -40,8 +41,8 @@
 /* define some special constants values to be used during server execution */
 /***************************************************************************/
 #define MAX_CLIENTS        32             /* define the maximum threads number */
-#define SV_THREAD           MAX_CLIENTS   /* signal thread will be the last one */
-#define BUFFER_SIZE      1024             /* buffer size */
+#define SV_THREAD          MAX_CLIENTS   /* signal thread will be the last one */
+#define BUFFER_SIZE        1024             /* buffer size */
 //#define MSG_FROM_SERVER     0             /* the stream came from the server instead of a particular client */
 #define MAX_PWD_TRIES       5             /* number of retries for password fail */
 #define FATAL              -1             /* fatal error flag */
@@ -105,10 +106,11 @@ typedef struct args {
 
 
 typedef struct msgitem {
-  byte_t             *stream;
-  uint32_t           tothread;
-  int                delivers;
-  int                bsent[MAX_CLIENTS];
+  //byte_t             *stream;
+  stream_t           stream;
+  tellapic_u32_t     tothread;
+  tellapic_u32_t     delivers;
+  unsigned int       bsent[MAX_CLIENTS];
   pthread_mutex_t    mutex;
 
 } mitem_t;
@@ -305,5 +307,16 @@ isnameinuse(tdata_t *thread);
 int
 args_check(int arc, char **argv);
 
+/**
+ *
+ */
+mitem_t *
+new_message(stream_t stream, int tothread);
+
+/**
+ *
+ */
+void
+destroy_message(mitem_t *msg);
 
 #endif
