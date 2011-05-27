@@ -95,7 +95,7 @@ La cabecera contiene los bytes principales de información para luego validar lo
 
   * [Notes#Byte_de_endiannes Byte de endiannes]: Utilizado para determinar el orden de los bytes
   * [Notes#Byte_de_control Byte de control]: Utilizado para darle sentido al mensaje
-  * [Notes#Bytes_de_tamaño Bytes de tamaño]: Utilizado para determinar la longitud del mensaje en bytes
+  * [Notes#Bytes_de_tama&ntilde;o Bytes de tamaño]: Utilizado para determinar la longitud del mensaje en bytes
 
 La cabecera es utilizada en la implementación del protocolo (_libtellapic_) para realizar lecturas sucesivas conociendo los posibles valores a leer en un futuro. De esta forma, primero se recibe una cabecera, se la procesa y en base a esa información - gracias al byte de control - se prepara para leer información de la cual se esperan ciertos parámetros, longitud, etc.
 
