@@ -53,7 +53,7 @@ En lenguaje coloquial, el protocolo puede construir mensajes que se refieran a:
   * [Notes#CTL_CL_DRW Información mientras se dibuja (actualización de coordenadas)]
   * [Notes#CTL_CL_PMSG Chat privado]
   * [Notes#CTL_CL_BMSG Chat global]
-  * [Notes#CTL_CL_PWDASK Solicitud de contraseña de sesión]
+  * [Notes#CTL_SV_PWDASK Solicitud de contraseña de sesión]
   * [Notes#CTL_SV_PWDOK Contraseña de sesión correcta]
   * [Notes#CTL_SV_PWDFAIL Contraseña de sesión incorrecta]
   * [Notes#CTL_CL_PWD Envío de contraseña de sesión]
@@ -170,19 +170,19 @@ Las siguientes secciones definen estos bytes de control, su acción y su forma:
   * Byte de datos:
     El id del cliente que intentó utilizar un nombre ya en uso.
 ----
-======CTL_CL_RMFIG======
+======CTL_CL_PING======
   * Descripción:
-    Informa la eliminación de un dibujo.
+    Envía una solicitud de respuesta.
 
   * Valor:  
-    0xf1 (241)
+    0xd1 (209)
   
   * Byte de control:
 {{{
      _____high_____  ______low______
     /              \/               \   
     +---+---+---+---+---+---+---+---+
-    | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
+    | 1 | 1 | 0 | 1 | 0 | 0 | 0 | 1 |
     +---+---+---+---+---+---+---+---+
 }}}
 
@@ -190,8 +190,95 @@ Las siguientes secciones definen estos bytes de control, su acción y su forma:
     Longitud de la cabecera + 1
 
   * Byte de datos:
-    El id del cliente que acaba de eliminar un dibujo
+    El id del cliente que acaba de enviar el paquete ping
+----
+======CTL_SV_PONG======
+  * Descripción:
+    Respuesta al paquete [Notes#CTL_CL_PING CTL_CL_PING]
 
+  * Valor:  
+    0xb0 (176)
+  
+  * Byte de control:
+{{{
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 1 | 0 | 1 | 1 | 0 | 0 | 0 | 0 |
+    +---+---+---+---+---+---+---+---+
+}}}
+
+  * Bytes de tamaño:
+    Longitud de la cabecera + 1
+
+  * Byte de datos:
+    El id del cliente que solicitó la respuesta.
+----
+======CTL_SV_AUTHOK======
+  * Descripción:
+    Autenticación con el servidor satisfactoria.
+
+  * Valor:  
+    0xa0 (160)
+  
+  * Byte de control:
+{{{
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
+    +---+---+---+---+---+---+---+---+
+}}}
+
+  * Bytes de tamaño:
+    Longitud de la cabecera + 1
+
+  * Byte de datos:
+    El id del cliente que se autenticó correctamente.
+----
+======CTL_SV_ID======
+  * Descripción:
+    Envío del ID de sesión del usuario conectado.
+
+  * Valor:  
+    0x80 (128)
+  
+  * Byte de control:
+{{{
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+    +---+---+---+---+---+---+---+---+
+}}}
+
+  * Bytes de tamaño:
+    Longitud de la cabecera + 1
+
+  * Byte de datos:
+    El id del cliente que se autenticó correctamente.
+----
+======CTL_CL_DISC======
+  * Descripción:
+    Solicitud de desconexión
+
+  * Valor:  
+    0x91 (145)
+  
+  * Byte de control:
+{{{
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 1 |
+    +---+---+---+---+---+---+---+---+
+}}}
+
+  * Bytes de tamaño:
+    Longitud de la cabecera + 1
+
+  * Byte de datos:
+    El id del cliente que solicita desconectarse.
 ----
 ======CTL_SV_CLRM======
 
@@ -538,6 +625,45 @@ seguido de una lista de (id, nombre) donde nombre es una cadena null terminated.
      /                                   \/                                  \
      +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
      |  0  | 97  |  0  |  0  |  0  |  12 |  9  |      <contraseña>           | = 12 bytes
+     +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+
+}}}
+----
+======CTL_CL_NAME======
+
+  * Descripción:  
+    Un paquete con el nombre de sesión enviado por un cliente.
+
+  * Valor:
+    0xa1 (161)
+
+  * Byte de control:
+{{{
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 1 |
+    +---+---+---+---+---+---+---+---+
+}}}
+
+  * Bytes de tamaño:
+    Longitud de la cabecera + 1 + longitud de información adicional
+
+  * Bytes de datos:
+    * `<id>`: el id del cliente que envía el nombre.
+    * `<información adicional>`: los bytes correspondientes al nombre enviado.
+
+
+  * Ejemplo: El cliente de id 9 envía su nombre "Pablo".
+{{{
+                                       STREAM
+      ______________________________________________________________________
+     /                                                                      \
+                  CABECERA                                DATOS
+      ___________________________________  __________________________________
+     /                                   \/                                  \
+     +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+     |  0  | 161 |  0  |  0  |  0  |  12 |  9  | 'P' | 'a' | 'b' | 'l' | 'o' | = 12 bytes
      +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
 
 }}}
