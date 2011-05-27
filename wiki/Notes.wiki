@@ -54,8 +54,8 @@ En lenguaje coloquial, el protocolo puede construir mensajes que se refieran a:
   * [Notes#CTL_CL_PMSG Chat privado]
   * [Notes#CTL_CL_BMSG Chat global]
   * [Notes#CTL_CL_PWDASK Solicitud de contraseña de sesión]
-  * [Notes#CTL_CL_PWDOK Contraseña de sesión correcta]
-  * [Notes#CTL_CL_PWDFAIL Contraseña de sesión incorrecta]
+  * [Notes#CTL_SV_PWDOK Contraseña de sesión correcta]
+  * [Notes#CTL_SV_PWDFAIL Contraseña de sesión incorrecta]
   * [Notes#CTL_CL_PWD Envío de contraseña de sesión]
   * [Notes#CTL_CL_CLIST Información de todos los clientes conectados]
   * [Notes#CTL_CL_NAME Envío de nombre de sesión]
@@ -146,6 +146,51 @@ Cuando la cabecera define este tipo de mensaje, la sección datos sólo contiene
 Se puede observar su longitud fija, siempre igual a la longitud de la cabecera más uno.
 
 Las siguientes secciones definen estos bytes de control, su acción y su forma:
+
+----
+======CTL_SV_NAMEINUSE======
+  * Descripción:
+    Informa la desconexión de un cliente.
+
+  * Valor:  
+    0x90 (144)
+  
+  * Byte de control:
+{{{
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
+    +---+---+---+---+---+---+---+---+
+}}}
+
+  * Bytes de tamaño:
+    Longitud de la cabecera + 1
+
+  * Byte de datos:
+    El id del cliente que intentó utilizar un nombre ya en uso.
+----
+======CTL_CL_RMFIG======
+  * Descripción:
+    Informa la eliminación de un dibujo.
+
+  * Valor:  
+    0xf1 (241)
+  
+  * Byte de control:
+{{{
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
+    +---+---+---+---+---+---+---+---+
+}}}
+
+  * Bytes de tamaño:
+    Longitud de la cabecera + 1
+
+  * Byte de datos:
+    El id del cliente que acaba de eliminar un dibujo
 
 ----
 ======CTL_SV_CLRM======
