@@ -1,17 +1,14 @@
-TODO!!!: UPDATE!!! HACE FALTA CAMBIAR ESTA DOCUMENTACION
-----
-<wiki:toc max_depth="4" />
-= 1. PROTOCOLO =
+<wiki:toc max_depth="6" />
+= PROTOCOLO =
   
 
 
-Algunas consideraciones. La idea principal del proyecto es la flexibilidad y modularización del todo. Se entiende por el 'todo', al
-esquema global que comprende a cada herramienta y su función en el desarrollo. El esquema global consta de una aplicación servidor
-y N aplicaciones clientes, y el término flexibilidad hace referencia a que cada cliente es una interpretación gráfica o una interfaz
-de usuario escrita en un lenguaje a elección. Flexibilidad no en términos de programación, sino de elección. Para ello, se debe
-lograr una abstracción adecuada y exponer la funcionalidad e interfaz de los clientes.
+Algunas consideraciones: La idea principal del proyecto es la flexibilidad y modularización del _todo_. Se entiende por el _todo_, al
+esquema global que comprende a cada herramienta y su función en el desarrollo. El esquema global consta de una aplicación servidor, *N* aplicaciones clientes y un protocolo implementado por una biblioteca, y el término _flexibilidad_ hace referencia a que cada cliente es una interpretación gráfica o una interfaz
+de usuario escrita en un lenguaje a elección. Flexibilidad no en términos de programación, sino de *elección*. Para ello, se debe
+lograr una abstracción adecuada y exponer la funcionalidad e interfaz a los clientes del protocolo en cuestión.
 
-Estructuralmente, el esquema global de la herramienta suponiendo 2 clientes conectados, uno escrito en Java y otro en Python,
+Estructuralmente, el esquema global de la herramienta suponiendo 2 clientes conectados, uno escrito en *Java* y otro en *Python*,
 puede verse de la siguiente manera:
 
 {{{
@@ -42,273 +39,509 @@ puede verse de la siguiente manera:
                             desemsamblaje de paquetes
 }}}
 
-
-----
-
-*¿Qué vamos a enviar desde un cliente?*
+== Organización de la información ==
 
 
-  *1. imagen a compartir
-  *2. información de nueva conexión
-  *3. un dibujo completo
-  *4. información mientras se dibuja
-  *5. chat
-  *6. contraseña de sesión
+El protocolo va a ser binario. Esto es, se define bajo una secuencia de bytes crudos, donde cada ubicación de un byte en particular o un conjunto de bytes tiene un significado específico. El protocolo va a definir sus acciones mediante una sencuencia de longitud conocida o longitud máxima según la acción que se determine. Para esto, la secuencia de bytes se va a dividir en dos grandes secciones. Una sección de [Notes#Datos datos] y una [Notes#Cabecera cabecera]. Esta última, va a definir un conjunto de acciones o informaciones a enviar/recibir por parte de los usuarios del protocolo. Cada mensaje construído por el protocolo es o bien una acción que el receptor debe realizar, o información que el emisor comparte con el receptor.
 
-----
+En lenguaje coloquial, el protocolo puede construir mensajes que se refieran a:
 
-*¿Qué vamos a recibir desde el servidor?*
+  * [Notes#CTL_SV_FILE Envío de imagen a compartir]
+  * [Notes#CTL_SV_CLADD Información de nueva conexión]
+  * [Notes#CTL_SV_CLRM Información de una desconexión]
+  * [Notes#CTL_CL_FIG Un dibujo completo (elipse, rectángulo, etc)]
+  * [Notes#CTL_CL_DRW Información mientras se dibuja (actualización de coordenadas)]
+  * [Notes#CTL_CL_PMSG Chat privado]
+  * [Notes#CTL_CL_BMSG Chat global]
+  * [Notes#CTL_CL_PWDASK Solicitud de contraseña de sesión]
+  * [Notes#CTL_CL_PWDOK Contraseña de sesión correcta]
+  * [Notes#CTL_CL_PWDFAIL Contraseña de sesión incorrecta]
+  * [Notes#CTL_CL_PWD Envío de contraseña de sesión]
+  * [Notes#CTL_CL_CLIST Información de todos los clientes conectados]
+  * [Notes#CTL_CL_NAME Envío de nombre de sesión]
+  * [Notes#CTL_CL_PING Información de paquete _ping_]
+  * [Notes#CTL_SV_PONG Información de paquete _pong_]
+  * [Notes#CTL_SV_AUTHOK Autenticación correcta]
+  * [Notes#CTL_SV_ID Id de usuario en la sesión]
+  * [Notes#CTL_SV_NAMEINUSE Nombre de sesión en uso]
+  * [Notes#CTL_FAIL Paquete erróneo]
+  * [Notes#CTL_NOPIPE Broken-pipe sobre el medio de comunicación]
+  * [Notes#CTL_CL_TIMEOUT Tiempo de espera agotado]
+  * [Notes#CTL_CL_DISC Paquete solicitando desconexión]
+  * [Note#CTL_CL_RMFIG Eliminación de un dibujo]
 
+Cada uno de estos mensajes debe ser identificado unívocamente. Para ello, y dado la naturaleza de la cabecera, se utiliza un *byte de control* situada en ella. En pocas palabras, el byte de control es el principal actor sobre el protocolo, que define de qué se trata el mensaje enviado. El byte de control es el responsable, junto con los bytes de tamaño, de determinar si el mensaje enviado es válido. Primero, se observa si el byte de control es algún byte de control válido y luego, según el byte de control se verifica que el tamaño esté entre los parámetros de éste. Una vez que haya sido validada la cabecera, la sección datos tendrá la información necesaria para el receptor. En base a ella, éste realizará las acciones pertinentes necesarias para el mensaje recibido.
 
-  *1. la imagen compartida
-  *2. peteción de contraseña
-  *3. información de nuevo cliente conectado
-  *4. información de cliente desconectado
-  *5. información de todos los clientes conectados
-  *6. un dibujo completo
-  *7. un dibujo que se está dibujando
-  *8. chat
-  *9. peteción de contraseña incorrecta
-  *10. petición de contraseña correcta
+=== Cabecera ===
 
-----
-
-*¿Qué herramientas de dibujo va a soportar el protocolo? *
-
-
-(*NOTA*: los dibujos posibles serán determinados por el protocolo. Esto es una desventaja en lo que respecta a extensibilidad. Proponer como trabajo futuro
-diseñar el protocolo más flexible de manera que agregar una nueva herramienta sea sencillo. Como por ejemplo, pensar que en la biblioteca se tienen métodos,
-estructuras y tipos específicos para cada herramienta, dónde cada una sabe como dibujarse a sí misma dentro de la misma biblioteca y exponer la funcionalidad
-usando SWIG. De esta manera, las interfaces gráficas deberían interpretar esa información para dibujar)
-
-  *1. Marcador (resaltador)
-  *2. Camino
-  *3. Elipse
-  *4. Rectángulo
-  *5. Texto
-  *6. Goma
-  *7. Lápiz
-  *8. Línea
-
-----
-
-*¿Cómo vamos a organizar la información?*
-
-
-Con bytes de datos y bytes de control. Los bytes de control son bytes de información sobre los datos e información sobre qué se está recibiendo. Un paquete de información lleva consigo
-1 sola acción o información, y cada nueva acción o información debe enviarse en un paquete nuevo.
-
-        El paquete de información se compone de una cabecera y datos. La cabecera contiene el byte de control, un byte de endianness y 4 bytes que informan el tamaño del paquete que se está enviando.
-
-        Byte de endianness + byte de control + bytes de tamaño = CABECERA
-
-A la CABECERA le deben suceder los datos: CABECERA + DATOS = stream
+El siguiente esquema muestra conceptualmente cómo estaría formada la cabecera:
 
 {{{
 
-                                                 STREAM
-            _______________________________________^_______________________________________
-           /                                                                               \
              byte      byte             bytes de           
               de        de               tamaño         
           endianness  control   ____________^_____________ 
                ^         ^     /                          \
-          +---------+---------+------+------+------+------+-------------------------------+
-          |         |         |      |      |      |      |                               |
-          +---------+---------+------+------+------+------+-------------------------------+
-          \_______________________________________________/\______________________________/
+          +---------+---------+------+------+------+------+
+          |         |         |      |      |      |      |
+          +---------+---------+------+------+------+------+
+          \_______________________________________________/
+
+                               CABECERA 
+}}}
+
+
+La cabecera contiene los bytes principales de información para luego validar los datos que existan en la sección datos del mensaje. La cabecera es de longitud fija y *siempre* tendrá un tamaño fijo. Sobre ésta viven los siguientes bytes:
+
+  * [Notes#Byte_de_endiannes Byte de endiannes]: Utilizado para determinar el orden de los bytes
+  * [Notes#Byte_de_control Byte de control]: Utilizado para darle sentido al mensaje
+  * [Notes#Bytes_de_tamaño Bytes de tamaño]: Utilizado para determinar la longitud del mensaje en bytes
+
+La cabecera es utilizada en la implementación del protocolo (_libtellapic_) para realizar lecturas sucesivas conociendo los posibles valores a leer en un futuro. De esta forma, primero se recibe una cabecera, se la procesa y en base a esa información - gracias al byte de control - se prepara para leer información de la cual se esperan ciertos parámetros, longitud, etc.
+
+Las siguientes secciones describen detalladamente cada byte de la cabecera.
+
+====Byte de endianness====
+
+El byte de endianness va a determinar el orden de los bytes del flujo de datos. El orden puede ser _LITTLE_ENDIAN_ o _BIG_ENDIAN_. Este byte simplemente definirá cómo están ordenados los bytes con un *0* o *1* respectivamente.
+
+
+====Byte de control====
+
+Es el byte más importante del protocolo y con mayor jerarquía. Se lo utiliza para determinar el significado del mensaje, validar el mensaje, y determinar las acciones pertinentes sobre los datos que los receptores deben realizar.
+
+El byte de control provee información sobre los datos, y como se mencionó anteriormente, define unívocamente el mensaje a construir. El byte de endianness determina si el flujo de datos es _BIG_ENDIAN_ o _LITTLE_ENDIAN_, y los bytes de tamaño informan el tamaño que tendrá el mensaje a construir incluyendo el tamaño de la cabecera.
+
+_`<cabecera>` := `<byte-de-endianness>` + `<byte-de-control>` + `<byte-de-tamaño>`
+
+Los bytes de control se agrupan en las siguientes clases:
+
+  * [Notes#Control Control]
+  * [Notes#Control_Extendido Control extendido (control más información adicional)]
+  * [Notes#Dibujo Dibujo]
+  * [Notes#Dibujando Dibujando]
+  * [Notes#Archivo Archivo]
+  * [Notes# Chat Chat]
+
+=====Control=====
+
+Cuando la cabecera define este tipo de mensaje, la sección datos sólo contiene 1 byte de información. Es el mensaje, quitando mensajes de error, que menor tamaño posee y su tamaño es igual al tamaño de la cabecera más uno. El byte en la sección datos usualmente es un ID sobre el cual realizar la acción que determina el byte de control o, proporcionar la información a tal ID. Un mensaje de _control_ tiene la siguiente forma:
+
+{{{
+                                    STREAM
+            __________________________^_________________________
+           /                                                    \
+             byte      byte             bytes de           
+              de        de               tamaño         
+          endianness  control   ____________^_____________ 
+               ^         ^     /                          \
+          +---------+---------+------+------+------+------+-----+
+          |         |         |      |      |      |      |     |
+          +---------+---------+------+------+------+------+-----+
+          \_______________________________________________/\____/
+
+                               CABECERA                     DATOS
+}}}
+
+Se puede observar su longitud fija, siempre igual a la longitud de la cabecera más uno.
+
+Las siguientes secciones definen estos bytes de control, su acción y su forma:
+
+======CTL_SV_CLRM======
+
+  * Descripción:
+    Informa la desconexión de un cliente.
+
+  * Valor:  
+    0x20 (32)
+  
+  * Byte de control:
+{{{
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
+    +---+---+---+---+---+---+---+---+
+}}}
+
+  * Bytes de tamaño:
+    Longitud de la cabecera + 1
+
+  * Byte de datos:
+    El id del cliente que se acaba de desconectar.
+
+
+  * Ejemplo: Un cliente con id 8 se desconecta.
+{{{
+                      STREAM
+     _________________________________________
+    /                                         \
+                  CABECERA               DATOS
+     ___________________________________  ____
+    /                                   \/    \
+    +-----+-----+-----+-----+-----+-----+-----+
+    |  0  | 16  |  0  |  0  |  0  |  7  |  8  |
+    +-----+-----+-----+-----+-----+-----+-----+
+
+}}}
+
+======CTL_CL_CLIST======
+
+  * Descripción:
+    Solicitar al servidor la lista de clientes conectados.
+
+  * Valor:  
+    0x51 (81)
+  
+  * Byte de control:
+{{{
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 1 |
+    +---+---+---+---+---+---+---+---+
+}}}
+
+  * Bytes de tamaño:
+    Longitud de la cabecera + 1
+
+  * Byte de datos:
+    Id del cliente que solicita la información.
+
+
+  * Ejemplo: Un cliente con id 9 solicita la lista de ids al servidor.
+{{{
+                          STREAM
+      ________________________________________
+     /                                        \
+                    CABECERA              DATOS
+      ___________________________________  ____
+     /                                   \/    \
+     +-----+-----+-----+-----+-----+-----+-----+
+     |  0  | 48  |  0  |  0  |  0  |  7  |  9  | = 7 bytes
+     +-----+-----+-----+-----+-----+-----+-----+
+}}}
+
+======CTL_SV_PWDASK======
+
+  * Descripción:
+    Solicitar la contraseña de sesión al cliente que intenta comunicarse.
+
+  * Valor:
+    0x40 (64)
+
+  * Byte de control:
+{{{
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+    +---+---+---+---+---+---+---+---+
+}}}
+
+  * Bytes de tamaño:
+    Longitud de la cabecera + 1
+
+  * Byte de datos:
+    Id del cliente al que se le solicita la contraseña.
+
+
+  * Ejemplo: El servidor le solicita la contraseña de sesión a un cliente con id 9.
+{{{
+                        STREAM
+      _________________________________________
+     /                                         \
+                    CABECERA              DATOS
+      ___________________________________  ____
+     /                                   \/    \
+     +-----+-----+-----+-----+-----+-----+-----+
+     |  0  | 64  |  0  |  0  |  0  |  7  |  9  | = 7 bytes
+     +-----+-----+-----+-----+-----+-----+-----+
+}}}
+
+======CTL_SV_PWDOK======
+
+  * Descripción:
+    Informa que la contraseña de sesión enviada por el cliente es correcta.
+
+  * Valor:
+    0x50  (80)
+
+  * Byte de control:
+{{{
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 0 |
+    +---+---+---+---+---+---+---+---+
+}}}
+
+  * Bytes de tamaño:
+    Longitud de cabecera + 1
+
+  * Byte de datos:
+    El id del cliente que envió la contraseña.
+
+
+======CTL_SV_PWDFAIL======
+
+  * Descripción:
+    Informa que la contraseña de sesión enviada por el cliente es incorrecta.
+
+  * Valor:
+    0x60  (96)
+
+  * Byte de control:
+{{{
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
+    +---+---+---+---+---+---+---+---+
+}}}
+
+  * Bytes de tamaño:
+    Longitud de la cabecera + 1
+
+  * Byte de datos:
+    El id del cliente que envió la contraseña.
+
+======CTL_CL_FILEASK======
+
+  * Descripción:
+    Solicitud del archivo de imagen que se está "observando" corrientemente. Un cliente recién conectado puede solicitar
+al servidor que le pase el archivo que el cliente que inició la sesión (o el dueño de sesión) está compartiendo.
+
+  * Valor:
+    0x71 (113)
+
+  * Byte de control:
+{{{
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 0 | 1 | 1 | 1 | 0 | 0 | 0 | 1 |
+    +---+---+---+---+---+---+---+---+
+}}}
+
+  * Bytes de tamaño:
+    Longitud de la cabecera + 1
+
+  * Byte de datos:
+    Id del cliente que solicita el archivo.
+
+======CTL_CL_FILEOK======
+
+  * Descripción:
+    Informa que el archivo de imagen se recibió correctamente.
+
+  * Valor:
+    0x81   (129)
+ 
+  * Byte de control:
+{{{
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
+    +---+---+---+---+---+---+---+---+
+}}}
+
+  * Bytes de tamaño:
+    Longitud de la cabecera + 1
+
+  * Byte de datos:
+    Id del cliente que solicita el archivo.
+
+
+=====Control Extendido=====
+
+Este tipo de mensaje lleva consigo información adicional que un mensaje de _control_ no puede enviar. La longitud de este tipo de mensaje puede ser variable pero sin sobrepasar un máximo predefinido. La sección datos, en lugar de contener sólamente 1 byte, tendrá de manera adicional los bytes necesarios que describan la información extendida del mensaje, siempre y cuando no superen un máximo predeterminado. De esta forma, gráficamente se puede pensar a un mensaje de _control extendido_ como lo muestra el equema siguiente:
+
+{{{
+                                    STREAM
+            __________________________^_________________________________________________
+           /                                                                            \
+             byte      byte             bytes de           
+              de        de               tamaño         
+          endianness  control   ____________^_____________ 
+               ^         ^     /                          \
+          +---------+---------+------+------+------+------+-----+---------/ ... /--------+
+          |         |         |      |      |      |      |     |                        |
+          +---------+---------+------+------+------+------+-----+---------/ ... /--------|
+          \_______________________________________________/\_____________________________/
 
                                CABECERA                                DATOS
 }}}
-El byte de control va a determinar el tipo de información que habrá en la sección DATOS. Puede ser una de las siguientes:
-   
-  * Datos de un dibujo ya dibujado.
-  * Datos de un dibujo mientras se dibuja.
-  * Datos de mensajes de chat.
-  * Datos de control y diálogo entre cliente y servidor.
+
+Las secciones subsiguientes enumeran y describen los tipos posibles de mensajes que el protocolo define como _control extendido_.
 
 
-----
+======CTL_SV_CLADD======
 
-*¿Cómo va a ser la información a enviar de cada dibujo?*
+  * Descripción:
+    Indica que un nuevo cliente se a conectado al servidor. Provee el id y el nombre del cliente que se acaba de conectar. De esta forma,
+existe una relación unívoca entre id y nombre, y por ello es que no pueden existir 2 clientes con el mismo nombre en el servidor. El id,
+es información que puede viajar en un 1 byte, sin embargo el nombre puede ser abritrariamente largo y a los fines prácticos es sólo útil
+informarlo una vez o bien cuando se haga un cambio de nombre.
 
-
-Cada vez que se mande un dibujo, ya sea completo o dibujandosé, la sección DATOS tendrá un byte de dibujo y una sección de bytes de datos sobre el dibujo:
-
-
-
-
+  * Valor:  
+    0x10 (16)
+  
+  * Byte de control:
 {{{
-                                         STREAM
-        ________________________________________________________________________________
-       /                                                                                \
+    _____high_____  ______low______
+   /              \/               \   
+   +---+---+---+---+---+---+---+---+
+   | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
+   +---+---+---+---+---+---+---+---+
+}}}
 
-             CABECERA                                 DATOS
-        _________________  ______________________________________________________________
-       /                 \/                                                              \
-       +--+--+--+--+--+--+------+-----------+-------+-------+-------+ ... +-------+------+
-       |  |  |  |  |  |  | <id> | <byte de dibujo>  |  <bytes de datos sobre el dibujo>  |
-       +--+--+--+--+--+--+------+-----------+-------+-------+-------+ ... +-------+------+
+  * Bytes de tamaño:
+    Longitud de cabecera + 1 + longitud de información adicional
 
+  * Bytes de datos:
+    * `<id>`: el nuevo id del cliente que se acaba de conectar.
+    * `<información adicional>`: el nombre que tiene asignado el cliente que se acaba de conectar
+
+  * Ejemplo: Un cliente se conecta. Se le asigna el id 19 y éste indica que su nombre es "Alberto".
+{{{
+                                          STREAM
+      __________________________________________________________________________________
+     /                                                                                  \
+                CABECERA                                          DATOS
+     ___________________________________  ______________________________________________
+    /                                   \/                                              \
+    +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+    |  0  | 16  |  0  |  0  |  0  | 14  | 19  | 'A' | 'l' | 'b' | 'e' | 'r' | 't' | 'o' | = 14 bytes
+    +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
 
 }}}
 
-----
 
-= 1.2 CABECERA =
-    
+======CTL_SV_CLIST=======
 
-== 1.2.1 Byte de endianness: ==
-      
-
+  * Descripción:
+    Una lista de los clientes que se encuentran actualmente conectados al servidor. El tamaño del paquete es variable, dependiendo 
+cuantos clientes están actualmente conectados.
 
 
-
-== 1.2.2 Byte de control: ==
-
-
-El byte de control indica la acción o información que se va a recibir. Los datos de esa acción o información se encuentran en la sección datos del paquete.
-
-Dependiendo la acción o información recibida, se debe entonces examinar la sección datos del paquete.
-
-El byte de control puede indicar todas estas cosas:
-  * CTL_CL_PMSG o CTL_CL_BMSG: el paquete se trata de un mensaje de chat
-  * CTL_CL_FIG: el paquete es un dibujo completo
-  * CTL_CL_DRW: el paquete es un dibujo que se está dibujando
-  * CTL_SV_CLADD: el paquete es información de un cliente que se conectó
-  * CTL_SV_CLRM: el paquete es información de un cliente que se desconectó
-  * CTL_SV_CLIST: el paquete es información de todos los clientes que están conectados
-  * CTL_CL_CLIST: el paquete es una petición de los clientes que están conectados
-  * CTL_SV_PWDASK: el paquete es una solicitud de contraseña
-  * CTL_CL_PWD: el paquete es una contraseña
-  * CTL_SV_PWDOK: el paquete es una indicación de que se recibió correctamente la contraseña
-  * CTL_SV_PWDFAIL: el paquete es una indicación de que la contraseña fue incorrecta
-  * CTL_CL_FILEASK: el paquete es una petición de un archivo de imagen
-  * CTL_CL_FILEOK: el paquete es una indicación que el archivo no llegó correctamente
-  * CTL_SV_FILE: el paquete es una indicación que se trata de un archivo
-
-
-*TODO 29-11-2010:* CTL_CL_NAME, CTL_SV_NAMEINUSE
-
-*TODO 16-12-2010:* FIXED DATA CHUNK SIZE. NO MORE MALLOCS
-
-*14-01-2011 ADDED CTL_NOPIPE*
-
-
-
-  Se podría indicar los bytes de control que son de la forma CTL_SV_ como pares y los que son de la forma CTL_CL_ como impares, es decir:
-
+  * Valor:  
+    0x30 (48)
+  
+  * Byte de control:
 {{{
-            7   6   5   4   3   2   1   0
-          +---+---+---+---+---+---+---+---+
-          | ? | ? | ? | ? | ? | ? | ? | 0 |    ---> CTL_SV_
-          +---+---+---+---+---+---+---+---+
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 |
+    +---+---+---+---+---+---+---+---+
+}}}
+  * Bytes de tamaño:
 
+  * Bytes de datos:
 
-
-            7   6   5   4   3   2   1   0
-          +---+---+---+---+---+---+---+---+
-          | ? | ? | ? | ? | ? | ? | ? | 1 |    ---> CTL_CL_
-          +---+---+---+---+---+---+---+---+
+  * Ejemplo: Un cliente solicita la lista de ids al servidor. El servidor responde con el id del cliente que solicitó la información
+seguido de una lista de (id, nombre) donde nombre es una cadena null terminated.
+{{{
+                                                 STREAM
+      ________________________________________________________________________________________
+     /                                                                                        \
+                     CABECERA                            DATOS
+      ___________________________________  ____________________________________________________
+     /                                   \/                                                    \
+     +-----+-----+-----+-----+-----+-----+-----+---+---+---+---+---+---+---+---+---+---+---+---+
+     |  0  | 48  |  0  |  0  |  0  |  10 |  8  | 9 |'H'|'u'|'g'|'o'| 0 | 11|'P'|'e'|'p'|'e'| 0 |
+     +-----+-----+-----+-----+-----+-----+-----+---+---+---+---+---+---+---+---+---+---+---+---+
 
 }}}
 
-----
-        =CTL_CL_BMSG       0x11 (17)=
 
-        * Descripción:
-                Mensaje global de un usuario hacia todos los demás usuarios conectados. (broadcast message)
+======CTL_CL_PWD======
 
-        * Valor: 
-                0x11 (17)
+  * Descripción:  
+    Un paquete con la contraseña de sesión enviado por un cliente.
 
-        * Byte de control:
+  * Valor:
+    0x61 (97)
+
+  * Byte de control:
 {{{
-                         _____high_____  ______low______
-                        /              \/               \   
-                        +---+---+---+---+---+---+---+---+
-                        | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 1 |
-                        +---+---+---+---+---+---+---+---+
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 1 |
+    +---+---+---+---+---+---+---+---+
 }}}
-        * Bytes de tamaño: 
-                Tamaño del STREAM.
 
-        * Bytes de datos:
-                - id: byte que identifica a quién pertenece el mensaje enviado.
-                - Texto: Tamaño del texto igual a (bytes de tamaño - tamaño de CABECERA - byte de id).
-{{{
-                +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+----+
-                | <id>| 'H' | 'O' | 'L' | 'A' | ' ' | 'M' | 'U' | 'N' | 'D' | 'O' |'\0'|
-                +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+----+
+  * Bytes de tamaño:
+    Longitud de la cabecera + 1 + longitud de información adicional
 
-}}}
-         * Ejemplo:
+  * Bytes de datos:
+    * `<id>`: el id del cliente que envía la contraseña.
+    * `<información adicional>`: los bytes correspondientes a la contraseña enviada.
+
+
+  * Ejemplo: El servidor le envía a un cliente con id 9 CTL_SV_PWDASK. El cliente responde con CTL_CL_PWD.
 {{{
-                                             STREAM
- _________________________________________________________________________________________________________
-/                                                                                                         \ 
-              CABECERA                                             DATOS
- ___________________________________  _____________________________________________________________________
-/                                   \/                                                                     \
-+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+----+
-|  0  | 17  |  0  |  0  |  0  | 17  | <id>| 'H' | 'O' | 'L' | 'A' | ' ' | 'M' | 'U' | 'N' | 'D' | 'O' |'\0'|
-+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+----+
+                                       STREAM
+      ______________________________________________________________________
+     /                                                                      \
+                  CABECERA                                DATOS
+      ___________________________________  __________________________________
+     /                                   \/                                  \
+     +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+     |  0  | 97  |  0  |  0  |  0  |  12 |  9  |      <contraseña>           | = 12 bytes
+     +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
 
 }}}
 
-----
+======CTL_SV_FILE======
 
-        =CTL_CL_PMSG       0x21 (33)=
-        
-        * Descripción:
-                Mensaje privado de un usuario hacia uno particular que esté conectado. (private message)
-        * Valor: 
-                0x21 (33)
-        * Byte de control:
-{{{
-                             _____high_____  ______low______
-                            /              \/               \   
-                            +---+---+---+---+---+---+---+---+
-                            | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 |
-                            +---+---+---+---+---+---+---+---+
-}}}
-        * Bytes de tamaño: 
-                Tamaño del STREAM.
-        * Bytes de datos:
-                - id: byte que identifica a quién pertenece el mensaje enviado.
-                - to: byte que identifica para quién es el mensaje enviado.
-                - Texto: Tamaño del texto igual a (*actualizar*).
-{{{
-                   +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
-                   | <id>| <to>| 'H' | 'O' | 'L' | 'A' | ' ' | 'M' | 'A' | 'R' | 'T' | 'A' |  = 12 bytes
-                   +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+  * Descripción:
+    Archivo de imagen a enviar a un cliente que lo solicitó.
 
-}}}
-               * Ejemplo:
-{{{
-                                             STREAM
- __________________________________________________________________________________________________________
-/                                                                                                          \
-            CABECERA                                                  DATOS
- ___________________________________  ______________________________________________________________________
-/                                   \/                                                                      \
-+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
-|  0  | 33  |  0  |  0  |  0  | 18  | <id>| <to>| 'H' | 'O' | 'L' | 'A' | ' ' | 'M' | 'A' | 'R' | 'T' | 'A' |
-+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+  * Valor:
+    0x70  (112)
 
+  * Byte de control:
+{{{
+     _____high_____  ______low______
+    /              \/               \   
+    +---+---+---+---+---+---+---+---+
+    | 0 | 1 | 1 | 1 | 0 | 0 | 0 | 0 |
+    +---+---+---+---+---+---+---+---+
+ }}}
+
+  * Bytes de datos:
+    * `<id>`: id del cliente que solicitó el archivo.
+    * `<archivo de imagen>`: bytes correspondiente al archivo de imagen. El tamaño del archivo está limitado a 2^32
+
+  * Ejemplo: El cliente con id 9 solicitó el archivo de imagen de sesión.
+{{{
+                                       STREAM
+      ______________________________________________________________________
+     /                                                                      \
+                 CABECERA                               DATOS
+      ___________________________________  __________________________________
+     /                                   \/                                  \
+     +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+     |  0  | 112 |  0  |  0  |  0  | 7+N |  9  |      <archivo binario>      | = 7+N bytes (siendo N el tamaño del archivo de imagen)
+     +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
 }}}
 
-----
 
-        =CTL_CL_FIG        0x31 (49)=
+=====Dibujo=====
 
-        * Descripción:
-                Una "figura" que se ha dibujado por algún cliente.
+======CTL_CL_FIG======
 
-        * Valor: 
-                0x31 (49)
+  * Descripción:
+    Una "figura" que se ha dibujado por algún cliente.
 
-        * Byte de control:
+  * Valor: 
+    0x31 (49)
+
+  * Byte de control:
 {{{
                              _____high_____  ______low______
                             /              \/               \   
@@ -317,19 +550,18 @@ El byte de control puede indicar todas estas cosas:
                             +---+---+---+---+---+---+---+---+
 
 }}}
-        * Bytes de tamaño:
-                Tamaño el STREAM.
+  * Bytes de tamaño:
 
-        * Bytes de datos:
-                - <id>: byte que identifica a quién pertenece el dibujo o figura.
-                - byte de dibujo: que determina qué herramienta se usó para dibujar y que evento lo generó:
-                        + Marcador (null event | drag event | press event | release event)
-                        + Camino
-                        + Elipse (null event)
-                        + Rectángulo (null event)
-                        + Texto
-                        + Lápiz (null event | drag event | press event | release event)
-                - datos del dibujo y cómo representarlo. Depende de la herramienta usada.
+  * Bytes de datos:
+    * `<id>`: byte que identifica a quién pertenece el dibujo o figura.
+    * `<byte de dibujo>`: que determina qué herramienta se usó para dibujar y que evento lo generó:
+      # Marcador (null event | drag event | press event | release event)
+      # Camino
+      # Elipse (null event)
+      # Rectángulo (null event)
+      # Texto
+      # Lápiz (null event | drag event | press event | release event)
+    * `<datos del dibujo y cómo representarlo>`: Depende de la herramienta usada.
 {{{
 
                         +---------------------------+
@@ -342,7 +574,7 @@ El byte de control puede indicar todas estas cosas:
 
 }}}
 
-        * Ejemplo: Se dibuja un rectángulo con esquina superior izquierda (100,119) y esquina inferior derecha (265,190), línea de 7 puntos de grosor, transparencia de 0.7, color rojo, line join miter, end caps round.
+  * Ejemplo: Se dibuja un rectángulo con esquina superior izquierda (100,119) y esquina inferior derecha (265,190), línea de 7 puntos de grosor, transparencia de 0.7, color rojo, line join miter, end caps round.
 
 {{{
 
@@ -383,17 +615,17 @@ El byte de control puede indicar todas estas cosas:
 
 }}}
 
-----
 
-        =CTL_CL_DRW        0x41 (65)=
+=====Dibujando=====
+======CTL_CL_DRW======
         
-        * Descripción: 
-                Un "dibujo" que está siendo dibujado (live mode)
+  * Descripción: 
+    Un "dibujo" que está siendo dibujado (live mode)
 
-        * Valor: 
-                0x41 (65)
+  * Valor: 
+    0x41 (65)
   
-        * Byte de control:
+  * Byte de control:
 {{{
 
      _____high_____  ______low______
@@ -404,16 +636,16 @@ El byte de control puede indicar todas estas cosas:
 
 }}}
 
-       * Bytes de tamaño:
-                Tamaño del STREAM.
+  * Bytes de tamaño:
+    amaño del STREAM.
 
-       * Bytes de datos:
-                - <id>: byte que identifica a quién pertenece el dibujo.
-                - byte de dibujo: que determina qué herramienta se usó para dibujar y que evento lo generó:
-                       + Marcador
-                       + Camino
-                       + Lápiz
-                - datos del dibujo y cómo ir representandoló a medida que arriban este tipo de paquetes. Depende de la herramienta usada y del evento que lo generó.
+   * Bytes de datos:
+     * `<id>`: byte que identifica a quién pertenece el dibujo.
+     * `<byte de dibujo>`: que determina qué herramienta se usó para dibujar y que evento lo generó:
+       # Marcador
+       # Camino
+       # Lápiz
+     * <datos del dibujo y cómo ir representandoló>`. Depende de la herramienta usada y del evento que lo generó.
 {{{
 
 +---------------------------+                              
@@ -426,7 +658,7 @@ El byte de control puede indicar todas estas cosas:
 
 }}}
 
-    *Ejemplo:  Se dibuja un trazo que comienza en el punto (10,10) y termina en el punto (59, 90). El primer punto y las propiedades del dibujo se envían
+    * Ejemplo:  Se dibuja un trazo que comienza en el punto (10,10) y termina en el punto (59, 90). El primer punto y las propiedades del dibujo se envían
     en el paquete que contiene al evento P (press event). El último punto, se encuentra en el paquete que contiene el evento R (release event).
    Y los puntos intermedios, como así también una posible modificación de las propiedades del dibujo, se encuentran en el paquete que contiene
     el evento D (drag event). Si no se modifican las propiedades del dibujo mientras se dibuja, en el evento D sólo habrá coordenadas de
@@ -517,373 +749,97 @@ El byte de control puede indicar todas estas cosas:
 
 }}}
 
-----
 
-   =CTL_SV_CLADD      0x10 (16)=
+=====Chat=====
 
-  * Descripción:
-Indica que un nuevo cliente se a conectado al servidor. Provee el id y el nombre del cliente que se acaba de conectar. De esta forma,
-existe una relación unívoca entre id y nombre, y por ello es que no pueden existir 2 clientes con el mismo nombre en el servidor. El id,
-es información que puede viajar en un 1 byte, sin embargo el nombre puede ser abritrariamente largo y a los fines prácticos es sólo útil
-informarlo una vez o bien cuando se haga un cambio de nombre.
-
-  * Valor:  
- 0x10 (16)
-  
-  * Byte de control:
-{{{
-    _____high_____  ______low______
-   /              \/               \   
-   +---+---+---+---+---+---+---+---+
-   | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
-   +---+---+---+---+---+---+---+---+
-}}}
-  * Bytes de tamaño:
-Tamaño del STREAM.
-
-  * Bytes de datos:
- <id>: el nuevo id del cliente que se acaba de conectar.
-- bytes de nombre: el nombre que tiene asignado el cliente que se acaba de conectar
-
-  * Ejemplo: Un cliente se conecta. Se le asigna el id 19 y éste indica que su nombre es "Alberto".
-{{{
-                                          STREAM
-      __________________________________________________________________________________
-     /                                                                                  \
-                CABECERA                                          DATOS
-     ___________________________________  ______________________________________________
-    /                                   \/                                              \
-    +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
-    |  0  | 16  |  0  |  0  |  0  | 14  | 19  | 'A' | 'l' | 'b' | 'e' | 'r' | 't' | 'o' | = 14 bytes
-    +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
-
-}}}
-
-----
-
-        =CTL_SV_CLRM       0x20 (32)=
+======CTL_CL_BMSG======
 
   * Descripción:
-Informa la desconexión de un cliente.
+    Mensaje global de un usuario hacia todos los demás usuarios conectados. (broadcast message)
 
-  * Valor:  
-  0x20 (32)
-  
-  * Byte de control:
-{{{
-     _____high_____  ______low______
-    /              \/               \   
-    +---+---+---+---+---+---+---+---+
-    | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-    +---+---+---+---+---+---+---+---+
-}}}
-  * Bytes de tamaño:
-  Tamaño del STREAM.
-
-  * Bytes de datos:
-  - <id>: el id del cliente que se acaba de desconectar.
-
-
-  * Ejemplo: Un cliente con id 8 se desconecta.
-{{{
-                      STREAM
-     _________________________________________
-    /                                         \
-                  CABECERA               DATOS
-     ___________________________________  ____
-    /                                   \/    \
-    +-----+-----+-----+-----+-----+-----+-----+
-    |  0  | 16  |  0  |  0  |  0  |  7  |  8  |
-    +-----+-----+-----+-----+-----+-----+-----+
-
-}}}
-
-----
-
-    =CTL_SV_CLIST      0x30 (48)=
-
-  * Descripción:
-Una lista de los clientes que se encuentran actualmente conectados al servidor. El tamaño del paquete es variable, dependiendo 
-cuantos clientes están actualmente conectados.
-
-
-  * Valor:  
-  0x30 (48)
-  
-  * Byte de control:
-{{{
-     _____high_____  ______low______
-    /              \/               \   
-    +---+---+---+---+---+---+---+---+
-    | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 |
-    +---+---+---+---+---+---+---+---+
-}}}
-  * Bytes de tamaño:
-Tamaño del STREAM.
-
-  * Bytes de datos:
-- L[<id>]: lista de id's que están conectados al servidor.
-
-
-  * Ejemplo: Un cliente solicita la lista de ids al servidor. El servidor responde con el id del cliente que solicitó la información
-seguido de una lista de (id, nombre) donde nombre es una cadena null terminated.
-{{{
-                                                 STREAM
-      ________________________________________________________________________________________
-     /                                                                                        \
-                     CABECERA                            DATOS
-      ___________________________________  ____________________________________________________
-     /                                   \/                                                    \
-     +-----+-----+-----+-----+-----+-----+-----+---+---+---+---+---+---+---+---+---+---+---+---+
-     |  0  | 48  |  0  |  0  |  0  |  10 |  8  | 9 |'H'|'u'|'g'|'o'| 0 | 11|'P'|'e'|'p'|'e'| 0 |
-     +-----+-----+-----+-----+-----+-----+-----+---+---+---+---+---+---+---+---+---+---+---+---+
-
-}}}
-
-----
-
-    =CTL_CL_CLIST      0x51 (81)=
-
-  * Descripción:
-Solicitar al servidor la lista de clientes conectados.
-
-  * Valor:  
-    0x51 (81)
-  
-  * Byte de control:
-{{{
-     _____high_____  ______low______
-    /              \/               \   
-    +---+---+---+---+---+---+---+---+
-    | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 1 |
-    +---+---+---+---+---+---+---+---+
-}}}
-  * Bytes de tamaño:
-Tamaño del STREAM.
-
-  * Bytes de datos:
-- <id>: id del cliente que solicita la información.
-
-
-  * Ejemplo: Un cliente con id 9 solicita la lista de ids al servidor.
-{{{
-                          STREAM
-      ________________________________________
-     /                                        \
-                    CABECERA              DATOS
-      ___________________________________  ____
-     /                                   \/    \
-     +-----+-----+-----+-----+-----+-----+-----+
-     |  0  | 48  |  0  |  0  |  0  |  7  |  9  | = 7 bytes
-     +-----+-----+-----+-----+-----+-----+-----+
-}}}
-
-----
-
-     =CTL_SV_PWDASK     0x40 (64)=
-
-  * Descripción:
-Solicitar la contraseña de sesión al cliente que intenta comunicarse.
-
-  * Valor:
-0x40 (64)
+  * Valor: 
+    0x11 (17)
 
   * Byte de control:
 {{{
-     _____high_____  ______low______
-    /              \/               \   
-    +---+---+---+---+---+---+---+---+
-    | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
-    +---+---+---+---+---+---+---+---+
+                         _____high_____  ______low______
+                        /              \/               \   
+                        +---+---+---+---+---+---+---+---+
+                        | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 1 |
+                        +---+---+---+---+---+---+---+---+
 }}}
-  * Bytes de tamaño:
-  Tamaño del STREAM.
+  * Bytes de tamaño: 
 
   * Bytes de datos:
-  - <id>: id del cliente al que se le solicita la contraseña.
-
-
-  * Ejemplo: El servidor le solicita la contraseña de sesión a un cliente con id 9.
+    * `<id>`: byte que identifica a quién pertenece el mensaje enviado.
+    * `<Texto>`: Tamaño del texto igual a (bytes de tamaño - tamaño de CABECERA - byte de id).
 {{{
-                        STREAM
-      _________________________________________
-     /                                         \
-                    CABECERA              DATOS
-      ___________________________________  ____
-     /                                   \/    \
-     +-----+-----+-----+-----+-----+-----+-----+
-     |  0  | 64  |  0  |  0  |  0  |  7  |  9  | = 7 bytes
-     +-----+-----+-----+-----+-----+-----+-----+
+                +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+----+
+                | <id>| 'H' | 'O' | 'L' | 'A' | ' ' | 'M' | 'U' | 'N' | 'D' | 'O' |'\0'|
+                +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+----+
+
 }}}
 
-----
+  * Ejemplo:
+{{{
+                                             STREAM
+ _________________________________________________________________________________________________________
+/                                                                                                         \ 
+              CABECERA                                             DATOS
+ ___________________________________  _____________________________________________________________________
+/                                   \/                                                                     \
++-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+----+
+|  0  | 17  |  0  |  0  |  0  | 17  | <id>| 'H' | 'O' | 'L' | 'A' | ' ' | 'M' | 'U' | 'N' | 'D' | 'O' |'\0'|
++-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+----+
 
-    =CTL_CL_PWD        0x61 (97)=
+}}}
 
+======CTL_CL_PMSG======
+        
   * Descripción:
-Un paquete con la contraseña de sesión enviado por un cliente.
-  * Valor:
-0x61 (97)
+    Mensaje privado de un usuario hacia uno particular que esté conectado. (private message)
+
+  * Valor: 
+    0x21 (33)
 
   * Byte de control:
 {{{
-     _____high_____  ______low______
-    /              \/               \   
-    +---+---+---+---+---+---+---+---+
-    | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 1 |
-    +---+---+---+---+---+---+---+---+
+                             _____high_____  ______low______
+                            /              \/               \   
+                            +---+---+---+---+---+---+---+---+
+                            | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 |
+                            +---+---+---+---+---+---+---+---+
 }}}
-  * Bytes de tamaño:
-  Tamaño del STREAM.
+  * Bytes de tamaño: 
+    Tamaño del STREAM.
 
   * Bytes de datos:
-  - <id>: el id del cliente que envía la contraseña.
-  - <contraseña>: los bytes correspondientes a la contraseña enviada.
-
-
-  * Ejemplo: El servidor le envía a un cliente con id 9 CTL_SV_PWDASK. El cliente responde con CTL_CL_PWD.
+    * `<id>`: byte que identifica a quién pertenece el mensaje enviado.
+    * `<to>`: byte que identifica para quién es el mensaje enviado.
+    * `<Texto>: Tamaño del texto igual a (*actualizar*).
 {{{
-                                       STREAM
-      ______________________________________________________________________
-     /                                                                      \
-                  CABECERA                                DATOS
-      ___________________________________  __________________________________
-     /                                   \/                                  \
-     +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
-     |  0  | 97  |  0  |  0  |  0  |  12 |  9  |      <contraseña>           | = 12 bytes
-     +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+                   +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+                   | <id>| <to>| 'H' | 'O' | 'L' | 'A' | ' ' | 'M' | 'A' | 'R' | 'T' | 'A' |  = 12 bytes
+                   +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
 
 }}}
 
-----
-
-    =CTL_SV_PWDOK      0x50 (80)=
-
-  * Descripción:
-Informa que la contraseña de sesión enviada por el cliente es correcta.
-  * Valor:
-0x50  (80)
-
-  * Byte de control:
+  * Ejemplo:
 {{{
-     _____high_____  ______low______
-    /              \/               \   
-    +---+---+---+---+---+---+---+---+
-    | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 0 |
-    +---+---+---+---+---+---+---+---+
-}}}
-  * Bytes de tamaño:
-  Tamaño del STREAM.
+                                             STREAM
+ __________________________________________________________________________________________________________
+/                                                                                                          \
+            CABECERA                                                  DATOS
+ ___________________________________  ______________________________________________________________________
+/                                   \/                                                                      \
++-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+|  0  | 33  |  0  |  0  |  0  | 18  | <id>| <to>| 'H' | 'O' | 'L' | 'A' | ' ' | 'M' | 'A' | 'R' | 'T' | 'A' |
++-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
 
-  * Bytes de datos:
-  - <id>: el id del cliente que envió la contraseña.
-
-----
-
-   =CTL_SV_PWDFAIL    0x60 (96)=
-
-  * Descripción:
-Informa que la contraseña de sesión enviada por el cliente es incorrecta.
-
-  * Valor:
-0x60  (96)
-
-  * Byte de control:
-{{{
-     _____high_____  ______low______
-    /              \/               \   
-    +---+---+---+---+---+---+---+---+
-    | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
-    +---+---+---+---+---+---+---+---+
-}}}
-  * Bytes de tamaño:
-  Tamaño del STREAM.
-
-  * Bytes de datos:
-  - <id>: el id del cliente que envió la contraseña.
-
-
-----
-
-    =CTL_CL_FILEASK    0x71 (113)=
-
-  * Descripción:
-Petición del archivo de imagen que se está "observando" corrientemente. Un cliente recién conectado puede solicitar
-al servidor que le pase el archivo que el cliente que inició la sesión (o el dueño de sesión) está compartiendo.
-
-  * Valor:
-0x71 (113)
-
-  * Byte de control:
-{{{
-     _____high_____  ______low______
-    /              \/               \   
-    +---+---+---+---+---+---+---+---+
-    | 0 | 1 | 1 | 1 | 0 | 0 | 0 | 1 |
-    +---+---+---+---+---+---+---+---+
-}}}
-  * Bytes de datos:
-  - <id>: id del cliente que solicita el archivo.
-
-----
-
-    =CTL_CL_FILEOK     0x81 (129)=
-
-  * Descripción:
-Informa que el archivo de imagen se recibió correctamente.
-
-  * Valor:
-0x81   (129)
- 
-  * Byte de control:
-{{{
-     _____high_____  ______low______
-    /              \/               \   
-    +---+---+---+---+---+---+---+---+
-    | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
-    +---+---+---+---+---+---+---+---+
-}}}
-  * Bytes de datos:
-  - <id>: id del cliente que solicita el archivo.
-
-----
-
-   =CTL_SV_FILE       0x70 (112)=
-
-  * Descripción:
-Archivo de imagen a enviar a un cliente que lo solicitó.
-
-  * Valor:
-0x70  (112)
-
-  * Byte de control:
-{{{
-     _____high_____  ______low______
-    /              \/               \   
-    +---+---+---+---+---+---+---+---+
-    | 0 | 1 | 1 | 1 | 0 | 0 | 0 | 0 |
-    +---+---+---+---+---+---+---+---+
- }}}
-  * Bytes de datos:
-  - <id>: id del cliente que solicitó el archivo.
-  - <archivo de imagen>: bytes correspondiente al archivo de imagen. El tamaño del archivo está limitado a 2^32
-
-  * Ejemplo: El cliente con id 9 solicitó el archivo de imagen de sesión.
-{{{
-                                       STREAM
-      ______________________________________________________________________
-     /                                                                      \
-                 CABECERA                               DATOS
-      ___________________________________  __________________________________
-     /                                   \/                                  \
-     +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
-     |  0  | 112 |  0  |  0  |  0  | 7+N |  9  |      <archivo binario>      | = 7+N bytes (siendo N el tamaño del archivo de imagen)
-     +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
 }}}
 
-----
 
-== 1.2.3 Bytes de tamaño. ==
+====Bytes de tamaño====
       
 
       Estos bytes determinan el tamaño de todo el stream. A medida que se va leyendo las secciones fijas en bytes, se puede usar esta información para saber en qué
@@ -894,17 +850,18 @@ Archivo de imagen a enviar a un cliente que lo solicitó.
       contando desde 0.
 
 
+=== Datos ===
+
+Esta sección es flexible y variable. Va a depender exactamente de la cabecera. Según el byte de control, esta sección va a contener distinto tipo de información.
 
 
-= 1.3 DATOS =
-
-== 1.3.1 Byte de id. ==
+====Byte de id====
 
 
       Un byte que determina el id del cliente que envía la información del dibujo. Puede ser un valor entre 0 y 255.
 
 
-== 1.3.2 Byte de dibujo. ==
+====Byte de dibujo====
 
 
   # Marcador (resaltador)
@@ -1072,7 +1029,7 @@ Traza una línea recta entre 2 puntos arbitrarios.
     +---+---+---+---+---+---+---+---+
 }}}
 
-== 1.3.3 Bytes de datos de dibujo. ==
+====Bytes de datos de dibujo====
 
       
       Ya se mencionó que la sección DATOS contendrán al byte de dibujo. El byte de dibujo es una especia de byte de control sobre los bytes datos del dibujo, cómo lo es en efecto
@@ -1211,5 +1168,47 @@ DIBUJO  |    |   ?    |   ?    |    ?   |    ?   |   4 bytes de transparencia.
           +-----------------+-----------------+                             } Punto Final
           |   coordenada y1 |  coordenada y1  |   2 bytes de coordenada y1 /
           +-----------------+-----------------+
+
+}}}
+
+== Alcanze y Limitaciones ==
+
+*¿Qué herramientas de dibujo va a soportar el protocolo? *
+
+
+(*NOTA*: los dibujos posibles serán determinados por el protocolo. Esto es una desventaja en lo que respecta a extensibilidad. Proponer como trabajo futuro
+diseñar el protocolo más flexible de manera que agregar una nueva herramienta sea sencillo. Como por ejemplo, pensar que en la biblioteca se tienen métodos,
+estructuras y tipos específicos para cada herramienta, dónde cada una sabe como dibujarse a sí misma dentro de la misma biblioteca y exponer la funcionalidad
+usando SWIG. De esta manera, las interfaces gráficas deberían interpretar esa información para dibujar)
+
+  *1. Marcador (resaltador)
+  *2. Camino
+  *3. Elipse
+  *4. Rectángulo
+  *5. Texto
+  *6. Goma
+  *7. Lápiz
+  *8. Línea
+
+*¿Cómo va a ser la información a enviar de cada dibujo?*
+
+
+Cada vez que se mande un dibujo, ya sea completo o dibujandosé, la sección DATOS tendrá un byte de dibujo y una sección de bytes de datos sobre el dibujo:
+
+
+
+
+{{{
+                                         STREAM
+        ________________________________________________________________________________
+       /                                                                                \
+
+             CABECERA                                 DATOS
+        _________________  ______________________________________________________________
+       /                 \/                                                              \
+       +--+--+--+--+--+--+------+-----------+-------+-------+-------+ ... +-------+------+
+       |  |  |  |  |  |  | <id> | <byte de dibujo>  |  <bytes de datos sobre el dibujo>  |
+       +--+--+--+--+--+--+------+-----------+-------+-------+-------+ ... +-------+------+
+
 
 }}}
