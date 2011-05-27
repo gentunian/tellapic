@@ -1,5 +1,5 @@
 <wiki:toc max_depth="6" />
-= PROTOCOLO =
+= 1. PROTOCOLO =
   
 
 
@@ -39,7 +39,7 @@ puede verse de la siguiente manera:
                             desemsamblaje de paquetes
 }}}
 
-== Organización de la información ==
+== 1.1 Organización de la información ==
 
 
 El protocolo va a ser binario. Esto es, se define bajo una secuencia de bytes crudos, donde cada ubicación de un byte en particular o un conjunto de bytes tiene un significado específico. El protocolo va a definir sus acciones mediante una sencuencia de longitud conocida o longitud máxima según la acción que se determine. Para esto, la secuencia de bytes se va a dividir en dos grandes secciones. Una sección de [Notes#Datos datos] y una [Notes#Cabecera cabecera]. Esta última, va a definir un conjunto de acciones o informaciones a enviar/recibir por parte de los usuarios del protocolo. Cada mensaje construído por el protocolo es o bien una acción que el receptor debe realizar, o información que el emisor comparte con el receptor.
@@ -72,7 +72,7 @@ En lenguaje coloquial, el protocolo puede construir mensajes que se refieran a:
 
 Cada uno de estos mensajes debe ser identificado unívocamente. Para ello, y dado la naturaleza de la cabecera, se utiliza un *byte de control* situada en ella. En pocas palabras, el byte de control es el principal actor sobre el protocolo, que define de qué se trata el mensaje enviado. El byte de control es el responsable, junto con los bytes de tamaño, de determinar si el mensaje enviado es válido. Primero, se observa si el byte de control es algún byte de control válido y luego, según el byte de control se verifica que el tamaño esté entre los parámetros de éste. Una vez que haya sido validada la cabecera, la sección datos tendrá la información necesaria para el receptor. En base a ella, éste realizará las acciones pertinentes necesarias para el mensaje recibido.
 
-=== Cabecera ===
+=== 1.1.1 Cabecera ===
 
 El siguiente esquema muestra conceptualmente cómo estaría formada la cabecera:
 
@@ -147,6 +147,7 @@ Se puede observar su longitud fija, siempre igual a la longitud de la cabecera m
 
 Las siguientes secciones definen estos bytes de control, su acción y su forma:
 
+----
 ======CTL_SV_CLRM======
 
   * Descripción:
@@ -184,7 +185,7 @@ Las siguientes secciones definen estos bytes de control, su acción y su forma:
     +-----+-----+-----+-----+-----+-----+-----+
 
 }}}
-
+----
 ======CTL_CL_CLIST======
 
   * Descripción:
@@ -221,7 +222,7 @@ Las siguientes secciones definen estos bytes de control, su acción y su forma:
      |  0  | 48  |  0  |  0  |  0  |  7  |  9  | = 7 bytes
      +-----+-----+-----+-----+-----+-----+-----+
 }}}
-
+----
 ======CTL_SV_PWDASK======
 
   * Descripción:
@@ -258,7 +259,7 @@ Las siguientes secciones definen estos bytes de control, su acción y su forma:
      |  0  | 64  |  0  |  0  |  0  |  7  |  9  | = 7 bytes
      +-----+-----+-----+-----+-----+-----+-----+
 }}}
-
+----
 ======CTL_SV_PWDOK======
 
   * Descripción:
@@ -282,7 +283,7 @@ Las siguientes secciones definen estos bytes de control, su acción y su forma:
   * Byte de datos:
     El id del cliente que envió la contraseña.
 
-
+----
 ======CTL_SV_PWDFAIL======
 
   * Descripción:
@@ -305,7 +306,7 @@ Las siguientes secciones definen estos bytes de control, su acción y su forma:
 
   * Byte de datos:
     El id del cliente que envió la contraseña.
-
+----
 ======CTL_CL_FILEASK======
 
   * Descripción:
@@ -329,7 +330,7 @@ al servidor que le pase el archivo que el cliente que inició la sesión (o el d
 
   * Byte de datos:
     Id del cliente que solicita el archivo.
-
+----
 ======CTL_CL_FILEOK======
 
   * Descripción:
@@ -353,7 +354,7 @@ al servidor que le pase el archivo que el cliente que inició la sesión (o el d
   * Byte de datos:
     Id del cliente que solicita el archivo.
 
-
+----
 =====Control Extendido=====
 
 Este tipo de mensaje lleva consigo información adicional que un mensaje de _control_ no puede enviar. La longitud de este tipo de mensaje puede ser variable pero sin sobrepasar un máximo predefinido. La sección datos, en lugar de contener sólamente 1 byte, tendrá de manera adicional los bytes necesarios que describan la información extendida del mensaje, siempre y cuando no superen un máximo predeterminado. De esta forma, gráficamente se puede pensar a un mensaje de _control extendido_ como lo muestra el equema siguiente:
@@ -376,7 +377,7 @@ Este tipo de mensaje lleva consigo información adicional que un mensaje de _con
 
 Las secciones subsiguientes enumeran y describen los tipos posibles de mensajes que el protocolo define como _control extendido_.
 
-
+----
 ======CTL_SV_CLADD======
 
   * Descripción:
@@ -418,7 +419,7 @@ informarlo una vez o bien cuando se haga un cambio de nombre.
 
 }}}
 
-
+----
 ======CTL_SV_CLIST=======
 
   * Descripción:
@@ -456,7 +457,7 @@ seguido de una lista de (id, nombre) donde nombre es una cadena null terminated.
 
 }}}
 
-
+----
 ======CTL_CL_PWD======
 
   * Descripción:  
@@ -495,7 +496,7 @@ seguido de una lista de (id, nombre) donde nombre es una cadena null terminated.
      +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
 
 }}}
-
+----
 ======CTL_SV_FILE======
 
   * Descripción:
@@ -530,9 +531,10 @@ seguido de una lista de (id, nombre) donde nombre es una cadena null terminated.
      +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
 }}}
 
-
+----
 =====Dibujo=====
-
+blabla
+----
 ======CTL_CL_FIG======
 
   * Descripción:
@@ -615,8 +617,10 @@ seguido de una lista de (id, nombre) donde nombre es una cadena null terminated.
 
 }}}
 
-
+----
 =====Dibujando=====
+blabla2
+----
 ======CTL_CL_DRW======
         
   * Descripción: 
@@ -651,18 +655,14 @@ seguido de una lista de (id, nombre) donde nombre es una cadena null terminated.
 +---------------------------+                              
 |             <id>          |   byte de id                 
 +--------------+------------+
-| herramienta  |   evento   |   byte de dibujo (el evento puede ser alguno de {null event | drag event | press event | release event})
+| herramienta  |   evento   |   byte de dibujo (evento = {null event | drag event | press event | release event})
 +--------------+------------+
 |        datos de dibujo    |   bytes de datos del dibujo de acuerdo al evento y herramienta seleccionada.
 +---------------------------+
 
 }}}
 
-    * Ejemplo:  Se dibuja un trazo que comienza en el punto (10,10) y termina en el punto (59, 90). El primer punto y las propiedades del dibujo se envían
-    en el paquete que contiene al evento P (press event). El último punto, se encuentra en el paquete que contiene el evento R (release event).
-   Y los puntos intermedios, como así también una posible modificación de las propiedades del dibujo, se encuentran en el paquete que contiene
-    el evento D (drag event). Si no se modifican las propiedades del dibujo mientras se dibuja, en el evento D sólo habrá coordenadas de
-   actualización.
+    * Ejemplo:  Se dibuja un trazo que comienza en el punto (10,10) y termina en el punto (59, 90). El primer punto y las propiedades del dibujo se envían en el paquete que contiene al evento P (press event). El último punto, se encuentra en el paquete que contiene el evento R (release event). Y los puntos intermedios, como así también una posible modificación de las propiedades del dibujo, se encuentran en el paquete que contiene el evento D (drag event). Si no se modifican las propiedades del dibujo mientras se dibuja, en el evento D sólo habrá coordenadas de actualización.
 
 {{{
 
@@ -749,9 +749,10 @@ seguido de una lista de (id, nombre) donde nombre es una cadena null terminated.
 
 }}}
 
-
+----
 =====Chat=====
-
+blabla3
+----
 ======CTL_CL_BMSG======
 
   * Descripción:
@@ -793,7 +794,7 @@ seguido de una lista de (id, nombre) donde nombre es una cadena null terminated.
 +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+----+
 
 }}}
-
+----
 ======CTL_CL_PMSG======
         
   * Descripción:
@@ -816,7 +817,7 @@ seguido de una lista de (id, nombre) donde nombre es una cadena null terminated.
   * Bytes de datos:
     * `<id>`: byte que identifica a quién pertenece el mensaje enviado.
     * `<to>`: byte que identifica para quién es el mensaje enviado.
-    * `<Texto>: Tamaño del texto igual a (*actualizar*).
+    * `<Texto>`: Tamaño del texto igual a (*actualizar*).
 {{{
                    +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
                    | <id>| <to>| 'H' | 'O' | 'L' | 'A' | ' ' | 'M' | 'A' | 'R' | 'T' | 'A' |  = 12 bytes
@@ -837,20 +838,15 @@ seguido de una lista de (id, nombre) donde nombre es una cadena null terminated.
 +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
 
 }}}
-
+----
 
 ====Bytes de tamaño====
       
 
-      Estos bytes determinan el tamaño de todo el stream. A medida que se va leyendo las secciones fijas en bytes, se puede usar esta información para saber en qué
-      parte del stream nos encontramos. De esta forma, se pone especial cuidado en ubicar las secciones de tamaño desconocidas al final de la sección datos pudiendo
-      conocer el tamaño gracias a los bytes de tamaño. Por ejemplo, si enviamos un archivo como se observa arriba, el tamaño del archivo será N, dado que el archivo
-      comienza en el byte 7 (u 8 si enumeramos desde 1) y el stream tiene un tamaño total de 7+N. Lo mismo sucede cuando se envía información de un dibujo. Para obtener
-      el tamaño del arreglo 'dash_array' hacemos lo siguiente: 41 - <tamaño indicado en bytes de tamaño>, ya que en el byte 41 comienza la sección de dicho arreglo
-      contando desde 0.
+blabla
 
 
-=== Datos ===
+=== 1.1.2 Datos ===
 
 Esta sección es flexible y variable. Va a depender exactamente de la cabecera. Según el byte de control, esta sección va a contener distinto tipo de información.
 
@@ -858,7 +854,7 @@ Esta sección es flexible y variable. Va a depender exactamente de la cabecera. 
 ====Byte de id====
 
 
-      Un byte que determina el id del cliente que envía la información del dibujo. Puede ser un valor entre 0 y 255.
+Un byte que determina el id del cliente que envía la información del dibujo. Puede ser un valor entre 0 y 255.
 
 
 ====Byte de dibujo====
@@ -1171,7 +1167,7 @@ DIBUJO  |    |   ?    |   ?    |    ?   |    ?   |   4 bytes de transparencia.
 
 }}}
 
-== Alcanze y Limitaciones ==
+== 1.2 Alcanze y Limitaciones ==
 
 *¿Qué herramientas de dibujo va a soportar el protocolo? *
 
