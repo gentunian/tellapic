@@ -3,4 +3,4 @@
   * [WhatsNot What is it not?]
   * [FAQ FAQ]
   * [Build Build instructions]
-  * [Notas Tellapic protocol implementation]
+  * [Notes Tellapic protocol implementation]

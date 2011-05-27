@@ -1376,7 +1376,7 @@ DIBUJO  |    |   ?    |   ?    |    ?   |    ?   |   4 bytes de transparencia.
 
 }}}
 
-== 1.2 Alcanze y Limitaciones ==
+== 1.2 Alcance y Limitaciones ==
 
 *¿Qué herramientas de dibujo va a soportar el protocolo? *
 
