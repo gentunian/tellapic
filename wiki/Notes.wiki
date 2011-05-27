@@ -510,6 +510,44 @@ Este tipo de mensaje lleva consigo información adicional que un mensaje de _con
 Las secciones subsiguientes enumeran y describen los tipos posibles de mensajes que el protocolo define como _control extendido_.
 
 ----
+======CTL_CL_RMFIG======
+
+  * Descripción:
+    Un cliente elimina un dibujo enumerado.
+
+  * Valor:  
+    0xf1 (241)
+  
+  * Byte de control:
+{{{
+    _____high_____  ______low______
+   /              \/               \   
+   +---+---+---+---+---+---+---+---+
+   | 1 | 1 | 1 | 1 | 0 | 0 | 0 | 1 |
+   +---+---+---+---+---+---+---+---+
+}}}
+
+  * Bytes de tamaño:
+    Longitud de cabecera + 1 + longitud de información adicional
+
+  * Bytes de datos:
+    * `<id>`: el id del cliente que elimina un dibujo enumerado.
+    * `<información adicional>`: el número dibujo (en string) del dibujo a borrar.
+
+  * Ejemplo: Un cliente con id 19 elimina su dibujo enumerado 189
+{{{
+                                 STREAM
+      __________________________________________________________
+     /                                                          \
+                CABECERA                           DATOS
+     ___________________________________  ______________________
+    /                                   \/                      \
+    +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+    |  0  | 241 |  0  |  0  |  0  | 10  | 19  | '1' | '8' | '9' | = 10 bytes
+    +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+
+}}}
+----
 ======CTL_SV_CLADD======
 
   * Descripción:
