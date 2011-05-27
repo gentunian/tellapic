@@ -15,7 +15,7 @@
       * [Build#List_of_files List of files]
     * [Notes Tellapic protocol implementation]
       * [Notes#1._PROTOCOLO Protocolo]
-        * [Notes#1.1_Organización_de_la_información Organización de la información]
+        * [Notes#1.1_Organizaci&oacute;n_de_la_informaci&oacute;n Organización de la información]
           * [Notes#1.1.1_Cabecera Cabecera]
           * [Notes#1.1.2_Datos Datos]
         * [Notes#1.2_Alcance_y_Limitaciones Alcance y Limitaciones]
