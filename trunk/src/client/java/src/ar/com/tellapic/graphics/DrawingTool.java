@@ -32,7 +32,7 @@ import ar.com.tellapic.utils.Utils;
  */
 public abstract class DrawingTool extends Tool {
 	
-	protected Drawing             temporalDrawing;
+	//protected AbstractDrawing             temporalDrawing;
 	
 	
 	/**
@@ -71,19 +71,9 @@ public abstract class DrawingTool extends Tool {
 	 * 
 	 * @return
 	 */
-	public Drawing finishDrawing() {
-		return (Drawing) temporalDrawing.clone();
+	public AbstractDrawing finishDrawing() {
+		return (AbstractDrawing) getTemporalDrawing().clone();
 	}
-	
-
-	/**
-	 * 
-	 * @return
-	 */
-	public Drawing getTemporalDrawing() {
-		return temporalDrawing;
-	}
-	
 	
 	/**
 	 * 
@@ -95,31 +85,22 @@ public abstract class DrawingTool extends Tool {
 		Image image = Utils.createIconImage(ICON_SIZE, ICON_SIZE, cursorPath);
 		setCursor(Toolkit.getDefaultToolkit().createCustomCursor(image, new Point(xOffset, yOffset), getName()));
 	}
-	
-//	public abstract Drawing getTemporalDrawing();
-//	public abstract Drawing finishDrawing();
 
+	public abstract AbstractDrawing getTemporalDrawing();
 	public abstract boolean hasAlphaCapability();
 	public abstract boolean hasColorCapability();
 	public abstract boolean hasFontCapability();
 	public abstract boolean hasStrokeCapability();
-	
-
-	
 	public abstract boolean isFilleable();
-
-	
 	public abstract boolean isLiveModeSupported();
 	public abstract boolean isOnDragSupported();
 	public abstract boolean isOnPressSupported();
 	public abstract boolean isOnReleaseSupported();
-
-	public abstract void setAlpha(PaintPropertyAlpha alpha);
-	public abstract void setColor(PaintPropertyColor color);
-	public abstract void setFont(PaintPropertyFont font);
-	public abstract void setStroke(PaintPropertyStroke stroke);
-	
-
+//	public abstract void setAlpha(PaintPropertyAlpha alpha);
+//	public abstract void setColor(PaintPropertyColor color);
+//	public abstract void setFont(PaintPropertyFont font);
+//	public abstract void setStroke(PaintPropertyStroke stroke);
+	public abstract void setPaintProperties(PaintProperty properties[]);
 	public abstract double getDefaultAlpha();
 	public abstract Color getDefaultColor();
 	public abstract String getDefaultFontFace();

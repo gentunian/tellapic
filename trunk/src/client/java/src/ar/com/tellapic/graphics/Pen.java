@@ -43,7 +43,7 @@ public class Pen extends DrawingTool {
 	private Point2D             firstPoint;
 	private boolean             inUse;
 	private GeneralPath         pen;
-//	private Drawing             temporalDrawing;
+	private DrawingShape             temporalDrawing;
 
 	/**
 	 * 
@@ -61,7 +61,7 @@ public class Pen extends DrawingTool {
 		super(tellapicConstants.TOOL_PATH, name, PEN_ICON_PATH, Utils.msg.getString("pentooltip") ,Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 		firstPoint = new Point2D.Double();
 		inUse = false;
-		temporalDrawing = new Drawing(getName());
+		temporalDrawing = new DrawingShape(getName());
 //		setToolCursor(PEN_ICON_PATH, 0, 15);
 	}
 	
@@ -196,45 +196,45 @@ public class Pen extends DrawingTool {
 		inUse = true;
 	}
 
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#setAlpha(ar.com.tellapic.graphics.PaintPropertyAlpha)
-	 */
-	@Override
-	public void setAlpha(PaintPropertyAlpha alpha) {
-		temporalDrawing.setAlpha(alpha);
-		setChanged();
-		notifyObservers(temporalDrawing);
-	}
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#setColor(ar.com.tellapic.graphics.PaintPropertyColor)
-	 */
-	@Override
-	public void setColor(PaintPropertyColor color) {
-		temporalDrawing.setColor(color);
-		setChanged();
-		notifyObservers(temporalDrawing);
-	}
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#setFont(ar.com.tellapic.graphics.PaintPropertyFont)
-	 */
-	@Override
-	public void setFont(PaintPropertyFont font) {
-		temporalDrawing.setFont(font);
-		setChanged();
-		notifyObservers(temporalDrawing);
-	}
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#setStroke(ar.com.tellapic.graphics.PaintPropertyStroke)
-	 */
-	@Override
-	public void setStroke(PaintPropertyStroke stroke) {
-		temporalDrawing.setStroke(stroke);
-		setChanged();
-		notifyObservers(temporalDrawing);
-	}
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#setAlpha(ar.com.tellapic.graphics.PaintPropertyAlpha)
+//	 */
+//	@Override
+//	public void setAlpha(PaintPropertyAlpha alpha) {
+//		temporalDrawing.setAlpha(alpha);
+//		setChanged();
+//		notifyObservers(temporalDrawing);
+//	}
+//
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#setColor(ar.com.tellapic.graphics.PaintPropertyColor)
+//	 */
+//	@Override
+//	public void setColor(PaintPropertyColor color) {
+//		temporalDrawing.setColor(color);
+//		setChanged();
+//		notifyObservers(temporalDrawing);
+//	}
+//
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#setFont(ar.com.tellapic.graphics.PaintPropertyFont)
+//	 */
+//	@Override
+//	public void setFont(PaintPropertyFont font) {
+//		temporalDrawing.setFont(font);
+//		setChanged();
+//		notifyObservers(temporalDrawing);
+//	}
+//
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#setStroke(ar.com.tellapic.graphics.PaintPropertyStroke)
+//	 */
+//	@Override
+//	public void setStroke(PaintPropertyStroke stroke) {
+//		temporalDrawing.setStroke(stroke);
+//		setChanged();
+//		notifyObservers(temporalDrawing);
+//	}
 
 
 	/* (non-Javadoc)
@@ -352,5 +352,33 @@ public class Pen extends DrawingTool {
 	@Override
 	public float getDefaultMiterLimit() {
 		return DEFAULT_MITER_LIMIT;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#getTemporalDrawing()
+	 */
+	@Override
+	public AbstractDrawing getTemporalDrawing() {
+		return temporalDrawing;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#setPaintProperties(ar.com.tellapic.graphics.PaintProperty[])
+	 */
+	@Override
+	public void setPaintProperties(PaintProperty[] properties) {
+		for(int i = 0; i < properties.length; i++) {
+			if (properties[i] instanceof PaintPropertyStroke) {
+				temporalDrawing.setStroke((PaintPropertyStroke) properties[i]);
+			} else if (properties[i] instanceof PaintPropertyAlpha) {
+				temporalDrawing.setAlpha((PaintPropertyAlpha) properties[i]);
+			} else if (properties[i] instanceof PaintPropertyColor) {
+				temporalDrawing.setColor((PaintPropertyColor) properties[i]);
+			}
+		}
+		setChanged();
+		notifyObservers(temporalDrawing);
 	}
 }

@@ -50,7 +50,7 @@ final public class TextNet extends Text {
 	public void onRelease(int x, int y, int button, int mask) {
 		super.onRelease(x, y, button, mask);
 		 
-		Drawing drawing = super.getTemporalDrawing();
+		DrawingText drawing = (DrawingText) super.getTemporalDrawing();
 		if (drawing == null)
 			return ;
 		

@@ -56,7 +56,7 @@ final public class PenNet extends Pen {
 	@Override
 	public void onPress(int x, int y, int button, int mask) {
 		super.onPress(x, y, button, mask);
-		Drawing drawing = super.getTemporalDrawing();
+		DrawingShape drawing = (DrawingShape) super.getTemporalDrawing();
 		if (NetManager.getInstance().isConnected() && avoidLoopback) {
 			int wrappedEvent = getToolId();
 			if (button == MouseEvent.BUTTON1)
@@ -111,7 +111,7 @@ final public class PenNet extends Pen {
 				if ((mask & MouseEvent.CTRL_DOWN_MASK) == MouseEvent.CTRL_DOWN_MASK)
 					eventExtMod = tellapicConstants.EVENT_CTL_DOWN;
 					
-				Drawing drawing = super.getTemporalDrawing();
+				DrawingShape drawing = (DrawingShape) super.getTemporalDrawing();
 				tellapic.tellapic_send_drw_using(
 						NetManager.getInstance().getSocket(),
 						wrappedEvent,
@@ -140,7 +140,7 @@ final public class PenNet extends Pen {
 	public void onRelease(int x, int y, int button, int mask) {
 		super.onRelease(x, y, button, mask);
 		
-		Drawing drawing = super.getTemporalDrawing();
+		DrawingShape drawing = (DrawingShape) super.getTemporalDrawing();
 		if (drawing == null)
 			return;
 		

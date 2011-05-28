@@ -369,21 +369,24 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 		
 		for(AbstractUser user : UserManager.getInstance().getUsers()) {
 			if (!user.isRemoved() && user.isVisible()) {
-				for(Drawing drawing : user.getDrawings())
-					drawDrawing(drawingArea, drawing, user.getCustomProperties());
+				for(AbstractDrawing drawing : user.getDrawings())
+					//drawDrawing(drawingArea, drawing, user.getCustomProperties());
+					drawing.draw(drawingArea);
 				
 				if (user.isDrawing())
-					drawDrawing(drawingArea, user.getDrawing(), user.getCustomProperties());
+					//drawDrawing(drawingArea, user.getDrawing(), user.getCustomProperties());
+					user.getDrawing().draw(drawingArea);
 			}
 		}
 		
 		if (observable instanceof DrawingTool && ((DrawingTool)observable).isBeingUsed()) {
-			DrawingTool drawingTool = (DrawingTool) observable;
-			Drawing         drawing = drawingTool.getTemporalDrawing();
-			AbstractUser user = drawing.getUser();
+			DrawingTool     drawingTool = (DrawingTool) observable;
+			AbstractDrawing drawing = drawingTool.getTemporalDrawing();
+			AbstractUser    user = drawing.getUser();
 			
 			if (user != null && user.isVisible())
-				drawDrawing(drawingArea, drawing, user.getCustomProperties());
+				//drawDrawing(drawingArea, drawing, user.getCustomProperties());
+				drawing.draw(drawingArea);
 			
 		} else if (observable instanceof Zoom) {
 			float newZoom = (Float) data;
@@ -504,44 +507,44 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 //	}
 	
 	
-	private void drawDrawing(Graphics2D g, Drawing drawing, PaintProperty[] overridedProperties) {
-		if (drawing != null && drawing.isVisible()) {
-			g.setRenderingHints(rh);
-			
-			if (drawing.hasAlphaProperty()) {
-				if (overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_ALPHA] != null)
-					g.setComposite(((PaintPropertyAlpha)overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_ALPHA]).getComposite());
-				else
-					g.setComposite(drawing.getPaintPropertyAlpha().getComposite());
-			}
-			
-			if (drawing.hasColorProperty()) {
-				if (overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR] != null)
-					g.setColor(((PaintPropertyColor)overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR]).getColor());
-				else
-					g.setColor(drawing.getPaintPropertyColor().getColor());
-			}
-			
-			if (drawing.hasStrokeProperty()) {
-				if (overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_STROKE] != null)
-					g.setStroke(((PaintPropertyStroke)overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_STROKE]).getStroke());
-				else
-					g.setStroke(drawing.getPaintPropertyStroke().getStroke());
-			}
-			
-			if (drawing.hasShape())
-				g.draw(drawing.getShape());
-			
-			if (drawing.hasFontProperty()) {
-					if (overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_FONT] != null) 
-						g.setFont(((PaintPropertyFont)overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_FONT]).getFont());
-					else
-						g.setFont(drawing.getPaintPropertyFont().getFont());
-					
-				g.drawString(drawing.getText(), drawing.getTextX(), drawing.getTextY());
-			}
-		}
-	}
+//	private void drawDrawing(Graphics2D g, Drawing drawing, PaintProperty[] overridedProperties) {
+//		if (drawing != null && drawing.isVisible()) {
+//			g.setRenderingHints(rh);
+//			
+//			if (drawing.hasAlphaProperty()) {
+//				if (overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_ALPHA] != null)
+//					g.setComposite(((PaintPropertyAlpha)overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_ALPHA]).getComposite());
+//				else
+//					g.setComposite(drawing.getPaintPropertyAlpha().getComposite());
+//			}
+//			
+//			if (drawing.hasColorProperty()) {
+//				if (overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR] != null)
+//					g.setColor(((PaintPropertyColor)overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR]).getColor());
+//				else
+//					g.setColor(drawing.getPaintPropertyColor().getColor());
+//			}
+//			
+//			if (drawing.hasStrokeProperty()) {
+//				if (overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_STROKE] != null)
+//					g.setStroke(((PaintPropertyStroke)overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_STROKE]).getStroke());
+//				else
+//					g.setStroke(drawing.getPaintPropertyStroke().getStroke());
+//			}
+//			
+//			if (drawing.hasShape())
+//				g.draw(drawing.getShape());
+//			
+//			if (drawing.hasFontProperty()) {
+//					if (overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_FONT] != null) 
+//						g.setFont(((PaintPropertyFont)overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_FONT]).getFont());
+//					else
+//						g.setFont(drawing.getPaintPropertyFont().getFont());
+//					
+//				g.drawString(drawing.getText(), drawing.getTextX(), drawing.getTextY());
+//			}
+//		}
+//	}
 
 
 	/**
@@ -781,8 +784,6 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 	 */
 	@Override
 	public void mousePressed(MouseEvent event) {
-		//Utils.printEventInfo(event);
-		
 		/* Do nothing if some coordinate is negative */
 		if (event.getX() < 0 || event.getY() < 0)
 			return;
@@ -792,7 +793,6 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 			scrollingPoint = new java.awt.Point(event.getX(), event.getY());
 			return;
 		}
-		
 		
 		IToolBoxState toolBoxState = user.getToolBoxModel();
 		Tool usedTool = toolBoxState.getLastUsedTool();
@@ -808,22 +808,18 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 		if (event.getButton() == MouseEvent.BUTTON1) {
 			if (usedTool instanceof DrawingTool) {
 				DrawingTool drawingTool = (DrawingTool) usedTool;
-				Drawing temporalDrawing = drawingTool.getTemporalDrawing();
+				AbstractDrawing temporalDrawing = drawingTool.getTemporalDrawing();
 				
 				temporalDrawing.setUser(user);
 				user.setTemporalDrawing(temporalDrawing);
 				
-				if (drawingTool.hasAlphaCapability())
-					drawingTool.setAlpha(toolBoxState.getOpacityProperty());
-
-				if (drawingTool.hasColorCapability())
-					drawingTool.setColor(toolBoxState.getColorProperty());
-
-				if (drawingTool.hasStrokeCapability())
-					drawingTool.setStroke(toolBoxState.getStrokeProperty());
-
-				if (drawingTool.hasFontCapability())
-					drawingTool.setFont(toolBoxState.getFontProperty());
+				drawingTool.setPaintProperties(new PaintProperty[] {
+						toolBoxState.getOpacityProperty(),
+						toolBoxState.getColorProperty(),
+						toolBoxState.getStrokeProperty(),
+						toolBoxState.getFontProperty(),
+						toolBoxState.getColorProperty()
+				});
 			}
 			
 			if (usedTool.isOnPressSupported())
@@ -1003,27 +999,17 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 		if (usedTool.isOnMoveSupported()) {
 			if (usedTool instanceof DrawingTool) {
 				DrawingTool drawingTool = (DrawingTool) usedTool;
-				Drawing     drawing = drawingTool.getTemporalDrawing();
+				AbstractDrawing  drawing = drawingTool.getTemporalDrawing();
+				
 				drawing.setUser(user);
-				if (drawingTool.hasAlphaCapability())
-					drawing.setAlpha(toolBoxState.getOpacityProperty());
-				
-				if (drawingTool.hasColorCapability())
-					drawing.setColor(toolBoxState.getColorProperty());
-				
-				if (drawingTool.hasStrokeCapability())
-					drawing.setStroke(toolBoxState.getStrokeProperty());
-				
-				if (drawingTool.hasFontCapability())
-					drawing.setFont(toolBoxState.getFontProperty());
-				
-				if (drawingTool.hasColorCapability())
-					drawing.setColor(toolBoxState.getColorProperty());
-				
-//				drawingTool.onMove(event.getX(), event.getY());
+				drawingTool.setPaintProperties(new PaintProperty[] {
+						toolBoxState.getOpacityProperty(),
+						toolBoxState.getColorProperty(),
+						toolBoxState.getStrokeProperty(),
+						toolBoxState.getFontProperty(),
+						toolBoxState.getColorProperty()
+				});
 				drawingTool.onMove(xZoomOffset, yZoomOffset);
-				
-//				user.setTemporalDrawing(drawingTool.getDrawing());
 			}
 			
 		}

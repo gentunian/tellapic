@@ -56,7 +56,7 @@ final public class MarkerNet extends Marker {
 	@Override
 	public void onPress(int x, int y, int button, int mask) {
 		super.onPress(x, y, button, mask);
-		Drawing drawing = super.getTemporalDrawing();
+		DrawingShape drawing = (DrawingShape) super.getTemporalDrawing();
 		if (NetManager.getInstance().isConnected() && avoidLoopback) {
 			int wrappedEvent = getToolId();
 			if (button == MouseEvent.BUTTON1)
@@ -112,7 +112,7 @@ final public class MarkerNet extends Marker {
 					eventExtMod = tellapicConstants.EVENT_CTL_DOWN;
 
 					
-				Drawing drawing = super.getTemporalDrawing();
+				DrawingShape drawing = (DrawingShape) super.getTemporalDrawing();
 				tellapic.tellapic_send_drw_using(
 						NetManager.getInstance().getSocket(),
 						wrappedEvent,
@@ -141,7 +141,7 @@ final public class MarkerNet extends Marker {
 	public void onRelease(int x, int y, int button, int mask) {
 		super.onRelease(x, y, button, mask);
 		
-		Drawing drawing = super.getTemporalDrawing();
+		DrawingShape drawing = (DrawingShape) super.getTemporalDrawing();
 		if (drawing == null)
 			return ;
 		

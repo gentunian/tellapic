@@ -28,7 +28,7 @@ import javax.swing.tree.TreePath;
 import org.jdesktop.swingx.tree.TreeModelSupport;
 import org.jdesktop.swingx.treetable.TreeTableModel;
 
-import ar.com.tellapic.graphics.Drawing;
+import ar.com.tellapic.graphics.AbstractDrawing;
 import ar.com.tellapic.graphics.DrawingAreaView;
 import ar.com.tellapic.utils.Utils;
 
@@ -306,37 +306,19 @@ public class UserManager implements IUserManager, IUserManagerState, TreeTableMo
 				value = "[chat]";
 				break;
 			}
-		} else if( node instanceof Drawing) {
+		} else if( node instanceof AbstractDrawing) {
 			switch(column) {
 			case 0:
 				value = node;
 				break;
 			case 1:
-				value = ((Drawing)node).isVisible();
+				value = ((AbstractDrawing)node).isVisible();
 				break;
 			default:
 				value = false;
 				break;
 			}
 		}
-//		
-//		Object value = null;
-//		if (column == 0) {
-//			if (node instanceof Collection<?> || node instanceof HashMap<?,?>)
-//				value = "Users";
-//			else
-//				value = node;
-//		} else if (column == 1) {
-//			if (node instanceof AbstractUser)
-//				value = ((AbstractUser)node).isVisible();
-//			else if (node instanceof Drawing)
-//				value = ((Drawing)node).isVisible();
-//			else
-//				value = false;
-//		} else if (column == 2) {
-//			value = (node instanceof AbstractUser);
-//		}
-//		Utils.logMessage("getValueAt("+node+" , "+column+") = "+value);
 		return value;
 	}
 
@@ -365,10 +347,10 @@ public class UserManager implements IUserManager, IUserManagerState, TreeTableMo
 				break;
 			}
 		}
-		else if (node instanceof Drawing) {
+		else if (node instanceof AbstractDrawing) {
 			switch(column) {
 			case 1: 
-				((Drawing)node).setVisible((Boolean)value);
+				((AbstractDrawing)node).setVisible((Boolean)value);
 				break;
 			case 2:
 				break;
@@ -423,7 +405,7 @@ public class UserManager implements IUserManager, IUserManagerState, TreeTableMo
 			count = user.getDrawings().size();
 //			Utils.logMessage("getchildCount USER: "+count);
 			
-		} else if (parent instanceof Drawing) {
+		} else if (parent instanceof AbstractDrawing) {
 //			Utils.logMessage("getchildCount DRAWING: "+count);
 			count = 0;
 		} else {
@@ -504,8 +486,8 @@ public class UserManager implements IUserManager, IUserManagerState, TreeTableMo
 	@Override
 	public void update(Observable o, Object arg) {
 		AbstractUser user = (AbstractUser) o;
-		ArrayList<Drawing> childs = user.getDrawings();
-		if (arg instanceof Drawing) {
+		ArrayList<AbstractDrawing> childs = user.getDrawings();
+		if (arg instanceof AbstractDrawing) {
 			if (childs.contains(arg))
 				tms.fireChildAdded(new TreePath(new Object[]{ getRoot(), user }), childs.indexOf(arg), arg);
 			
@@ -518,7 +500,7 @@ public class UserManager implements IUserManager, IUserManagerState, TreeTableMo
 			
 		} else if (arg instanceof Object[]) {
 			int index = (Integer)((Object[]) arg)[1];
-			Drawing drawing = (Drawing)((Object[])arg)[0];
+			AbstractDrawing drawing = (AbstractDrawing)((Object[])arg)[0];
 			tms.fireChildRemoved(new TreePath(new Object[]{ getRoot(), user }), index, drawing);
 		}
 		

@@ -20,7 +20,7 @@ public class Marker extends DrawingTool {
 	private static final float  DEFAULT_MITER_LIMIT = 1;
 	private Line2D              line;
 	private Point2D             firstPoint;
-//	private Drawing             temporalDrawing;
+	private DrawingShape        temporalDrawing;
 	private boolean             inUse;
 
 	
@@ -29,7 +29,7 @@ public class Marker extends DrawingTool {
 		super(tellapicConstants.TOOL_MARKER, name, MARKER_ICON_PATH , Utils.msg.getString("markertooltip"), Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 		firstPoint = new Point2D.Double();
 		inUse = false;
-		temporalDrawing = new Drawing(getName());
+		temporalDrawing = new DrawingShape(getName());
 		//setToolCursor(MARKER_ICON_PATH, 2, 14);
 	}
 	
@@ -183,42 +183,42 @@ public class Marker extends DrawingTool {
 		return true;
 	}
 
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#setAplha(ar.com.tellapic.graphics.PaintPropertyAlpha)
-	 */
-	@Override
-	public void setAlpha(PaintPropertyAlpha alpha) {
-		temporalDrawing.setAlpha(alpha);
-		setChanged();
-		notifyObservers(temporalDrawing);
-	}
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#setColor(ar.com.tellapic.graphics.PaintPropertyColor)
-	 */
-	@Override
-	public void setColor(PaintPropertyColor color) {
-		temporalDrawing.setColor(color);
-		setChanged();
-		notifyObservers(temporalDrawing);
-	}
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#setFont(ar.com.tellapic.graphics.PaintPropertyFont)
-	 */
-	@Override
-	public void setFont(PaintPropertyFont font) {
-	}
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#setStroke(ar.com.tellapic.graphics.PaintPropertyStroke)
-	 */
-	@Override
-	public void setStroke(PaintPropertyStroke stroke) {
-		temporalDrawing.setStroke(stroke);
-		setChanged();
-		notifyObservers(temporalDrawing);
-	}
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#setAplha(ar.com.tellapic.graphics.PaintPropertyAlpha)
+//	 */
+//	@Override
+//	public void setAlpha(PaintPropertyAlpha alpha) {
+//		temporalDrawing.setAlpha(alpha);
+//		setChanged();
+//		notifyObservers(temporalDrawing);
+//	}
+//
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#setColor(ar.com.tellapic.graphics.PaintPropertyColor)
+//	 */
+//	@Override
+//	public void setColor(PaintPropertyColor color) {
+//		temporalDrawing.setColor(color);
+//		setChanged();
+//		notifyObservers(temporalDrawing);
+//	}
+//
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#setFont(ar.com.tellapic.graphics.PaintPropertyFont)
+//	 */
+//	@Override
+//	public void setFont(PaintPropertyFont font) {
+//	}
+//
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#setStroke(ar.com.tellapic.graphics.PaintPropertyStroke)
+//	 */
+//	@Override
+//	public void setStroke(PaintPropertyStroke stroke) {
+//		temporalDrawing.setStroke(stroke);
+//		setChanged();
+//		notifyObservers(temporalDrawing);
+//	}
 
 
 	/* (non-Javadoc)
@@ -324,5 +324,31 @@ public class Marker extends DrawingTool {
 	@Override
 	public float getDefaultMiterLimit() {
 		return DEFAULT_MITER_LIMIT;
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#getTemporalDrawing()
+	 */
+	@Override
+	public AbstractDrawing getTemporalDrawing() {
+		return temporalDrawing;
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#setPaintProperties(ar.com.tellapic.graphics.PaintProperty[])
+	 */
+	@Override
+	public void setPaintProperties(PaintProperty[] properties) {
+		for(int i = 0; i < properties.length; i++) {
+			if (properties[i] instanceof PaintPropertyStroke) {
+				temporalDrawing.setStroke((PaintPropertyStroke) properties[i]);
+			} else if (properties[i] instanceof PaintPropertyAlpha) {
+				temporalDrawing.setAlpha((PaintPropertyAlpha) properties[i]);
+			} else if (properties[i] instanceof PaintPropertyColor) {
+				temporalDrawing.setColor((PaintPropertyColor) properties[i]);
+			}
+		}
+		setChanged();
+		notifyObservers(temporalDrawing);
 	}
 }

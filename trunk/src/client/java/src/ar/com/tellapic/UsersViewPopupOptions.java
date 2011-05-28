@@ -33,7 +33,7 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 
 import ar.com.tellapic.chat.ChatViewController;
-import ar.com.tellapic.graphics.Drawing;
+import ar.com.tellapic.graphics.AbstractDrawing;
 import ar.com.tellapic.graphics.PaintPropertyColor;
 import ar.com.tellapic.utils.Utils;
 
@@ -66,8 +66,8 @@ public class UsersViewPopupOptions extends JPopupMenu {
 		controller = c;
 		if (data instanceof AbstractUser)
 			buildUserPopup((AbstractUser) data);
-		else if (data instanceof Drawing) 
-			buildDrawingPopup((Drawing)data);
+		else if (data instanceof AbstractDrawing) 
+			buildDrawingPopup((AbstractDrawing)data);
 		
 		addPopupMenuListener(new PopupMenuListener(){
 			public void popupMenuCanceled(PopupMenuEvent e) {}
@@ -83,7 +83,7 @@ public class UsersViewPopupOptions extends JPopupMenu {
 	/**
 	 * @param data
 	 */
-	private void buildDrawingPopup(final Drawing drawing) {
+	private void buildDrawingPopup(final AbstractDrawing drawing) {
 		/* +------------------------------+ */
 		/* |          <ToolName>          | /
 		/* +------------------------------+ */ 
