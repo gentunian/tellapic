@@ -36,10 +36,11 @@ import javax.swing.SwingUtilities;
 
 import ar.com.tellapic.chat.ChatClientModel;
 import ar.com.tellapic.chat.Message;
-import ar.com.tellapic.graphics.Drawing;
+import ar.com.tellapic.graphics.AbstractDrawing;
 import ar.com.tellapic.graphics.DrawingTool;
 import ar.com.tellapic.graphics.IPaintPropertyController;
 import ar.com.tellapic.graphics.IToolBoxController;
+import ar.com.tellapic.graphics.PaintProperty;
 import ar.com.tellapic.graphics.Tool;
 import ar.com.tellapic.graphics.ToolBoxModel;
 import ar.com.tellapic.graphics.ToolFactory;
@@ -801,18 +802,24 @@ public class NetManager extends Observable implements Runnable {
 		/* Both text and stroke has color properties */
 		c.handleColorChange(color);
 
-		
-		if (usedTool.hasAlphaCapability())
-			usedTool.setAlpha(toolBoxState.getOpacityProperty());
-
-		if (usedTool.hasColorCapability())
-			usedTool.setColor(toolBoxState.getColorProperty());
-
-		if (usedTool.hasStrokeCapability())
-			usedTool.setStroke(toolBoxState.getStrokeProperty());
-
-		if (usedTool.hasFontCapability())
-			usedTool.setFont(toolBoxState.getFontProperty());
+		usedTool.setPaintProperties(new PaintProperty[] {
+				toolBoxState.getOpacityProperty(),
+				toolBoxState.getColorProperty(),
+				toolBoxState.getStrokeProperty(),
+				toolBoxState.getFontProperty(),
+				toolBoxState.getColorProperty()
+		});
+//		if (usedTool.hasAlphaCapability())
+//			usedTool.setAlpha(toolBoxState.getOpacityProperty());
+//
+//		if (usedTool.hasColorCapability())
+//			usedTool.setColor(toolBoxState.getColorProperty());
+//
+//		if (usedTool.hasStrokeCapability())
+//			usedTool.setStroke(toolBoxState.getStrokeProperty());
+//
+//		if (usedTool.hasFontCapability())
+//			usedTool.setFont(toolBoxState.getFontProperty());
 
 		if (usedTool.isOnPressSupported())
 			usedTool.onPress(
@@ -838,7 +845,7 @@ public class NetManager extends Observable implements Runnable {
 					swingMask
 			);
 
-		Drawing drawing = usedTool.finishDrawing();
+		AbstractDrawing drawing = usedTool.finishDrawing();
 
 		if (drawing == null) 
 			return;
@@ -925,7 +932,7 @@ public class NetManager extends Observable implements Runnable {
 
 		/* Get an instance of the used tool */
 		DrawingTool usedTool = (DrawingTool) toolBoxState.getLastUsedTool();
-		Drawing temporalDrawing = usedTool.getTemporalDrawing();
+		AbstractDrawing temporalDrawing = usedTool.getTemporalDrawing();
 		temporalDrawing.setUser(remoteUser);
 		remoteUser.setTemporalDrawing(temporalDrawing);
 		
@@ -948,20 +955,27 @@ public class NetManager extends Observable implements Runnable {
 			c.handleWidthChange(drawingData.getWidth());
 			c.handleColorChange(color);
 
-			if (usedTool.hasAlphaCapability())
-				usedTool.setAlpha(toolBoxState.getOpacityProperty());
-
-			if (usedTool.hasColorCapability())
-				usedTool.setColor(toolBoxState.getColorProperty());
-
-			if (usedTool.hasStrokeCapability())
-				usedTool.setStroke(toolBoxState.getStrokeProperty());
-
-			if (usedTool.hasFontCapability())
-				usedTool.setFont(toolBoxState.getFontProperty());
-
-			if (usedTool.hasColorCapability())
-				usedTool.setColor(toolBoxState.getColorProperty());
+			usedTool.setPaintProperties(new PaintProperty[] {
+						toolBoxState.getOpacityProperty(),
+						toolBoxState.getColorProperty(),
+						toolBoxState.getStrokeProperty(),
+						toolBoxState.getFontProperty(),
+						toolBoxState.getColorProperty()
+				});
+//			if (usedTool.hasAlphaCapability())
+//				usedTool.setAlpha(toolBoxState.getOpacityProperty());
+//
+//			if (usedTool.hasColorCapability())
+//				usedTool.setColor(toolBoxState.getColorProperty());
+//
+//			if (usedTool.hasStrokeCapability())
+//				usedTool.setStroke(toolBoxState.getStrokeProperty());
+//
+//			if (usedTool.hasFontCapability())
+//				usedTool.setFont(toolBoxState.getFontProperty());
+//
+//			if (usedTool.hasColorCapability())
+//				usedTool.setColor(toolBoxState.getColorProperty());
 
 			usedTool.onPress(
 					(int)drawingData.getPoint1().getX(),
@@ -990,7 +1004,7 @@ public class NetManager extends Observable implements Runnable {
 					swingButton,
 					swingMask
 			);
-			Drawing drawing = usedTool.finishDrawing();
+			AbstractDrawing drawing = usedTool.finishDrawing();
 
 			if (drawing == null) 
 				return;

@@ -77,10 +77,7 @@ public class UserGUIBuilder {
 	private ChatView                chatView;
 	private JFrame                  mainWindow;
 	private JScrollPane             scrollPane;
-//	private RuleHeader              topRule;
-//	private RuleHeader              leftRule;
-//	private JPanel                  buttonCorner;
-//	private JToggleButton           isMetric;
+
 	
 	public UserGUIBuilder(LocalUser user) throws NullPointerException{
 		if (user == null)
@@ -98,7 +95,6 @@ public class UserGUIBuilder {
 		//                       For remote user, emulates the user selection on a tool with a received packet
 		//                       from the net.
 		PaintPropertyController propertyController = new PaintPropertyController(model);
-		//DrawingLocalController  drawingController  = new DrawingLocalController();
 		IToolBoxController      toolViewController = new ToolBoxController(model);
 		
 		user.setToolboxController(toolViewController);
@@ -116,42 +112,11 @@ public class UserGUIBuilder {
 		userView.setChatViewController(c);
 		
 		
-		// Get the drawing area model instance. Its where all Drawing objects will live.
-		//DrawingAreaModel  drawingAreaModel = DrawingAreaModel.getInstance();
-		
 		// Get the area where all the living Drawing objects will be drawn.
 		DrawingAreaView   drawingAreaView  = DrawingAreaView.getInstance();
-//		user.addObserver(drawingAreaView);
-		//user.addObserver(userView);
-		//user.notifyObservers(user);
 		scrollPane = new JScrollPane(drawingAreaView);
-		
-//		topRule   = new RuleHeader(RuleHeader.HORIZONTAL, true);
-//		leftRule = new RuleHeader(RuleHeader.VERTICAL, true);
-//		buttonCorner = new JPanel();
-//		JToggleButton isMetric     = new JToggleButton("cm", true);
-//		isMetric.setFont(new Font("SansSerif", Font.PLAIN, 8));
-//		isMetric.addItemListener(new ItemListener() {
-//			@Override
-//			public void itemStateChanged(ItemEvent e) {
-//				JToggleButton isMetric = (JToggleButton) e.getSource();
-//				boolean v = (e.getStateChange() == ItemEvent.SELECTED);
-//				((RuleHeader)scrollPane.getColumnHeader().getView()).setIsMetric(v);
-//				((RuleHeader)scrollPane.getRowHeader().getView()).setIsMetric(v);
-//				if (v)
-//					isMetric.setText("cm");
-//				else
-//					isMetric.setText("in");
-//			}
-//		});
-//		buttonCorner.add(isMetric);
-//		
 		scrollPane.setName(drawingAreaView.getName());
-
-//		propertyController.setDrawingController(drawingController);
-		
 		drawingAreaView.setPropertyController(propertyController);
-		
 		toolView.setController(toolViewController);
 		propertyView.setController(propertyController);
 		
@@ -180,10 +145,7 @@ public class UserGUIBuilder {
 		grid.add(10, 0, 350, 200, dock3);
 		grid.add(360, 0, 100, 100, dock5);
 		grid.add(360, 100, 100, 100, dock4);
-//		grid.add(0, 0, 20, 20, dock1);
-//		grid.add(2, 0, 200, 40, dock3);
-//		grid.add(200, 1, 30, 50, dock5);
-//		grid.add(200, 2, 30, 50, dock4);
+
 		
 		content.deploy(grid);
 		

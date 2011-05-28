@@ -53,7 +53,7 @@ import org.jdesktop.swingx.renderer.LabelProvider;
 import org.jdesktop.swingx.renderer.StringValue;
 
 import ar.com.tellapic.chat.ChatViewController;
-import ar.com.tellapic.graphics.Drawing;
+import ar.com.tellapic.graphics.AbstractDrawing;
 import ar.com.tellapic.graphics.PaintPropertyColor;
 import ar.com.tellapic.utils.Utils;
 
@@ -91,6 +91,7 @@ public class UsersView extends JPanel {
 		final JXTreeTable tree = new JXTreeTable(UserManager.getInstance());;
 		addKeyShortcuts(tree);
 		tree.addMouseListener(new MouseAdapter(){
+			/* This is a workarround to manage mouse events in the Tree View */
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				int colSel = tree.getColumnModel().getColumnIndexAtX(e.getX());
@@ -115,8 +116,8 @@ public class UsersView extends JPanel {
 							chatViewController.initiateChat(user);
 							break;
 						}
-					} else if (o instanceof Drawing) {
-						Drawing drawing = (Drawing) o;
+					} else if (o instanceof AbstractDrawing) {
+						AbstractDrawing drawing = (AbstractDrawing) o;
 						switch(colSel) {
 						case 1:
 //							userOptionsController.toggleDrawingVisibility(drawing);
@@ -196,8 +197,8 @@ public class UsersView extends JPanel {
 			public void actionPerformed(ActionEvent e) {
 				int row = tree.getSelectedRow();
 				Object value = tree.getValueAt(row, tree.getHierarchicalColumn());
-				if (value instanceof Drawing) {
-					Drawing drawing = (Drawing) value;
+				if (value instanceof AbstractDrawing) {
+					AbstractDrawing drawing = (AbstractDrawing) value;
 					drawing.getUser().changeDrawingVisibility(drawing);
 				} else if (value instanceof AbstractUser)
 					((AbstractUser)value).changeVisibility();
@@ -234,9 +235,9 @@ public class UsersView extends JPanel {
 			public void actionPerformed(ActionEvent e) {
 				int row = tree.getSelectedRow();
 				Object value = tree.getValueAt(row, 0);
-				if (value instanceof Drawing) {
-					AbstractUser user = ((Drawing)value).getUser();
-					user.removeDrawing((Drawing) value);
+				if (value instanceof AbstractDrawing) {
+					AbstractUser user = ((AbstractDrawing)value).getUser();
+					user.removeDrawing((AbstractDrawing) value);
 				}
 			}
 		});
@@ -424,7 +425,7 @@ public class UsersView extends JPanel {
 				str = Utils.msg.getString("userlist");
 			else if (value instanceof AbstractUser)
 				str = value.toString();
-			else if (value instanceof Drawing)
+			else if (value instanceof AbstractDrawing)
 				str = value.toString();
 			
 			return str;
@@ -442,7 +443,7 @@ public class UsersView extends JPanel {
 				icon = usersIcon;
 			else if (value instanceof AbstractUser)
 				icon = userIcon;
-			else if (value instanceof Drawing)
+			else if (value instanceof AbstractDrawing)
 				icon = drawingIcon;
 			else if (value instanceof String) {
 				if (value.toString().startsWith("[chat]"))

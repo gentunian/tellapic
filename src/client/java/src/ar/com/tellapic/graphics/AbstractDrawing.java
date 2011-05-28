@@ -17,7 +17,7 @@
  */  
 package ar.com.tellapic.graphics;
 
-import java.awt.Shape;
+import java.awt.Graphics2D;
 
 import ar.com.tellapic.AbstractUser;
 
@@ -27,9 +27,9 @@ import ar.com.tellapic.AbstractUser;
  *          sebastian.treu(at)gmail.com
  *
  */
-public abstract class AbstractDrawing {
+public abstract class AbstractDrawing implements Cloneable {
 
-	
+	private String              name;
 	private long                number;
 	private boolean             isVisible;
 	private AbstractUser        user;
@@ -52,62 +52,20 @@ public abstract class AbstractDrawing {
 	}
 	
 	/**
-	 * @return the text
+	 * 
+	 * @return
 	 */
-	public abstract String getText();
-	
-	/**
-	 * @param shape the shape to set
-	 */
-	public abstract void setShape(Shape shape);
-	
-	/**
-	 * @return the shape
-	 */
-	public abstract Shape getShape();
-	
-	/**
-	 * @return the stroke
-	 */
-	public abstract PaintPropertyStroke getPaintPropertyStroke();
-	
-	/**
-	 * @return the color
-	 */
-	public abstract PaintPropertyColor getPaintPropertyColor();
-
-	/**
-	 * @return the alpha
-	 */
-	public abstract PaintPropertyAlpha getPaintPropertyAlpha();
-
-	/**
-	 * @return the font
-	 */
-	public abstract PaintPropertyFont getPaintPropertyFont();
-	
 	public boolean isVisible() {
 		return isVisible;
 	}
 	
+	/**
+	 * 
+	 * @param visible
+	 */
 	public void setVisible(boolean visible) {
 		isVisible = visible;
 	}
-	/**
-	 * 
-	 * @return
-	 */
-//	public abstract PaintPropertyZoom getPaintPropertyZoom();
-	
-	public abstract boolean hasFontProperty();
-	
-	public abstract boolean hasColorProperty();
-	
-	public abstract boolean hasStrokeProperty();
-	
-	public abstract boolean hasAlphaProperty();
-	
-//	public abstract boolean hasZoomProperty();
 
 	/**
 	 * @param user the user to set
@@ -123,5 +81,39 @@ public abstract class AbstractDrawing {
 		return user;
 	}
 	
+	/**
+	 * 
+	 * @param g
+	 */
+	public abstract void draw(Graphics2D g);
+
+	/**
+	 * @param name the name to set
+	 */
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	/**
+	 * @return the name
+	 */
+	public String getName() {
+		return name;
+	}
 	
+	public abstract void cloneProperties();
+	
+	/**
+	 * 
+	 */
+	public Object clone() {
+		try {
+			cloneProperties();
+			return super.clone();
+		}
+		catch (CloneNotSupportedException e) {
+			// This should never happen
+			throw new InternalError(e.toString());
+		}
+	}
 }

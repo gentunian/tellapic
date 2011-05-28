@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.NoSuchElementException;
 import java.util.Observable;
 
-import ar.com.tellapic.graphics.Drawing;
+import ar.com.tellapic.graphics.AbstractDrawing;
 import ar.com.tellapic.graphics.IPaintPropertyController;
 import ar.com.tellapic.graphics.IToolBoxController;
 import ar.com.tellapic.graphics.PaintProperty;
@@ -57,7 +57,7 @@ public abstract class AbstractUser extends Observable  {
 	//complete information to be drawn on the screen. This objects will live as long as the
 	//local user wants, that is, if a user gets disconnected, the user will appear as disconnected
 	//and it won't be removed unless the local user wants to.
-	private ArrayList<Drawing>      drawingList;
+	private ArrayList<AbstractDrawing>      drawingList;
 	
 	
 	// This is the first drawing, added to the list of drawings, that has not been drawn yet on screen.
@@ -73,13 +73,13 @@ public abstract class AbstractUser extends Observable  {
 	// +-----+-----+-----+-----+ ... +-----+-----+
 	//
 	// That means that updating 'firstNotDrawn' is just selecting the next not drawn object if applicable.
-//	private Drawing                 firstNotDrawn;
+//	private AbstractDrawing                 firstNotDrawn;
 
 	
 	// The firstNotDrawn is a candidate to be the lastDrawn when it gets drawn. This is useful to know
 	// which drawing was the last being drawn, and views can get this field instead of searching the whole
 	// list.
-//	private Drawing                 lastDrawn;
+//	private AbstractDrawing                 lastDrawn;
 	
 	
 	//This is the actual drawing object. That is, the object that the user *is* drawing. This is used
@@ -87,7 +87,7 @@ public abstract class AbstractUser extends Observable  {
 	//and creating the desired form, size, transparency, etc. This is a candidate to be added to the drawing
 	//list and to be a 'firstNotDrawn' object accordingly, if the user desires to complete the drawing. Else,
 	//this object will be discarded and not drawn.
-	private Drawing                 temporalDrawing;
+	private AbstractDrawing                 temporalDrawing;
 	
 	
 	// User properties
@@ -106,7 +106,7 @@ public abstract class AbstractUser extends Observable  {
 		visible = true;
 		removed = false;
 		toolBox   = new ToolBoxModel();
-		drawingList = new ArrayList<Drawing>();
+		drawingList = new ArrayList<AbstractDrawing>();
 		//TODO: the idea was that local user can set how to paint all paintings of a user
 		customProperties = new PaintProperty[4];
 //		addObserver(DrawingAreaView.getInstance());
@@ -131,7 +131,7 @@ public abstract class AbstractUser extends Observable  {
 	 * @param drawing
 	 * @throws NullPointerException
 	 */
-	public synchronized void addDrawing(Drawing drawing) throws NullPointerException {
+	public synchronized void addDrawing(AbstractDrawing drawing) throws NullPointerException {
 		if (drawing == null)
 			throw new NullPointerException("Drawing should not be null");
 		
@@ -249,7 +249,7 @@ public abstract class AbstractUser extends Observable  {
 	 * 
 	 * @return
 	 */
-	public ArrayList<Drawing> getDrawings() {
+	public ArrayList<AbstractDrawing> getDrawings() {
 		return drawingList;
 	}
 	
@@ -258,7 +258,7 @@ public abstract class AbstractUser extends Observable  {
 	 * 
 	 * @param drawing
 	 */
-	public void changeDrawingVisibility(Drawing drawing) {
+	public void changeDrawingVisibility(AbstractDrawing drawing) {
 		if (!drawingList.contains(drawing))
 			throw new NoSuchElementException("Drawing is not a member of this user drawing list");
 		
@@ -273,7 +273,7 @@ public abstract class AbstractUser extends Observable  {
 	 * 
 	 * @param drawing
 	 */
-	public void setDrawingVisible(Drawing drawing, boolean visible) {
+	public void setDrawingVisible(AbstractDrawing drawing, boolean visible) {
 		if (!drawingList.contains(drawing))
 			throw new NoSuchElementException("Drawing is not a member of this user drawing list");
 		
@@ -370,7 +370,7 @@ public abstract class AbstractUser extends Observable  {
 	/**
 	 * @param drawing
 	 */
-	public synchronized boolean removeDrawing(Drawing drawing) {
+	public synchronized boolean removeDrawing(AbstractDrawing drawing) {
 		if (drawing == null)
 			return false;
 		
@@ -397,7 +397,7 @@ public abstract class AbstractUser extends Observable  {
 		if (drawingList.isEmpty())
 			return false;
 		
-		Drawing drawing = drawingList.get(drawingList.size() - 1);
+		AbstractDrawing drawing = drawingList.get(drawingList.size() - 1);
 		
 		return removeDrawing(drawing);
 	}
@@ -423,7 +423,7 @@ public abstract class AbstractUser extends Observable  {
 	/**
 	 * @return
 	 */
-	public Drawing getDrawing() {
+	public AbstractDrawing getDrawing() {
 		return temporalDrawing;
 	}
 
@@ -431,7 +431,7 @@ public abstract class AbstractUser extends Observable  {
 	/**
 	 * @param temporalDrawing2
 	 */
-	public void setTemporalDrawing(Drawing temporalDrawing) {
+	public void setTemporalDrawing(AbstractDrawing temporalDrawing) {
 		this.temporalDrawing = temporalDrawing; 
 	}
 
@@ -448,7 +448,7 @@ public abstract class AbstractUser extends Observable  {
 	 * @param number
 	 */
 	public synchronized boolean removeDrawing(long number) {
-		Drawing drawing = findDrawing(number);
+		AbstractDrawing drawing = findDrawing(number);
 		
 		if (drawing == null)
 			return false;
@@ -461,9 +461,9 @@ public abstract class AbstractUser extends Observable  {
 	 * @param number
 	 * @return
 	 */
-	private Drawing findDrawing(long number) {
+	private AbstractDrawing findDrawing(long number) {
 		boolean found   = false;
-		Drawing drawing = null;
+		AbstractDrawing drawing = null;
 		
 		for(int i = 0; i < drawingList.size() && !found; i++) {
 			if (found = (drawingList.get(i).getNumber() == number))

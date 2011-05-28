@@ -147,9 +147,8 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 			throw new IllegalArgumentException("cap value must be one of CAP_SQUARE, CAP_ROUND or CAP_BUTT");
 		
 		strokeProperty.setEndCaps(cap);
-//		Utils.logMessage("stroke end caps property set to: "+strokeProperty.getEndCaps());
 		if (lastUsedTool instanceof DrawingTool) {
-			((DrawingTool) lastUsedTool).setStroke(strokeProperty);
+			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {strokeProperty});
 		}
 	}
 
@@ -169,7 +168,7 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 		strokeProperty.setDash(dash);
 		strokeProperty.setDash_phase(dashPhase);
 		if (lastUsedTool instanceof DrawingTool) {
-			((DrawingTool) lastUsedTool).setStroke(strokeProperty);
+			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {strokeProperty});
 		}
 	}
 
@@ -184,9 +183,8 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 		
 		strokeProperty.setLineJoins(join);
 		if (lastUsedTool instanceof DrawingTool) {
-			((DrawingTool) lastUsedTool).setStroke(strokeProperty);
+			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {strokeProperty});
 		}
-//		Utils.logMessage("stroke line joins property set to: "+strokeProperty.getLineJoins());
 	}
 
 
@@ -196,9 +194,8 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	@Override
 	public void setStrokePropertyMiterLimit(float width) {
 		strokeProperty.setMiterLimit(width);
-//		Utils.logMessage("stroke mitter limit property set to: "+strokeProperty.getMiterLimit());
 		if (lastUsedTool instanceof DrawingTool) {
-			((DrawingTool) lastUsedTool).setStroke(strokeProperty);
+			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {strokeProperty});
 		}
 	}
 
@@ -210,11 +207,10 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	public void setStrokePropertyWidth(double width) {
 		strokeProperty.setWidth(width);
 		if (lastUsedTool instanceof DrawingTool) {
-			((DrawingTool) lastUsedTool).setStroke(strokeProperty);
+			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {strokeProperty});
 		}
 		setChanged();
 		notifyObservers(new ActionData(UPDATE_TOOL, lastUsedTool));
-//		Utils.logMessage("stroke width property set to: "+strokeProperty.getWidth());
 	}
 
 
@@ -224,9 +220,8 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	@Override
 	public void setFontPropertyFace(String face) {
 		fontProperty.setFace(face);
-//		Utils.logMessage("Font face has been set to "+face);
 		if (lastUsedTool instanceof DrawingTool) {
-			((DrawingTool) lastUsedTool).setFont(fontProperty);
+			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {fontProperty});
 		}
 	}
 
@@ -237,9 +232,8 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	@Override
 	public void setFontPropertySize(float size) {
 		fontProperty.setSize(size);
-//		Utils.logMessage("Font size has been set to "+size);
 		if (lastUsedTool instanceof DrawingTool) {
-			((DrawingTool) lastUsedTool).setFont(fontProperty);
+			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {fontProperty});
 		}
 	}
 
@@ -250,9 +244,8 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	@Override
 	public void setFontPropertyStyle(int style) {
 		fontProperty.setStyle(style);
-//		Utils.logMessage("Font style has been set to "+style);
 		if (lastUsedTool instanceof DrawingTool) {
-			((DrawingTool) lastUsedTool).setFont(fontProperty);
+			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {fontProperty});
 		}
 	}
 
@@ -264,11 +257,10 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	public void setAlphaPropertyValue(double value) {
 		alphaProperty.alpha = (float) value;
 		if (lastUsedTool instanceof DrawingTool) {
-			((DrawingTool) lastUsedTool).setAlpha(alphaProperty);
+			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {alphaProperty});
 		}
 		setChanged();
 		notifyObservers(new ActionData(UPDATE_TOOL, lastUsedTool));
-//		Utils.logMessage("Alpha opacity has been set to "+value);
 	}
 
 
@@ -352,10 +344,9 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	@Override
 	public void setFontPropertyText(String text) {
 		fontProperty.setText(text);
-//		Utils.logMessage("Font text has been set to "+text);
 
 		if (lastUsedTool instanceof DrawingTool) {
-			((DrawingTool) lastUsedTool).setFont(fontProperty);
+			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {fontProperty});
 		}
 		setChanged();
 		notifyObservers(new ActionData(UPDATE_TOOL, lastUsedTool));
@@ -386,7 +377,7 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	public void setColorPropertyValue(Color color) {
 		colorProperty.setColor(color);
 		if (lastUsedTool instanceof DrawingTool) {
-			((DrawingTool) lastUsedTool).setColor(colorProperty);
+			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {colorProperty});
 		}
 		setChanged();
 		notifyObservers(new ActionData(UPDATE_TOOL, lastUsedTool));

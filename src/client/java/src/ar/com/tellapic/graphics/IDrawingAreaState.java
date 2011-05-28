@@ -20,37 +20,37 @@ import com.google.common.collect.ListMultimap;
  *
  */
 public interface IDrawingAreaState {
-
-	/**
-	 * Returns the list of drawn objects
-	 * 
-	 * @return the List of Drawing.
-	 */
-	public Collection<Map.Entry<AbstractUser,Drawing>> getDrawingCollection();
-	
-	/**
-	 * 
-	 * @return
-	 */
-	public ListMultimap<AbstractUser, Drawing> getDrawings();
-	
-	
-	/**
-	 * Returns the last drawn object
-	 * 
-	 * @return the last Drawing object.
-	 */
-	//public Drawing getLastDrawing();
-	
-	
-	/**
-	 * Returns the Drawing at position i in the list of Drawings.
-	 * 
-	 * @param i the index of the Drawing to be retrieved.
-	 * @return the Drawing at position i.
-	 * @throws IndexOutOfBoundsException if position i is out of bound in the list
-	 */
-	public List<Drawing> getDrawingsFrom(AbstractUser user) throws IndexOutOfBoundsException;
-	
-	
+//
+//	/**
+//	 * Returns the list of drawn objects
+//	 * 
+//	 * @return the List of Drawing.
+//	 */
+//	public Collection<Map.Entry<AbstractUser,Drawing>> getDrawingCollection();
+//	
+//	/**
+//	 * 
+//	 * @return
+//	 */
+//	public ListMultimap<AbstractUser, Drawing> getDrawings();
+//	
+//	
+//	/**
+//	 * Returns the last drawn object
+//	 * 
+//	 * @return the last Drawing object.
+//	 */
+//	//public Drawing getLastDrawing();
+//	
+//	
+//	/**
+//	 * Returns the Drawing at position i in the list of Drawings.
+//	 * 
+//	 * @param i the index of the Drawing to be retrieved.
+//	 * @return the Drawing at position i.
+//	 * @throws IndexOutOfBoundsException if position i is out of bound in the list
+//	 */
+//	public List<Drawing> getDrawingsFrom(AbstractUser user) throws IndexOutOfBoundsException;
+//	
+//	
 }

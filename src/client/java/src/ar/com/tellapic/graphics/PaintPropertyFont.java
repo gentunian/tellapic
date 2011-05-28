@@ -28,7 +28,7 @@ import java.awt.Font;
 public class PaintPropertyFont extends PaintProperty {
 	private String text;
 	private String face;
-	private float    size;
+	private float  size;
 	private int    style;
 	
 	public PaintPropertyFont() {

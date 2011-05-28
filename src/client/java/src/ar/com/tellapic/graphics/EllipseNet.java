@@ -55,7 +55,7 @@ final public class EllipseNet extends Ellipse {
 	public void onRelease(int x, int y, int button, int mask) {
 		super.onRelease(x, y, button, mask);
 		
-		Drawing drawing = super.getTemporalDrawing();
+		DrawingShape drawing = (DrawingShape) super.getTemporalDrawing();
 		
 		if (drawing == null)
 			return ;
