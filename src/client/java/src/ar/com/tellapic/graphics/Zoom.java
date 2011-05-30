@@ -4,6 +4,7 @@ import java.awt.Cursor;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Toolkit;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 
 import javax.swing.ComboBoxModel;
@@ -65,13 +66,13 @@ public final class Zoom extends ControlTool implements ComboBoxModel{
 	}
 	
 	
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#getInit()
-	 */
-	@Override
-	public Point2D getInit() {
-		return firstPoint;
-	}
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#getInit()
+//	 */
+//	@Override
+//	public Point2D getInit() {
+//		return firstPoint;
+//	}
 
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.ControlTool#hasZoomCapability()
@@ -88,110 +89,110 @@ public final class Zoom extends ControlTool implements ComboBoxModel{
 	public boolean isBeingUsed() {
 		return inUse;
 	}
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#isOnDragSupported()
-	 */
-	@Override
-	public boolean isOnDragSupported() {
-		return false;
-	}
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#isOnMoveSupported()
-	 */
-	@Override
-	public boolean isOnMoveSupported() {
-		return false;
-	}
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#isOnPressSupported()
-	 */
-	@Override
-	public boolean isOnPressSupported() {
-		return true;
-	}
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#isOnReleaseSupported()
-	 */
-	@Override
-	public boolean isOnReleaseSupported() {
-		return true;
-	}
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onDrag(int, int, int, int)
-	 */
-	@Override
-	public void onDrag(int x, int y, int button, int mask) {
-
-	}
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onMove(int, int)
-	 */
-	@Override
-	public void onMove(int x, int y) {
-
-	}
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onPause()
-	 */
-	@Override
-	public void onPause() {
-		inUse = false;
-	}
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onPress(int, int, int, int)
-	 */
-	@Override
-	public void onPress(int x, int y, int button, int mask) {
-		inUse = true;
-		firstPoint.setLocation(x, y);
-//		zoomFactor += ((zoomIn)? zoomStep : -1*zoomStep);
-		
-		if (zoomIn) {
-			zoomFactor += zoomStep;
-			if (zoomFactor > MAX_ZOOM_FACTOR) {
-				zoomFactor = MAX_ZOOM_FACTOR;
-				current = values.length - 1;
-			} else {
-				current++;
-			}
-		} else {
-			zoomFactor -= zoomStep;
-			if (zoomFactor < MIN_ZOOM_FACTOR) {
-				zoomFactor = MIN_ZOOM_FACTOR;
-				current = 0;
-			} else {
-				current --;
-			}
-		}
-	}
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onRelease(int, int, int, int)
-	 */
-	@Override
-	public void onRelease(int x, int y, int button, int mask) {
-		inUse = false;
-		dataListener.contentsChanged(new ListDataEvent(values, ListDataEvent.CONTENTS_CHANGED, 0, values.length));
-		setChanged();
-		notifyObservers(zoomFactor);
-	}
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onRestore()
-	 */
-	@Override
-	public void onRestore() {
-		if (!inUse)
-			inUse = true;
-	}
+//
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#isOnDragSupported()
+//	 */
+//	@Override
+//	public boolean isOnDragSupported() {
+//		return false;
+//	}
+//
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#isOnMoveSupported()
+//	 */
+//	@Override
+//	public boolean isOnMoveSupported() {
+//		return false;
+//	}
+//
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#isOnPressSupported()
+//	 */
+//	@Override
+//	public boolean isOnPressSupported() {
+//		return true;
+//	}
+//
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#isOnReleaseSupported()
+//	 */
+//	@Override
+//	public boolean isOnReleaseSupported() {
+//		return true;
+//	}
+//
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#onDrag(int, int, int, int)
+//	 */
+//	@Override
+//	public void onDrag(int x, int y, int button, int mask) {
+//
+//	}
+//
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#onMove(int, int)
+//	 */
+//	@Override
+//	public void onMove(int x, int y) {
+//
+//	}
+//
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#onPause()
+//	 */
+//	@Override
+//	public void onPause() {
+//		inUse = false;
+//	}
+//
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#onPress(int, int, int, int)
+//	 */
+//	@Override
+//	public void onPress(int x, int y, int button, int mask) {
+//		inUse = true;
+//		firstPoint.setLocation(x, y);
+////		zoomFactor += ((zoomIn)? zoomStep : -1*zoomStep);
+//		
+//		if (zoomIn) {
+//			zoomFactor += zoomStep;
+//			if (zoomFactor > MAX_ZOOM_FACTOR) {
+//				zoomFactor = MAX_ZOOM_FACTOR;
+//				current = values.length - 1;
+//			} else {
+//				current++;
+//			}
+//		} else {
+//			zoomFactor -= zoomStep;
+//			if (zoomFactor < MIN_ZOOM_FACTOR) {
+//				zoomFactor = MIN_ZOOM_FACTOR;
+//				current = 0;
+//			} else {
+//				current --;
+//			}
+//		}
+//	}
+//
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#onRelease(int, int, int, int)
+//	 */
+//	@Override
+//	public void onRelease(int x, int y, int button, int mask) {
+//		inUse = false;
+//		dataListener.contentsChanged(new ListDataEvent(values, ListDataEvent.CONTENTS_CHANGED, 0, values.length));
+//		setChanged();
+//		notifyObservers(zoomFactor);
+//	}
+//
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#onRestore()
+//	 */
+//	@Override
+//	public void onRestore() {
+//		if (!inUse)
+//			inUse = true;
+//	}
 
 
 	/**
@@ -290,6 +291,76 @@ public final class Zoom extends ControlTool implements ComboBoxModel{
 	 */
 	@Override
 	public void removeListDataListener(ListDataListener l) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseListener#mouseClicked(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseListener#mouseEntered(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseListener#mouseExited(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mouseExited(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseListener#mousePressed(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mousePressed(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseListener#mouseReleased(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseMotionListener#mouseDragged(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mouseDragged(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseMotionListener#mouseMoved(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mouseMoved(MouseEvent e) {
 		// TODO Auto-generated method stub
 		
 	}

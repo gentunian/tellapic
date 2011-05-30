@@ -17,10 +17,6 @@
  */  
 package ar.com.tellapic;
 
-
-
-
-
 /**
  * @author 
  *          Sebastian Treu
@@ -28,17 +24,8 @@ package ar.com.tellapic;
  *
  */
 public class LocalUser extends AbstractUser {
-	/*
-	private ToolBoxModel            toolBox;
-	private ToolViewController      toolBoxController;
-	private DrawingLocalController  drawingController;
-	private PaintPropertyController propertyController;
-	*/
+	
 	public static final String LOCAL_NAME = "Local";
-	//private DrawingLocalController  drawingController;
-//	private ToolBoxModel            toolBox;
-//	private PaintPropertyController propertyController;
-//	private ToolViewController      toolController;
 	
 	private static class Holder {
 		private static final LocalUser INSTANCE = new LocalUser(0, LOCAL_NAME);
@@ -46,12 +33,6 @@ public class LocalUser extends AbstractUser {
 	
 	private LocalUser(int id, String name) {
 		super(id, name);
-//		toolBox   = new ToolBoxModel();
-		//drawingController  = new DrawingLocalController(toolBox); //, DrawingAreaModel.getInstance(), DrawingAreaView.getInstance());
-//		propertyController = new PaintPropertyController(toolBox);
-//		toolController     = new ToolViewController(toolBox);
-		//UserGUIBuilder gui = 
-		
 	}
 	
 	public static LocalUser getInstance() {

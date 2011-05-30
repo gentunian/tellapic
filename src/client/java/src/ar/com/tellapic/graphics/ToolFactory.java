@@ -12,7 +12,7 @@ public class ToolFactory {
 	private static Map<Integer, String> registeredToolsClassNames = Collections.synchronizedMap(new HashMap<Integer,String>());
 	
 	public static boolean registerToolClassName(int id, String toolClassName) {
-		Utils.logMessage("Adding tool name "+toolClassName);
+		Utils.logMessage("Registering tool name "+toolClassName);
 //		Integer toolId = Integer.valueOf(id);
 		registeredToolsClassNames.put(id, toolClassName);
 		//TODO: WTF?

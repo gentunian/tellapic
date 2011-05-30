@@ -17,6 +17,8 @@
  */  
 package ar.com.tellapic.graphics;
 
+import java.awt.event.MouseEvent;
+
 import ar.com.tellapic.NetManager;
 import ar.com.tellapic.SessionUtils;
 import ar.com.tellapic.lib.tellapic;
@@ -29,16 +31,8 @@ import ar.com.tellapic.lib.tellapic;
  */
 final public class TextNet extends Text {
 
-	private boolean avoidLoopback = true;
-
-
 	public TextNet() {
 		super("TextNet");
-	}
-	
-	
-	public void setAvoidLoopback(boolean v) {
-		avoidLoopback  = v;
 	}
 	
 	
@@ -47,33 +41,34 @@ final public class TextNet extends Text {
 	 * @see ar.com.tellapic.graphics.Ellipse#onRelease(int)
 	 */
 	@Override
-	public void onRelease(int x, int y, int button, int mask) {
-		super.onRelease(x, y, button, mask);
+	public void mouseReleased(MouseEvent event) {
+		super.mouseReleased(event);
 		 
-		DrawingText drawing = (DrawingText) super.getTemporalDrawing();
-		if (drawing == null)
-			return ;
-		
-		if (NetManager.getInstance().isConnected() && avoidLoopback) {
-			
-			tellapic.tellapic_send_text(
-					NetManager.getInstance().getSocket(),
-					SessionUtils.getId(),
-					1,
-					drawing.getPaintPropertyFont().getFont().getSize2D(),
-					drawing.getPaintPropertyAlpha().alpha,
-					drawing.getPaintPropertyColor().getRed(),
-					drawing.getPaintPropertyColor().getGreen(),
-					drawing.getPaintPropertyColor().getBlue(),
-					drawing.getTextX(),
-					drawing.getTextY(),
-					drawing.getPaintPropertyFont().getStyle(),
-					drawing.getPaintPropertyFont().getFace().length(),
-					drawing.getPaintPropertyFont().getFace(),
-					drawing.getText().length(),
-					drawing.getText()
-			);
+		if (isSelected()) {
+			DrawingText drawing = (DrawingText) super.getTemporalDrawing();
+			if (drawing == null)
+				return ;
+
+			if (NetManager.getInstance().isConnected() && !(event instanceof RemoteMouseEvent)) {
+
+				tellapic.tellapic_send_text(
+						NetManager.getInstance().getSocket(),
+						SessionUtils.getId(),
+						1,
+						drawing.getPaintPropertyFont().getFont().getSize2D(),
+						drawing.getPaintPropertyAlpha().alpha,
+						drawing.getPaintPropertyColor().getRed(),
+						drawing.getPaintPropertyColor().getGreen(),
+						drawing.getPaintPropertyColor().getBlue(),
+						drawing.getTextX(),
+						drawing.getTextY(),
+						drawing.getPaintPropertyFont().getStyle(),
+						drawing.getPaintPropertyFont().getFace().length(),
+						drawing.getPaintPropertyFont().getFace(),
+						drawing.getText().length(),
+						drawing.getText()
+				);
+			}
 		}
-		avoidLoopback = true;
 	}
 }

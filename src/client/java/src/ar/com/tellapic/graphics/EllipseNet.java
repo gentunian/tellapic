@@ -17,6 +17,8 @@
  */  
 package ar.com.tellapic.graphics;
 
+import java.awt.event.MouseEvent;
+
 import ar.com.tellapic.NetManager;
 import ar.com.tellapic.SessionUtils;
 import ar.com.tellapic.lib.tellapic;
@@ -29,7 +31,7 @@ import ar.com.tellapic.lib.tellapic;
  */
 final public class EllipseNet extends Ellipse {
 
-	private boolean avoidLoopback = true;
+//	private boolean avoidLoopback = true;
 	
 	
 	
@@ -38,52 +40,93 @@ final public class EllipseNet extends Ellipse {
 	}
 	
 	
-	/**
-	 * 
-	 * @param v
-	 */
-	public void setAvoidLoopback(boolean v) {
-		avoidLoopback = v;
-	}
+//	/**
+//	 * 
+//	 * @param v
+//	 */
+//	public void setAvoidLoopback(boolean v) {
+//		avoidLoopback = v;
+//	}
 	
 	
-	/*
-	 * (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Ellipse#onRelease(int)
+//	/*
+//	 * (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Ellipse#onRelease(int)
+//	 */
+//	@Override
+//	public void onRelease(int x, int y, int button, int mask) {
+//		super.onRelease(x, y, button, mask);
+//		
+//		DrawingShape drawing = (DrawingShape) super.getTemporalDrawing();
+//		
+//		if (drawing == null)
+//			return ;
+//		
+//		if (NetManager.getInstance().isConnected() && avoidLoopback) {
+//			java.awt.Rectangle bounds = drawing.getShape().getBounds();
+//			tellapic.tellapic_send_fig(
+//					NetManager.getInstance().getSocket(),
+//					getToolId(), 
+//					0,
+//					SessionUtils.getId(), 
+//					1,
+//					(float) drawing.getPaintPropertyStroke().getWidth(),
+//					drawing.getPaintPropertyAlpha().alpha,
+//					drawing.getPaintPropertyColor().getRed(),
+//					drawing.getPaintPropertyColor().getGreen(),
+//					drawing.getPaintPropertyColor().getBlue(),
+//					(int)bounds.getX(),
+//					(int)bounds.getY(),
+//					(int)(bounds.getX() + bounds.getWidth()),
+//					(int)(bounds.getY() + bounds.getHeight()),
+//					drawing.getPaintPropertyStroke().getLineJoins(),
+//					drawing.getPaintPropertyStroke().getEndCaps(),
+//					drawing.getPaintPropertyStroke().getMiterLimit(),
+//					drawing.getPaintPropertyStroke().getDash_phase(),
+//					drawing.getPaintPropertyStroke().getDash()
+//			);
+//		}
+//		avoidLoopback = true;
+//	}
+	
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseListener#mouseReleased(java.awt.event.MouseEvent)
 	 */
 	@Override
-	public void onRelease(int x, int y, int button, int mask) {
-		super.onRelease(x, y, button, mask);
+	public void mouseReleased(MouseEvent e) {
+		super.mouseReleased(e);
 		
-		DrawingShape drawing = (DrawingShape) super.getTemporalDrawing();
-		
-		if (drawing == null)
-			return ;
-		
-		if (NetManager.getInstance().isConnected() && avoidLoopback) {
-			java.awt.Rectangle bounds = drawing.getShape().getBounds();
-			tellapic.tellapic_send_fig(
-					NetManager.getInstance().getSocket(),
-					getToolId(), 
-					0,
-					SessionUtils.getId(), 
-					1,
-					(float) drawing.getPaintPropertyStroke().getWidth(),
-					drawing.getPaintPropertyAlpha().alpha,
-					drawing.getPaintPropertyColor().getRed(),
-					drawing.getPaintPropertyColor().getGreen(),
-					drawing.getPaintPropertyColor().getBlue(),
-					(int)bounds.getX(),
-					(int)bounds.getY(),
-					(int)(bounds.getX() + bounds.getWidth()),
-					(int)(bounds.getY() + bounds.getHeight()),
-					drawing.getPaintPropertyStroke().getLineJoins(),
-					drawing.getPaintPropertyStroke().getEndCaps(),
-					drawing.getPaintPropertyStroke().getMiterLimit(),
-					drawing.getPaintPropertyStroke().getDash_phase(),
-					drawing.getPaintPropertyStroke().getDash()
-			);
+		/* The model guarentees that no 2 tools are selected */
+		if (isSelected()) {
+			DrawingShape drawing = (DrawingShape) getTemporalDrawing();
+
+			if (drawing == null)
+				return ;
+
+			if (NetManager.getInstance().isConnected() && !(e instanceof RemoteMouseEvent)) {
+				java.awt.Rectangle bounds = drawing.getShape().getBounds();
+				tellapic.tellapic_send_fig(
+						NetManager.getInstance().getSocket(),
+						getToolId(), 
+						0,
+						SessionUtils.getId(), 
+						1,
+						(float) drawing.getPaintPropertyStroke().getWidth(),
+						drawing.getPaintPropertyAlpha().alpha,
+						drawing.getPaintPropertyColor().getRed(),
+						drawing.getPaintPropertyColor().getGreen(),
+						drawing.getPaintPropertyColor().getBlue(),
+						(int)bounds.getX(),
+						(int)bounds.getY(),
+						(int)(bounds.getX() + bounds.getWidth()),
+						(int)(bounds.getY() + bounds.getHeight()),
+						drawing.getPaintPropertyStroke().getLineJoins(),
+						drawing.getPaintPropertyStroke().getEndCaps(),
+						drawing.getPaintPropertyStroke().getMiterLimit(),
+						drawing.getPaintPropertyStroke().getDash_phase(),
+						drawing.getPaintPropertyStroke().getDash()
+				);
+			}
 		}
-		avoidLoopback = true;
 	}
 }

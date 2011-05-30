@@ -18,6 +18,7 @@
 package ar.com.tellapic.graphics;
 
 import java.awt.Graphics2D;
+import java.awt.geom.Rectangle2D;
 
 import ar.com.tellapic.AbstractUser;
 
@@ -161,5 +162,58 @@ public class DrawingText extends AbstractDrawing {
 	 */
 	public PaintPropertyColor getPaintPropertyColor() {
 		return colorProperty;
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.AbstractDrawing#getBounds()
+	 */
+	@Override
+	public Rectangle2D getBounds2D() {
+		/* TODO: calculate the text frame */
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.AbstractDrawing#setSelected(boolean)
+	 */
+	@Override
+	public void setSelected(boolean value) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	/*
+	 * (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.AbstractDrawing#isSelected()
+	 */
+	public boolean isSelected() {
+		// TODO: !!
+		return false;
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.AbstractDrawing#isResizeable()
+	 */
+	@Override
+	public boolean isResizeable() {
+		return false;
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.AbstractDrawing#move(double, double)
+	 */
+	@Override
+	public void move(double firstX, double firstY, double eventX, double eventY) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.AbstractDrawing#resize(int, int, ar.com.tellapic.graphics.ControlPoint)
+	 */
+	@Override
+	public void resize(double x, double y, ControlPoint controlPoint) {
+		// TODO Auto-generated method stub
+		
 	}
 }

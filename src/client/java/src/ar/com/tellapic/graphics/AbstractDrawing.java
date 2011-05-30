@@ -18,6 +18,7 @@
 package ar.com.tellapic.graphics;
 
 import java.awt.Graphics2D;
+import java.awt.geom.Rectangle2D;
 
 import ar.com.tellapic.AbstractUser;
 
@@ -33,7 +34,8 @@ public abstract class AbstractDrawing implements Cloneable {
 	private long                number;
 	private boolean             isVisible;
 	private AbstractUser        user;
-	
+	protected ControlPoint      controlPoints[];
+	protected boolean           selected;
 	
 	/**
 	 * 
@@ -56,7 +58,7 @@ public abstract class AbstractDrawing implements Cloneable {
 	 * @return
 	 */
 	public boolean isVisible() {
-		return isVisible;
+		return (user.isVisible())? isVisible : user.isVisible();
 	}
 	
 	/**
@@ -116,4 +118,25 @@ public abstract class AbstractDrawing implements Cloneable {
 			throw new InternalError(e.toString());
 		}
 	}
+	
+	/**
+	 * @return the controlPoints
+	 */
+	public ControlPoint[] getControlPoints() {
+		return this.controlPoints;
+	}
+
+	/**
+	 * @param controlPoints the controlPoints to set
+	 */
+	public void setControlPoints(ControlPoint[] controlPoints) {
+		this.controlPoints = controlPoints;
+	}
+	public abstract void setSelected(boolean value);
+	public abstract boolean isSelected();
+	public abstract Rectangle2D getBounds2D();
+	public abstract boolean isResizeable();
+	public abstract void resize(double eventX, double eventY, ControlPoint controlPoint);
+	public abstract void move(double firstX, double firstY, double eventX, double eventY);
+
 }

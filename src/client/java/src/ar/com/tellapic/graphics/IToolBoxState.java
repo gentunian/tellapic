@@ -52,5 +52,10 @@ public interface IToolBoxState {
 	 * @return
 	 */
 	public PaintPropertyColor getColorProperty();
-	
+
+	/**
+	 * @return
+	 */
+	public long getAssignedNumber();
+		
 }

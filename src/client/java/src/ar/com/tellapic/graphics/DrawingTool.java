@@ -42,7 +42,6 @@ public abstract class DrawingTool extends Tool {
 	 */
 	public DrawingTool(int id, String name, String iconPath) {
 		this(id, name, iconPath, null);
-
 	}
 
 
@@ -67,13 +66,13 @@ public abstract class DrawingTool extends Tool {
 	}
 	
 	
-	/**
-	 * 
-	 * @return
-	 */
-	public AbstractDrawing finishDrawing() {
-		return (AbstractDrawing) getTemporalDrawing().clone();
-	}
+//	/**
+//	 * 
+//	 * @return
+//	 */
+//	public AbstractDrawing finishDrawing() {
+//		return (AbstractDrawing) getTemporalDrawing().clone();
+//	}
 	
 	/**
 	 * 
@@ -91,16 +90,16 @@ public abstract class DrawingTool extends Tool {
 	public abstract boolean hasColorCapability();
 	public abstract boolean hasFontCapability();
 	public abstract boolean hasStrokeCapability();
-	public abstract boolean isFilleable();
-	public abstract boolean isLiveModeSupported();
-	public abstract boolean isOnDragSupported();
-	public abstract boolean isOnPressSupported();
-	public abstract boolean isOnReleaseSupported();
+//	public abstract boolean isFilleable();
+//	public abstract boolean isLiveModeSupported();
+//	public abstract boolean isOnDragSupported();
+//	public abstract boolean isOnPressSupported();
+//	public abstract boolean isOnReleaseSupported();
 //	public abstract void setAlpha(PaintPropertyAlpha alpha);
 //	public abstract void setColor(PaintPropertyColor color);
 //	public abstract void setFont(PaintPropertyFont font);
 //	public abstract void setStroke(PaintPropertyStroke stroke);
-	public abstract void setPaintProperties(PaintProperty properties[]);
+//	public abstract void setPaintProperties(PaintProperty properties[]);
 	public abstract double getDefaultAlpha();
 	public abstract Color getDefaultColor();
 	public abstract String getDefaultFontFace();

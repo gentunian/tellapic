@@ -17,6 +17,7 @@
  */  
 package ar.com.tellapic.graphics;
 
+import java.awt.event.MouseEvent;
 import java.awt.geom.Line2D;
 
 import ar.com.tellapic.NetManager;
@@ -32,20 +33,8 @@ import ar.com.tellapic.lib.tellapic;
 final public class LineNet extends Line {
 	
 	
-	private boolean avoidLoopback = true;
-
-
 	public LineNet() {
 		super("LineNet");
-	}
-	
-	
-	/**
-	 * 
-	 * @param v
-	 */
-	public void setAvoidLoopback(boolean v) {
-		avoidLoopback  = v;
 	}
 	
 	
@@ -54,38 +43,40 @@ final public class LineNet extends Line {
 	 * @see ar.com.tellapic.graphics.Ellipse#onRelease(int)
 	 */
 	@Override
-	public void onRelease(int x, int y, int button, int mask) {
-		super.onRelease(x, y, button, mask);
+	public void mouseReleased(MouseEvent event) {
+		super.mouseReleased(event);
 		
-		DrawingShape drawing = (DrawingShape) super.getTemporalDrawing();
-		if (drawing == null)
-			return ;
-		
-		if (NetManager.getInstance().isConnected() && avoidLoopback) {
-			Line2D line = (Line2D) drawing.getShape();
-			
-			tellapic.tellapic_send_fig(
-					NetManager.getInstance().getSocket(),
-					getToolId(), 
-					0,
-					SessionUtils.getId(), 
-					1,
-					(float) drawing.getPaintPropertyStroke().getWidth(),
-					drawing.getPaintPropertyAlpha().alpha,
-					drawing.getPaintPropertyColor().getRed(),
-					drawing.getPaintPropertyColor().getGreen(),
-					drawing.getPaintPropertyColor().getBlue(),
-					(int)line.getX1(),
-					(int)line.getY1(),
-					(int)line.getX2(),
-					(int)line.getY2(),
-					drawing.getPaintPropertyStroke().getLineJoins(),
-					drawing.getPaintPropertyStroke().getEndCaps(),
-					drawing.getPaintPropertyStroke().getMiterLimit(),
-					drawing.getPaintPropertyStroke().getDash_phase(),
-					drawing.getPaintPropertyStroke().getDash()
-			);
+		/* The model guarentees that no 2 tools are selected */
+		if (isSelected()) {
+			DrawingShape drawing = (DrawingShape) getTemporalDrawing();
+			if (drawing == null)
+				return ;
+
+			if (NetManager.getInstance().isConnected() && !(event instanceof RemoteMouseEvent)) {
+				Line2D line = (Line2D) drawing.getShape();
+
+				tellapic.tellapic_send_fig(
+						NetManager.getInstance().getSocket(),
+						getToolId(), 
+						0,
+						SessionUtils.getId(), 
+						1,
+						(float) drawing.getPaintPropertyStroke().getWidth(),
+						drawing.getPaintPropertyAlpha().alpha,
+						drawing.getPaintPropertyColor().getRed(),
+						drawing.getPaintPropertyColor().getGreen(),
+						drawing.getPaintPropertyColor().getBlue(),
+						(int)line.getX1(),
+						(int)line.getY1(),
+						(int)line.getX2(),
+						(int)line.getY2(),
+						drawing.getPaintPropertyStroke().getLineJoins(),
+						drawing.getPaintPropertyStroke().getEndCaps(),
+						drawing.getPaintPropertyStroke().getMiterLimit(),
+						drawing.getPaintPropertyStroke().getDash_phase(),
+						drawing.getPaintPropertyStroke().getDash()
+				);
+			}
 		}
-		avoidLoopback = true;
 	}
 }

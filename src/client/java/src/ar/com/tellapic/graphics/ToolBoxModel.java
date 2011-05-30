@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.NoSuchElementException;
 import java.util.Observable;
 
+import ar.com.tellapic.utils.Utils;
+
 /**
  * 
  * @author 
@@ -28,7 +30,7 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	private PaintPropertyColor    colorProperty;
 	private PaintPropertyFont     fontProperty;
 	private PaintPropertyAlpha    alphaProperty;
-	
+	private long                  lastAssignedNumber;
 	
 	public class ActionData {
 		private int action;
@@ -93,7 +95,10 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 		if (tool == null)
 			throw new IllegalArgumentException("tool cannot be null");
 
+		if (lastUsedTool != null)
+			lastUsedTool.setSelected(false);
 		lastUsedTool = tool;
+		lastUsedTool.setSelected(true);
 		
 		setChanged();
 		notifyObservers(new ActionData(SHOW_TOOL, lastUsedTool));
@@ -131,8 +136,10 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 			throw new IllegalArgumentException("tool cannot be null");
 		
 		tools.put(tool.getName(), tool);
-//		Utils.logMessage("Tool added: "+tool.getName()+". Notifying observers...");
+		Utils.logMessage("Tool added: "+tool.getName()+". Notifying observers...");
 		tool.addObserver(DrawingAreaView.getInstance());
+//		DrawingAreaView.getInstance().addMouseListener(tool);
+//		DrawingAreaView.getInstance().addMouseMotionListener(tool);
 		setChanged();
 		notifyObservers(new ActionData(ADD_TOOL, tool));
 	}
@@ -147,9 +154,9 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 			throw new IllegalArgumentException("cap value must be one of CAP_SQUARE, CAP_ROUND or CAP_BUTT");
 		
 		strokeProperty.setEndCaps(cap);
-		if (lastUsedTool instanceof DrawingTool) {
-			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {strokeProperty});
-		}
+//		if (lastUsedTool instanceof DrawingTool) {
+//			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {strokeProperty});
+//		}
 	}
 
 
@@ -167,9 +174,9 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 		
 		strokeProperty.setDash(dash);
 		strokeProperty.setDash_phase(dashPhase);
-		if (lastUsedTool instanceof DrawingTool) {
-			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {strokeProperty});
-		}
+//		if (lastUsedTool instanceof DrawingTool) {
+//			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {strokeProperty});
+//		}
 	}
 
 
@@ -182,9 +189,9 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 			throw new IllegalArgumentException("join value must be one of JOIN_MITER, JOIN_BEVEL or JOIN_ROUND");
 		
 		strokeProperty.setLineJoins(join);
-		if (lastUsedTool instanceof DrawingTool) {
-			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {strokeProperty});
-		}
+//		if (lastUsedTool instanceof DrawingTool) {
+//			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {strokeProperty});
+//		}
 	}
 
 
@@ -194,9 +201,9 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	@Override
 	public void setStrokePropertyMiterLimit(float width) {
 		strokeProperty.setMiterLimit(width);
-		if (lastUsedTool instanceof DrawingTool) {
-			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {strokeProperty});
-		}
+//		if (lastUsedTool instanceof DrawingTool) {
+//			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {strokeProperty});
+//		}
 	}
 
 
@@ -206,9 +213,9 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	@Override
 	public void setStrokePropertyWidth(double width) {
 		strokeProperty.setWidth(width);
-		if (lastUsedTool instanceof DrawingTool) {
-			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {strokeProperty});
-		}
+//		if (lastUsedTool instanceof DrawingTool) {
+//			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {strokeProperty});
+//		}
 		setChanged();
 		notifyObservers(new ActionData(UPDATE_TOOL, lastUsedTool));
 	}
@@ -220,9 +227,9 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	@Override
 	public void setFontPropertyFace(String face) {
 		fontProperty.setFace(face);
-		if (lastUsedTool instanceof DrawingTool) {
-			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {fontProperty});
-		}
+//		if (lastUsedTool instanceof DrawingTool) {
+//			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {fontProperty});
+//		}
 	}
 
 
@@ -232,9 +239,9 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	@Override
 	public void setFontPropertySize(float size) {
 		fontProperty.setSize(size);
-		if (lastUsedTool instanceof DrawingTool) {
-			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {fontProperty});
-		}
+//		if (lastUsedTool instanceof DrawingTool) {
+//			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {fontProperty});
+//		}
 	}
 
 
@@ -244,9 +251,9 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	@Override
 	public void setFontPropertyStyle(int style) {
 		fontProperty.setStyle(style);
-		if (lastUsedTool instanceof DrawingTool) {
-			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {fontProperty});
-		}
+//		if (lastUsedTool instanceof DrawingTool) {
+//			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {fontProperty});
+//		}
 	}
 
 
@@ -256,9 +263,9 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	@Override
 	public void setAlphaPropertyValue(double value) {
 		alphaProperty.alpha = (float) value;
-		if (lastUsedTool instanceof DrawingTool) {
-			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {alphaProperty});
-		}
+//		if (lastUsedTool instanceof DrawingTool) {
+//			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {alphaProperty});
+//		}
 		setChanged();
 		notifyObservers(new ActionData(UPDATE_TOOL, lastUsedTool));
 	}
@@ -345,9 +352,9 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	public void setFontPropertyText(String text) {
 		fontProperty.setText(text);
 
-		if (lastUsedTool instanceof DrawingTool) {
-			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {fontProperty});
-		}
+//		if (lastUsedTool instanceof DrawingTool) {
+//			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {fontProperty});
+//		}
 		setChanged();
 		notifyObservers(new ActionData(UPDATE_TOOL, lastUsedTool));
 	}
@@ -376,9 +383,9 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	@Override
 	public void setColorPropertyValue(Color color) {
 		colorProperty.setColor(color);
-		if (lastUsedTool instanceof DrawingTool) {
-			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {colorProperty});
-		}
+//		if (lastUsedTool instanceof DrawingTool) {
+//			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {colorProperty});
+//		}
 		setChanged();
 		notifyObservers(new ActionData(UPDATE_TOOL, lastUsedTool));
 	}
@@ -431,5 +438,23 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 				setStrokePropertyMiterLimit(((DrawingTool)lastUsedTool).getDefaultMiterLimit());
 			}
 		}
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.IToolBoxState#getAssignedNumber()
+	 */
+	@Override
+	public long getAssignedNumber() {
+		return lastAssignedNumber;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.IToolBoxState#setAssignedNumber(long)
+	 */
+	@Override
+	public void setAssignedNumber(long number) {
+		lastAssignedNumber = number;
 	}
 }

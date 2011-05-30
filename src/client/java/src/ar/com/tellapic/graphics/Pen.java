@@ -19,9 +19,12 @@ package ar.com.tellapic.graphics;
 
 import java.awt.Color;
 import java.awt.Cursor;
+import java.awt.event.MouseEvent;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Point2D;
 
+import ar.com.tellapic.AbstractUser;
+import ar.com.tellapic.UserManager;
 import ar.com.tellapic.lib.tellapicConstants;
 import ar.com.tellapic.utils.Utils;
 
@@ -65,14 +68,14 @@ public class Pen extends DrawingTool {
 //		setToolCursor(PEN_ICON_PATH, 0, 15);
 	}
 	
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#getInit()
-	 */
-	@Override
-	public Point2D getInit() {
-		return firstPoint;
-	}
+//
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#getInit()
+//	 */
+//	@Override
+//	public Point2D getInit() {
+//		return firstPoint;
+//	}
 
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.Tool#hasAlphaProperties()
@@ -113,88 +116,88 @@ public class Pen extends DrawingTool {
 	public boolean isBeingUsed() {
 		return inUse;
 	}
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#isFilleable()
-	 */
-	@Override
-	public boolean isFilleable() {
-		return false;
-	}
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#isLiveModeSupported()
-	 */
-	@Override
-	public boolean isLiveModeSupported() {
-		return true;
-	}
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#isOnMoveSupported()
-	 */
-	@Override
-	public boolean isOnMoveSupported() {
-		return false;
-	}
-
-	
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onCancel()
-	 */
-	@Override
-	public void onPause() {
-		inUse = false;
-	}
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onDrag(int, int, boolean, int)
-	 */
-	@Override
-	public void onDrag(int x, int y, int button, int mask) {
-		if (inUse) {
-			pen.lineTo(x, y);
-			setChanged();
-			notifyObservers(temporalDrawing);
-		}
-	}
-
-	
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onPress(int, int, int, int)
-	 */
-	@Override
-	public void onPress(int x, int y, int button, int mask) {
-		firstPoint.setLocation(x, y);
-		pen = new GeneralPath();
-		pen.moveTo(x, y);
-		inUse = true;
-		temporalDrawing.setShape(pen);
-		setChanged();
-		notifyObservers(temporalDrawing);
-	}
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onRelease(int, int, int)
-	 */
-	@Override
-	public void onRelease(int x, int y, int button, int mask) {
-		if (inUse) {
-			pen.lineTo(x, y);
-//			temporalDrawing.cloneProperties();
-			inUse = false;
-			setChanged();
-			notifyObservers(temporalDrawing);
-		}
-	}
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onRestore()
-	 */
-	@Override
-	public void onRestore() {
-		inUse = true;
-	}
+//
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#isFilleable()
+//	 */
+//	@Override
+//	public boolean isFilleable() {
+//		return false;
+//	}
+//
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#isLiveModeSupported()
+//	 */
+//	@Override
+//	public boolean isLiveModeSupported() {
+//		return true;
+//	}
+//
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#isOnMoveSupported()
+//	 */
+//	@Override
+//	public boolean isOnMoveSupported() {
+//		return false;
+//	}
+//
+//	
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#onCancel()
+//	 */
+//	@Override
+//	public void onPause() {
+//		inUse = false;
+//	}
+//
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#onDrag(int, int, boolean, int)
+//	 */
+//	@Override
+//	public void onDrag(int x, int y, int button, int mask) {
+//		if (inUse) {
+//			pen.lineTo(x, y);
+//			setChanged();
+//			notifyObservers(temporalDrawing);
+//		}
+//	}
+//
+//	
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#onPress(int, int, int, int)
+//	 */
+//	@Override
+//	public void onPress(int x, int y, int button, int mask) {
+//		firstPoint.setLocation(x, y);
+//		pen = new GeneralPath();
+//		pen.moveTo(x, y);
+//		inUse = true;
+//		temporalDrawing.setShape(pen);
+//		setChanged();
+//		notifyObservers(temporalDrawing);
+//	}
+//
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#onRelease(int, int, int)
+//	 */
+//	@Override
+//	public void onRelease(int x, int y, int button, int mask) {
+//		if (inUse) {
+//			pen.lineTo(x, y);
+////			temporalDrawing.cloneProperties();
+//			inUse = false;
+//			setChanged();
+//			notifyObservers(temporalDrawing);
+//		}
+//	}
+//
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#onRestore()
+//	 */
+//	@Override
+//	public void onRestore() {
+//		inUse = true;
+//	}
 
 //	/* (non-Javadoc)
 //	 * @see ar.com.tellapic.graphics.Tool#setAlpha(ar.com.tellapic.graphics.PaintPropertyAlpha)
@@ -237,41 +240,41 @@ public class Pen extends DrawingTool {
 //	}
 
 
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.DrawingTool#isOnDragSupported()
-	 */
-	@Override
-	public boolean isOnDragSupported() {
-		return true;
-	}
-
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.DrawingTool#isOnPressSupported()
-	 */
-	@Override
-	public boolean isOnPressSupported() {
-		return true;
-	}
-
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.DrawingTool#isOnReleaseSupported()
-	 */
-	@Override
-	public boolean isOnReleaseSupported() {
-		return true;
-	}
-
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onMove(int, int)
-	 */
-	@Override
-	public void onMove(int x, int y) {
-		// TODO Auto-generated method stub
-		
-	}
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.DrawingTool#isOnDragSupported()
+//	 */
+//	@Override
+//	public boolean isOnDragSupported() {
+//		return true;
+//	}
+//
+//
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.DrawingTool#isOnPressSupported()
+//	 */
+//	@Override
+//	public boolean isOnPressSupported() {
+//		return true;
+//	}
+//
+//
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.DrawingTool#isOnReleaseSupported()
+//	 */
+//	@Override
+//	public boolean isOnReleaseSupported() {
+//		return true;
+//	}
+//
+//
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#onMove(int, int)
+//	 */
+//	@Override
+//	public void onMove(int x, int y) {
+//		// TODO Auto-generated method stub
+//		
+//	}
 
 
 	/* (non-Javadoc)
@@ -364,21 +367,130 @@ public class Pen extends DrawingTool {
 	}
 
 
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.DrawingTool#setPaintProperties(ar.com.tellapic.graphics.PaintProperty[])
+//	 */
+//	@Override
+//	public void setPaintProperties(PaintProperty[] properties) {
+//		for(int i = 0; i < properties.length; i++) {
+//			if (properties[i] instanceof PaintPropertyStroke) {
+//				temporalDrawing.setStroke((PaintPropertyStroke) properties[i]);
+//			} else if (properties[i] instanceof PaintPropertyAlpha) {
+//				temporalDrawing.setAlpha((PaintPropertyAlpha) properties[i]);
+//			} else if (properties[i] instanceof PaintPropertyColor) {
+//				temporalDrawing.setColor((PaintPropertyColor) properties[i]);
+//			}
+//		}
+//		setChanged();
+//		notifyObservers(temporalDrawing);
+//	}
+
+
 	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.DrawingTool#setPaintProperties(ar.com.tellapic.graphics.PaintProperty[])
+	 * @see java.awt.event.MouseListener#mouseClicked(java.awt.event.MouseEvent)
 	 */
 	@Override
-	public void setPaintProperties(PaintProperty[] properties) {
-		for(int i = 0; i < properties.length; i++) {
-			if (properties[i] instanceof PaintPropertyStroke) {
-				temporalDrawing.setStroke((PaintPropertyStroke) properties[i]);
-			} else if (properties[i] instanceof PaintPropertyAlpha) {
-				temporalDrawing.setAlpha((PaintPropertyAlpha) properties[i]);
-			} else if (properties[i] instanceof PaintPropertyColor) {
-				temporalDrawing.setColor((PaintPropertyColor) properties[i]);
+	public void mouseClicked(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseListener#mouseEntered(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseListener#mouseExited(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mouseExited(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseListener#mousePressed(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mousePressed(MouseEvent e) {
+		if (isSelected() && !e.isConsumed()) {
+			AbstractUser user = null;
+			if (e instanceof RemoteMouseEvent) {
+				user = ((RemoteMouseEvent)e).getUser();
+			} else {
+				user = UserManager.getInstance().getLocalUser();
 			}
+			IToolBoxState toolBoxState = user.getToolBoxModel();
+			firstPoint.setLocation(e.getX(), e.getY());
+			pen = new GeneralPath();
+			pen.moveTo(e.getX(), e.getY());
+			inUse = true;
+			temporalDrawing = new DrawingShape(getName());
+			temporalDrawing.setShape(pen);
+			temporalDrawing.setAlpha(toolBoxState.getOpacityProperty());
+			temporalDrawing.setColor(toolBoxState.getColorProperty());
+			temporalDrawing.setStroke(toolBoxState.getStrokeProperty());
+			temporalDrawing.setNumber(toolBoxState.getAssignedNumber());
+			temporalDrawing.setUser(user);
+			user.setTemporalDrawing(temporalDrawing);
+			e.consume();
+			setChanged();
+			notifyObservers(temporalDrawing);
 		}
-		setChanged();
-		notifyObservers(temporalDrawing);
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseListener#mouseReleased(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		if (isSelected() && !e.isConsumed()) {
+			if (inUse) {
+				pen.lineTo(e.getX(), e.getY());
+				inUse = false;
+				if (e instanceof RemoteMouseEvent) {
+					AbstractUser user = ((RemoteMouseEvent)e).getUser();
+					user.addDrawing(temporalDrawing);
+				}
+				setChanged();
+				notifyObservers(temporalDrawing);
+			}
+			e.consume();
+		}
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseMotionListener#mouseDragged(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mouseDragged(MouseEvent e) {
+		if (isSelected() && !e.isConsumed()) {
+			if (inUse) {
+				pen.lineTo(e.getX(), e.getY());
+				setChanged();
+				notifyObservers(temporalDrawing);
+			}
+			e.consume();
+		}
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseMotionListener#mouseMoved(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mouseMoved(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
 	}
 }

@@ -1,7 +1,8 @@
 package ar.com.tellapic.graphics;
 
 import java.awt.Cursor;
-import java.awt.geom.Point2D;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.util.Observable;
 
 /**
@@ -35,7 +36,7 @@ import java.util.Observable;
  * @author Sebastián Treu, mailTo: sebastian.treu (at) gmail.com
  *
  */
-public abstract class Tool extends Observable {
+public abstract class Tool extends Observable implements MouseListener, MouseMotionListener {
 	public static final int ICON_SIZE = 16;
 	private int              id;
 	private String           name;
@@ -43,6 +44,7 @@ public abstract class Tool extends Observable {
 	private String           toolTipText;
 	private boolean          visible;
 	private Cursor           toolCursor;
+	private boolean          selected;
 	
 	
 	/**
@@ -77,14 +79,14 @@ public abstract class Tool extends Observable {
 	/**
 	 * 
 	 */
-	public abstract void onRestore();
+//	public abstract void onRestore();
 	
 	
 	/**
 	 * @param x the x coordinate
 	 * @param y the y coordinate
 	 */
-	public abstract void onPress(int x, int y, int button, int mask);
+//	public abstract void onPress(int x, int y, int button, int mask);
 
 	/**
 	 * Call this when dragging the tool on the drawing area so it can update itself.
@@ -92,7 +94,7 @@ public abstract class Tool extends Observable {
 	 * @param y the y coordinate.
 	 * @param symmetric whether or not this tool can use its symmetric feature (if it have any).
 	 */
-	public abstract void onDrag(int x, int y, int button, int mask);
+//	public abstract void onDrag(int x, int y, int button, int mask);
 	
 	
 	/**
@@ -101,7 +103,7 @@ public abstract class Tool extends Observable {
 	 * @param x the x coordinate.
 	 * @param y the y coordinate.
 	 */
-	public abstract void onMove(int x, int y);
+//	public abstract void onMove(int x, int y);
 	
 	
 	/**
@@ -110,14 +112,14 @@ public abstract class Tool extends Observable {
 	 * until someone calls {@link ar.com.tellapic.graphics.Tool#init(double, double)}.
 	 * @return The last drawing object state of this tool.
 	 */
-	public abstract void onRelease(int x, int y, int button, int mask);
+//	public abstract void onRelease(int x, int y, int button, int mask);
 	
 	
 	/**
 	 * 
 	 */
 	//TODO: rename to: onPause();
-	public abstract void onPause();
+//	public abstract void onPause();
 	
 	
 	/**
@@ -159,10 +161,10 @@ public abstract class Tool extends Observable {
 	 * area being not a drag event.
 	 * @return true if the move feature is supported.
 	 */
-	public abstract boolean isOnMoveSupported();
-	public abstract boolean isOnPressSupported();
-	public abstract boolean isOnDragSupported();
-	public abstract boolean isOnReleaseSupported();
+//	public abstract boolean isOnMoveSupported();
+//	public abstract boolean isOnPressSupported();
+//	public abstract boolean isOnDragSupported();
+//	public abstract boolean isOnReleaseSupported();
 	
 	
 	
@@ -186,7 +188,7 @@ public abstract class Tool extends Observable {
 	 * Get the first point where this Tool has been started.
 	 * @return returns the first point of this Tool.
 	 */
-	public abstract Point2D getInit();
+//	public abstract Point2D getInit();
 	
 	
 	/**
@@ -327,5 +329,21 @@ public abstract class Tool extends Observable {
 	 */
 	public Cursor getCursor() {
 		return toolCursor;
+	}
+
+
+	/**
+	 * @param b
+	 */
+	public void setSelected(boolean b) {
+		         selected = b;
+	}
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public boolean isSelected() {
+		return selected;
 	}
 }
