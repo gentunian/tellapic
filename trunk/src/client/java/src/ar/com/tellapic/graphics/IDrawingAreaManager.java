@@ -3,9 +3,6 @@
  */
 package ar.com.tellapic.graphics;
 
-import java.util.NoSuchElementException;
-
-import ar.com.tellapic.AbstractUser;
 
 
 /**
@@ -16,14 +13,12 @@ import ar.com.tellapic.AbstractUser;
  *
  */
 public interface IDrawingAreaManager {
-//
-//	/**
-//	 * Adds a Drawing to a list.
-//	 * 
-//	 * @param drawing the Drawing to be added.
-//	 * @throws IllegalArgumentException if drawing is null.
-//	 */
-//	public void addDrawing(AbstractUser user, Drawing drawing) throws IllegalArgumentException;
+	/**
+	 * 
+	 * @param drawing
+	 * @throws IllegalArgumentException
+	 */
+	public void addDrawing(AbstractDrawing drawing) throws IllegalArgumentException;
 //	
 //	
 //	/**

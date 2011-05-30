@@ -492,8 +492,12 @@ public class UserManager implements IUserManager, IUserManagerState, TreeTableMo
 				tms.fireChildAdded(new TreePath(new Object[]{ getRoot(), user }), childs.indexOf(arg), arg);
 			
 		} else if (arg instanceof Boolean){
-			tms.fireChildChanged(new TreePath(new Object[]{ getRoot() }), users.indexOf(user), user);
-			
+			 TreePath path = new TreePath(new Object[]{ getRoot() });
+			tms.fireChildChanged(path, users.indexOf(user), user);
+			int indices[] = new int[user.getDrawings().size()];
+			for(int i = 0; i < indices.length; i++)
+				indices[i] = i;
+			tms.fireChildrenChanged(path.pathByAddingChild(user), indices, user.getDrawings().toArray());
 		} else if (arg instanceof Integer) {
 			int index = (Integer) arg;
 			tms.fireChildChanged(new TreePath(new Object[]{getRoot(), user}), index, childs.get(index));

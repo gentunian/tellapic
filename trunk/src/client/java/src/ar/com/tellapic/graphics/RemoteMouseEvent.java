@@ -20,7 +20,7 @@ package ar.com.tellapic.graphics;
 import java.awt.Component;
 import java.awt.event.MouseEvent;
 
-import ar.com.tellapic.RemoteUser;
+import ar.com.tellapic.AbstractUser;
 
 /**
  * @author 
@@ -35,7 +35,7 @@ public class RemoteMouseEvent extends MouseEvent {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private RemoteUser user;
+	private AbstractUser user;
 	
 	/**
 	 * @param source
@@ -49,7 +49,6 @@ public class RemoteMouseEvent extends MouseEvent {
 	 */
 	public RemoteMouseEvent(Component source, int id, long when, int modifiers,	int x, int y, int clickCount, boolean popupTrigger) {
 		super(source, id, when, modifiers, x, y, clickCount, popupTrigger);
-		// TODO Auto-generated constructor stub
 	}
 
 	
@@ -66,7 +65,7 @@ public class RemoteMouseEvent extends MouseEvent {
 	 * @param popupTrigger
 	 * @param button
 	 */
-	public RemoteMouseEvent(RemoteUser user, Component source, int id, long when, int modifiers, int x, int y, int clickCount, boolean popupTrigger, int button) {
+	public RemoteMouseEvent(AbstractUser user, Component source, int id, long when, int modifiers, int x, int y, int clickCount, boolean popupTrigger, int button) {
 		super(source, id, when, modifiers, x, y, clickCount, popupTrigger, button);
 		this.user = user;
 	}
@@ -87,7 +86,6 @@ public class RemoteMouseEvent extends MouseEvent {
 	 */
 	public RemoteMouseEvent(Component source, int id, long when, int modifiers,	int x, int y, int xAbs, int yAbs, int clickCount, boolean popupTrigger, int button) {
 		super(source, id, when, modifiers, x, y, xAbs, yAbs, clickCount, popupTrigger, button);
-		// TODO Auto-generated constructor stub
 	}
 
 
@@ -102,7 +100,7 @@ public class RemoteMouseEvent extends MouseEvent {
 	/**
 	 * @return the user
 	 */
-	public RemoteUser getUser() {
+	public AbstractUser getUser() {
 		return user;
 	}
 

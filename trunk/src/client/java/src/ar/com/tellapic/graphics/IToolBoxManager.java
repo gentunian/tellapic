@@ -125,8 +125,16 @@ public interface IToolBoxManager {
 	 */
 	public void setAlphaPropertyValue(double value);
 	
+	/**
+	 * 
+	 * @param value
+	 */
 	public void setZoomValue(float value);
 	
+	/**
+	 * 
+	 * @param value
+	 */
 	public void setZoomIn(boolean value);
 	
 	/**
@@ -140,4 +148,10 @@ public interface IToolBoxManager {
 	 * @param color
 	 */
 	public void setColorPropertyValue(Color color);
+	
+	/**
+	 * 
+	 * @param number
+	 */
+	public void setAssignedNumber(long number);
 }

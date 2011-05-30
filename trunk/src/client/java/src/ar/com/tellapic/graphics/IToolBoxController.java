@@ -20,4 +20,9 @@ public interface IToolBoxController {
 	 * @param tool the Tool selected
 	 */
 	public void selectToolByName(String toolName);
+
+	/**
+	 * @param number
+	 */
+	public void handleAssignedNumber(long number);
 }

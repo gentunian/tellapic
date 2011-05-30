@@ -52,6 +52,7 @@ import ar.com.tellapic.graphics.DrawingAreaView;
 import ar.com.tellapic.graphics.IToolBoxController;
 import ar.com.tellapic.graphics.PaintPropertyController;
 import ar.com.tellapic.graphics.PaintPropertyView;
+import ar.com.tellapic.graphics.Tool;
 import ar.com.tellapic.graphics.ToolBoxController;
 import ar.com.tellapic.graphics.ToolBoxModel;
 import ar.com.tellapic.graphics.ToolView;
@@ -119,7 +120,11 @@ public class UserGUIBuilder {
 		drawingAreaView.setPropertyController(propertyController);
 		toolView.setController(toolViewController);
 		propertyView.setController(propertyController);
-		
+		for(Tool tool : model.getTools().values()) {
+			drawingAreaView.addMouseListener(tool);
+			drawingAreaView.addMouseMotionListener(tool);
+		}
+
 		/****************************************/
 		/* Creates the dockable station and gui */
 		/****************************************/

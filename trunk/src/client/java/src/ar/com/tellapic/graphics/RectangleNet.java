@@ -17,6 +17,8 @@
  */  
 package ar.com.tellapic.graphics;
 
+import java.awt.event.MouseEvent;
+
 import ar.com.tellapic.NetManager;
 import ar.com.tellapic.SessionUtils;
 import ar.com.tellapic.lib.tellapic;
@@ -29,21 +31,9 @@ import ar.com.tellapic.lib.tellapic;
  */
 final public class RectangleNet extends Rectangle {
 	
-	private boolean avoidLoopback = true;
-
-	
 
 	public RectangleNet() {
 		super("RectangleNet");
-	}
-	
-	
-	/**
-	 * 
-	 * @param v
-	 */
-	public void setAvoidLoopback(boolean v) {
-		avoidLoopback = v;
 	}
 	
 	
@@ -52,42 +42,43 @@ final public class RectangleNet extends Rectangle {
 	 * @see ar.com.tellapic.graphics.Ellipse#onRelease(int)
 	 */
 	@Override
-	public void onRelease(int x, int y, int button, int mask) {
-		super.onRelease(x, y, button, mask);
+	public void mouseReleased(MouseEvent event) {
+		super.mouseReleased(event);
 		
-		DrawingShape drawing = (DrawingShape) super.getTemporalDrawing();
-		if (drawing == null)
-			return ;
-		
-		if (NetManager.getInstance().isConnected() && avoidLoopback) {
-			java.awt.Rectangle bounds = drawing.getShape().getBounds();
-			tellapic.tellapic_send_fig(
-					NetManager.getInstance().getSocket(),
-					getToolId(), 
-					0,
-					SessionUtils.getId(), 
-					1,
-					(float) drawing.getPaintPropertyStroke().getWidth(),
-					drawing.getPaintPropertyAlpha().alpha,
-					drawing.getPaintPropertyColor().getRed(),
-					drawing.getPaintPropertyColor().getGreen(),
-					drawing.getPaintPropertyColor().getBlue(),
-					(int)bounds.getX(),
-					(int)bounds.getY(),
-					(int)(bounds.getX() + bounds.getWidth()),
-					(int)(bounds.getY() + bounds.getHeight()),
-					drawing.getPaintPropertyStroke().getLineJoins(),
-					drawing.getPaintPropertyStroke().getEndCaps(),
-					drawing.getPaintPropertyStroke().getMiterLimit(),
-					drawing.getPaintPropertyStroke().getDash_phase(),
-					drawing.getPaintPropertyStroke().getDash()
-//					((BasicStroke)drawing.getStroke()).getLineJoin(),
-//					((BasicStroke)drawing.getStroke()).getEndCap(),
-//					((BasicStroke)drawing.getStroke()).getMiterLimit(),
-//					((BasicStroke)drawing.getStroke()).getDashPhase(),
-//					((BasicStroke)drawing.getStroke()).getDashArray()
-			);
+		if (isSelected()) {
+			DrawingShape drawing = (DrawingShape) super.getTemporalDrawing();
+			if (drawing == null)
+				return ;
+
+			if (NetManager.getInstance().isConnected() && !(event instanceof RemoteMouseEvent)) {
+				java.awt.Rectangle bounds = drawing.getShape().getBounds();
+				tellapic.tellapic_send_fig(
+						NetManager.getInstance().getSocket(),
+						getToolId(), 
+						0,
+						SessionUtils.getId(), 
+						1,
+						(float) drawing.getPaintPropertyStroke().getWidth(),
+						drawing.getPaintPropertyAlpha().alpha,
+						drawing.getPaintPropertyColor().getRed(),
+						drawing.getPaintPropertyColor().getGreen(),
+						drawing.getPaintPropertyColor().getBlue(),
+						(int)bounds.getX(),
+						(int)bounds.getY(),
+						(int)(bounds.getX() + bounds.getWidth()),
+						(int)(bounds.getY() + bounds.getHeight()),
+						drawing.getPaintPropertyStroke().getLineJoins(),
+						drawing.getPaintPropertyStroke().getEndCaps(),
+						drawing.getPaintPropertyStroke().getMiterLimit(),
+						drawing.getPaintPropertyStroke().getDash_phase(),
+						drawing.getPaintPropertyStroke().getDash()
+						//					((BasicStroke)drawing.getStroke()).getLineJoin(),
+						//					((BasicStroke)drawing.getStroke()).getEndCap(),
+						//					((BasicStroke)drawing.getStroke()).getMiterLimit(),
+						//					((BasicStroke)drawing.getStroke()).getDashPhase(),
+						//					((BasicStroke)drawing.getStroke()).getDashArray()
+				);
+			}
 		}
-		avoidLoopback = true;
 	}
 }

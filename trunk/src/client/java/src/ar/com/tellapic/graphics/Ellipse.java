@@ -7,6 +7,8 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 
+import ar.com.tellapic.AbstractUser;
+import ar.com.tellapic.UserManager;
 import ar.com.tellapic.lib.tellapicConstants;
 import ar.com.tellapic.utils.Utils;
 
@@ -50,95 +52,95 @@ public class Ellipse extends DrawingTool {
 		return size;
 	}
 	
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#init(double, double)
-	 */
-	@Override
-	public void onPress(int x, int y, int button, int mask) {
-		firstPoint.setLocation(x, y);
-		ellipse = new Ellipse2D.Double(x, y, 0, 0);
-		size    = new Dimension(0, 0);
-		inUse   = true;
-		temporalDrawing.setShape(ellipse);
-		setChanged();
-		notifyObservers(temporalDrawing);
-	}
-	
-	
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#draw(double, double)
-	 */
-	@Override
-	public void onDrag(int x, int y, int button, int mask) {
-		if (inUse) {
-			boolean symmetric = (mask & MouseEvent.CTRL_DOWN_MASK) == MouseEvent.CTRL_DOWN_MASK;
-			double initX   = firstPoint.getX();
-			double initY   = firstPoint.getY();
-			int    width   = (int) Math.abs(initX - x);
-			int    height  = (int) Math.abs(initY - y);
-			Dimension size = new Dimension(((symmetric)? Math.max(width, height) : width), ((symmetric)? Math.max(width, height) : height));
-			Point2D  point = null;
-
-			if (symmetric)
-				point = new Point2D.Double( ((initX < x)? initX : initX - size.getWidth()), ((initY < y)? initY : initY - size.getHeight()));
-			else
-				point = new Point2D.Double( ((initX < x)? initX : x), ((initY < y)? initY : y));
-
-			ellipse.setFrame(point, size);
-			setChanged();
-			notifyObservers(temporalDrawing);
-		}
-	}
-	
-	
-		/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onFinishDraw()
-	 */
-	@Override
-	public void onRelease(int x, int y, int button, int mask) {
-		if (inUse && !ellipse.isEmpty()) {
-//			temporalDrawing.cloneProperties();
-			inUse = false;
-			setChanged();
-			notifyObservers(temporalDrawing);
-		}
-	}
-	
-	
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#getInit()
-	 */
-	@Override
-	public Point2D getInit() {
-		return firstPoint;
-	}
-	
-	
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#isFilleable()
-	 */
-	@Override
-	public boolean isFilleable() {
-		return true;
-	}
-	
-	
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onMove(double, double)
-	 */
-	@Override
-	public void onMove(int x, int y) {
-
-	}
-	
-	
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#isOnMoveSupported()
-	 */
-	@Override
-	public boolean isOnMoveSupported() {
-		return false;
-	}
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#init(double, double)
+//	 */
+//	@Override
+//	public void onPress(int x, int y, int button, int mask) {
+//		firstPoint.setLocation(x, y);
+//		ellipse = new Ellipse2D.Double(x, y, 0, 0);
+//		size    = new Dimension(0, 0);
+//		inUse   = true;
+//		temporalDrawing.setShape(ellipse);
+//		setChanged();
+//		notifyObservers(temporalDrawing);
+//	}
+//	
+//	
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#draw(double, double)
+//	 */
+//	@Override
+//	public void onDrag(int x, int y, int button, int mask) {
+//		if (inUse) {
+//			boolean symmetric = (mask & MouseEvent.CTRL_DOWN_MASK) == MouseEvent.CTRL_DOWN_MASK;
+//			double initX   = firstPoint.getX();
+//			double initY   = firstPoint.getY();
+//			int    width   = (int) Math.abs(initX - x);
+//			int    height  = (int) Math.abs(initY - y);
+//			Dimension size = new Dimension(((symmetric)? Math.max(width, height) : width), ((symmetric)? Math.max(width, height) : height));
+//			Point2D  point = null;
+//
+//			if (symmetric)
+//				point = new Point2D.Double( ((initX < x)? initX : initX - size.getWidth()), ((initY < y)? initY : initY - size.getHeight()));
+//			else
+//				point = new Point2D.Double( ((initX < x)? initX : x), ((initY < y)? initY : y));
+//
+//			ellipse.setFrame(point, size);
+//			setChanged();
+//			notifyObservers(temporalDrawing);
+//		}
+//	}
+//	
+//	
+//		/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#onFinishDraw()
+//	 */
+//	@Override
+//	public void onRelease(int x, int y, int button, int mask) {
+//		if (inUse && !ellipse.isEmpty()) {
+////			temporalDrawing.cloneProperties();
+//			inUse = false;
+//			setChanged();
+//			notifyObservers(temporalDrawing);
+//		}
+//	}
+//	
+//	
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#getInit()
+//	 */
+//	@Override
+//	public Point2D getInit() {
+//		return firstPoint;
+//	}
+//	
+//	
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#isFilleable()
+//	 */
+//	@Override
+//	public boolean isFilleable() {
+//		return true;
+//	}
+//	
+//	
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#onMove(double, double)
+//	 */
+//	@Override
+//	public void onMove(int x, int y) {
+//
+//	}
+//	
+//	
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#isOnMoveSupported()
+//	 */
+//	@Override
+//	public boolean isOnMoveSupported() {
+//		return false;
+//	}
 	
 	
 	/* (non-Javadoc)
@@ -148,102 +150,60 @@ public class Ellipse extends DrawingTool {
 	public boolean isBeingUsed() {
 		return inUse;
 	}
-	
-	
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onCancel()
-	 */
-	@Override
-	public void onPause() {
-		inUse = false;
-	}
-	
-	
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#isLiveModeSupported()
-	 */
-	@Override
-	public boolean isLiveModeSupported() {
-		return false;
-	}
-	
-	
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#onRestore()
-	 */
-	@Override
-	public void onRestore() {
-		inUse = true;
-	}
-
-
+//	
+//	
 //	/* (non-Javadoc)
-//	 * @see ar.com.tellapic.graphics.Tool#setAlpha(ar.com.tellapic.graphics.PaintPropertyAlpha)
+//	 * @see ar.com.tellapic.graphics.Tool#onCancel()
 //	 */
 //	@Override
-//	public void setAlpha(PaintPropertyAlpha alpha) {
-//		temporalDrawing.setAlpha(alpha);
-//		setChanged();
-//		notifyObservers(temporalDrawing);
+//	public void onPause() {
+//		inUse = false;
+//	}
+//	
+//	
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#isLiveModeSupported()
+//	 */
+//	@Override
+//	public boolean isLiveModeSupported() {
+//		return false;
+//	}
+//	
+//	
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#onRestore()
+//	 */
+//	@Override
+//	public void onRestore() {
+//		inUse = true;
+//	}
+//
+//	
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.Tool#isOnDragSupported()
+//	 */
+//	@Override
+//	public boolean isOnDragSupported() {
+//		return true;
 //	}
 //
 //
 //	/* (non-Javadoc)
-//	 * @see ar.com.tellapic.graphics.Tool#setColor(ar.com.tellapic.graphics.PaintPropertyColor)
+//	 * @see ar.com.tellapic.graphics.Tool#isOnPressSupported()
 //	 */
 //	@Override
-//	public void setColor(PaintPropertyColor color) {
-//		temporalDrawing.setColor(color);
-//		setChanged();
-//		notifyObservers(temporalDrawing);
-//		
+//	public boolean isOnPressSupported() {
+//		return true;
 //	}
 //
 //
 //	/* (non-Javadoc)
-//	 * @see ar.com.tellapic.graphics.Tool#setFont(ar.com.tellapic.graphics.PaintPropertyFont)
+//	 * @see ar.com.tellapic.graphics.Tool#isOnReleaseSupported()
 //	 */
 //	@Override
-//	public void setFont(PaintPropertyFont font) {
-//
+//	public boolean isOnReleaseSupported() {
+//		return true;
 //	}
-//
-//
-//	/* (non-Javadoc)
-//	 * @see ar.com.tellapic.graphics.Tool#setStroke(ar.com.tellapic.graphics.PaintPropertyStroke)
-//	 */
-//	@Override
-//	public void setStroke(PaintPropertyStroke stroke) {
-//		temporalDrawing.setStroke(stroke);
-//		setChanged();
-//		notifyObservers(temporalDrawing);
-//	}
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#isOnDragSupported()
-	 */
-	@Override
-	public boolean isOnDragSupported() {
-		return true;
-	}
-
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#isOnPressSupported()
-	 */
-	@Override
-	public boolean isOnPressSupported() {
-		return true;
-	}
-
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#isOnReleaseSupported()
-	 */
-	@Override
-	public boolean isOnReleaseSupported() {
-		return true;
-	}
 
 
 	/* (non-Javadoc)
@@ -371,21 +331,142 @@ public class Ellipse extends DrawingTool {
 		return temporalDrawing;
 	}
 	
-	/**
-	 * 
+//	/**
+//	 * 
+//	 */
+//	@Override
+//	public void setPaintProperties(PaintProperty properties[]) {
+//		for(int i = 0; i < properties.length; i++) {
+//			if (properties[i] instanceof PaintPropertyStroke) {
+//				temporalDrawing.setStroke((PaintPropertyStroke) properties[i]);
+//			} else if (properties[i] instanceof PaintPropertyAlpha) {
+//				temporalDrawing.setAlpha((PaintPropertyAlpha) properties[i]);
+//			} else if (properties[i] instanceof PaintPropertyColor) {
+//				temporalDrawing.setColor((PaintPropertyColor) properties[i]);
+//			}
+//		}
+//		setChanged();
+//		notifyObservers(temporalDrawing);
+//	}
+
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseListener#mouseClicked(java.awt.event.MouseEvent)
 	 */
 	@Override
-	public void setPaintProperties(PaintProperty properties[]) {
-		for(int i = 0; i < properties.length; i++) {
-			if (properties[i] instanceof PaintPropertyStroke) {
-				temporalDrawing.setStroke((PaintPropertyStroke) properties[i]);
-			} else if (properties[i] instanceof PaintPropertyAlpha) {
-				temporalDrawing.setAlpha((PaintPropertyAlpha) properties[i]);
-			} else if (properties[i] instanceof PaintPropertyColor) {
-				temporalDrawing.setColor((PaintPropertyColor) properties[i]);
+	public void mouseClicked(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseListener#mouseEntered(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseListener#mouseExited(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mouseExited(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseListener#mousePressed(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mousePressed(MouseEvent e) {
+		if (isSelected() && !e.isConsumed()) {
+			AbstractUser user = null;
+			if (e instanceof RemoteMouseEvent) {
+				user = ((RemoteMouseEvent)e).getUser();
+			} else {
+				user = UserManager.getInstance().getLocalUser();
 			}
+			IToolBoxState toolBoxState = user.getToolBoxModel();
+			firstPoint.setLocation(e.getX(), e.getY());
+			ellipse = new Ellipse2D.Double(e.getX(), e.getY(), 0, 0);
+			size    = new Dimension(0, 0);
+			inUse   = true;
+			temporalDrawing = new DrawingShape(getName());
+			temporalDrawing.setShape(ellipse);
+			temporalDrawing.setAlpha(toolBoxState.getOpacityProperty());
+			temporalDrawing.setColor(toolBoxState.getColorProperty());
+			temporalDrawing.setStroke(toolBoxState.getStrokeProperty());
+			temporalDrawing.setNumber(toolBoxState.getAssignedNumber());
+			temporalDrawing.setUser(user);
+			user.setTemporalDrawing(temporalDrawing);
+			e.consume();
+			setChanged();
+			notifyObservers(temporalDrawing);
 		}
-		setChanged();
-		notifyObservers(temporalDrawing);
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseListener#mouseReleased(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		if (isSelected() && !e.isConsumed()) {
+			if (inUse && !ellipse.isEmpty()) {
+				if (e instanceof RemoteMouseEvent) {
+					AbstractUser user = ((RemoteMouseEvent)e).getUser();
+					user.addDrawing(temporalDrawing);
+				}
+				inUse = false;
+				setChanged();
+				notifyObservers(temporalDrawing);
+			}
+			e.consume();
+		}
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseMotionListener#mouseDragged(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mouseDragged(MouseEvent e) {
+		if (isSelected() && !e.isConsumed()) {
+			if (inUse) {
+				boolean symmetric = e.isControlDown();
+				double initX   = firstPoint.getX();
+				double initY   = firstPoint.getY();
+				int    width   = (int) Math.abs(initX - e.getX());
+				int    height  = (int) Math.abs(initY - e.getY());
+				Dimension size = new Dimension(((symmetric)? Math.max(width, height) : width), ((symmetric)? Math.max(width, height) : height));
+				Point2D  point = null;
+
+				if (symmetric)
+					point = new Point2D.Double( ((initX < e.getX())? initX : initX - size.getWidth()), ((initY < e.getY())? initY : initY - size.getHeight()));
+				else
+					point = new Point2D.Double( ((initX < e.getX())? initX : e.getX()), ((initY < e.getY())? initY : e.getY()));
+
+				ellipse.setFrame(point, size);
+				setChanged();
+				notifyObservers(temporalDrawing);
+			}
+			e.consume();
+		}
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseMotionListener#mouseMoved(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mouseMoved(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
 	}
 }

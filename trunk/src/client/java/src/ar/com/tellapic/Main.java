@@ -29,6 +29,7 @@ import ar.com.tellapic.graphics.LineNet;
 import ar.com.tellapic.graphics.MarkerNet;
 import ar.com.tellapic.graphics.PenNet;
 import ar.com.tellapic.graphics.RectangleNet;
+import ar.com.tellapic.graphics.Selector;
 import ar.com.tellapic.graphics.TextNet;
 import ar.com.tellapic.graphics.ToolFactory;
 import ar.com.tellapic.graphics.Zoom;
@@ -198,9 +199,11 @@ public class Main {
 		ToolFactory.registerToolClassName(tellapicConstants.TOOL_TEXT, TextNet.class.getName());
 		ToolFactory.registerToolClassName(tellapicConstants.TOOL_MARKER, MarkerNet.class.getName());
 		ToolFactory.registerToolClassName(tellapicConstants.TOOL_PATH, PenNet.class.getName());
+		ToolFactory.registerToolClassName(0, Selector.class.getName());
 		
 		final UserManager userManager = UserManager.getInstance();
 		final LocalUser luser = (LocalUser) userManager.createUser(id, name, false);
+
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				new UserGUIBuilder(luser);

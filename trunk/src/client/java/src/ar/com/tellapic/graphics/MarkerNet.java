@@ -33,20 +33,8 @@ import ar.com.tellapic.lib.tellapicConstants;
 final public class MarkerNet extends Marker {
 	
 	
-	private boolean avoidLoopback = true;
-	
-
 	public MarkerNet() {
 		super("MarkerNet");
-	}
-	
-	
-	/**
-	 * 
-	 * @param v
-	 */
-	public void setAvoidLoopback(boolean v) {
-		avoidLoopback  = v;
 	}
 	
 	
@@ -54,69 +42,22 @@ final public class MarkerNet extends Marker {
 	 * @see ar.com.tellapic.graphics.Tool#init(double, double)
 	 */
 	@Override
-	public void onPress(int x, int y, int button, int mask) {
-		super.onPress(x, y, button, mask);
-		DrawingShape drawing = (DrawingShape) super.getTemporalDrawing();
-		if (NetManager.getInstance().isConnected() && avoidLoopback) {
-			int wrappedEvent = getToolId();
-			if (button == MouseEvent.BUTTON1)
-				wrappedEvent |= tellapicConstants.EVENT_PLEFT;
-			else if (button == MouseEvent.BUTTON2)
-				wrappedEvent |= tellapicConstants.EVENT_PRESS;
-			else
-				wrappedEvent |= tellapicConstants.EVENT_PMIDDLE;
-			tellapic.tellapic_send_drw_init(
-					NetManager.getInstance().getSocket(),
-					wrappedEvent,
-					0,
-					SessionUtils.getId(), 
-					1,
-					(float) drawing.getPaintPropertyStroke().getWidth(),
-					drawing.getPaintPropertyAlpha().alpha,
-					drawing.getPaintPropertyColor().getRed(),
-					drawing.getPaintPropertyColor().getGreen(),
-					drawing.getPaintPropertyColor().getBlue(),
-					x,
-					y,
-					x,
-					y,
-					drawing.getPaintPropertyStroke().getLineJoins(),
-					drawing.getPaintPropertyStroke().getEndCaps(),
-					drawing.getPaintPropertyStroke().getMiterLimit(),
-					drawing.getPaintPropertyStroke().getDash_phase(),
-					drawing.getPaintPropertyStroke().getDash()
-			);
-		}
-		avoidLoopback = true;
-	}
-	
-	
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.Tool#draw(double, double)
-	 */
-	@Override
-	public void onDrag(int x, int y, int button, int mask) {
-		super.onDrag(x, y, button, mask);
-		if (isBeingUsed()) {
-			if (NetManager.getInstance().isConnected() && avoidLoopback) {
-				int eventExtMod  = 0;
+	public void mousePressed(MouseEvent event) {
+		super.mousePressed(event);
+		if (isSelected()) {
+			DrawingShape drawing = (DrawingShape) super.getTemporalDrawing();
+			if (NetManager.getInstance().isConnected() && !(event instanceof RemoteMouseEvent)) {
 				int wrappedEvent = getToolId();
-				if ((mask & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK)
-					wrappedEvent |= tellapicConstants.EVENT_DLEFT;
-				else if ((mask & MouseEvent.BUTTON2_DOWN_MASK) == MouseEvent.BUTTON2_DOWN_MASK)
-					wrappedEvent |= tellapicConstants.EVENT_DRIGHT;
-				else if ((mask & MouseEvent.BUTTON3_DOWN_MASK) == MouseEvent.BUTTON3_DOWN_MASK)
-					wrappedEvent |= tellapicConstants.EVENT_DMIDDLE;
-				
-				if ((mask & MouseEvent.CTRL_DOWN_MASK) == MouseEvent.CTRL_DOWN_MASK)
-					eventExtMod = tellapicConstants.EVENT_CTL_DOWN;
-
-					
-				DrawingShape drawing = (DrawingShape) super.getTemporalDrawing();
-				tellapic.tellapic_send_drw_using(
+				if (event.getButton() == MouseEvent.BUTTON1)
+					wrappedEvent |= tellapicConstants.EVENT_PLEFT;
+				else if (event.getButton() == MouseEvent.BUTTON2)
+					wrappedEvent |= tellapicConstants.EVENT_PRESS;
+				else
+					wrappedEvent |= tellapicConstants.EVENT_PMIDDLE;
+				tellapic.tellapic_send_drw_init(
 						NetManager.getInstance().getSocket(),
 						wrappedEvent,
-						eventExtMod,
+						0,
 						SessionUtils.getId(), 
 						1,
 						(float) drawing.getPaintPropertyStroke().getWidth(),
@@ -124,11 +65,59 @@ final public class MarkerNet extends Marker {
 						drawing.getPaintPropertyColor().getRed(),
 						drawing.getPaintPropertyColor().getGreen(),
 						drawing.getPaintPropertyColor().getBlue(),
-						x,
-						y
+						event.getX(),
+						event.getY(),
+						event.getX(),
+						event.getY(),
+						drawing.getPaintPropertyStroke().getLineJoins(),
+						drawing.getPaintPropertyStroke().getEndCaps(),
+						drawing.getPaintPropertyStroke().getMiterLimit(),
+						drawing.getPaintPropertyStroke().getDash_phase(),
+						drawing.getPaintPropertyStroke().getDash()
 				);
 			}
-			avoidLoopback = true;
+		}
+	}
+	
+	
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#draw(double, double)
+	 */
+	@Override
+	public void mouseDragged(MouseEvent event) {
+		super.mouseDragged(event);
+		if (isSelected()) {
+			if (isBeingUsed()) {
+				if (NetManager.getInstance().isConnected() && !(event instanceof RemoteMouseEvent)) {
+					int eventExtMod  = 0;
+					int wrappedEvent = getToolId();
+					if ((event.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK)
+						wrappedEvent |= tellapicConstants.EVENT_DLEFT;
+					else if ((event.getModifiersEx() & MouseEvent.BUTTON2_DOWN_MASK) == MouseEvent.BUTTON2_DOWN_MASK)
+						wrappedEvent |= tellapicConstants.EVENT_DRIGHT;
+					else if ((event.getModifiersEx() & MouseEvent.BUTTON3_DOWN_MASK) == MouseEvent.BUTTON3_DOWN_MASK)
+						wrappedEvent |= tellapicConstants.EVENT_DMIDDLE;
+
+					if ((event.getModifiersEx() & MouseEvent.CTRL_DOWN_MASK) == MouseEvent.CTRL_DOWN_MASK)
+						eventExtMod = tellapicConstants.EVENT_CTL_DOWN;
+
+					DrawingShape drawing = (DrawingShape) super.getTemporalDrawing();
+					tellapic.tellapic_send_drw_using(
+							NetManager.getInstance().getSocket(),
+							wrappedEvent,
+							eventExtMod,
+							SessionUtils.getId(), 
+							1,
+							(float) drawing.getPaintPropertyStroke().getWidth(),
+							drawing.getPaintPropertyAlpha().alpha,
+							drawing.getPaintPropertyColor().getRed(),
+							drawing.getPaintPropertyColor().getGreen(),
+							drawing.getPaintPropertyColor().getBlue(),
+							event.getX(),
+							event.getY()
+					);
+				}
+			}
 		}
 	}
 	
@@ -138,37 +127,38 @@ final public class MarkerNet extends Marker {
 	 * @see ar.com.tellapic.graphics.Ellipse#onRelease(int)
 	 */
 	@Override
-	public void onRelease(int x, int y, int button, int mask) {
-		super.onRelease(x, y, button, mask);
+	public void mouseReleased(MouseEvent event) {
+		super.mouseReleased(event);
 		
-		DrawingShape drawing = (DrawingShape) super.getTemporalDrawing();
-		if (drawing == null)
-			return ;
-		
-		if (NetManager.getInstance().isConnected() && avoidLoopback) {
-			int wrappedEvent = getToolId();
-			if (button == MouseEvent.BUTTON1)
-				wrappedEvent |= tellapicConstants.EVENT_RLEFT;
-			else if (button == MouseEvent.BUTTON2)
-				wrappedEvent |= tellapicConstants.EVENT_RRIGHT;
-			else
-				wrappedEvent |= tellapicConstants.EVENT_RMIDDLE;
+		if (isSelected()) {
+			DrawingShape drawing = (DrawingShape) super.getTemporalDrawing();
+			if (drawing == null)
+				return ;
 
-			tellapic.tellapic_send_drw_using(
-					NetManager.getInstance().getSocket(),
-					wrappedEvent,
-					0,
-					SessionUtils.getId(), 
-					1,
-					(float) drawing.getPaintPropertyStroke().getWidth(),
-					drawing.getPaintPropertyAlpha().alpha,
-					drawing.getPaintPropertyColor().getRed(),
-					drawing.getPaintPropertyColor().getGreen(),
-					drawing.getPaintPropertyColor().getBlue(),
-					x,
-					y
-			);
+			if (NetManager.getInstance().isConnected() && !(event instanceof RemoteMouseEvent)) {
+				int wrappedEvent = getToolId();
+				if (event.getButton() == MouseEvent.BUTTON1)
+					wrappedEvent |= tellapicConstants.EVENT_RLEFT;
+				else if (event.getButton() == MouseEvent.BUTTON2)
+					wrappedEvent |= tellapicConstants.EVENT_RRIGHT;
+				else
+					wrappedEvent |= tellapicConstants.EVENT_RMIDDLE;
+
+				tellapic.tellapic_send_drw_using(
+						NetManager.getInstance().getSocket(),
+						wrappedEvent,
+						0,
+						SessionUtils.getId(), 
+						1,
+						(float) drawing.getPaintPropertyStroke().getWidth(),
+						drawing.getPaintPropertyAlpha().alpha,
+						drawing.getPaintPropertyColor().getRed(),
+						drawing.getPaintPropertyColor().getGreen(),
+						drawing.getPaintPropertyColor().getBlue(),
+						event.getX(),
+						event.getY()
+				);
+			}
 		}
-		avoidLoopback = true;
 	}
 }

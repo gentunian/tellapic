@@ -37,10 +37,12 @@ import javax.swing.SwingUtilities;
 import ar.com.tellapic.chat.ChatClientModel;
 import ar.com.tellapic.chat.Message;
 import ar.com.tellapic.graphics.AbstractDrawing;
+import ar.com.tellapic.graphics.DrawingAreaView;
 import ar.com.tellapic.graphics.DrawingTool;
 import ar.com.tellapic.graphics.IPaintPropertyController;
 import ar.com.tellapic.graphics.IToolBoxController;
 import ar.com.tellapic.graphics.PaintProperty;
+import ar.com.tellapic.graphics.RemoteMouseEvent;
 import ar.com.tellapic.graphics.Tool;
 import ar.com.tellapic.graphics.ToolBoxModel;
 import ar.com.tellapic.graphics.ToolFactory;
@@ -766,9 +768,8 @@ public class NetManager extends Observable implements Runnable {
 		String toolClassName = ToolFactory.getRegisteredToolsClassNames().get(remoteTool);
 
 		/* Get the remote user paint controller and tool box model */
-		IPaintPropertyController    c = remoteUser.getPaintController();
-		ToolBoxModel    toolBoxState  = remoteUser.getToolBoxModel();
-		IToolBoxController toolControl = remoteUser.getToolboxController();
+		IPaintPropertyController paintControl = remoteUser.getPaintController();
+		IToolBoxController       toolControl  = remoteUser.getToolboxController();
 
 		toolControl.selectToolByName(toolClassName.split("[a-z].*\\.")[1]);
 
@@ -779,108 +780,76 @@ public class NetManager extends Observable implements Runnable {
 				drawingData.getColor().getBlue()
 		);
 
-		/* Get an instance of the used tool */
-		DrawingTool usedTool = (DrawingTool) toolBoxState.getLastUsedTool();
-		usedTool.getTemporalDrawing().setUser(remoteUser);
-		avoidLoopback(usedTool);
-
 		/* Handle text properties if the used tool was TEXT. Otherwise, handle stroke properties */
 		if ((remoteTool & tellapicConstants.TOOL_TEXT) == tellapicConstants.TOOL_TEXT) {
-			c.handleFontSizeChange(drawingData.getWidth());
-			c.handleFontStyleChange(drawingData.getType().getText().getStyle());
-			c.handleTextChange(drawingData.getType().getText().getInfo());
-			c.handleFontFaceChange(drawingData.getType().getText().getFace());
+			paintControl.handleFontSizeChange(drawingData.getWidth());
+			paintControl.handleFontStyleChange(drawingData.getType().getText().getStyle());
+			paintControl.handleTextChange(drawingData.getType().getText().getInfo());
+			paintControl.handleFontFaceChange(drawingData.getType().getText().getFace());
 
 		} else {
-			c.handleEndCapsChange(drawingData.getType().getFigure().getEndcaps());
-			c.handleLineJoinsChange(drawingData.getType().getFigure().getLinejoin());
-			c.handleOpacityChange(drawingData.getOpacity());
-			c.handleWidthChange(drawingData.getWidth());
-			c.handleDashChange(drawingData.getType().getFigure().getDash_array(), drawingData.getType().getFigure().getDash_phase());
+			paintControl.handleEndCapsChange(drawingData.getType().getFigure().getEndcaps());
+			paintControl.handleLineJoinsChange(drawingData.getType().getFigure().getLinejoin());
+			paintControl.handleOpacityChange(drawingData.getOpacity());
+			paintControl.handleWidthChange(drawingData.getWidth());
+			paintControl.handleDashChange(drawingData.getType().getFigure().getDash_array(), drawingData.getType().getFigure().getDash_phase());
 		}
-
-		/* Both text and stroke has color properties */
-		c.handleColorChange(color);
-
-		usedTool.setPaintProperties(new PaintProperty[] {
-				toolBoxState.getOpacityProperty(),
-				toolBoxState.getColorProperty(),
-				toolBoxState.getStrokeProperty(),
-				toolBoxState.getFontProperty(),
-				toolBoxState.getColorProperty()
-		});
-//		if (usedTool.hasAlphaCapability())
-//			usedTool.setAlpha(toolBoxState.getOpacityProperty());
-//
-//		if (usedTool.hasColorCapability())
-//			usedTool.setColor(toolBoxState.getColorProperty());
-//
-//		if (usedTool.hasStrokeCapability())
-//			usedTool.setStroke(toolBoxState.getStrokeProperty());
-//
-//		if (usedTool.hasFontCapability())
-//			usedTool.setFont(toolBoxState.getFontProperty());
-
-		if (usedTool.isOnPressSupported())
-			usedTool.onPress(
-					(int)drawingData.getPoint1().getX(),
-					(int)drawingData.getPoint1().getY(),
-					swingButton,
-					swingMask
-			);
-
-		if (usedTool.isOnDragSupported())
-			usedTool.onDrag(
-					(int)drawingData.getType().getFigure().getPoint2().getX(),
-					(int)drawingData.getType().getFigure().getPoint2().getY(),
-					swingButton,
-					swingMask
-			);
-
-		if (usedTool.isOnReleaseSupported())
-			usedTool.onRelease(
-					(int)drawingData.getType().getFigure().getPoint2().getX(),
-					(int)drawingData.getType().getFigure().getPoint2().getY(),
-					swingButton,
-					swingMask
-			);
-
-		AbstractDrawing drawing = usedTool.finishDrawing();
-
-		if (drawing == null) 
-			return;
 		
-		drawing.setNumber(drawingData.getNumber());
-		remoteUser.addDrawing(drawing);
+		toolControl.handleAssignedNumber(drawingData.getNumber());
+		
+		/* Both text and stroke has color properties */
+		paintControl.handleColorChange(color);
 
+		RemoteMouseEvent pressEvent = new RemoteMouseEvent(
+				remoteUser,
+				DrawingAreaView.getInstance(),
+				MouseEvent.MOUSE_PRESSED,
+				System.currentTimeMillis(),
+				swingMask,
+				(int)drawingData.getPoint1().getX(),
+				(int)drawingData.getPoint1().getY(),
+				0,
+				false,
+				swingButton);
+		
+		RemoteMouseEvent dragEvent = new RemoteMouseEvent(
+				remoteUser,
+				DrawingAreaView.getInstance(),
+				MouseEvent.MOUSE_DRAGGED,
+				System.currentTimeMillis(),
+				swingMask,
+				(int)drawingData.getType().getFigure().getPoint2().getX(),
+				(int)drawingData.getType().getFigure().getPoint2().getY(),
+				0,
+				false,
+				swingButton);
+
+		RemoteMouseEvent releaseEvent = new RemoteMouseEvent(
+				remoteUser,
+				DrawingAreaView.getInstance(),
+				MouseEvent.MOUSE_RELEASED,
+				System.currentTimeMillis(),
+				swingMask,
+				(int)drawingData.getType().getFigure().getPoint2().getX(),
+				(int)drawingData.getType().getFigure().getPoint2().getY(),
+				0,
+				false,
+				swingButton);
+
+//		DrawingAreaView.getInstance().dispatchEvent(pressEvent);
+//		DrawingAreaView.getInstance().dispatchEvent(dragEvent);
+//		DrawingAreaView.getInstance().dispatchEvent(releaseEvent);
+		Tool usedTool = remoteUser.getToolBoxModel().getLastUsedTool();
+		usedTool.mousePressed(pressEvent);
+		usedTool.mouseDragged(dragEvent);
+		usedTool.mouseReleased(releaseEvent);
+		
 		/* TODO: JUST FOR DEBUG */
 		int x1 = (int)drawingData.getPoint1().getX();
 		int y1 = (int)drawingData.getPoint1().getY();
 		int x2 = (int)drawingData.getType().getFigure().getPoint2().getX();
 		int y2 = (int)drawingData.getType().getFigure().getPoint2().getY();
 		System.out.println("RECEIVED COORDS: ("+x1+","+y1+") ("+x2+","+y2+")");
-	}
-
-	/**
-	 * @param user
-	 */
-	private void avoidLoopback(Tool usedTool) {
-		try {
-			Method avoidLoopback = usedTool.getClass().getMethod("setAvoidLoopback", boolean.class);
-			try {
-				avoidLoopback.invoke(usedTool, false);
-			} catch (IllegalArgumentException e) {
-				e.printStackTrace();
-			} catch (IllegalAccessException e) {
-				e.printStackTrace();
-			} catch (InvocationTargetException e) {
-				e.printStackTrace();
-			}
-		} catch (SecurityException e) {
-			e.printStackTrace();
-		} catch (NoSuchMethodException e) {
-			e.printStackTrace();
-		}
 	}
 
 
@@ -923,25 +892,13 @@ public class NetManager extends Observable implements Runnable {
 
 		/* Get the remote user paint controller to set paint properties */
 		IPaintPropertyController c = remoteUser.getPaintController();
-
-		/* Get the remote user tool box model */
-		ToolBoxModel  toolBoxState = remoteUser.getToolBoxModel();
-
+		IToolBoxController toolControl = remoteUser.getToolboxController();
+		
 		/* Select the tool the remote user has used for this drawing and set its properties */
 		remoteUser.getToolboxController().selectToolByName(toolClassName.split("[a-z].*\\.")[1]);
-
-		/* Get an instance of the used tool */
-		DrawingTool usedTool = (DrawingTool) toolBoxState.getLastUsedTool();
-		AbstractDrawing temporalDrawing = usedTool.getTemporalDrawing();
-		temporalDrawing.setUser(remoteUser);
-		remoteUser.setTemporalDrawing(temporalDrawing);
-		
-		/* Avoid loopback information through the network. Each time a net tool is used */
-		/* it sends data through the network if loopback is set to true.                */
-		avoidLoopback(usedTool);
-
+		Tool usedTool = remoteUser.getToolBoxModel().getLastUsedTool();
 		switch(event) {
-
+		
 		case tellapicConstants.EVENT_PRESS:
 			Color color = new Color(
 					drawingData.getColor().getRed(),
@@ -954,64 +911,54 @@ public class NetManager extends Observable implements Runnable {
 			c.handleOpacityChange(drawingData.getOpacity());
 			c.handleWidthChange(drawingData.getWidth());
 			c.handleColorChange(color);
-
-			usedTool.setPaintProperties(new PaintProperty[] {
-						toolBoxState.getOpacityProperty(),
-						toolBoxState.getColorProperty(),
-						toolBoxState.getStrokeProperty(),
-						toolBoxState.getFontProperty(),
-						toolBoxState.getColorProperty()
-				});
-//			if (usedTool.hasAlphaCapability())
-//				usedTool.setAlpha(toolBoxState.getOpacityProperty());
-//
-//			if (usedTool.hasColorCapability())
-//				usedTool.setColor(toolBoxState.getColorProperty());
-//
-//			if (usedTool.hasStrokeCapability())
-//				usedTool.setStroke(toolBoxState.getStrokeProperty());
-//
-//			if (usedTool.hasFontCapability())
-//				usedTool.setFont(toolBoxState.getFontProperty());
-//
-//			if (usedTool.hasColorCapability())
-//				usedTool.setColor(toolBoxState.getColorProperty());
-
-			usedTool.onPress(
+			
+			toolControl.handleAssignedNumber(drawingData.getNumber());
+			
+			RemoteMouseEvent pressEvent = new RemoteMouseEvent(
+					remoteUser,
+					DrawingAreaView.getInstance(),
+					MouseEvent.MOUSE_PRESSED,
+					System.currentTimeMillis(),
+					swingMask,
 					(int)drawingData.getPoint1().getX(),
 					(int)drawingData.getPoint1().getY(),
-					swingButton,
-					swingMask
-			);
-
+					0,
+					false,
+					swingButton);
+//			DrawingAreaView.getInstance().dispatchEvent(pressEvent);e
+			usedTool.mousePressed(pressEvent);
 			break;
 
 		case tellapicConstants.EVENT_DRAG:
-			usedTool.onDrag(
-					(int)drawingData.getPoint1().getX(), 
-					(int)drawingData.getPoint1().getY(), 
-					swingButton,
-					swingMask
-			);
-
+			RemoteMouseEvent dragEvent = new RemoteMouseEvent(
+					remoteUser,
+					DrawingAreaView.getInstance(),
+					MouseEvent.MOUSE_DRAGGED,
+					System.currentTimeMillis(),
+					swingMask,
+					(int)drawingData.getType().getFigure().getPoint2().getX(),
+					(int)drawingData.getType().getFigure().getPoint2().getY(),
+					0,
+					false,
+					swingButton);
+//			DrawingAreaView.getInstance().dispatchEvent(dragEvent);
+			usedTool.mouseDragged(dragEvent);
 			break;
 
 		case tellapicConstants.EVENT_RELEASE:
-			remoteUser.setTemporalDrawing(null);
-			usedTool.onRelease(
-					(int)drawingData.getPoint1().getX(),
-					(int)drawingData.getPoint1().getY(),
-					swingButton,
-					swingMask
-			);
-			AbstractDrawing drawing = usedTool.finishDrawing();
-
-			if (drawing == null) 
-				return;
-			
-			drawing.setNumber(drawingData.getNumber());
-			remoteUser.addDrawing(drawing);
-
+			RemoteMouseEvent releaseEvent = new RemoteMouseEvent(
+					remoteUser,
+					DrawingAreaView.getInstance(),
+					MouseEvent.MOUSE_RELEASED,
+					System.currentTimeMillis(),
+					swingMask,
+					(int)drawingData.getType().getFigure().getPoint2().getX(),
+					(int)drawingData.getType().getFigure().getPoint2().getY(),
+					0,
+					false,
+					swingButton);
+//			DrawingAreaView.getInstance().dispatchEvent(releaseEvent);
+			usedTool.mouseReleased(releaseEvent);
 			break;
 		}
 	}

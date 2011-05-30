@@ -4,12 +4,6 @@
 package ar.com.tellapic.graphics;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
-import ar.com.tellapic.AbstractUser;
-
-import com.google.common.collect.ListMultimap;
 
 
 /**
@@ -27,12 +21,11 @@ public interface IDrawingAreaState {
 //	 * @return the List of Drawing.
 //	 */
 //	public Collection<Map.Entry<AbstractUser,Drawing>> getDrawingCollection();
-//	
-//	/**
-//	 * 
-//	 * @return
-//	 */
-//	public ListMultimap<AbstractUser, Drawing> getDrawings();
+
+	/**
+	 * 
+	 */
+	public Collection<AbstractDrawing> getDrawings();
 //	
 //	
 //	/**

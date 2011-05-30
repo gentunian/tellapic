@@ -22,6 +22,7 @@ import java.util.NoSuchElementException;
 import java.util.Observable;
 
 import ar.com.tellapic.graphics.AbstractDrawing;
+import ar.com.tellapic.graphics.DrawingAreaModel;
 import ar.com.tellapic.graphics.IPaintPropertyController;
 import ar.com.tellapic.graphics.IToolBoxController;
 import ar.com.tellapic.graphics.PaintProperty;
@@ -88,7 +89,7 @@ public abstract class AbstractUser extends Observable  {
 	//list and to be a 'firstNotDrawn' object accordingly, if the user desires to complete the drawing. Else,
 	//this object will be discarded and not drawn.
 	private AbstractDrawing                 temporalDrawing;
-	
+
 	
 	// User properties
 	//private int     state;
@@ -109,8 +110,6 @@ public abstract class AbstractUser extends Observable  {
 		drawingList = new ArrayList<AbstractDrawing>();
 		//TODO: the idea was that local user can set how to paint all paintings of a user
 		customProperties = new PaintProperty[4];
-//		addObserver(DrawingAreaView.getInstance());
-//		addObserver(UserManager.getInstance());
 	}
 	
 	
@@ -143,7 +142,7 @@ public abstract class AbstractUser extends Observable  {
 		
 		/* Shouldn't we set this line outside this object??? */
 		drawing.setUser(this);
-		
+		DrawingAreaModel.getInstance().addDrawing(drawing);
 		/* Report the view only if we are visible */
 		setChanged();
 		notifyObservers(drawing);
@@ -499,5 +498,17 @@ public abstract class AbstractUser extends Observable  {
 	 */
 	public IPaintPropertyController getPaintController() {
 		return paintController;
+	}
+
+
+	/**
+	 * @param drawing
+	 */
+	public void setDrawingSelected(AbstractDrawing drawing) {
+		for(AbstractDrawing d : getDrawings()) {
+			d.setSelected(d.equals(drawing));
+		}
+		setChanged();
+		notifyObservers(drawingList.indexOf(drawing));
 	}
 }

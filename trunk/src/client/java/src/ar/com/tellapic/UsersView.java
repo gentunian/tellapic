@@ -119,8 +119,14 @@ public class UsersView extends JPanel {
 					} else if (o instanceof AbstractDrawing) {
 						AbstractDrawing drawing = (AbstractDrawing) o;
 						switch(colSel) {
+						case 0:
+							AbstractUser user = drawing.getUser();
+							/* Doing it so will trigger a notify() so UserView will be updated */
+							user.setDrawingSelected(drawing);
+							break;
 						case 1:
 //							userOptionsController.toggleDrawingVisibility(drawing);
+							/* Doing it so will trigger a notify() so UserView will be updated */
 							drawing.getUser().changeDrawingVisibility(drawing);
 							break;
 						case 2:
@@ -131,7 +137,19 @@ public class UsersView extends JPanel {
 					}
 				}
 			}
+			
 			public void mousePressed(MouseEvent e) {
+				if (e.isPopupTrigger()) {
+					TreePath path = tree.getPathForLocation(e.getX(), e.getY());
+					if (path != null) {
+						tree.getTreeSelectionModel().addSelectionPath(path);
+						UsersViewPopupOptions popup = new UsersViewPopupOptions(path.getLastPathComponent(), chatViewController);
+						popup.show(UsersView.this, e.getX(), e.getY());
+					}
+				}
+			}
+			
+			public void mouseReleased(MouseEvent e) {
 				if (e.isPopupTrigger()) {
 					TreePath path = tree.getPathForLocation(e.getX(), e.getY());
 					if (path != null) {

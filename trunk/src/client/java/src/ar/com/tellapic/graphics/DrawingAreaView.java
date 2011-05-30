@@ -39,7 +39,6 @@ import javax.swing.JViewport;
 import javax.swing.KeyStroke;
 import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 
@@ -112,9 +111,6 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 	 * 
 	 */
 	private DrawingAreaView() throws NullPointerException {
-//		temporalDrawings = new ArrayList<Drawing>();
-//		userList         = new ArrayList<AbstractUser>();
-		
 		/* Get the graphic environment settings */
 		ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 		gd = ge.getDefaultScreenDevice();
@@ -362,22 +358,43 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 //			/* This layer is translucent and holds each drawing on it */
 //			/**********************************************************/
 //			frontArea.drawImage(background, 0, 0, null);
-		
+
 		Graphics2D  drawingArea = (Graphics2D) background.getGraphics();
 		drawingArea.drawImage(backimage, 0, 0, null);
 		drawingArea.setRenderingHints(rh);
 		
-		for(AbstractUser user : UserManager.getInstance().getUsers()) {
-			if (!user.isRemoved() && user.isVisible()) {
-				for(AbstractDrawing drawing : user.getDrawings())
-					//drawDrawing(drawingArea, drawing, user.getCustomProperties());
-					drawing.draw(drawingArea);
-				
-				if (user.isDrawing())
-					//drawDrawing(drawingArea, user.getDrawing(), user.getCustomProperties());
-					user.getDrawing().draw(drawingArea);
-			}
+		AbstractDrawing selectedDrawing = null;
+		
+		for(AbstractDrawing drawing : DrawingAreaModel.getInstance().getDrawings()) {
+			
+			if (drawing.isVisible())
+				drawing.draw(drawingArea);
+			
+			/* Remember this selected drawing to draw the control points later */
+			if (drawing.isSelected())
+				selectedDrawing = drawing;
 		}
+		
+//		for(AbstractUser user : UserManager.getInstance().getUsers()) {
+//			if (!user.isRemoved() && user.isVisible()) {
+//				for(AbstractDrawing drawing : user.getDrawings()) {
+//					//drawDrawing(drawingArea, drawing, user.getCustomProperties());
+//					drawing.draw(drawingArea);
+//					if (drawing.isSelected())
+//						selectedDrawing = drawing;
+//				}
+				
+//				if (user.isDrawing())
+//					user.getDrawing().draw(drawingArea);
+//			}
+//		}
+		
+		/* Draw the control points for the selected drawing above all drawings */
+		if (selectedDrawing != null && selectedDrawing.isVisible()) {
+			for(ControlPoint p : selectedDrawing.getControlPoints())
+				p.draw(drawingArea);
+		}
+		
 		
 		if (observable instanceof DrawingTool && ((DrawingTool)observable).isBeingUsed()) {
 			DrawingTool     drawingTool = (DrawingTool) observable;
@@ -389,12 +406,12 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 				drawing.draw(drawingArea);
 			
 		} else if (observable instanceof Zoom) {
-			float newZoom = (Float) data;
-			setZoom(
-					(int)((Zoom)observable).getInit().getX(),
-					(int) ((Zoom)observable).getInit().getY(),
-					newZoom
-			);
+//			float newZoom = (Float) data;
+//			setZoom(
+//					(int)((Zoom)observable).getInit().getX(),
+//					(int) ((Zoom)observable).getInit().getY(),
+//					newZoom
+//			);
 		}
 		
 		repaint();
@@ -775,6 +792,14 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 //			tool.onPress(event.getX(), event.getY(), event.getButton(), event.getModifiers());
 //			tool.onRelease(event.getX(), event.getY(), event.getButton(), event.getModifiers());
 //		}
+		
+//		for(AbstractUser user : UserManager.getInstance().getUsers()) {
+//			if (!user.isRemoved() && user.isVisible()) {
+//				for(AbstractDrawing drawing : user.getDrawings()) {
+//					((DrawingShape)drawing).setSelected(((DrawingShape)drawing).getShape().contains(event.getPoint()));
+//				}
+//			}
+//		}
 	}
 	
 	
@@ -794,42 +819,41 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 			return;
 		}
 		
-		IToolBoxState toolBoxState = user.getToolBoxModel();
-		Tool usedTool = toolBoxState.getLastUsedTool();
-
-		int xZoomOffset = (int)(event.getX() / zoomX);
-		int yZoomOffset = (int)(event.getY() / zoomX);
-		
-		/* Do nothing with an empty tool */
-		if (usedTool == null)
-			return;
-		
-		/* If button is the left one, start using the tool */
-		if (event.getButton() == MouseEvent.BUTTON1) {
-			if (usedTool instanceof DrawingTool) {
-				DrawingTool drawingTool = (DrawingTool) usedTool;
-				AbstractDrawing temporalDrawing = drawingTool.getTemporalDrawing();
-				
-				temporalDrawing.setUser(user);
-				user.setTemporalDrawing(temporalDrawing);
-				
-				drawingTool.setPaintProperties(new PaintProperty[] {
-						toolBoxState.getOpacityProperty(),
-						toolBoxState.getColorProperty(),
-						toolBoxState.getStrokeProperty(),
-						toolBoxState.getFontProperty(),
-						toolBoxState.getColorProperty()
-				});
-			}
-			
-			if (usedTool.isOnPressSupported())
-				usedTool.onPress(xZoomOffset, yZoomOffset, event.getButton(), event.getModifiers());
-
-		} else {
-			/* If we press another button, just stop using the tool */
-			//TODO: The tool is actually paused. Rename the tool's method onCancel() to onPaused().
-			usedTool.onPause();
-		}
+//		IToolBoxState toolBoxState = user.getToolBoxModel();
+//		Tool usedTool = toolBoxState.getLastUsedTool();
+//
+//		int xZoomOffset = (int)(event.getX() / zoomX);
+//		int yZoomOffset = (int)(event.getY() / zoomX);
+//		
+//		/* Do nothing with an empty tool */
+//		if (usedTool == null)
+//			return;
+//		
+//		/* If button is the left one, start using the tool */
+//		if (event.getButton() == MouseEvent.BUTTON1) {
+//			if (usedTool instanceof DrawingTool) {
+//				DrawingTool drawingTool = (DrawingTool) usedTool;
+//				AbstractDrawing temporalDrawing = drawingTool.getTemporalDrawing();
+//				
+//				temporalDrawing.setUser(user);
+//				user.setTemporalDrawing(temporalDrawing);
+//				
+//				drawingTool.setPaintProperties(new PaintProperty[] {
+//						toolBoxState.getOpacityProperty(),
+//						toolBoxState.getColorProperty(),
+//						toolBoxState.getStrokeProperty(),
+//						toolBoxState.getFontProperty(),
+//						toolBoxState.getColorProperty()
+//				});
+//			}
+//			
+//			if (usedTool.isOnPressSupported())
+//				usedTool.onPress(xZoomOffset, yZoomOffset, event.getButton(), event.getModifiers());
+//
+//		} else {
+//			/* If we press another button, just stop using the tool */
+//			usedTool.onPause();
+//		}
 	}
 	
 	
@@ -902,28 +926,24 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 			return;
 		}
 		
-		Tool usedTool = user.getToolBoxModel().getLastUsedTool();
-		
-		/* Do nothing with an empty tool */
-		if (usedTool == null)
-			return;
-		
-		if (usedTool.isOnDragSupported()) {
-			/* Do nothing if some coordinate is negative */
-			if (event.getX() < 0 || event.getY() < 0)
-				usedTool.onPause();
-			else {
-				if (usedTool.isBeingUsed())
-					
-					usedTool.onDrag(xZoomOffset, yZoomOffset, event.getButton(), event.getModifiersEx());
-				else
-					usedTool.onRestore();
-			}
-//			if (usedTool instanceof DrawingTool) {
-				// This will trigger an update() to the DrawingAreaView
-//				user.setTemporalDrawing(((DrawingTool)usedTool).getDrawing());
+//		Tool usedTool = user.getToolBoxModel().getLastUsedTool();
+//		
+//		/* Do nothing with an empty tool */
+//		if (usedTool == null)
+//			return;
+//		
+//		if (usedTool.isOnDragSupported()) {
+//			/* Do nothing if some coordinate is negative */
+//			if (event.getX() < 0 || event.getY() < 0)
+//				usedTool.onPause();
+//			else {
+//				if (usedTool.isBeingUsed())
+//					
+//					usedTool.onDrag(xZoomOffset, yZoomOffset, event.getButton(), event.getModifiersEx());
+//				else
+//					usedTool.onRestore();
 //			}
-		}
+//		}
 	}
 	
 	
@@ -933,46 +953,29 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 	 */
 	@Override
 	public void mouseReleased(MouseEvent event) {
-		//Utils.printEventInfo(event);
-		Tool         usedTool = user.getToolBoxModel().getLastUsedTool();
-		
-		/* Do nothing with an empty tool */
-		if (usedTool == null)
-			return;
-		
-		int xZoomOffset = (int)(event.getX() / zoomX);
-		int yZoomOffset = (int)(event.getY() / zoomX);
-		
-		/* Release event won't use temporal drawing anymore */
-		user.setTemporalDrawing(null);
-		
-		if (usedTool.isBeingUsed() && event.getButton() == MouseEvent.BUTTON1) {
-			
-			if (usedTool.isOnReleaseSupported())
-				usedTool.onRelease(xZoomOffset, yZoomOffset, event.getButton(), event.getModifiersEx());
-			
-			if (usedTool instanceof DrawingTool) {
-			
-//				Drawing drawing = ((DrawingTool)usedTool).finishDrawing();
-//				if (drawing == null) 
-//					return;
-			
-				// This will trigger an update() to the DrawingAreaView
-				//user.addDrawing(drawing);
-			
-				return;
-			}
-		}
-		
-		
-		if (event.getButton() == MouseEvent.BUTTON3 && event.getModifiersEx() == java.awt.event.InputEvent.BUTTON1_DOWN_MASK) {
-			usedTool.onRestore();
-			return;
-		}
-		
-		//TODO: Reveer esto (?)
-//		if (event.getButton() == MouseEvent.BUTTON3)
-//			user.setTemporalDrawing(null);
+//		Tool         usedTool = user.getToolBoxModel().getLastUsedTool();
+//		
+//		/* Do nothing with an empty tool */
+//		if (usedTool == null)
+//			return;
+//		
+//		int xZoomOffset = (int)(event.getX() / zoomX);
+//		int yZoomOffset = (int)(event.getY() / zoomX);
+//		
+//		/* Release event won't use temporal drawing anymore */
+//		user.setTemporalDrawing(null);
+//		
+//		if (usedTool.isBeingUsed() && event.getButton() == MouseEvent.BUTTON1) {
+//			
+//			if (usedTool.isOnReleaseSupported())
+//				usedTool.onRelease(xZoomOffset, yZoomOffset, event.getButton(), event.getModifiersEx());
+//		}
+//		
+//		
+//		if (event.getButton() == MouseEvent.BUTTON3 && event.getModifiersEx() == java.awt.event.InputEvent.BUTTON1_DOWN_MASK) {
+//			usedTool.onRestore();
+//			return;
+//		}
 	}
 	
 	
@@ -982,8 +985,8 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 	 */
 	@Override
 	public void mouseMoved(MouseEvent event) {
-		IToolBoxState toolBoxState = user.getToolBoxModel();
-		Tool              usedTool = toolBoxState.getLastUsedTool();
+//		IToolBoxState toolBoxState = user.getToolBoxModel();
+//		Tool              usedTool = toolBoxState.getLastUsedTool();
 		
 		int xZoomOffset = (int) (event.getX() / zoomX); 
 		int yZoomOffset = (int) (event.getY() / zoomX);
@@ -993,26 +996,26 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 		topRule.update(event.getX(), event.getY(), zoomX);
 		leftRule.update(event.getX(), event.getY(), zoomX);
 		
-		if (usedTool == null)
-			return;
-		
-		if (usedTool.isOnMoveSupported()) {
-			if (usedTool instanceof DrawingTool) {
-				DrawingTool drawingTool = (DrawingTool) usedTool;
-				AbstractDrawing  drawing = drawingTool.getTemporalDrawing();
-				
-				drawing.setUser(user);
-				drawingTool.setPaintProperties(new PaintProperty[] {
-						toolBoxState.getOpacityProperty(),
-						toolBoxState.getColorProperty(),
-						toolBoxState.getStrokeProperty(),
-						toolBoxState.getFontProperty(),
-						toolBoxState.getColorProperty()
-				});
-				drawingTool.onMove(xZoomOffset, yZoomOffset);
-			}
-			
-		}
+//		if (usedTool == null)
+//			return;
+//		
+//		if (usedTool.isOnMoveSupported()) {
+//			if (usedTool instanceof DrawingTool) {
+//				DrawingTool drawingTool = (DrawingTool) usedTool;
+//				AbstractDrawing  drawing = drawingTool.getTemporalDrawing();
+//				
+//				drawing.setUser(user);
+//				drawingTool.setPaintProperties(new PaintProperty[] {
+//						toolBoxState.getOpacityProperty(),
+//						toolBoxState.getColorProperty(),
+//						toolBoxState.getStrokeProperty(),
+//						toolBoxState.getFontProperty(),
+//						toolBoxState.getColorProperty()
+//				});
+//				drawingTool.onMove(xZoomOffset, yZoomOffset);
+//			}
+//			
+//		}
 	}
 	
 	
@@ -1032,14 +1035,14 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 	 */
 	@Override
 	public void mouseEntered(MouseEvent event) {
-		IToolBoxState toolBoxState = user.getToolBoxModel();
-		Tool              usedTool = toolBoxState.getLastUsedTool();
-	
-		if (usedTool == null)
-			return;
-	
-		setCursor(usedTool.getCursor());
-		statusBar.setToolInfo(usedTool.getIconPath(), usedTool.getToolTipText());
+//		IToolBoxState toolBoxState = user.getToolBoxModel();
+//		Tool              usedTool = toolBoxState.getLastUsedTool();
+//	
+//		if (usedTool == null)
+//			return;
+//	
+//		setCursor(usedTool.getCursor());
+//		statusBar.setToolInfo(usedTool.getIconPath(), usedTool.getToolTipText());
 	}
 	
 	
@@ -1056,8 +1059,8 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 		if (usedTool == null) {
 			Zoom zoom = Zoom.getInstance();
 			zoom.setZoomIn(step > 0);
-			zoom.onPress((int)(event.getX() / zoomX), (int) (event.getY() / zoomX), 0, 0);
-			zoom.onRelease((int)(event.getX() / zoomX), (int) (event.getY() / zoomX), 0, 0);
+//			zoom.onPress((int)(event.getX() / zoomX), (int) (event.getY() / zoomX), 0, 0);
+//			zoom.onRelease((int)(event.getX() / zoomX), (int) (event.getY() / zoomX), 0, 0);
 			return;
 		}
 		
@@ -1066,51 +1069,51 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 		
 		//if (usedTool.hasZoomProperties())
 		
-		if (usedTool instanceof DrawingTool ) {
-
-			/* If the tool is currently in use */
-			if (usedTool.isBeingUsed()) {
-				
-				/* This is for changing tool properties while drawing */
-				if (!((DrawingTool)usedTool).isLiveModeSupported()) {
-					/* If shift is pressed change the opacity if the tool supports it*/
-					if (event.isShiftDown()) {
-
-						/* Does this tool support opacity changes? */
-						if (((DrawingTool)usedTool).hasAlphaCapability())
-							propertyController.handleOpacityChange(toolBoxState.getOpacityProperty().alpha + 0.1f * step);
-
-						/* else, change the width */
-					} else {
-
-						/* Does this tool support stroke width changes? */
-						if (((DrawingTool)usedTool).hasStrokeCapability())
-							propertyController.handleWidthChange((int)toolBoxState.getStrokeProperty().getWidth() + step);
-
-						/* Does this tool support font width changes? */
-						else if (((DrawingTool)usedTool).hasFontCapability())
-							propertyController.handleFontSizeChange(toolBoxState.getFontProperty().getSize() + step);
-					}
-				}
-				return;
-			}
-
-			Zoom zoom = Zoom.getInstance();
-			zoom.setZoomIn(step > 0);
-			zoom.onPress((int)(event.getX() / zoomX), (int) (event.getY() / zoomX), 0, 0);
-			zoom.onRelease((int)(event.getX() / zoomX), (int) (event.getY() / zoomX), 0, 0);
+//		if (usedTool instanceof DrawingTool ) {
+//
+//			/* If the tool is currently in use */
+//			if (usedTool.isBeingUsed()) {
+//				
+//				/* This is for changing tool properties while drawing */
+//				if (!((DrawingTool)usedTool).isLiveModeSupported()) {
+//					/* If shift is pressed change the opacity if the tool supports it*/
+//					if (event.isShiftDown()) {
+//
+//						/* Does this tool support opacity changes? */
+//						if (((DrawingTool)usedTool).hasAlphaCapability())
+//							propertyController.handleOpacityChange(toolBoxState.getOpacityProperty().alpha + 0.1f * step);
+//
+//						/* else, change the width */
+//					} else {
+//
+//						/* Does this tool support stroke width changes? */
+//						if (((DrawingTool)usedTool).hasStrokeCapability())
+//							propertyController.handleWidthChange((int)toolBoxState.getStrokeProperty().getWidth() + step);
+//
+//						/* Does this tool support font width changes? */
+//						else if (((DrawingTool)usedTool).hasFontCapability())
+//							propertyController.handleFontSizeChange(toolBoxState.getFontProperty().getSize() + step);
+//					}
+//				}
+//				return;
+//			}
+//
+//			Zoom zoom = Zoom.getInstance();
+//			zoom.setZoomIn(step > 0);
+//			zoom.onPress((int)(event.getX() / zoomX), (int) (event.getY() / zoomX), 0, 0);
+//			zoom.onRelease((int)(event.getX() / zoomX), (int) (event.getY() / zoomX), 0, 0);
 			
 //			if (((DrawingTool)usedTool).getDrawing() != null)
 //				user.setTemporalDrawing(((DrawingTool)usedTool).getDrawing());
-			
-		} else {
-			/* This is a control tool if it's not a drawing tool*/
-			if (usedTool instanceof Zoom) {
-				((Zoom)usedTool).setZoomIn(step > 0);
-				usedTool.onPress(event.getX(), event.getY(), 0, 0);
-				usedTool.onRelease(event.getX(), event.getY(), 0, 0);
-			}
-		}
+//			
+//		} else {
+//			/* This is a control tool if it's not a drawing tool*/
+//			if (usedTool instanceof Zoom) {
+//				((Zoom)usedTool).setZoomIn(step > 0);
+//				usedTool.onPress(event.getX(), event.getY(), 0, 0);
+//				usedTool.onRelease(event.getX(), event.getY(), 0, 0);
+//			}
+//		}
 	}
 	
 	
