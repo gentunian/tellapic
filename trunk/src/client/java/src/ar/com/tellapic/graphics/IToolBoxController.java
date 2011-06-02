@@ -21,8 +21,4 @@ public interface IToolBoxController {
 	 */
 	public void selectToolByName(String toolName);
 
-	/**
-	 * @param number
-	 */
-	public void handleAssignedNumber(long number);
 }

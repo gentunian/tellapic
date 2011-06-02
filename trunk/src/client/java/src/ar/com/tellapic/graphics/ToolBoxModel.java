@@ -391,26 +391,26 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	}
 
 
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.IToolBoxManager#incrementZoom()
-	 */
-	@Override
-	public void setZoomIn(boolean value) {
-		Zoom zoom = (Zoom) tools.get("Zoom"); //TODO: use constant.
-		
-		zoom.setZoomIn(value);
-	}
-
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.IToolBoxManager#setZoomValue(double)
-	 */
-	@Override
-	public void setZoomValue(float value) {
-		Zoom zoom = (Zoom) tools.get("Zoom"); //TODO: use constant.
-		
-		zoom.setZoom(value);
-	}
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.IToolBoxManager#incrementZoom()
+//	 */
+//	@Override
+//	public void setZoomIn(boolean value) {
+//		Zoom zoom = (Zoom) tools.get("Zoom"); //TODO: use constant.
+//		
+//		zoom.setZoomIn(value);
+//	}
+//
+//
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.IToolBoxManager#setZoomValue(double)
+//	 */
+//	@Override
+//	public void setZoomValue(float value) {
+//		Zoom zoom = (Zoom) tools.get("Zoom"); //TODO: use constant.
+//		
+//		zoom.setZoom(value);
+//	}
 
 
 	/**
@@ -447,14 +447,5 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	@Override
 	public long getAssignedNumber() {
 		return lastAssignedNumber;
-	}
-
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.IToolBoxState#setAssignedNumber(long)
-	 */
-	@Override
-	public void setAssignedNumber(long number) {
-		lastAssignedNumber = number;
 	}
 }

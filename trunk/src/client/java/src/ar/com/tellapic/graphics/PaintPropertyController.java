@@ -133,20 +133,20 @@ public class PaintPropertyController implements IPaintPropertyController {
 	}
 
 
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleZoomChange(boolean)
-	 */
-	@Override
-	public void handleZoomChange(boolean b) {
-		model.setZoomIn(b);
-	}
-
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleZoomChange(double)
-	 */
-	@Override
-	public void handleZoomChange(float zoom) {
-		model.setZoomValue(zoom);
-	}
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleZoomChange(boolean)
+//	 */
+//	@Override
+//	public void handleZoomChange(boolean b) {
+//		model.setZoomIn(b);
+//	}
+//
+//
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleZoomChange(double)
+//	 */
+//	@Override
+//	public void handleZoomChange(float zoom) {
+//		model.setZoomValue(zoom);
+//	}
 }

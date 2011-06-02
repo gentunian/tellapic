@@ -40,13 +40,4 @@ public class ToolBoxController implements IToolBoxController {
 	public void selectToolByName(String toolName) {
 		model.setCurrentTool(toolName);
 	}
-
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.IToolBoxController#handleAssignedNumber(long)
-	 */
-	@Override
-	public void handleAssignedNumber(long number) {
-		model.setAssignedNumber(number);
-	}
 }

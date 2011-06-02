@@ -30,7 +30,7 @@ import ar.com.tellapic.lib.tellapic;
  *          sebastian.treu(at)gmail.com
  *
  */
-final public class LineNet extends Line {
+final public class LineNet extends LineTool {
 	
 	
 	public LineNet() {
@@ -60,7 +60,7 @@ final public class LineNet extends Line {
 						getToolId(), 
 						0,
 						SessionUtils.getId(), 
-						1,
+						0,
 						(float) drawing.getPaintPropertyStroke().getWidth(),
 						drawing.getPaintPropertyAlpha().alpha,
 						drawing.getPaintPropertyColor().getRed(),

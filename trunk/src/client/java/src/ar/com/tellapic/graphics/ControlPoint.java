@@ -17,20 +17,15 @@
  */  
 package ar.com.tellapic.graphics;
 
-import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Graphics2D;
-import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.Shape;
-import java.awt.Toolkit;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-
-import javax.swing.ImageIcon;
 
 /**
  * @author 
@@ -39,10 +34,6 @@ import javax.swing.ImageIcon;
  *
  */
 public class ControlPoint extends Ellipse2D{
-	private static final String HORIZONTAL_RESIZE_ICON     = "/icons/tools/arrow-resize.png";
-	private static final String VERTICAL_RESIZE_ICON       = "/icons/tools/arrow-resize-090.png";
-	private static final String RIGHT_DIAGONAL_RESIZE_ICON = "/icons/tools/arrow-resize-045.png";
-	private static final String LEFT_DIAGONAL_RESIZE_ICON  = "/icons/tools/arrow-resize-135.png";
 	
 	public static enum ControlType {
 		LEFT_CONTROL_POINT,
@@ -64,6 +55,7 @@ public class ControlPoint extends Ellipse2D{
 	private Color        controlPointColor;
 	private BasicStroke  stroke;
 	private Cursor       cursor;
+	private boolean      selected;
 	
 	/**
 	 * 
@@ -72,60 +64,9 @@ public class ControlPoint extends Ellipse2D{
 	 * @param color
 	 * @throws IllegalControlPointTypeException
 	 */
-	public ControlPoint(ControlType type, Shape shape, Color color) throws IllegalControlPointTypeException{
-		if (shape == null)
-			throw new IllegalArgumentException("Shape cannot be null.");
-		
-		Rectangle2D bounds = shape.getBounds2D();
-		Point2D point = null;
-		ImageIcon imageIcon = null;
-		switch(type) {
-		case LEFT_CONTROL_POINT:
-			point = new Point2D.Double(bounds.getX(), bounds.getCenterY());
-			setCursor(Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR));
-			break;
-			
-		case RIGHT_CONTROL_POINT:
-			point = new Point2D.Double(bounds.getX() + bounds.getWidth(), bounds.getCenterY());
-			setCursor(Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
-			break;
-			
-		case  TOP_LEFT_CONTROL_POINT:
-			point = new Point2D.Double(bounds.getX(), bounds.getY());
-			setCursor(Cursor.getPredefinedCursor(Cursor.NW_RESIZE_CURSOR));
-			break;
-			
-		case  TOP_RIGHT_CONTROL_POINT:
-			point = new Point2D.Double(bounds.getX() + bounds.getWidth(), bounds.getY());
-			setCursor(Cursor.getPredefinedCursor(Cursor.NE_RESIZE_CURSOR));
-			break;
-			
-		case  BOTTOM_LEFT_CONTROL_POINT:
-			point = new Point2D.Double(bounds.getX(), bounds.getY() + bounds.getHeight());
-			setCursor(Cursor.getPredefinedCursor(Cursor.SW_RESIZE_CURSOR));
-			break;
-			
-		case  BOTTOM_RIGHT_CONTROL_POINT:
-			point = new Point2D.Double(bounds.getX() + bounds.getWidth(), bounds.getY() + bounds.getHeight());
-			setCursor(Cursor.getPredefinedCursor(Cursor.SE_RESIZE_CURSOR));
-			break;
-			
-		case  BOTTOM_CONTROL_POINT:
-			point = new Point2D.Double(bounds.getCenterX(), bounds.getY() + bounds.getHeight());
-			setCursor(Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR));
-			break;
-			
-		case  TOP_CONTROL_POINT:
-			point = new Point2D.Double(bounds.getCenterX(), bounds.getY());
-			setCursor(Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR));
-			break;
-			
-		default:
-			throw new IllegalControlPointTypeException("No such control point type.");
-		}
+	public ControlPoint(ControlType type, Color color) throws IllegalControlPointTypeException{
 		controlType = type;
-		controlPoint = new Ellipse2D.Double(point.getX() - CORRECTION_FACTOR, point.getY() - CORRECTION_FACTOR, CONTROL_POINT_WIDTH, CONTROL_POINT_HEIGHT);
-		stroke = new BasicStroke(2, 0, 0);
+		stroke = new BasicStroke(2, 0, 0, 10);
 		setControlPointColor(color);
 	}
 	
@@ -223,9 +164,57 @@ public class ControlPoint extends Ellipse2D{
 
 	/**
 	 * @param controlPoint the controlPoint to set
+	 * @throws IllegalControlPointTypeException 
 	 */
-	public void setControlPoint(Ellipse2D controlPoint) {
-		this.controlPoint = controlPoint;
+	public void setControlPoint(Shape shape) throws IllegalControlPointTypeException {
+		Rectangle2D bounds = shape.getBounds2D();
+		Point2D     point = null;
+		
+		switch(getType()) {
+		case LEFT_CONTROL_POINT:
+			point = new Point2D.Double(bounds.getX(), bounds.getCenterY());
+			setCursor(Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR));
+			break;
+			
+		case RIGHT_CONTROL_POINT:
+			point = new Point2D.Double(bounds.getX() + bounds.getWidth(), bounds.getCenterY());
+			setCursor(Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
+			break;
+			
+		case  TOP_LEFT_CONTROL_POINT:
+			point = new Point2D.Double(bounds.getX(), bounds.getY());
+			setCursor(Cursor.getPredefinedCursor(Cursor.NW_RESIZE_CURSOR));
+			break;
+			
+		case  TOP_RIGHT_CONTROL_POINT:
+			point = new Point2D.Double(bounds.getX() + bounds.getWidth(), bounds.getY());
+			setCursor(Cursor.getPredefinedCursor(Cursor.NE_RESIZE_CURSOR));
+			break;
+			
+		case  BOTTOM_LEFT_CONTROL_POINT:
+			point = new Point2D.Double(bounds.getX(), bounds.getY() + bounds.getHeight());
+			setCursor(Cursor.getPredefinedCursor(Cursor.SW_RESIZE_CURSOR));
+			break;
+			
+		case  BOTTOM_RIGHT_CONTROL_POINT:
+			point = new Point2D.Double(bounds.getX() + bounds.getWidth(), bounds.getY() + bounds.getHeight());
+			setCursor(Cursor.getPredefinedCursor(Cursor.SE_RESIZE_CURSOR));
+			break;
+			
+		case  BOTTOM_CONTROL_POINT:
+			point = new Point2D.Double(bounds.getCenterX(), bounds.getY() + bounds.getHeight());
+			setCursor(Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR));
+			break;
+			
+		case  TOP_CONTROL_POINT:
+			point = new Point2D.Double(bounds.getCenterX(), bounds.getY());
+			setCursor(Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR));
+			break;
+			
+		default:
+			throw new IllegalControlPointTypeException("No such control point type.");
+		}
+		controlPoint = new Ellipse2D.Double(point.getX() - CORRECTION_FACTOR, point.getY() - CORRECTION_FACTOR, CONTROL_POINT_WIDTH, CONTROL_POINT_HEIGHT);
 	}
 
 	
@@ -233,14 +222,23 @@ public class ControlPoint extends Ellipse2D{
 	 * @param g
 	 */
 	public void draw(Graphics2D g) {
-		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		if (controlPoint == null)
+			return;
+		
 		g.setStroke(stroke);
-		g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1));
 		g.setColor(Color.black);
+		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		g.draw(controlPoint);
-		g.setColor(controlPointColor);
-		g.fill(controlPoint);
 		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+		if (!selected)
+			g.setColor(controlPointColor);
+		else {
+			g.setColor(Color.blue);
+			g.setStroke(new BasicStroke(1,0,0));
+			g.drawLine((int)controlPoint.getCenterX(), 0, (int)controlPoint.getCenterX(), Integer.MAX_VALUE);
+			g.drawLine(0, (int)controlPoint.getCenterY(), Integer.MAX_VALUE,(int) controlPoint.getCenterY());
+		}
+		g.fill(controlPoint);
 	}
 
 	/**
@@ -255,5 +253,24 @@ public class ControlPoint extends Ellipse2D{
 	 */
 	public Cursor getCursor() {
 		return cursor;
+	}
+
+	/**
+	 * @param selected the selected to set
+	 */
+	public void setSelected(boolean selected) {
+		this.selected = selected;
+	}
+
+	/**
+	 * @return the selected
+	 */
+	public boolean isSelected() {
+		return selected;
+	}
+	
+	@Override
+	public String toString() {
+		return getType().toString();
 	}
 }

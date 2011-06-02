@@ -23,6 +23,7 @@ import ar.com.tellapic.NetManager;
 import ar.com.tellapic.SessionUtils;
 import ar.com.tellapic.lib.tellapic;
 import ar.com.tellapic.lib.tellapicConstants;
+import ar.com.tellapic.utils.Utils;
 
 /**
  * @author 
@@ -30,7 +31,7 @@ import ar.com.tellapic.lib.tellapicConstants;
  *          sebastian.treu(at)gmail.com
  *
  */
-final public class PenNet extends Pen {	
+final public class PenNet extends PenTool {	
 
 	public PenNet() {
 		super("PenNet");
@@ -58,7 +59,7 @@ final public class PenNet extends Pen {
 						wrappedEvent,
 						0,
 						SessionUtils.getId(),
-						1,
+						0,
 						(float) drawing.getPaintPropertyStroke().getWidth(),
 						drawing.getPaintPropertyAlpha().alpha,
 						drawing.getPaintPropertyColor().getRed(),
@@ -107,7 +108,7 @@ final public class PenNet extends Pen {
 							wrappedEvent,
 							eventExtMod,
 							SessionUtils.getId(), 
-							1,
+							0,
 							(float) drawing.getPaintPropertyStroke().getWidth(),
 							drawing.getPaintPropertyAlpha().alpha,
 							drawing.getPaintPropertyColor().getRed(),
@@ -149,7 +150,7 @@ final public class PenNet extends Pen {
 						wrappedEvent,
 						0,
 						SessionUtils.getId(), 
-						1,
+						0,
 						(float) drawing.getPaintPropertyStroke().getWidth(),
 						drawing.getPaintPropertyAlpha().alpha,
 						drawing.getPaintPropertyColor().getRed(),

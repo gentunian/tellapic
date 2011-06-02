@@ -24,6 +24,7 @@ import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -76,7 +77,7 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 	private GraphicsConfiguration   gc;
 	private RenderingHints          rh;
 	private PaintPropertyController propertyController;
-	private AbstractUser            user;
+//	private AbstractUser            user;
 	private java.awt.Point          scrollingPoint;
 	private StatusBar               statusBar;
 	private float                   zoomX = 1f;
@@ -122,10 +123,10 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 		backimage        = null;
 		
 		/* The local user drawing over this area view */
-		user             = UserManager.getInstance().getLocalUser();
+//		user             = UserManager.getInstance().getLocalUser();
 		
-		if (user == null)
-			throw new NullPointerException("DrawingAreaView cannot be fetched before a local user creation.");
+//		if (user == null)
+//			throw new NullPointerException("DrawingAreaView cannot be fetched before a local user creation.");
 		
 		setImage(SessionUtils.getSharedImage());
 		
@@ -204,15 +205,22 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 		
 		InputMap inputMap = getInputMap();
 		inputMap.put(KeyStroke.getKeyStroke("control Z"), "removeLast");
+		inputMap.put(KeyStroke.getKeyStroke("DELETE"), "removeSelectedDrawing");
 		ActionMap actionMap = getActionMap();
 		actionMap.put("removeLast", new AbstractAction(){
 			private static final long serialVersionUID = 1L;
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				user.removeLastDrawing();
+				UserManager.getInstance().getLocalUser().removeLastDrawing();
 			}
 		});
-		
+		actionMap.put("removeSelectedDrawing", new AbstractAction(){
+			private static final long serialVersionUID = 1L;
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				DrawingAreaModel.getInstance().removeSelectedDrawing();
+			}
+		});
 		setVisible(true);
 	}
 
@@ -365,34 +373,39 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 		
 		AbstractDrawing selectedDrawing = null;
 		
-		for(AbstractDrawing drawing : DrawingAreaModel.getInstance().getDrawings()) {
+		/* Prevent concurrent access */
+		AbstractDrawing[] drawingArray = DrawingAreaModel.getInstance().getDrawings().toArray(new AbstractDrawing[0]); 
+		for(int i = 0; i < drawingArray.length; i++) {
 			
-			if (drawing.isVisible())
-				drawing.draw(drawingArea);
+			if (drawingArray[i].isVisible())
+				drawingArray[i].draw(drawingArea);
 			
 			/* Remember this selected drawing to draw the control points later */
-			if (drawing.isSelected())
-				selectedDrawing = drawing;
+			if (drawingArray[i].isSelected())
+				selectedDrawing = drawingArray[i];
 		}
 		
-//		for(AbstractUser user : UserManager.getInstance().getUsers()) {
-//			if (!user.isRemoved() && user.isVisible()) {
-//				for(AbstractDrawing drawing : user.getDrawings()) {
-//					//drawDrawing(drawingArea, drawing, user.getCustomProperties());
-//					drawing.draw(drawingArea);
-//					if (drawing.isSelected())
-//						selectedDrawing = drawing;
-//				}
-				
-//				if (user.isDrawing())
-//					user.getDrawing().draw(drawingArea);
-//			}
-//		}
+		List<AbstractUser> users  =UserManager.getInstance().getUsers(); 
+		for(int i = 0; i < users.size(); i++) {
+			if (users.get(i).isDrawing())
+				users.get(i).getDrawing().draw(drawingArea);
+		}
 		
 		/* Draw the control points for the selected drawing above all drawings */
 		if (selectedDrawing != null && selectedDrawing.isVisible()) {
-			for(ControlPoint p : selectedDrawing.getControlPoints())
-				p.draw(drawingArea);
+			ControlPoint[] points = selectedDrawing.getControlPoints();
+			if (points != null) {
+				ControlPoint selectedPoint = null;
+				for(ControlPoint p : points)
+					/* If a control point is selected, draw it in the last order */
+					if (p.isSelected())
+						selectedPoint = p;
+					else
+						p.draw(drawingArea);
+				/* If a control point is selected, draw it in the last order */
+				if (selectedPoint != null)
+					selectedPoint.draw(drawingArea);
+			}
 		}
 		
 		
@@ -405,14 +418,14 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 				//drawDrawing(drawingArea, drawing, user.getCustomProperties());
 				drawing.draw(drawingArea);
 			
-		} else if (observable instanceof Zoom) {
+		}
 //			float newZoom = (Float) data;
 //			setZoom(
 //					(int)((Zoom)observable).getInit().getX(),
 //					(int) ((Zoom)observable).getInit().getY(),
 //					newZoom
 //			);
-		}
+		
 		
 		repaint();
 	}
@@ -511,59 +524,6 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 //		((Graphics2D)g).drawImage(foreground, AffineTransform.getScaleInstance(zoomX, zoomX), null);
 	}
 	
-	
-	/**
-	 * 
-	 * @param drawing
-	 * @param i
-	 */
-//	public void update(Drawing drawing, int i) {
-//		//temporalDrawing = drawing;
-//		temporalDrawings.set(i, drawing);
-//		repaint();
-//	}
-	
-	
-//	private void drawDrawing(Graphics2D g, Drawing drawing, PaintProperty[] overridedProperties) {
-//		if (drawing != null && drawing.isVisible()) {
-//			g.setRenderingHints(rh);
-//			
-//			if (drawing.hasAlphaProperty()) {
-//				if (overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_ALPHA] != null)
-//					g.setComposite(((PaintPropertyAlpha)overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_ALPHA]).getComposite());
-//				else
-//					g.setComposite(drawing.getPaintPropertyAlpha().getComposite());
-//			}
-//			
-//			if (drawing.hasColorProperty()) {
-//				if (overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR] != null)
-//					g.setColor(((PaintPropertyColor)overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR]).getColor());
-//				else
-//					g.setColor(drawing.getPaintPropertyColor().getColor());
-//			}
-//			
-//			if (drawing.hasStrokeProperty()) {
-//				if (overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_STROKE] != null)
-//					g.setStroke(((PaintPropertyStroke)overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_STROKE]).getStroke());
-//				else
-//					g.setStroke(drawing.getPaintPropertyStroke().getStroke());
-//			}
-//			
-//			if (drawing.hasShape())
-//				g.draw(drawing.getShape());
-//			
-//			if (drawing.hasFontProperty()) {
-//					if (overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_FONT] != null) 
-//						g.setFont(((PaintPropertyFont)overridedProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_FONT]).getFont());
-//					else
-//						g.setFont(drawing.getPaintPropertyFont().getFont());
-//					
-//				g.drawString(drawing.getText(), drawing.getTextX(), drawing.getTextY());
-//			}
-//		}
-//	}
-
-
 	/**
 	 * @param gridSize the gridSize to set
 	 */
@@ -1052,20 +1012,20 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 	 */
 	@Override
 	public void mouseWheelMoved(MouseWheelEvent event) {
-		int step = (event.getWheelRotation() < 0)? 1 : -1;
-		IToolBoxState toolBoxState = user.getToolBoxModel();
-		Tool usedTool = toolBoxState.getLastUsedTool();
+//		int step = (event.getWheelRotation() < 0)? 1 : -1;
+//		IToolBoxState toolBoxState = user.getToolBoxModel();
+//		Tool usedTool = toolBoxState.getLastUsedTool();
 		
-		if (usedTool == null) {
-			Zoom zoom = Zoom.getInstance();
-			zoom.setZoomIn(step > 0);
+//		if (usedTool == null) {
+//			Zoom zoom = Zoom.getInstance();
+//			zoom.setZoomIn(step > 0);
 //			zoom.onPress((int)(event.getX() / zoomX), (int) (event.getY() / zoomX), 0, 0);
 //			zoom.onRelease((int)(event.getX() / zoomX), (int) (event.getY() / zoomX), 0, 0);
-			return;
-		}
+//			return;
+//		}
 		
-		if (propertyController == null)
-			return;
+//		if (propertyController == null)
+//			return;
 		
 		//if (usedTool.hasZoomProperties())
 		
@@ -1127,12 +1087,12 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 //		float zoomStep = 0.25f * ((event.getWheelRotation() < 0)? 1 : -1);
 //		zoomX += zoomStep;
 		
-		if (newZoom < Zoom.MIN_ZOOM_FACTOR)
-			newZoom = Zoom.MIN_ZOOM_FACTOR;
-		
-		if (newZoom > Zoom.MAX_ZOOM_FACTOR)
-			newZoom = Zoom.MAX_ZOOM_FACTOR;
-		
+//		if (newZoom < Zoom.MIN_ZOOM_FACTOR)
+//			newZoom = Zoom.MIN_ZOOM_FACTOR;
+//		
+//		if (newZoom > Zoom.MAX_ZOOM_FACTOR)
+//			newZoom = Zoom.MAX_ZOOM_FACTOR;
+//		
 		topRule.update(x, y, newZoom);
 		leftRule.update(x, y, newZoom);
 		
