@@ -29,7 +29,7 @@ import ar.com.tellapic.lib.tellapic;
  *          sebastian.treu(at)gmail.com
  *
  */
-final public class TextNet extends Text {
+final public class TextNet extends TextTool {
 
 	public TextNet() {
 		super("TextNet");
@@ -54,7 +54,7 @@ final public class TextNet extends Text {
 				tellapic.tellapic_send_text(
 						NetManager.getInstance().getSocket(),
 						SessionUtils.getId(),
-						1,
+						0,
 						drawing.getPaintPropertyFont().getFont().getSize2D(),
 						drawing.getPaintPropertyAlpha().alpha,
 						drawing.getPaintPropertyColor().getRed(),

@@ -30,7 +30,7 @@ import ar.com.tellapic.lib.tellapicConstants;
  *          sebastian.treu(at)gmail.com
  *
  */
-final public class MarkerNet extends Marker {
+final public class MarkerNet extends MarkerTool {
 	
 	
 	public MarkerNet() {
@@ -59,7 +59,7 @@ final public class MarkerNet extends Marker {
 						wrappedEvent,
 						0,
 						SessionUtils.getId(), 
-						1,
+						0,
 						(float) drawing.getPaintPropertyStroke().getWidth(),
 						drawing.getPaintPropertyAlpha().alpha,
 						drawing.getPaintPropertyColor().getRed(),
@@ -107,7 +107,7 @@ final public class MarkerNet extends Marker {
 							wrappedEvent,
 							eventExtMod,
 							SessionUtils.getId(), 
-							1,
+							0,
 							(float) drawing.getPaintPropertyStroke().getWidth(),
 							drawing.getPaintPropertyAlpha().alpha,
 							drawing.getPaintPropertyColor().getRed(),
@@ -149,7 +149,7 @@ final public class MarkerNet extends Marker {
 						wrappedEvent,
 						0,
 						SessionUtils.getId(), 
-						1,
+						0,
 						(float) drawing.getPaintPropertyStroke().getWidth(),
 						drawing.getPaintPropertyAlpha().alpha,
 						drawing.getPaintPropertyColor().getRed(),

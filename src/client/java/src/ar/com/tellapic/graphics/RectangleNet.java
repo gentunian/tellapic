@@ -29,7 +29,7 @@ import ar.com.tellapic.lib.tellapic;
  *          sebastian.treu(at)gmail.com
  *
  */
-final public class RectangleNet extends Rectangle {
+final public class RectangleNet extends RectangleTool {
 	
 
 	public RectangleNet() {
@@ -57,7 +57,7 @@ final public class RectangleNet extends Rectangle {
 						getToolId(), 
 						0,
 						SessionUtils.getId(), 
-						1,
+						0,
 						(float) drawing.getPaintPropertyStroke().getWidth(),
 						drawing.getPaintPropertyAlpha().alpha,
 						drawing.getPaintPropertyColor().getRed(),

@@ -196,16 +196,16 @@ public class PaintPropertyView extends JPanel implements Observer {
 		zoomToSizeButton = new JButton();
 		zoomInButton = new JToggleButton();
 		zoomOutButton = new JToggleButton();
-		zoomCombo = new JComboBox(Zoom.getInstance());
+		zoomCombo = new JComboBox(ZoomTool.getInstance());
 		
 		ButtonGroup group = new ButtonGroup();
 		group.add(zoomInButton);
 		group.add(zoomOutButton);
 		
-		zoomInButton.setIcon(new ImageIcon(Utils.createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, Zoom.ZOOMIN_ICON_PATH)));
-		zoomOutButton.setIcon(new ImageIcon(Utils.createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, Zoom.ZOOMOUT_ICON_PATH)));
-		zoomToFitButton.setIcon(new ImageIcon(Utils.createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, Zoom.ZOOMTOFIT_ICON_PATH)));
-		zoomToSizeButton.setIcon(new ImageIcon(Utils.createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, Zoom.ZOOMTOSIZE_ICON_PATH)));
+		zoomInButton.setIcon(new ImageIcon(Utils.createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, ZoomTool.ZOOMIN_ICON_PATH)));
+		zoomOutButton.setIcon(new ImageIcon(Utils.createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, ZoomTool.ZOOMOUT_ICON_PATH)));
+		zoomToFitButton.setIcon(new ImageIcon(Utils.createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, ZoomTool.ZOOMTOFIT_ICON_PATH)));
+		zoomToSizeButton.setIcon(new ImageIcon(Utils.createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, ZoomTool.ZOOMTOSIZE_ICON_PATH)));
 		
 		zoomCombo.setFont(defaultValueFont);
 		zoomCombo.setActionCommand(SET_ZOOM_ACTION);
@@ -1024,25 +1024,25 @@ public class PaintPropertyView extends JPanel implements Observer {
 					src = (JComboBox) arg0.getSource();
 					controller.handleLineJoinsChange(((Integer)src.getSelectedItem()).intValue());
 				}
-				else if (action.equals(SET_ZOOM_IN_ACTION))
-					controller.handleZoomChange(true);
-
-				else if (action.equals(SET_ZOOM_OUT_ACTION))
-					controller.handleZoomChange(false);
-					
-				else if (action.equals(SET_ZOOM_ACTION)) {
-					src = (JComboBox) arg0.getSource();
-					String str = (String) src.getSelectedItem();
-					float zoom = Float.valueOf(str.substring(0, str.length() - 1)) / 100;
-					controller.handleZoomChange(zoom);
-				}
-				
-				else if (action.equals(SET_ZOOM_TOFIT_ACTION)) {
-					
-				}
-				
-				else if (action.equals(SET_ZOOM_TOSIZE_ACTION))
-					controller.handleZoomChange(1);
+//				else if (action.equals(SET_ZOOM_IN_ACTION))
+//					controller.handleZoomChange(true);
+//
+//				else if (action.equals(SET_ZOOM_OUT_ACTION))
+//					controller.handleZoomChange(false);
+//					
+//				else if (action.equals(SET_ZOOM_ACTION)) {
+//					src = (JComboBox) arg0.getSource();
+//					String str = (String) src.getSelectedItem();
+//					float zoom = Float.valueOf(str.substring(0, str.length() - 1)) / 100;
+//					controller.handleZoomChange(zoom);
+//				}
+//				
+//				else if (action.equals(SET_ZOOM_TOFIT_ACTION)) {
+//					
+//				}
+//				
+//				else if (action.equals(SET_ZOOM_TOSIZE_ACTION))
+//					controller.handleZoomChange(1);
 			}
 		}
 	}

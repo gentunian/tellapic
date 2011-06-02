@@ -22,6 +22,7 @@ import java.awt.Cursor;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Toolkit;
+import java.awt.geom.Point2D;
 
 import ar.com.tellapic.utils.Utils;
 /**
@@ -31,9 +32,6 @@ import ar.com.tellapic.utils.Utils;
  *
  */
 public abstract class DrawingTool extends Tool {
-	
-	//protected AbstractDrawing             temporalDrawing;
-	
 	
 	/**
 	 * @param id
@@ -65,15 +63,6 @@ public abstract class DrawingTool extends Tool {
 		super(id, name, iconPath, description, cursor);
 	}
 	
-	
-//	/**
-//	 * 
-//	 * @return
-//	 */
-//	public AbstractDrawing finishDrawing() {
-//		return (AbstractDrawing) getTemporalDrawing().clone();
-//	}
-	
 	/**
 	 * 
 	 * @param cursorPath
@@ -90,16 +79,6 @@ public abstract class DrawingTool extends Tool {
 	public abstract boolean hasColorCapability();
 	public abstract boolean hasFontCapability();
 	public abstract boolean hasStrokeCapability();
-//	public abstract boolean isFilleable();
-//	public abstract boolean isLiveModeSupported();
-//	public abstract boolean isOnDragSupported();
-//	public abstract boolean isOnPressSupported();
-//	public abstract boolean isOnReleaseSupported();
-//	public abstract void setAlpha(PaintPropertyAlpha alpha);
-//	public abstract void setColor(PaintPropertyColor color);
-//	public abstract void setFont(PaintPropertyFont font);
-//	public abstract void setStroke(PaintPropertyStroke stroke);
-//	public abstract void setPaintProperties(PaintProperty properties[]);
 	public abstract double getDefaultAlpha();
 	public abstract Color getDefaultColor();
 	public abstract String getDefaultFontFace();
@@ -109,5 +88,4 @@ public abstract class DrawingTool extends Tool {
 	public abstract float  getDefaultMiterLimit();
 	public abstract int    getDefaultCaps();
 	public abstract int    getDefaultJoins();
-	
 }

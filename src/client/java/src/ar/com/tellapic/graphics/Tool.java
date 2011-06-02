@@ -75,60 +75,6 @@ public abstract class Tool extends Observable implements MouseListener, MouseMot
 		this.toolCursor  = (cursor == null)? Cursor.getDefaultCursor() : cursor;
 	}
 	
-	
-	/**
-	 * 
-	 */
-//	public abstract void onRestore();
-	
-	
-	/**
-	 * @param x the x coordinate
-	 * @param y the y coordinate
-	 */
-//	public abstract void onPress(int x, int y, int button, int mask);
-
-	/**
-	 * Call this when dragging the tool on the drawing area so it can update itself.
-	 * @param x the x coordinate.
-	 * @param y the y coordinate.
-	 * @param symmetric whether or not this tool can use its symmetric feature (if it have any).
-	 */
-//	public abstract void onDrag(int x, int y, int button, int mask);
-	
-	
-	/**
-	 * Call this when moving the tool (without dragging) on the drawing area so it can
-	 * update itself if the tool support on-move mode: {@link ar.com.tellapic.graphics.Tool#isOnMoveSupported()}
-	 * @param x the x coordinate.
-	 * @param y the y coordinate.
-	 */
-//	public abstract void onMove(int x, int y);
-	
-	
-	/**
-	 * Event that represents ending the use of the tool. If its called, future
-	 * calls to {@link ar.com.tellapic.graphics.Tool#isBeingUsed()} should return false
-	 * until someone calls {@link ar.com.tellapic.graphics.Tool#init(double, double)}.
-	 * @return The last drawing object state of this tool.
-	 */
-//	public abstract void onRelease(int x, int y, int button, int mask);
-	
-	
-	/**
-	 * 
-	 */
-	//TODO: rename to: onPause();
-//	public abstract void onPause();
-	
-	
-	/**
-	 * Returns the *current state* of this drawing tool.
-	 * @return the drawing object that represents the current state of this tool.
-	 */
-//	public abstract Drawing getDrawing();
-	
-	
 	/**
 	 * Get the name of this tool.
 	 * @return the name the tool has.
@@ -136,7 +82,6 @@ public abstract class Tool extends Observable implements MouseListener, MouseMot
 	public String getName() {
 		return name;
 	}
-	
 	
 	/**
 	 * Get the id of this tool.
@@ -146,120 +91,11 @@ public abstract class Tool extends Observable implements MouseListener, MouseMot
 		return id;
 	}
 	
-	
-	/**
-	 * Inform whether or not live mode is supported. Live mode is a way or feature
-	 * of the tool that tells if the tool can report each motion to the tool user.
-	 * @return true if live mode is support, false otherwise.
-	 */
-//	public abstract boolean isLiveModeSupported();
-	
-	
-	/**
-	 * Returns whether or not this tool supports drawing itself without being
-	 * initiated by a press event, i.e. moving the tool within the drawing
-	 * area being not a drag event.
-	 * @return true if the move feature is supported.
-	 */
-//	public abstract boolean isOnMoveSupported();
-//	public abstract boolean isOnPressSupported();
-//	public abstract boolean isOnDragSupported();
-//	public abstract boolean isOnReleaseSupported();
-	
-	
-	
-	/**
-	 * This method should change the init. Take into account that will change the
-	 * first point location to (x,y).
-	 * @param x the x coordinate.
-	 * @param y the y coordinate.
-	 */
-//	public abstract void moveTo(double x, double y);
-	
-	
 	/**
 	 * 
 	 * @return true if the tool is being used. False otherwise
 	 */
 	public abstract boolean isBeingUsed();
-	
-	
-	/**
-	 * Get the first point where this Tool has been started.
-	 * @return returns the first point of this Tool.
-	 */
-//	public abstract Point2D getInit();
-	
-	
-	/**
-	 * 
-	 * @return True if the Drawing object can be filled with colors, false otherwise (e.g. a line).
-	 */
-//	public abstract boolean isFilleable();
-	
-	
-	/**
-	 * This method tells if the generated Drawing object will have stroke properties.
-	 * @return True if the Tool generates a Drawing object with stroke properties, false otherwise.
-	 */
-//	public abstract boolean hasStroke();
-	
-	
-	/**
-	 * This method tells if the generated Drawing object will have color properties.
-	 * @return
-	 */
-//	public abstract boolean hasColor();
-	
-	
-	/**
-	 * This method tells if the generated Drawing object will have font properties.
-	 * @return
-	 */
-//	public abstract boolean hasFont();
-	
-	
-	/**
-	 * This method tells if the generated Drawing object will have composite properties.
-	 * @return
-	 */
-//	public abstract boolean hasAlpha();
-	
-	
-	/**
-	 * 
-	 * @return
-	 */
-//	public abstract boolean hasZoomProperties();
-	
-	
-	/**
-	 * 
-	 * @param alpha
-	 */
-//	public abstract void setAlpha(PaintPropertyAlpha alpha);
-	
-	
-	/**
-	 * 
-	 * @param color
-	 */
-//	public abstract void setColor(PaintPropertyColor color);
-	
-	
-	/**
-	 * 
-	 * @param stroke
-	 */
-//	public abstract void setStroke(PaintPropertyStroke stroke);
-	
-	
-	/**
-	 * 
-	 * @param font
-	 */
-//	public abstract void setFont(PaintPropertyFont font);
-	
 	
 	/**
 	 * 
@@ -269,7 +105,6 @@ public abstract class Tool extends Observable implements MouseListener, MouseMot
 		iconPath = path;
 	}
 	
-	
 	/**
 	 * 
 	 * @return
@@ -277,7 +112,6 @@ public abstract class Tool extends Observable implements MouseListener, MouseMot
 	public String getIconPath() {
 		return iconPath;
 	}
-	
 	
 	/**
 	 * 
@@ -287,7 +121,6 @@ public abstract class Tool extends Observable implements MouseListener, MouseMot
 		visible = value;
 	}
 	
-	
 	/**
 	 * 
 	 * @return
@@ -296,14 +129,12 @@ public abstract class Tool extends Observable implements MouseListener, MouseMot
 		return visible;	
 	}
 	
-	
 	/**
 	 * @param toolTipText the toolTipText to set
 	 */
 	public void setToolTipText(String toolTipText) {
 		this.toolTipText = toolTipText;
 	}
-	
 	
 	/**
 	 * @return the toolTipText
@@ -312,7 +143,6 @@ public abstract class Tool extends Observable implements MouseListener, MouseMot
 		return toolTipText;
 	}
 	
-	
 	/**
 	 * 
 	 * @param cursor
@@ -320,7 +150,6 @@ public abstract class Tool extends Observable implements MouseListener, MouseMot
 	public void setCursor(Cursor cursor) {
 		toolCursor = cursor;
 	}
-	
 	
 	/**
 	 * 
@@ -331,12 +160,11 @@ public abstract class Tool extends Observable implements MouseListener, MouseMot
 		return toolCursor;
 	}
 
-
 	/**
 	 * @param b
 	 */
 	public void setSelected(boolean b) {
-		         selected = b;
+		selected = b;
 	}
 	
 	/**
