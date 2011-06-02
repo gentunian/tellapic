@@ -18,9 +18,10 @@
 package ar.com.tellapic;
 
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
@@ -33,7 +34,6 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 
 import ar.com.tellapic.chat.ChatViewController;
-import ar.com.tellapic.graphics.AbstractDrawing;
 import ar.com.tellapic.graphics.PaintPropertyColor;
 import ar.com.tellapic.utils.Utils;
 
@@ -43,88 +43,32 @@ import ar.com.tellapic.utils.Utils;
  *          sebastian.treu(at)gmail.com
  *
  */
-public class UsersViewPopupOptions extends JPopupMenu {
+public class UserPopupMenu extends JPopupMenu {
 
-	
-	private static final String USER_FONT = "Droid-10-italic";
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
-	private ChatViewController controller;
-	protected int x;
+	private AbstractUser user;
 	protected int y;
+	protected int x;
+	private ChatViewController controller;
 	
-	
-	public UsersViewPopupOptions(Object data, ChatViewController c) throws NullPointerException {
-		if (data == null)
-			throw new NullPointerException("data cannot be null.");
-
-		if (c == null)
-			throw new NullPointerException("c cannot be null.");
-		
+	public UserPopupMenu(AbstractUser user, ChatViewController c) {
+		this.user  = user;
 		controller = c;
-		if (data instanceof AbstractUser)
-			buildUserPopup((AbstractUser) data);
-		else if (data instanceof AbstractDrawing) 
-			buildDrawingPopup((AbstractDrawing)data);
-		
+		buildUserPopup();
 		addPopupMenuListener(new PopupMenuListener(){
 			public void popupMenuCanceled(PopupMenuEvent e) {}
 			public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
 				x = getLocationOnScreen().x;
 				y = getLocationOnScreen().y;
 			}
-			public void popupMenuWillBecomeVisible(PopupMenuEvent e) {}
+			public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+				
+			}
 		});
 	}
 	
 	
-	/**
-	 * @param data
-	 */
-	private void buildDrawingPopup(final AbstractDrawing drawing) {
-		/* +------------------------------+ */
-		/* |          <ToolName>          | /
-		/* +------------------------------+ */ 
-		/* |    Delete                    | */
-		/* |    Hide                      | */
-		/* +------------------------------+ */
-		JMenuItem name     = new JMenuItem(drawing.getName());
-		JMenuItem delete   = new JMenuItem(Utils.msg.getString("delete"));
-		JCheckBoxMenuItem hide = new JCheckBoxMenuItem(Utils.msg.getString("hide"));
-		
-		name.setEnabled(false);
-		name.setHorizontalTextPosition(JLabel.CENTER);
-		delete.setAccelerator(KeyStroke.getKeyStroke("DELETE"));
-		hide.setAccelerator(KeyStroke.getKeyStroke("H"));
-		hide.addItemListener(new ItemListener(){
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				drawing.getUser().setDrawingVisible(drawing, !(e.getStateChange() == ItemEvent.SELECTED));
-			}
-		});
-		delete.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				System.out.println("ASDFAS: "+e.getSource());
-				AbstractUser user = drawing.getUser();
-				user.removeDrawing(drawing);
-			}
-		});
-		hide.setSelected(!drawing.isVisible());
-		name.setFont(Font.decode(USER_FONT));
-		name.setAlignmentX(JPopupMenu.CENTER_ALIGNMENT);
-		add(name);
-		addSeparator();
-		/* Only allow removing from local user */
-		if (!drawing.getUser().isRemote())
-			add(delete);
-		add(hide);
-	}
-
-
-	private void buildUserPopup(final AbstractUser user) {
+	private void buildUserPopup() {
 		/* +------------------------------+ */
 		/* |          <username>          | /
 		/* +------------------------------+ */ 
@@ -159,7 +103,7 @@ public class UsersViewPopupOptions extends JPopupMenu {
 					e2.printStackTrace();
 				}
 				popup = new CustomPropertiesDialog(null, true, user, c);
-				popup.setLocation(x - popup.getSize().width, y);
+				popup.setLocation(getLocationOnScreen().x - popup.getSize().width, getY());
 				popup.setVisible(true);
 				if (popup.getReturnStatus() != CustomPropertiesDialog.RET_CANCEL) {
 					try {
@@ -188,7 +132,7 @@ public class UsersViewPopupOptions extends JPopupMenu {
 			}
 		});
 		hide.setSelected(!user.isVisible());
-		name.setFont(Font.decode(USER_FONT));
+		name.setFont(Utils.MAIN_FONT);
 		name.setAlignmentX(JPopupMenu.CENTER_ALIGNMENT);
 		add(name);
 		addSeparator();

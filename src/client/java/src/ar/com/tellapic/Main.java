@@ -29,10 +29,10 @@ import ar.com.tellapic.graphics.LineNet;
 import ar.com.tellapic.graphics.MarkerNet;
 import ar.com.tellapic.graphics.PenNet;
 import ar.com.tellapic.graphics.RectangleNet;
-import ar.com.tellapic.graphics.Selector;
+import ar.com.tellapic.graphics.SelectorTool;
 import ar.com.tellapic.graphics.TextNet;
 import ar.com.tellapic.graphics.ToolFactory;
-import ar.com.tellapic.graphics.Zoom;
+import ar.com.tellapic.graphics.ZoomTool;
 import ar.com.tellapic.lib.tellapicConstants;
 import ar.com.tellapic.utils.Utils;
 
@@ -192,14 +192,14 @@ public class Main {
 	 * @param name
 	 */
 	private static void initiate(final int id, final String name) {
-		ToolFactory.registerToolClassName(99, Zoom.class.getName());
+		ToolFactory.registerToolClassName(99, ZoomTool.class.getName());
 		ToolFactory.registerToolClassName(tellapicConstants.TOOL_ELLIPSE, EllipseNet.class.getName());
 		ToolFactory.registerToolClassName(tellapicConstants.TOOL_LINE, LineNet.class.getName());
 		ToolFactory.registerToolClassName(tellapicConstants.TOOL_RECT, RectangleNet.class.getName());
 		ToolFactory.registerToolClassName(tellapicConstants.TOOL_TEXT, TextNet.class.getName());
 		ToolFactory.registerToolClassName(tellapicConstants.TOOL_MARKER, MarkerNet.class.getName());
 		ToolFactory.registerToolClassName(tellapicConstants.TOOL_PATH, PenNet.class.getName());
-		ToolFactory.registerToolClassName(0, Selector.class.getName());
+		ToolFactory.registerToolClassName(0, SelectorTool.class.getName());
 		
 		final UserManager userManager = UserManager.getInstance();
 		final LocalUser luser = (LocalUser) userManager.createUser(id, name, false);
