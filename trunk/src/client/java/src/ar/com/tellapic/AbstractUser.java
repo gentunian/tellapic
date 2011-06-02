@@ -18,8 +18,8 @@
 package ar.com.tellapic;
 
 import java.util.ArrayList;
-import java.util.NoSuchElementException;
 import java.util.Observable;
+import java.util.Observer;
 
 import ar.com.tellapic.graphics.AbstractDrawing;
 import ar.com.tellapic.graphics.DrawingAreaModel;
@@ -33,6 +33,7 @@ import ar.com.tellapic.graphics.PaintPropertyStroke;
 import ar.com.tellapic.graphics.ToolBoxModel;
 import ar.com.tellapic.lib.tellapic;
 import ar.com.tellapic.lib.tellapicConstants;
+import ar.com.tellapic.utils.Utils;
 
 /**
  * @author 
@@ -40,7 +41,7 @@ import ar.com.tellapic.lib.tellapicConstants;
  *          sebastian.treu(at)gmail.com
  *
  */
-public abstract class AbstractUser extends Observable  {
+public abstract class AbstractUser extends Observable implements Observer {
 	
 	public static final int CUSTOM_PAINT_PROPERTY_COLOR  = 0;
 	public static final int CUSTOM_PAINT_PROPERTY_STROKE = 1;
@@ -58,7 +59,7 @@ public abstract class AbstractUser extends Observable  {
 	//complete information to be drawn on the screen. This objects will live as long as the
 	//local user wants, that is, if a user gets disconnected, the user will appear as disconnected
 	//and it won't be removed unless the local user wants to.
-	private ArrayList<AbstractDrawing>      drawingList;
+	protected ArrayList<AbstractDrawing>      drawingList;
 	
 	
 	// This is the first drawing, added to the list of drawings, that has not been drawn yet on screen.
@@ -142,10 +143,15 @@ public abstract class AbstractUser extends Observable  {
 		
 		/* Shouldn't we set this line outside this object??? */
 		drawing.setUser(this);
-		DrawingAreaModel.getInstance().addDrawing(drawing);
-		/* Report the view only if we are visible */
+		
+		if (drawing.getNumber() != 0)
+			DrawingAreaModel.getInstance().addDrawing(drawing);
+		
+		drawing.addObserver(this);
+		
 		setChanged();
-		notifyObservers(drawing);
+		if (isVisible())
+			notifyObservers(drawing);
 	}
 	
 	
@@ -252,36 +258,6 @@ public abstract class AbstractUser extends Observable  {
 		return drawingList;
 	}
 	
-	
-	/**
-	 * 
-	 * @param drawing
-	 */
-	public void changeDrawingVisibility(AbstractDrawing drawing) {
-		if (!drawingList.contains(drawing))
-			throw new NoSuchElementException("Drawing is not a member of this user drawing list");
-		
-		boolean oldValue = drawing.isVisible();
-		drawing.setVisible(!oldValue);
-		setChanged();
-		notifyObservers(drawingList.indexOf(drawing));
-	}
-	
-	
-	/**
-	 * 
-	 * @param drawing
-	 */
-	public void setDrawingVisible(AbstractDrawing drawing, boolean visible) {
-		if (!drawingList.contains(drawing))
-			throw new NoSuchElementException("Drawing is not a member of this user drawing list");
-		
-		drawing.setVisible(visible);
-		setChanged();
-		notifyObservers(drawingList.indexOf(drawing));
-	}
-	
-	
 	/**
 	 * 
 	 */
@@ -377,6 +353,7 @@ public abstract class AbstractUser extends Observable  {
 		boolean removed = drawingList.remove(drawing);
 		
 		if (removed) {
+			DrawingAreaModel.getInstance().removeDrawing(drawing);
 			setChanged();
 			notifyObservers(new Object[]{drawing, index});
 			String number = String.valueOf(drawing.getNumber());
@@ -401,16 +378,7 @@ public abstract class AbstractUser extends Observable  {
 		return removeDrawing(drawing);
 	}
 
-
-	/**
-	 * 
-	 */
-	public void changeVisibility() {
-		boolean oldValue = isVisible();
-		setVisible(!oldValue);
-	}
-
-
+	
 	/**
 	 * @return
 	 */
@@ -502,13 +470,25 @@ public abstract class AbstractUser extends Observable  {
 
 
 	/**
-	 * @param drawing
+	 * @param info
 	 */
-	public void setDrawingSelected(AbstractDrawing drawing) {
-		for(AbstractDrawing d : getDrawings()) {
-			d.setSelected(d.equals(drawing));
+	public void setDrawingNumber(String info) {
+		Utils.logMessage("setDrawingNumber() call");
+		AbstractDrawing drawing = findDrawing(0);
+		Long number = Long.parseLong(info);
+		
+		/* If we find a drawin 'unnumbered' (that is, with number 0), then set the number the server provides us */
+		if (drawing != null) {
+			drawing.setNumber(number);
+			/* Drawings with number 0 are not added to the model, so add it now */
+			DrawingAreaModel.getInstance().addDrawing(drawing);
+			setChanged();
+			notifyObservers();
+			/* If no drawing with no number is found, then it must be the temporalDrawing */
+		} else if (temporalDrawing != null){
+			temporalDrawing.setNumber(number);
+		} else {
+			throw new IllegalStateException("Something is probably wrong with drawing numbers.");
 		}
-		setChanged();
-		notifyObservers(drawingList.indexOf(drawing));
 	}
 }

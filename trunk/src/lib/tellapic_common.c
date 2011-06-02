@@ -59,8 +59,6 @@ _read_nb(tellapic_socket_t socket, size_t totalbytes, byte_t *buf);
  *
  */
 
-
-
 /**
  *
  */
@@ -1195,6 +1193,72 @@ _wrap_figure_data(stream_t *dest, byte_t *data)
 
 
 /**
+ *
+ */
+static int
+_do_wrapping(stream_t *stream, byte_t *data, tellapic_u32_t nbytes)
+{
+  tellapic_u32_t datasize = _get_header_ssize(&stream->header) - HEADER_SIZE;
+  if (nbytes == 0) 
+    {
+    _set_header_cbyte(&stream->header, CTL_NOPIPE);
+    _set_header_ssize(&stream->header, 0);
+    }
+  else if (nbytes < 0)
+    {
+      _set_header_cbyte(&stream->header, CTL_FAIL);
+      _set_header_ssize(&stream->header, 0);
+    }
+
+  else if (nbytes == datasize) 
+    {
+
+      /* Copy the stream data section upon the control byte. */
+      if (tellapic_ischatp(&stream->header))
+	{
+	  _wrap_privchat_data(stream, data, datasize);
+	}
+      else if (tellapic_ischatb(&stream->header))
+	{
+	  _wrap_broadchat_data(stream, data, datasize);
+	}
+      else if (tellapic_isfig(&stream->header) || tellapic_isdrw(&stream->header))
+	{
+	  _wrap_figure_data(stream, data);
+	}
+      else if (tellapic_isctle(&stream->header))
+	{
+	  _wrap_ctle_data(stream, data, datasize);
+	}
+      else if (tellapic_isfile(&stream->header))
+	{
+	  _wrap_file_data(stream, data, datasize);
+	}
+      else if (tellapic_isctl(&stream->header))
+	{
+	  _wrap_ctl_data(stream, data);
+	}
+      else if (tellapic_isping(&stream->header) || tellapic_ispong(&stream->header))
+	{
+	  /* nothing */
+	}
+      else
+	{
+	  printf("FAIL over HERE!\n");
+	  _set_header_cbyte(&stream->header, CTL_FAIL);
+	  _set_header_ssize(&stream->header, 0);
+	}
+    } 
+  else if (nbytes > 0)
+    {
+    _set_header_cbyte(&stream->header, CTL_NOSTREAM);
+    _set_header_ssize(&stream->header, 0);
+    }
+  return 0;
+}
+
+
+/**
  * Wraps bytes chunks in the header structure to be returned.
  * _b means blocking. For now, we just implement blocking mode.
  * If we successfuly read HEADER_SIZE bytes, we check the control
@@ -1283,77 +1347,8 @@ tellapic_read_data_b(tellapic_socket_t socket, header_t header)
   tellapic_u32_t nbytes   = _read_b(socket, datasize, data);
   stream_t       stream;
   
-  /* This is important. It tells us that what header.ssize says is what we really read and     */
-  /* what is indeed in the data buffer. So, is we move between 0 and header.ssize-HEADER_SIZE */
-  /* we won't have SIGSEGV. This information is useful to _*cpy() functions.                  */
-  if (nbytes == 0) 
-    _set_header_cbyte(&stream.header, CTL_NOPIPE);
-
-  else if (nbytes < 0)
-    {
-      _set_header_cbyte(&stream.header, CTL_FAIL);
-      _set_header_ssize(&stream.header, 0);
-    }
-
-  else if (nbytes == datasize) 
-    {
-      /* Copy the header to the stream structure. */
-      stream.header = header;
-
-      /* Copy the stream data section upon the control byte. */
-      switch(stream.header.cbyte) 
-	{
-	case CTL_CL_PMSG:
-	  _wrap_privchat_data(&stream, data, datasize);
-	  break; 
-
-	case CTL_CL_BMSG:
-	  _wrap_broadchat_data(&stream, data, datasize);
-	  break;
-
-	case CTL_CL_FIG:
-	case CTL_CL_DRW:
-	  _wrap_figure_data(&stream, data);
-	  break;
-
-	case CTL_SV_CLIST:
-	  break;
-
-	case CTL_SV_CLADD:
-	case CTL_CL_PWD:
-	case CTL_CL_NAME:
-	case CTL_CL_RMFIG:
-	  _wrap_ctle_data(&stream, data, datasize);
-	  break;
-
-	case CTL_SV_FILE:
-	  _wrap_file_data(&stream, data, datasize);
-	  break;
-
-	case CTL_CL_FILEASK:
-	case CTL_CL_FILEOK:
-	case CTL_SV_PWDFAIL:
-	case CTL_SV_PWDOK:
-	case CTL_SV_PWDASK:
-	case CTL_CL_CLIST:
-	case CTL_CL_DISC:
-	case CTL_SV_CLRM:
-	case CTL_SV_ID:
-	case CTL_SV_NAMEINUSE:
-	case CTL_SV_AUTHOK:
-	case CTL_CL_PING:
-	case CTL_SV_PONG:
-	  _wrap_ctl_data(&stream, data);
-	  break;
-	  
-	default:
-	  printf("FAIL over HERE!\n");
-	  _set_header_cbyte(&stream.header, CTL_FAIL);
-	  break;
-	}
-    } 
-  else if (nbytes > 0)
-    _set_header_cbyte(&stream.header, CTL_NOSTREAM);
+  stream.header = header;
+  _do_wrapping(&stream, data, nbytes);
 
   free(data);
   return stream;
@@ -1435,79 +1430,8 @@ tellapic_read_data_nb(tellapic_socket_t socket, header_t header)
   tellapic_u32_t nbytes   = _read_nb(socket, datasize, data);
   stream_t       stream;
 
-
-  /* This is important. It tells us that what header.ssize says is what we really read and     */
-  /* what is indeed in the data buffer. So, is we move between 0 and header.ssize-HEADER_SIZE */
-  /* we won't have SIGSEGV. This information is useful to _*cpy() functions.                  */
-  if (nbytes == 0) 
-    {
-      _set_header_cbyte(&stream.header, CTL_NOPIPE);
-    }
-  else if (nbytes < 0)
-    {
-      _set_header_cbyte(&stream.header, CTL_FAIL);
-      _set_header_ssize(&stream.header, 0);
-    }
-
-  else if (nbytes == datasize) 
-    {
-      /* Copy the header to the stream structure. */
-      stream.header = header;
-
-      /* Copy the stream data section upon the control byte. */
-      switch(stream.header.cbyte) 
-	{
-	case CTL_CL_PMSG:
-	  _wrap_privchat_data(&stream, data, datasize);
-	  break;
-
-	case CTL_CL_BMSG:
-	  _wrap_broadchat_data(&stream, data, datasize);
-	  break;
-
-	case CTL_CL_FIG:
-	case CTL_CL_DRW:
-	  _wrap_figure_data(&stream, data);
-	  break;
-
-	case CTL_SV_CLIST:
-	  break;
-
-	case CTL_SV_CLADD:
-	case CTL_CL_PWD:
-	case CTL_CL_NAME:
-	  _wrap_ctle_data(&stream, data, datasize);
-	  break;
-
-	case CTL_SV_FILE:
-	  _wrap_file_data(&stream, data, datasize);
-	  break;
-
-	case CTL_CL_FILEASK:
-	case CTL_CL_FILEOK:
-	case CTL_SV_PWDFAIL:
-	case CTL_SV_PWDOK:
-	case CTL_SV_PWDASK:
-	case CTL_CL_CLIST:
-	case CTL_CL_DISC:
-	case CTL_SV_CLRM:
-	case CTL_SV_ID:
-	case CTL_SV_NAMEINUSE:
-	case CTL_SV_AUTHOK:
-	case CTL_CL_PING:
-	case CTL_SV_PONG:
-	  _wrap_ctl_data(&stream, data);
-	  break;
-	  
-	default:
-	  printf("FAIL over HERE!\n");
-	  _set_header_cbyte(&stream.header, CTL_FAIL);
-	  break;
-	}
-    } 
-  else if (nbytes > 0)
-    _set_header_cbyte(&stream.header, CTL_NOSTREAM);
-  
+  stream.header = header;
+  _do_wrapping(&stream, data, nbytes);
 
   free(data);
   return stream;
@@ -1520,50 +1444,57 @@ tellapic_read_data_nb(tellapic_socket_t socket, header_t header)
 POSH_PUBLIC_API(int)
 _stream_header_ok(byte_t *header)
 {
-  /* get the stream size from the header section */
-  tellapic_u32_t ssize = _read_header_ssize(header);
+  /* /\* get the stream size from the header section *\/ */
+  /* tellapic_u32_t ssize = _read_header_ssize(header); */
 
-  /* check if the stream size is upon valid values */
-  if (ssize >= HEADER_SIZE && ssize <= MAX_STREAM_SIZE)
-    {
-      /* if so, then check whether or not the control byte and the stream size are ok */
-      if ( !( header[CBYTE_INDEX] == CTL_CL_BMSG  && ssize <= MAX_BMSG_STREAM_SIZE   && ssize >= MIN_BMSG_STREAM_SIZE )
-	   &&
-	   !( header[CBYTE_INDEX] == CTL_CL_PMSG  && ssize <= MAX_PMSG_STREAM_SIZE   && ssize >= MIN_PMSG_STREAM_SIZE )
-	   &&
-	   !( header[CBYTE_INDEX] == CTL_CL_FIG   && ssize <= MAX_FIGTXT_STREAM_SIZE && ssize >= MIN_FIGTXT_STREAM_SIZE )
-	   &&
-	   !( header[CBYTE_INDEX] == CTL_CL_DRW   && (ssize == DRW_INIT_STREAM_SIZE || ssize == DRW_USING_STREAM_SIZE) )
-	   &&
-	   !( header[CBYTE_INDEX] == CTL_SV_FILE  && ssize <= MAX_STREAM_SIZE && ssize >= MIN_CTLEXT_STREAM_SIZE)
-	   &&
-	   !( (header[CBYTE_INDEX] == CTL_CL_PWD ||
-	       header[CBYTE_INDEX] == CTL_CL_NAME ||
-	       header[CBYTE_INDEX] == CTL_SV_CLADD) && ssize <= MAX_CTLEXT_STREAM_SIZE && ssize >= MIN_CTLEXT_STREAM_SIZE )
-	   &&
-	   !(( header[CBYTE_INDEX] == CTL_CL_FILEASK || 
-	       header[CBYTE_INDEX] == CTL_CL_FILEOK  ||
-	       header[CBYTE_INDEX] == CTL_SV_PWDFAIL ||
-	       header[CBYTE_INDEX] == CTL_SV_PWDOK   ||
-	       header[CBYTE_INDEX] == CTL_CL_CLIST   ||
-	       header[CBYTE_INDEX] == CTL_CL_DISC    ||
-	       header[CBYTE_INDEX] == CTL_SV_CLRM    ||
-	       header[CBYTE_INDEX] == CTL_SV_ID      ||
-	       header[CBYTE_INDEX] == CTL_SV_AUTHOK  ||
-	       header[CBYTE_INDEX] == CTL_CL_PING    ||
-	       header[CBYTE_INDEX] == CTL_SV_NAMEINUSE) && ssize == CTL_STREAM_SIZE )
-	   )
-	{
-	  /* header and stream size are invalid */
-	  return 0;
-	}
-      else
-	{
-	  /* header and ssize valids */
-	  return ssize;
-	}
-    }
-  return 0;
+  /* /\* check if the stream size is upon valid values *\/ */
+  /* if (ssize >= HEADER_SIZE && ssize <= MAX_STREAM_SIZE) */
+  /*   { */
+  /*     /\* if so, then check whether or not the control byte and the stream size are ok *\/ */
+  /*     if ( !( header[CBYTE_INDEX] == CTL_CL_BMSG  && ssize <= MAX_BMSG_STREAM_SIZE   && ssize >= MIN_BMSG_STREAM_SIZE ) */
+  /* 	   && */
+  /* 	   !( header[CBYTE_INDEX] == CTL_CL_PMSG  && ssize <= MAX_PMSG_STREAM_SIZE   && ssize >= MIN_PMSG_STREAM_SIZE ) */
+  /* 	   && */
+  /* 	   !( header[CBYTE_INDEX] == CTL_CL_FIG   && ssize <= MAX_FIGTXT_STREAM_SIZE && ssize >= MIN_FIGTXT_STREAM_SIZE ) */
+  /* 	   && */
+  /* 	   !( header[CBYTE_INDEX] == CTL_CL_DRW   && (ssize == DRW_INIT_STREAM_SIZE || ssize == DRW_USING_STREAM_SIZE) ) */
+  /* 	   && */
+  /* 	   !( header[CBYTE_INDEX] == CTL_SV_FILE  && ssize <= MAX_STREAM_SIZE && ssize >= MIN_CTLEXT_STREAM_SIZE) */
+  /* 	   && */
+  /* 	   !( (header[CBYTE_INDEX] == CTL_CL_PWD || */
+  /* 	       header[CBYTE_INDEX] == CTL_CL_NAME || */
+  /* 	       header[CBYTE_INDEX] == CTL_SV_CLADD) && ssize <= MAX_CTLEXT_STREAM_SIZE && ssize >= MIN_CTLEXT_STREAM_SIZE ) */
+  /* 	   && */
+  /* 	   !(( header[CBYTE_INDEX] == CTL_CL_FILEASK ||  */
+  /* 	       header[CBYTE_INDEX] == CTL_CL_FILEOK  || */
+  /* 	       header[CBYTE_INDEX] == CTL_SV_PWDFAIL || */
+  /* 	       header[CBYTE_INDEX] == CTL_SV_PWDOK   || */
+  /* 	       header[CBYTE_INDEX] == CTL_CL_CLIST   || */
+  /* 	       header[CBYTE_INDEX] == CTL_CL_DISC    || */
+  /* 	       header[CBYTE_INDEX] == CTL_SV_CLRM    || */
+  /* 	       header[CBYTE_INDEX] == CTL_SV_ID      || */
+  /* 	       header[CBYTE_INDEX] == CTL_SV_FIGID   || */
+  /* 	       header[CBYTE_INDEX] == CTL_SV_AUTHOK  || */
+  /* 	       header[CBYTE_INDEX] == CTL_CL_PING    || */
+  /* 	       header[CBYTE_INDEX] == CTL_SV_NAMEINUSE) && ssize == CTL_STREAM_SIZE ) */
+  /* 	   ) */
+  /* 	{ */
+  /* 	  /\* header and stream size are invalid *\/ */
+  /* 	  return 0; */
+  /* 	} */
+  /*     else */
+  /* 	{ */
+  /* 	  /\* header and ssize valids *\/ */
+  /* 	  return ssize; */
+  /* 	} */
+  /*   } */
+  header_t wheader;
+  _wrap_stream_header(&wheader, header);
+
+  if (wheader.ssize == 0 || wheader.cbyte == CTL_NOSTREAM)
+    return 0;
+  else
+    return wheader.ssize;
 }
 
 
@@ -2762,6 +2693,7 @@ tellapic_isctle(header_t *header)
   return ((header->cbyte == CTL_CL_PWD   ||
 	   header->cbyte == CTL_CL_NAME  ||
 	   header->cbyte == CTL_CL_RMFIG ||
+	   header->cbyte == CTL_SV_FIGID ||
 	   header->cbyte == CTL_SV_CLADD) && header->ssize <= MAX_CTLEXT_STREAM_SIZE && header->ssize >= MIN_CTLEXT_STREAM_SIZE) ;
 }
 

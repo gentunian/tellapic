@@ -877,14 +877,21 @@ fetch_stream(tdata_t *thread)
 
     case CTL_CL_FIG:
       item->stream.data.drawing.number = dnumber_inc();
+      char info[MAX_INFO_SIZE];
+      sprintf(info, "%i", item->stream.data.drawing.number);
+      tellapic_send_ctle(thread->client->socket, thread->tnum, CTL_SV_FIGID, strlen(info), info);
       queue_message(item, thread);
       break;
 
     case CTL_CL_DRW:
       /* Only assign a drawing number when the drawing is created. */
-      if ((stream.data.drawing.dcbyte & EVENT_PRESS) == EVENT_PRESS)
-	stream.data.drawing.number = dnumber_inc();
-
+      if ((stream.data.drawing.dcbyte & EVENT_MASK) == EVENT_PRESS)
+	{
+	  item->stream.data.drawing.number = dnumber_inc();
+	  char info[MAX_INFO_SIZE];
+	  sprintf(info, "%i", item->stream.data.drawing.number);
+	  tellapic_send_ctle(thread->client->socket, thread->tnum, CTL_SV_FIGID, strlen(info), info);
+	}
       queue_message(item, thread);
       break;
 
@@ -1001,8 +1008,8 @@ queue_message(mitem_t *msg, tdata_t *thread)
       /* If it isn't for him, then do nothing. Else, if it isn't private, send it anyway. */
 
       if ( (ccbitset & (1 << thread[i].tnum)) &&                            /* Check if thread[i].tnum is connected */
-	   (msg->tothread == TO_ALL || msg->tothread == thread[i].tnum) /* &&*/  /* Check if it's private to the i-th thread or not. */
-	   /*current != thread[i].tnum*/)                                       /* Check if we aren't forwarding to the sender */
+	   (msg->tothread == TO_ALL || msg->tothread == thread[i].tnum) &&  /* Check if it's private to the i-th thread or not. */
+	   current != thread[i].tnum)                                       /* Check if we aren't forwarding to the sender */
 	{
 #         ifdef DEBUG 
 	  char   buf[256];

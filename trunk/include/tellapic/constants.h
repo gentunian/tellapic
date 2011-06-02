@@ -152,7 +152,8 @@
 #define CTL_SV_ID        0x80   /* is ctl  */
 #define CTL_SV_NAMEINUSE 0x90   /* is ctl  */
 #define CTL_SV_AUTHOK    0xa0   /* is ctl  */
-#define CTL_SV_PONG      0xb0
+#define CTL_SV_PONG      0xb0   /* is ctl  */
+#define CTL_SV_FIGID     0xc0   /* is ctle */
 
 
 /* Face properties */

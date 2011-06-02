@@ -17,6 +17,9 @@
  */  
 package ar.com.tellapic;
 
+import java.util.Observable;
+
+import ar.com.tellapic.graphics.AbstractDrawing;
 import ar.com.tellapic.graphics.PaintPropertyController;
 import ar.com.tellapic.graphics.ToolBoxController;
 
@@ -73,5 +76,15 @@ public class RemoteUser extends AbstractUser {
 	public boolean isSpecial() {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.util.Observer#update(java.util.Observable, java.lang.Object)
+	 */
+	@Override
+	public void update(Observable o, Object arg) {
+		AbstractDrawing drawing = (AbstractDrawing) o;
+		setChanged();
+		notifyObservers(drawingList.indexOf(drawing));
 	}
 }

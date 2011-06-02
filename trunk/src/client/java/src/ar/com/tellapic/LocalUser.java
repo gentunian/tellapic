@@ -17,6 +17,10 @@
  */  
 package ar.com.tellapic;
 
+import java.util.Observable;
+
+import ar.com.tellapic.graphics.AbstractDrawing;
+
 /**
  * @author 
  *          Sebastian Treu
@@ -61,5 +65,15 @@ public class LocalUser extends AbstractUser {
 	@Override
 	public boolean isSpecial() {
 		return false;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.util.Observer#update(java.util.Observable, java.lang.Object)
+	 */
+	@Override
+	public void update(Observable o, Object arg) {
+		AbstractDrawing drawing = (AbstractDrawing) o;
+		setChanged();
+		notifyObservers(drawingList.indexOf(drawing));
 	}
 }

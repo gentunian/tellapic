@@ -35,6 +35,7 @@ import javax.swing.ImageIcon;
 import javax.swing.InputMap;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
@@ -54,6 +55,7 @@ import org.jdesktop.swingx.renderer.StringValue;
 
 import ar.com.tellapic.chat.ChatViewController;
 import ar.com.tellapic.graphics.AbstractDrawing;
+import ar.com.tellapic.graphics.DrawingAreaModel;
 import ar.com.tellapic.graphics.PaintPropertyColor;
 import ar.com.tellapic.utils.Utils;
 
@@ -105,7 +107,6 @@ public class UsersView extends JPanel {
 						AbstractUser user = (AbstractUser) o;
 						switch(colSel) {
 						case 1:
-//							userOptionsController.toggleUserVisibility(user);
 							boolean oldValue = user.isVisible();
 							user.setVisible(!oldValue);
 							break;
@@ -120,14 +121,10 @@ public class UsersView extends JPanel {
 						AbstractDrawing drawing = (AbstractDrawing) o;
 						switch(colSel) {
 						case 0:
-							AbstractUser user = drawing.getUser();
-							/* Doing it so will trigger a notify() so UserView will be updated */
-							user.setDrawingSelected(drawing);
+							DrawingAreaModel.getInstance().selectDrawing(drawing);
 							break;
 						case 1:
-//							userOptionsController.toggleDrawingVisibility(drawing);
-							/* Doing it so will trigger a notify() so UserView will be updated */
-							drawing.getUser().changeDrawingVisibility(drawing);
+							drawing.setVisible(!drawing.isVisible());
 							break;
 						case 2:
 							break;
@@ -143,7 +140,13 @@ public class UsersView extends JPanel {
 					TreePath path = tree.getPathForLocation(e.getX(), e.getY());
 					if (path != null) {
 						tree.getTreeSelectionModel().addSelectionPath(path);
-						UsersViewPopupOptions popup = new UsersViewPopupOptions(path.getLastPathComponent(), chatViewController);
+						Object data = path.getLastPathComponent();
+						JPopupMenu popup = null;
+						if (data instanceof AbstractDrawing) {
+							popup = new DrawingPopupMenu(null, (AbstractDrawing) data);
+						} else if (data instanceof AbstractUser) {
+							popup = new UserPopupMenu((AbstractUser) data, chatViewController);
+						}
 						popup.show(UsersView.this, e.getX(), e.getY());
 					}
 				}
@@ -154,7 +157,13 @@ public class UsersView extends JPanel {
 					TreePath path = tree.getPathForLocation(e.getX(), e.getY());
 					if (path != null) {
 						tree.getTreeSelectionModel().addSelectionPath(path);
-						UsersViewPopupOptions popup = new UsersViewPopupOptions(path.getLastPathComponent(), chatViewController);
+						Object data = path.getLastPathComponent();
+						JPopupMenu popup = null;
+						if (data instanceof AbstractDrawing) {
+							popup = new DrawingPopupMenu(null, (AbstractDrawing) data);
+						} else if (data instanceof AbstractUser) {
+							popup = new UserPopupMenu((AbstractUser) data, chatViewController);
+						}
 						popup.show(UsersView.this, e.getX(), e.getY());
 					}
 				}
@@ -217,9 +226,11 @@ public class UsersView extends JPanel {
 				Object value = tree.getValueAt(row, tree.getHierarchicalColumn());
 				if (value instanceof AbstractDrawing) {
 					AbstractDrawing drawing = (AbstractDrawing) value;
-					drawing.getUser().changeDrawingVisibility(drawing);
-				} else if (value instanceof AbstractUser)
-					((AbstractUser)value).changeVisibility();
+					drawing.setVisible(!drawing.isVisible());
+				} else if (value instanceof AbstractUser) {
+					AbstractUser user = (AbstractUser) value;
+					user.setVisible(!user.isVisible());
+				}
 			}
 		});
 		
@@ -253,10 +264,8 @@ public class UsersView extends JPanel {
 			public void actionPerformed(ActionEvent e) {
 				int row = tree.getSelectedRow();
 				Object value = tree.getValueAt(row, 0);
-				if (value instanceof AbstractDrawing) {
-					AbstractUser user = ((AbstractDrawing)value).getUser();
-					user.removeDrawing((AbstractDrawing) value);
-				}
+				if (value instanceof AbstractDrawing)
+					DrawingAreaModel.getInstance().removeDrawing((AbstractDrawing)value);
 			}
 		});
 	}
@@ -482,38 +491,4 @@ public class UsersView extends JPanel {
 		return Holder.INSTANCE;
 	}
 	
-
-//	@Override
-//	public void update(Observable o, Object data) {
-//		
-//		if (data != null) {
-//			AbstractUser user = (AbstractUser) o;
-//			DefaultMutableTreeNode userNode = null;
-//			
-//			boolean found = false;
-//			for(int i = 0; i < rootNode.getChildCount() && !found; i++) {
-//				userNode = (DefaultMutableTreeNode) rootNode.getChildAt(i);
-//				if (userNode.getUserObject().equals(user))
-//					found = true;
-//			}
-//			
-//			if (found) {
-				//The user already exist in the users list.
-//				if (user.isRemoved()) {
-//					treeModel.removeNodeFromParent(userNode);
-//				} else {
-//					if (data instanceof Integer) {
-//						DefaultMutableTreeNode   drawingNode = new DefaultMutableTreeNode(user.getDrawings().get((Integer)data));
-//						treeModel.insertNodeInto(drawingNode, userNode, userNode.getChildCount());
-						//usersTree.scrollPathToVisible(new TreePath(drawingNode.getPath()));
-//					}
-//				}
-//			} else {
-				//The user doesn't exist in the users list. Add it.
-//				DefaultMutableTreeNode child = new DefaultMutableTreeNode(user);
-//				treeModel.insertNodeInto(child, rootNode, rootNode.getChildCount());
-//				usersTree.scrollPathToVisible(new TreePath(child.getPath()));
-//			}
-//		}
-//	}
 }

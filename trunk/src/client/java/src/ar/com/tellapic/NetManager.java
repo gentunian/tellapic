@@ -22,8 +22,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Observable;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -36,15 +34,11 @@ import javax.swing.SwingUtilities;
 
 import ar.com.tellapic.chat.ChatClientModel;
 import ar.com.tellapic.chat.Message;
-import ar.com.tellapic.graphics.AbstractDrawing;
 import ar.com.tellapic.graphics.DrawingAreaView;
-import ar.com.tellapic.graphics.DrawingTool;
 import ar.com.tellapic.graphics.IPaintPropertyController;
 import ar.com.tellapic.graphics.IToolBoxController;
-import ar.com.tellapic.graphics.PaintProperty;
 import ar.com.tellapic.graphics.RemoteMouseEvent;
 import ar.com.tellapic.graphics.Tool;
-import ar.com.tellapic.graphics.ToolBoxModel;
 import ar.com.tellapic.graphics.ToolFactory;
 import ar.com.tellapic.lib.ddata_t;
 import ar.com.tellapic.lib.header_t;
@@ -652,31 +646,32 @@ public class NetManager extends Observable implements Runnable {
 			
 		} else if (tellapic.tellapic_isctle(header) == 1) {
 			System.out.println("Was ctl extended");
+			AbstractUser user = null;
 			svcontrol_t ctlExtended = stream.getData().getControl();
 			int         userId      = ctlExtended.getIdfrom();
 			short[]     userInfo    = ctlExtended.getInfo();
 			long        userInfoLen = stream.getHeader().getSsize() - tellapicConstants.HEADER_SIZE - 1;
-			
+			String      info = "";
+			for(int i =0 ; i < userInfoLen; i++)
+				info += (char)userInfo[i];
+
 			switch(header.getCbyte()) {
 			case tellapicConstants.CTL_SV_CLADD:
 				if (userId != SessionUtils.getId()) {
-					String      userName = "";
-					for(int i =0 ; i < userInfoLen; i++)
-						userName += (char)userInfo[i];
-					UserManager.getInstance().createUser(userId, userName, true);
+					UserManager.getInstance().createUser(userId, info, true);
 				}
 				break;
 
-			case tellapicConstants.CTL_SV_FILE:
-				break;
-				
 			case tellapicConstants.CTL_CL_RMFIG:
-				String number = "";
-				for(int i =0 ; i < userInfoLen; i++)
-					number += (char)userInfo[i];
-				AbstractUser user = UserManager.getInstance().getUser(userId);
+				user = UserManager.getInstance().getUser(userId);
 				if (user != null && user.isRemote())
-					user.removeDrawing(number);
+					user.removeDrawing(info);
+				break;
+
+			case tellapicConstants.CTL_SV_FIGID:
+				Utils.logMessage("RECEIVEING NUMBER ID");
+				user = UserManager.getInstance().getLocalUser();
+				user.setDrawingNumber(info);
 				break;
 			}
 
@@ -795,8 +790,6 @@ public class NetManager extends Observable implements Runnable {
 			paintControl.handleDashChange(drawingData.getType().getFigure().getDash_array(), drawingData.getType().getFigure().getDash_phase());
 		}
 		
-		toolControl.handleAssignedNumber(drawingData.getNumber());
-		
 		/* Both text and stroke has color properties */
 		paintControl.handleColorChange(color);
 
@@ -836,20 +829,18 @@ public class NetManager extends Observable implements Runnable {
 				false,
 				swingButton);
 
-//		DrawingAreaView.getInstance().dispatchEvent(pressEvent);
-//		DrawingAreaView.getInstance().dispatchEvent(dragEvent);
-//		DrawingAreaView.getInstance().dispatchEvent(releaseEvent);
 		Tool usedTool = remoteUser.getToolBoxModel().getLastUsedTool();
 		usedTool.mousePressed(pressEvent);
+		remoteUser.getDrawing().setNumber(drawingData.getNumber());
 		usedTool.mouseDragged(dragEvent);
 		usedTool.mouseReleased(releaseEvent);
 		
 		/* TODO: JUST FOR DEBUG */
-		int x1 = (int)drawingData.getPoint1().getX();
-		int y1 = (int)drawingData.getPoint1().getY();
-		int x2 = (int)drawingData.getType().getFigure().getPoint2().getX();
-		int y2 = (int)drawingData.getType().getFigure().getPoint2().getY();
-		System.out.println("RECEIVED COORDS: ("+x1+","+y1+") ("+x2+","+y2+")");
+//		int x1 = (int)drawingData.getPoint1().getX();
+//		int y1 = (int)drawingData.getPoint1().getY();
+//		int x2 = (int)drawingData.getType().getFigure().getPoint2().getX();
+//		int y2 = (int)drawingData.getType().getFigure().getPoint2().getY();
+//		System.out.println("RECEIVED COORDS: ("+x1+","+y1+") ("+x2+","+y2+")");
 	}
 
 
@@ -912,8 +903,6 @@ public class NetManager extends Observable implements Runnable {
 			c.handleWidthChange(drawingData.getWidth());
 			c.handleColorChange(color);
 			
-			toolControl.handleAssignedNumber(drawingData.getNumber());
-			
 			RemoteMouseEvent pressEvent = new RemoteMouseEvent(
 					remoteUser,
 					DrawingAreaView.getInstance(),
@@ -925,8 +914,8 @@ public class NetManager extends Observable implements Runnable {
 					0,
 					false,
 					swingButton);
-//			DrawingAreaView.getInstance().dispatchEvent(pressEvent);e
 			usedTool.mousePressed(pressEvent);
+			remoteUser.getDrawing().setNumber(drawingData.getNumber());
 			break;
 
 		case tellapicConstants.EVENT_DRAG:
@@ -935,13 +924,12 @@ public class NetManager extends Observable implements Runnable {
 					DrawingAreaView.getInstance(),
 					MouseEvent.MOUSE_DRAGGED,
 					System.currentTimeMillis(),
-					swingMask,
-					(int)drawingData.getType().getFigure().getPoint2().getX(),
-					(int)drawingData.getType().getFigure().getPoint2().getY(),
+					MouseEvent.BUTTON1_DOWN_MASK,
+					(int)drawingData.getPoint1().getX(),
+					(int)drawingData.getPoint1().getY(),
 					0,
 					false,
-					swingButton);
-//			DrawingAreaView.getInstance().dispatchEvent(dragEvent);
+					MouseEvent.NOBUTTON);
 			usedTool.mouseDragged(dragEvent);
 			break;
 
@@ -952,12 +940,11 @@ public class NetManager extends Observable implements Runnable {
 					MouseEvent.MOUSE_RELEASED,
 					System.currentTimeMillis(),
 					swingMask,
-					(int)drawingData.getType().getFigure().getPoint2().getX(),
-					(int)drawingData.getType().getFigure().getPoint2().getY(),
+					(int)drawingData.getPoint1().getX(),
+					(int)drawingData.getPoint1().getY(),
 					0,
 					false,
 					swingButton);
-//			DrawingAreaView.getInstance().dispatchEvent(releaseEvent);
 			usedTool.mouseReleased(releaseEvent);
 			break;
 		}

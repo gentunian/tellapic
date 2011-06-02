@@ -322,9 +322,10 @@ main(int argc, char **argv)
 
   tellapic_free(&file_stream);
   printf("Drawing parabol\n");
-  do_parabol(socket, id, 400, 250, 100, 1000);
-  printf("Drawing sin\n");
+  do_parabol(socket, id, 565, 329, 150, 1000);
+  /*printf("Drawing sin\n");
   do_sen(socket, id, 1000);
+  */
   tellapic_close_socket(socket);
   return 0;
 }

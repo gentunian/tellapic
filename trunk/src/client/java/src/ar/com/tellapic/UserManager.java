@@ -337,7 +337,6 @@ public class UserManager implements IUserManager, IUserManagerState, TreeTableMo
 	 */
 	@Override
 	public void setValueAt(Object value, Object node, int column) {
-		Utils.logMessage("set value "+value+" at node " +node+" for column "+column);
 		if (node instanceof AbstractUser) {
 			switch(column) {
 			case 1:
@@ -374,19 +373,13 @@ public class UserManager implements IUserManager, IUserManagerState, TreeTableMo
 	@Override
 	public Object getChild(Object parent, int index) {
 		Object child = null;
-		
 		if (index >= 0 && index < getChildCount(parent))
-
 			if (parent instanceof ArrayList<?> )
 				child = ((ArrayList<?>)parent).get(index);
-
 			else if (parent instanceof AbstractUser && index >= 0)
 				child = ((AbstractUser)parent).getDrawings().get(index);
-
 			else 
 				child = parent;
-
-		Utils.logMessage("getChild: "+parent+ " at: "+index+ " is: "+child);
 		return child;
 	}
 
@@ -399,19 +392,14 @@ public class UserManager implements IUserManager, IUserManagerState, TreeTableMo
 		int count = 0;
 		if (parent instanceof ArrayList<?>) {
 			count = ((ArrayList<?>)parent).size();
-//			Utils.logMessage("getchildCount HASHMAP: "+count);
 		} else if (parent instanceof AbstractUser) {
 			AbstractUser user = (AbstractUser) parent;
 			count = user.getDrawings().size();
-//			Utils.logMessage("getchildCount USER: "+count);
-			
 		} else if (parent instanceof AbstractDrawing) {
-//			Utils.logMessage("getchildCount DRAWING: "+count);
 			count = 0;
 		} else {
-//			System.out.println("wadafak? "+parent);
+
 		}
-//		Utils.logMessage("getchildCount from "+parent+" was: "+count);
 		return count;
 	}
 
@@ -421,7 +409,6 @@ public class UserManager implements IUserManager, IUserManagerState, TreeTableMo
 	 */
 	@Override
 	public int getIndexOfChild(Object parent, Object child) {
-
 		int index = 0;
 		
 		if (parent instanceof AbstractUser) {
@@ -429,7 +416,6 @@ public class UserManager implements IUserManager, IUserManagerState, TreeTableMo
 		} else if (parent instanceof ArrayList<?>) {
 			index = ((ArrayList<?>)parent).indexOf(child);
 		}
-//		Utils.logMessage("getIndexOf: "+parent+ " child: "+child+" was: "+index);
 		return index;
 	}
 
@@ -475,8 +461,6 @@ public class UserManager implements IUserManager, IUserManagerState, TreeTableMo
 	@Override
 	public void valueForPathChanged(TreePath path, Object newValue) {
 		// TODO Auto-generated method stub
-		System.out.println("WAFASDFASJFKSAFJASLKFJAS");
-
 	}
 
 
@@ -515,7 +499,9 @@ public class UserManager implements IUserManager, IUserManagerState, TreeTableMo
 	 * @see javax.swing.event.TreeModelListener#treeNodesChanged(javax.swing.event.TreeModelEvent)
 	 */
 	@Override
-	public void treeNodesChanged(TreeModelEvent e) {}
+	public void treeNodesChanged(TreeModelEvent e) {
+		
+	}
 
 
 	/* (non-Javadoc)
