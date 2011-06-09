@@ -1,18 +1,15 @@
 package ar.com.tellapic.graphics;
 
 import java.awt.Color;
-import java.awt.Cursor;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Line2D;
-import java.awt.geom.Point2D;
 
-import ar.com.tellapic.AbstractUser;
-import ar.com.tellapic.UserManager;
 import ar.com.tellapic.lib.tellapicConstants;
 import ar.com.tellapic.utils.Utils;
 
 public class MarkerTool extends LineTool {
 	private static final String MARKER_ICON_PATH = "/icons/tools/marker.png";
+	@SuppressWarnings("unused")
 	private static final String MARKER_CURSOR_PATH = "/icons/tools/marker-cursor.png";
 	private static final double DEFAULT_WIDTH = 20;
 	private static final double DEFAULT_ALPHA = .5f;
@@ -139,15 +136,18 @@ public class MarkerTool extends LineTool {
 	@Override
 	public void mouseDragged(MouseEvent e) {
 		if (isSelected() && !e.isConsumed()) {
-			if (isBeingUsed()) {
-				DrawingShape t = (DrawingShape) getTemporalDrawing();
-				boolean symmetric = e.isControlDown();
-				if (symmetric)
-					((Line2D)t.getShape()).setLine(firstPoint.getX(), firstPoint.getY(), firstPoint.getX(), e.getY());
-				else
-					((Line2D)t.getShape()).setLine(firstPoint.getX(), firstPoint.getY(), e.getX(), firstPoint.getY());
-				setChanged();
-				notifyObservers(t);
+			if ((e.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK) {
+				if (isBeingUsed()) {
+					float zoomX = ZoomTool.getInstance().getZoomValue();
+					DrawingShape t = (DrawingShape) getTemporalDrawing();
+					boolean symmetric = e.isControlDown();
+					if (symmetric)
+						((Line2D)t.getShape()).setLine(firstPoint.getX(), firstPoint.getY(), firstPoint.getX(), e.getY()/zoomX);
+					else
+						((Line2D)t.getShape()).setLine(firstPoint.getX(), firstPoint.getY(), e.getX()/zoomX, firstPoint.getY());
+					setChanged();
+					notifyObservers(t);
+				}
 			}
 			e.consume();
 		}

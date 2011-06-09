@@ -30,21 +30,12 @@ public class ToolView extends JPanel implements Observer {
 //	private static final int ICON_SIZE = 18;
 	private static final long serialVersionUID = 1L;
 	
-	public static final int NO_VALUE = -1;
+	public static final int NO_VALUE    = -1;
 	public static final int UPDATE_VIEW = 0;
-	
-	// icon path
-	//TODO: use getResource()
-//	public static final String ELLIPSE_ICON_PATH   = "/icons/ellipse.png";
-//	public static final String LINE_ICON_PATH      = "/icons/line.png";
-//	public static final String MARKER_ICON_PATH    = "/icons/pencil.png";
-//	public static final String RECTANGLE_ICON_PATH = "/icons/rectangle.png";
-//	public static final String TEXT_ICON_PATH      = "/icons/text.png";
-//	public static final String ZOOM_ICON_PATH      = "/icons/zoom.png";
-	
+	public static final int  ICON_SIZE  = 16;
 	
 	// The toolbox controller interface
-	private IToolBoxController controller;
+	private IToolBoxController  controller;
 	
 	// ButtonGroup object that guarantees that only 1 button is selected
 	private ButtonGroup         buttonGroup;
@@ -52,7 +43,7 @@ public class ToolView extends JPanel implements Observer {
 	
 	
 	public ToolView(IToolBoxState modelState) {
-		Dimension iconDimension = new Dimension(Tool.ICON_SIZE, Tool.ICON_SIZE);
+		Dimension iconDimension = new Dimension(ICON_SIZE, ICON_SIZE);
 		Dimension minPanelDimension = new Dimension(iconDimension.width + ICON_GAP, Short.MAX_VALUE);
 		setName("");
 		//setLayout(new FlowLayout());//FlowLayout.CENTER, ICON_GAP, ICON_GAP));
@@ -104,7 +95,7 @@ public class ToolView extends JPanel implements Observer {
 
 	//TODO fix! reveer
 	private void addButton(Tool tool) {
-		JToggleButton  button = new JToggleButton(new ImageIcon(Utils.createIconImage(Tool.ICON_SIZE, Tool.ICON_SIZE, tool.getIconPath())));
+		JToggleButton  button = new JToggleButton(new ImageIcon(Utils.createIconImage(ICON_SIZE, ICON_SIZE, tool.getIconPath())));
 		//JToggleButton  button = new JToggleButton(new ImageIcon(getClass().getResource(tool.getIconPath())));
 		//button.setRolloverIcon(rolloverIcon);
 		button.setFocusPainted(true);

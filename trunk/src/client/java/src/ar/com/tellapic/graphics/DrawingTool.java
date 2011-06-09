@@ -22,7 +22,6 @@ import java.awt.Cursor;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Toolkit;
-import java.awt.geom.Point2D;
 
 import ar.com.tellapic.utils.Utils;
 /**
@@ -32,6 +31,8 @@ import ar.com.tellapic.utils.Utils;
  *
  */
 public abstract class DrawingTool extends Tool {
+	protected AbstractDrawing        temporalDrawing;
+	protected boolean                symmetricMode;
 	
 	/**
 	 * @param id
@@ -61,6 +62,7 @@ public abstract class DrawingTool extends Tool {
 	 */
 	public DrawingTool(int id, String name, String iconPath, String description, Cursor cursor) {
 		super(id, name, iconPath, description, cursor);
+		symmetricMode = false;
 	}
 	
 	/**
@@ -70,17 +72,52 @@ public abstract class DrawingTool extends Tool {
 	 * @param yOffset
 	 */
 	public void setToolCursor(String cursorPath, int xOffset, int yOffset) {
-		Image image = Utils.createIconImage(ICON_SIZE, ICON_SIZE, cursorPath);
+		Image image = Utils.createIconImage(12, 12, cursorPath);
 		setCursor(Toolkit.getDefaultToolkit().createCustomCursor(image, new Point(xOffset, yOffset), getName()));
 	}
 
-	public abstract AbstractDrawing getTemporalDrawing();
+	/**
+	 * 
+	 * @return
+	 */
+	public AbstractDrawing getTemporalDrawing() {
+		return temporalDrawing;
+	}
+	
+	/**
+	 * 
+	 * @param drawing
+	 */
+	public void setTemporalDrawing(AbstractDrawing drawing) {
+		temporalDrawing = drawing;
+	}
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public boolean isSymmetricModeEnabled() {
+		return symmetricMode;
+	}
+	
+	/**
+	 * 
+	 * @param enabled
+	 */
+	public void setSymmetricMode(boolean enabled) {
+		symmetricMode = enabled;
+	}
+	
+	/**
+	 * 
+	 * @return
+	 */
 	public abstract boolean hasAlphaCapability();
 	public abstract boolean hasColorCapability();
 	public abstract boolean hasFontCapability();
 	public abstract boolean hasStrokeCapability();
 	public abstract double getDefaultAlpha();
-	public abstract Color getDefaultColor();
+	public abstract Color  getDefaultColor();
 	public abstract String getDefaultFontFace();
 	public abstract double getDefaultFontSize();
 	public abstract int    getDefaultFontStyle();

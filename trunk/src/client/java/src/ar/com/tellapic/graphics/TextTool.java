@@ -13,6 +13,7 @@ import ar.com.tellapic.utils.Utils;
 public class TextTool extends DrawingTool {
 	private Point2D            firstPoint;
 	private static final String TEXT_ICON_PATH = "/icons/tools/text.png";
+	@SuppressWarnings("unused")
 	private static final String TEXT_CURSOR_PATH = "/icons/tools/text-cursor.png";
 	private static final double DEFAULT_ALPHA = 1;
 	private static final double DEFAULT_WIDTH = 5;
@@ -21,21 +22,18 @@ public class TextTool extends DrawingTool {
 	private static final double DEFAULT_SIZE = 12;
 	private static final int    DEFAULT_STYLE = 0;
 	
-	private DrawingText            temporalDrawing;
-	
-	
-	
+	/**
+	 * 
+	 * @param name
+	 */
 	public TextTool(String name) {
 		super(tellapicConstants.TOOL_TEXT, name, TEXT_ICON_PATH, Utils.msg.getString("texttooltip"), Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
 		firstPoint = new Point2D.Double();
-		//temporalDrawing = new DrawingText(getName());
 	}
-	
 	
 	public TextTool() {
 		this("Text");
 	}
-
 
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.Tool#hasAlphaCapability()
@@ -45,7 +43,6 @@ public class TextTool extends DrawingTool {
 		return true;
 	}
 
-
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.Tool#hasColorCapability()
 	 */
@@ -53,7 +50,6 @@ public class TextTool extends DrawingTool {
 	public boolean hasColorCapability() {
 		return true;
 	}
-
 
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.Tool#hasFontCapability()
@@ -63,7 +59,6 @@ public class TextTool extends DrawingTool {
 		return true;
 	}
 
-
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.Tool#hasStrokeCapability()
 	 */
@@ -71,7 +66,6 @@ public class TextTool extends DrawingTool {
 	public boolean hasStrokeCapability() {
 		return false;
 	}
-
 
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.Tool#isBeingUsed()
@@ -81,7 +75,6 @@ public class TextTool extends DrawingTool {
 		return true;
 	}
 
-
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.DrawingTool#getDefaultWidth()
 	 */
@@ -89,7 +82,6 @@ public class TextTool extends DrawingTool {
 	public double getDefaultWidth() {
 		return DEFAULT_WIDTH;
 	}
-
 
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.DrawingTool#getDefaultAlpha()
@@ -99,7 +91,6 @@ public class TextTool extends DrawingTool {
 		return DEFAULT_ALPHA;
 	}
 
-
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.DrawingTool#getDefaultCaps()
 	 */
@@ -107,7 +98,6 @@ public class TextTool extends DrawingTool {
 	public int getDefaultCaps() {
 		return 0;
 	}
-
 
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.DrawingTool#getDefaultColor()
@@ -117,7 +107,6 @@ public class TextTool extends DrawingTool {
 		return DEFAULT_COLOR;
 	}
 
-
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.DrawingTool#getDefaultFontFace()
 	 */
@@ -125,7 +114,6 @@ public class TextTool extends DrawingTool {
 	public String getDefaultFontFace() {
 		return DEFAULT_FACE;
 	}
-
 
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.DrawingTool#getDefaultFontSize()
@@ -135,7 +123,6 @@ public class TextTool extends DrawingTool {
 		return DEFAULT_SIZE;
 	}
 
-
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.DrawingTool#getDefaultFontStyle()
 	 */
@@ -143,7 +130,6 @@ public class TextTool extends DrawingTool {
 	public int getDefaultFontStyle() {
 		return DEFAULT_STYLE;
 	}
-
 
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.DrawingTool#getDefaultJoins()
@@ -153,7 +139,6 @@ public class TextTool extends DrawingTool {
 		return 0;
 	}
 
-
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.DrawingTool#getDefaultMiterLimit()
 	 */
@@ -162,51 +147,18 @@ public class TextTool extends DrawingTool {
 		return 10;
 	}
 
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.DrawingTool#getTemporalDrawing()
-	 */
-	@Override
-	public AbstractDrawing getTemporalDrawing() {
-		return temporalDrawing;
-	}
-
-
 	/* (non-Javadoc)
 	 * @see java.awt.event.MouseListener#mouseClicked(java.awt.event.MouseEvent)
 	 */
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
 	}
-
 
 	/* (non-Javadoc)
 	 * @see java.awt.event.MouseListener#mouseEntered(java.awt.event.MouseEvent)
 	 */
 	@Override
 	public void mouseEntered(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-	/* (non-Javadoc)
-	 * @see java.awt.event.MouseListener#mouseExited(java.awt.event.MouseEvent)
-	 */
-	@Override
-	public void mouseExited(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-	/* (non-Javadoc)
-	 * @see java.awt.event.MouseListener#mousePressed(java.awt.event.MouseEvent)
-	 */
-	@Override
-	public void mousePressed(MouseEvent e) {
 		if (isSelected() && !e.isConsumed()) {
 			AbstractUser user = null;
 			if (e instanceof RemoteMouseEvent) {
@@ -215,21 +167,67 @@ public class TextTool extends DrawingTool {
 				user = UserManager.getInstance().getLocalUser();
 			}
 			IToolBoxState toolBoxState = user.getToolBoxModel();
-			firstPoint.setLocation(e.getX(), e.getY());
+			float zoomX = ZoomTool.getInstance().getZoomValue();
+			firstPoint.setLocation(e.getX()/zoomX, e.getY()/zoomX);
 			temporalDrawing = new DrawingText(getName());
-			temporalDrawing.setTextX(e.getX());
-			temporalDrawing.setTextY(e.getY());
-			temporalDrawing.setAlpha(toolBoxState.getOpacityProperty());
-			temporalDrawing.setColor(toolBoxState.getColorProperty());
-			temporalDrawing.setNumber(toolBoxState.getAssignedNumber());
-			temporalDrawing.setUser(user);
+			((DrawingText) temporalDrawing).setTextX((int) firstPoint.getX());
+			((DrawingText) temporalDrawing).setTextY((int) firstPoint.getY());
+			((DrawingText) temporalDrawing).setAlpha(toolBoxState.getOpacityProperty());
+			((DrawingText) temporalDrawing).setFont(toolBoxState.getFontProperty());
+			((DrawingText) temporalDrawing).setColor(toolBoxState.getColorProperty());
 			user.setTemporalDrawing(temporalDrawing);
+			temporalDrawing.setUser(user);
 			setChanged();
 			notifyObservers(temporalDrawing);
 			e.consume();
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseListener#mouseExited(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mouseExited(MouseEvent e) {
+		if (isSelected() && !e.isConsumed()) {
+			if (temporalDrawing != null)
+				((DrawingText) temporalDrawing).setFont(null);
+			setChanged();
+			notifyObservers(temporalDrawing);
+			e.consume();
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseListener#mousePressed(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mousePressed(MouseEvent e) {
+		if (isSelected() && !e.isConsumed()) {
+			if (temporalDrawing == null)
+				temporalDrawing = new DrawingText(getName());
+			
+			AbstractUser user = null;
+			if (e instanceof RemoteMouseEvent) {
+				user = ((RemoteMouseEvent)e).getUser();
+			} else {
+				user = UserManager.getInstance().getLocalUser();
+			}
+			IToolBoxState toolBoxState = user.getToolBoxModel();
+
+			float zoomX = ZoomTool.getInstance().getZoomValue();
+			firstPoint.setLocation(e.getX()/zoomX, e.getY()/zoomX);
+			((DrawingText) temporalDrawing).setTextX((int) firstPoint.getX());
+			((DrawingText) temporalDrawing).setTextY((int) firstPoint.getY());
+			((DrawingText) temporalDrawing).setAlpha(toolBoxState.getOpacityProperty());
+			((DrawingText) temporalDrawing).setFont(toolBoxState.getFontProperty());
+			((DrawingText) temporalDrawing).setColor(toolBoxState.getColorProperty());
+			user.setTemporalDrawing(temporalDrawing);
+			temporalDrawing.setUser(user);
+			setChanged();
+			notifyObservers(temporalDrawing);
+			e.consume();
+		}
+	}
 
 	/* (non-Javadoc)
 	 * @see java.awt.event.MouseListener#mouseReleased(java.awt.event.MouseEvent)
@@ -237,19 +235,16 @@ public class TextTool extends DrawingTool {
 	@Override
 	public void mouseReleased(MouseEvent e) {
 		if (isSelected() && !e.isConsumed()) {
-			if (temporalDrawing.getText().length() > 0) {
-				AbstractUser user = null;
-				if (e instanceof RemoteMouseEvent) {
-					user = ((RemoteMouseEvent)e).getUser();
-				} else {
-					user = UserManager.getInstance().getLocalUser();
-				}
-				temporalDrawing.setTextX((int) firstPoint.getX());
-				temporalDrawing.setTextY((int) firstPoint.getY());
-				user.addDrawing(temporalDrawing);
-				setChanged();
-				notifyObservers(temporalDrawing);
+			AbstractUser user = null;
+			if (e instanceof RemoteMouseEvent) {
+				user = ((RemoteMouseEvent)e).getUser();
+			} else {
+				user = UserManager.getInstance().getLocalUser();
 			}
+			temporalDrawing.cloneProperties();
+			user.addDrawing((AbstractDrawing) temporalDrawing.clone());
+			setChanged();
+			notifyObservers(temporalDrawing);
 			e.consume();
 		}
 	}
@@ -260,10 +255,8 @@ public class TextTool extends DrawingTool {
 	 */
 	@Override
 	public void mouseDragged(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
+		mouseMoved(e);
 	}
-
 
 	/* (non-Javadoc)
 	 * @see java.awt.event.MouseMotionListener#mouseMoved(java.awt.event.MouseEvent)
@@ -271,21 +264,25 @@ public class TextTool extends DrawingTool {
 	@Override
 	public void mouseMoved(MouseEvent e) {
 		if (isSelected() && !e.isConsumed()) {
-			firstPoint.setLocation(e.getX(), e.getY());
-			AbstractUser user = null;
-			if (e instanceof RemoteMouseEvent) {
-				user = ((RemoteMouseEvent)e).getUser();
-			} else {
-				user = UserManager.getInstance().getLocalUser();
-			}
-			IToolBoxState toolBoxState = user.getToolBoxModel();
-			if (temporalDrawing == null)
+			if (temporalDrawing == null) {
+				AbstractUser user = null;
+				if (e instanceof RemoteMouseEvent) {
+					user = ((RemoteMouseEvent)e).getUser();
+				} else {
+					user = UserManager.getInstance().getLocalUser();
+				}
+				IToolBoxState toolBoxState = user.getToolBoxModel();
 				temporalDrawing = new DrawingText(getName());
-			temporalDrawing.setTextX(e.getX());
-			temporalDrawing.setTextY(e.getY());
-			temporalDrawing.setAlpha(toolBoxState.getOpacityProperty());
-			temporalDrawing.setColor(toolBoxState.getColorProperty());
-			temporalDrawing.setNumber(toolBoxState.getAssignedNumber());
+				((DrawingText) temporalDrawing).setAlpha(toolBoxState.getOpacityProperty());
+				((DrawingText) temporalDrawing).setFont(toolBoxState.getFontProperty());
+				((DrawingText) temporalDrawing).setColor(toolBoxState.getColorProperty());
+				user.setTemporalDrawing(temporalDrawing);
+				temporalDrawing.setUser(user);
+			}
+			float zoomX = ZoomTool.getInstance().getZoomValue();
+			firstPoint.setLocation(e.getX()/zoomX, e.getY()/zoomX);
+			((DrawingText) temporalDrawing).setTextX((int) firstPoint.getX());
+			((DrawingText) temporalDrawing).setTextY((int) firstPoint.getY());
 			setChanged();
 			notifyObservers(temporalDrawing);
 			e.consume();

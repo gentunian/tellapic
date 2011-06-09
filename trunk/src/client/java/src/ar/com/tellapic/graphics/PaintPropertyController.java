@@ -1,19 +1,20 @@
 package ar.com.tellapic.graphics;
 
 import java.awt.Color;
+import java.awt.RenderingHints.Key;
 
 public class PaintPropertyController implements IPaintPropertyController {
 	
-
 	private IToolBoxManager        model;
-	//private PaintPropertyView      view;
-//	private DrawingLocalController drawingController; 
 	
+	/**
+	 * 
+	 * @param model
+	 */
 	public PaintPropertyController(IToolBoxManager model) {
 		this.model = model;
 		//this.view  = view;
 	}
-	
 	
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleOpacityChange(int)
@@ -28,7 +29,6 @@ public class PaintPropertyController implements IPaintPropertyController {
 //		if (drawingController != null)
 //			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
 	}
-
 	
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleWidthChange(int)
@@ -44,7 +44,6 @@ public class PaintPropertyController implements IPaintPropertyController {
 //			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
 	}
 	
-	
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleEndCapsChange(int)
 	 */
@@ -55,7 +54,6 @@ public class PaintPropertyController implements IPaintPropertyController {
 //			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
 	}
 	
-	
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleLineJoinsChange(int)
 	 */
@@ -65,8 +63,7 @@ public class PaintPropertyController implements IPaintPropertyController {
 //		if (drawingController != null)
 //			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
 	}
-
-
+	
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleFontFaceChange(java.lang.String)
 	 */
@@ -76,7 +73,6 @@ public class PaintPropertyController implements IPaintPropertyController {
 //		if (drawingController != null)
 //			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
 	}
-
 
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleFontSizeChange(int)
@@ -88,7 +84,6 @@ public class PaintPropertyController implements IPaintPropertyController {
 //			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
 	}
 
-
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleFontStyleChange(int)
 	 */
@@ -98,7 +93,6 @@ public class PaintPropertyController implements IPaintPropertyController {
 //		if (drawingController != null)
 //			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
 	}
-
 
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleTextChange(java.lang.String)
@@ -110,11 +104,6 @@ public class PaintPropertyController implements IPaintPropertyController {
 //			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
 	}
 	
-//	public void setDrawingController(DrawingLocalController c) {
-//		drawingController = c;
-//	}
-
-
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleColorChange(java.awt.Color)
 	 */
@@ -122,7 +111,6 @@ public class PaintPropertyController implements IPaintPropertyController {
 	public void handleColorChange(Color color) {
 		model.setColorPropertyValue(color);
 	}
-
 
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleDashChange(float[])
@@ -132,21 +120,31 @@ public class PaintPropertyController implements IPaintPropertyController {
 		model.setStrokePropertyDash(dash, dashphase);
 	}
 
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleRenderingHint(java.awt.RenderingHints.Key, java.lang.Object)
+	 */
+	@Override
+	public void handleRenderingHint(Key key, Object value) {
+		if (value != null)
+			model.addRenderingHint(key, value);
+		else
+			model.removeRenderingHint(key);
+	}
 
-//	/* (non-Javadoc)
-//	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleZoomChange(boolean)
-//	 */
-//	@Override
-//	public void handleZoomChange(boolean b) {
-//		model.setZoomIn(b);
-//	}
-//
-//
-//	/* (non-Javadoc)
-//	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleZoomChange(double)
-//	 */
-//	@Override
-//	public void handleZoomChange(float zoom) {
-//		model.setZoomValue(zoom);
-//	}
+	
+	/* @see ar.com.tellapic.graphics.IPaintPropertyController#handleZoomChange(boolean)
+	 */
+	@Override
+	public void handleZoomChange(boolean value) {
+		ZoomTool.getInstance().setZoomIn(value);
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleZoomChange(double)
+	 */
+	@Override
+	public void handleZoomChange(float value) {
+		ZoomTool.getInstance().setZoom(value);
+	}
 }

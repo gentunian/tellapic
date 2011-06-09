@@ -31,7 +31,9 @@ import ar.com.tellapic.lib.tellapic;
  */
 final public class EllipseNet extends EllipseTool {
 
-	
+	/**
+	 * 
+	 */
 	public EllipseNet() {
 		super("EllipseNet");
 	}
@@ -45,7 +47,7 @@ final public class EllipseNet extends EllipseTool {
 		super.mouseReleased(e);
 		
 		/* The model guarentees that no 2 tools are selected */
-		if (isSelected()) {
+		if (isSelected() && e.getButton() == MouseEvent.BUTTON1) {
 			DrawingShape drawing = (DrawingShape) getTemporalDrawing();
 
 			if (drawing == null)
@@ -75,6 +77,9 @@ final public class EllipseNet extends EllipseTool {
 						drawing.getPaintPropertyStroke().getDash()
 				);
 			}
+			
+			/* This tool has no more temporal drawings */
+			setTemporalDrawing(null);
 		}
 	}
 }

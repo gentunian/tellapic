@@ -121,7 +121,7 @@ public class UsersView extends JPanel {
 						AbstractDrawing drawing = (AbstractDrawing) o;
 						switch(colSel) {
 						case 0:
-							DrawingAreaModel.getInstance().selectDrawing(drawing);
+							drawing.setSelected(true);
 							break;
 						case 1:
 							drawing.setVisible(!drawing.isVisible());

@@ -5,6 +5,8 @@ package ar.com.tellapic.graphics;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.RenderingHints;
+import java.awt.RenderingHints.Key;
 import java.util.HashMap;
 import java.util.NoSuchElementException;
 import java.util.Observable;
@@ -30,6 +32,7 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	private PaintPropertyColor    colorProperty;
 	private PaintPropertyFont     fontProperty;
 	private PaintPropertyAlpha    alphaProperty;
+	private RenderingHints        renderingHints;
 	private long                  lastAssignedNumber;
 	
 	public class ActionData {
@@ -83,6 +86,7 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 		fontProperty   = new PaintPropertyFont();
 		alphaProperty  = new PaintPropertyAlpha();
 		lastUsedTool   = null;
+		renderingHints = new RenderingHints(null);
 	}
 	
 	
@@ -391,28 +395,6 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	}
 
 
-//	/* (non-Javadoc)
-//	 * @see ar.com.tellapic.graphics.IToolBoxManager#incrementZoom()
-//	 */
-//	@Override
-//	public void setZoomIn(boolean value) {
-//		Zoom zoom = (Zoom) tools.get("Zoom"); //TODO: use constant.
-//		
-//		zoom.setZoomIn(value);
-//	}
-//
-//
-//	/* (non-Javadoc)
-//	 * @see ar.com.tellapic.graphics.IToolBoxManager#setZoomValue(double)
-//	 */
-//	@Override
-//	public void setZoomValue(float value) {
-//		Zoom zoom = (Zoom) tools.get("Zoom"); //TODO: use constant.
-//		
-//		zoom.setZoom(value);
-//	}
-
-
 	/**
 	 * 
 	 */
@@ -447,5 +429,36 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	@Override
 	public long getAssignedNumber() {
 		return lastAssignedNumber;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.IToolBoxManager#addRenderingHint(java.awt.RenderingHints.Key, java.lang.Object)
+	 */
+	@Override
+	public void addRenderingHint(Key key, Object value) {
+		renderingHints.put(key, value);
+	}
+
+	@Override
+	public void removeRenderingHint(Key key) {
+		renderingHints.remove(key);
+	}
+	
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.IToolBoxManager#setRenderingHints(java.awt.RenderingHints)
+	 */
+	@Override
+	public void setRenderingHints(RenderingHints hints) {
+		renderingHints = hints;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.IToolBoxState#getRenderingHints()
+	 */
+	@Override
+	public RenderingHints getRenderingHints() {
+		return renderingHints;
 	}
 }

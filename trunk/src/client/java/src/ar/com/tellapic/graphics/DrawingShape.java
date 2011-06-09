@@ -4,6 +4,7 @@ import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.geom.Rectangle2D;
 
@@ -44,7 +45,7 @@ public abstract class DrawingShape extends AbstractDrawing {
 		CONTROLPOINT_8,
 		DASH
 	};
-	protected static final int  COLUMN_COUNT = 3;
+	protected static final int COLUMN_COUNT = 3;
 	protected static final String COLUMN_NAMES[] = new String[] {
 		Utils.msg.getString("name"),
 		Utils.msg.getString("value"),
@@ -62,9 +63,7 @@ public abstract class DrawingShape extends AbstractDrawing {
 	private PaintPropertyColor  colorProperty;
 	private PaintPropertyAlpha  alphaProperty;
 	private Shape               shape;
-	private BasicStroke         selectedShapeStroke;
 	private BasicStroke         selectedEdgesStroke;
-	private AlphaComposite      selectedAlphaComposite;
 	private boolean             isLeftEdgeSelected;
 	private boolean             isRightEdgeSelected;
 	private boolean             isTopEdgeSelected;
@@ -76,21 +75,26 @@ public abstract class DrawingShape extends AbstractDrawing {
 	 * @param name
 	 */
 	public DrawingShape(String name, boolean resizeable, boolean moveable) {
+		super(name, resizeable, moveable);
+		createPropertiesMatrix();
 		setResizeable(resizeable);
 		setMoveable(moveable);
-		createPropertiesMatrix();
+		
 		/* This 2 properties are not changeable */
 		properties[PropertyType.MOVEABLE.ordinal()][VALUE_COLUMN]   = moveable;
 		properties[PropertyType.RESIZEABLE.ordinal()][VALUE_COLUMN] = resizeable;
 		properties[PropertyType.MOVEABLE.ordinal()][EXTRA_COLUMN]   = false;
 		properties[PropertyType.RESIZEABLE.ordinal()][EXTRA_COLUMN] = false;
-		shape = null;
+		
+		/* Initialize this object main properties */
+		shape          = null;
 		strokeProperty = null;
 		colorProperty  = null;
 		alphaProperty  = null;
-		selectedAlphaComposite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f);
-		selectedShapeStroke = new BasicStroke(2, 0, 0, 1, new float[] { 5, 5}, 0);
+		
 		selectedEdgesStroke = new BasicStroke(1, 0, 0); //, new float[] { 5, 5}, 0);
+		
+		/* This is initially visible */
 		setVisible(true);
 		setName(name);
 	}
@@ -204,6 +208,7 @@ public abstract class DrawingShape extends AbstractDrawing {
 		alphaProperty  = (PaintPropertyAlpha) alphaProperty.clone();
 		strokeProperty = (PaintPropertyStroke) strokeProperty.clone();
 		colorProperty  = (PaintPropertyColor) colorProperty.clone();
+		renderingHints = (RenderingHints) renderingHints.clone();
 		if (controlPoints != null)
 			controlPoints  = controlPoints.clone();
 		/* Now, get the values from the REAL properties instances for this drawing, not the toolbox instances. */
@@ -230,10 +235,11 @@ public abstract class DrawingShape extends AbstractDrawing {
 	 * 
 	 * @param g
 	 */
+	@Override
 	public void draw(Graphics2D g) {
 		PaintProperty overridenProperties[] = getUser().getCustomProperties();
 		if (isVisible()) {
-			//g.setRenderingHints(rh);
+			g.setRenderingHints(renderingHints);
 			
 			if (overridenProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_ALPHA] != null)
 				g.setComposite(((PaintPropertyAlpha)overridenProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_ALPHA]).getComposite());
@@ -252,12 +258,6 @@ public abstract class DrawingShape extends AbstractDrawing {
 
 			if (shape != null) {
 				g.draw(shape);
-				if (isSelected()) {
-					g.setComposite(selectedAlphaComposite);
-					g.setColor(Color.yellow);
-					g.setStroke(selectedShapeStroke);
-					g.draw(shape.getBounds2D());
-				}
 				g.setStroke(selectedEdgesStroke);
 				g.setColor(Color.orange);
 				g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC, 0.7f));
@@ -269,44 +269,11 @@ public abstract class DrawingShape extends AbstractDrawing {
 					g.drawLine(0, (int)shape.getBounds2D().getY(), Integer.MAX_VALUE, (int)shape.getBounds2D().getY());
 				if (isBottomEdgeSelected())
 					g.drawLine(0, (int)shape.getBounds2D().getMaxY(), Integer.MAX_VALUE, (int)shape.getBounds2D().getMaxY());
-			}
-		}
-	}
 
-	/**
-	 * @return
-	 */
-	public boolean isSelected() {
-		return selected;
-	}
-	
-	/**
-	 * 
-	 */
-	public void setSelected(boolean value) {
-		selected = value;
-		if (isSelected() && !getUser().isRemote()) {
-			createControlPoints();
-		}
-		setChanged();
-		notifyObservers();
-	}
-	
-	/**
-	 * 
-	 */
-	private void createControlPoints() {
-		int i = PropertyType.CONTROLPOINT_1.ordinal();
-		for(ControlPoint point : controlPoints) {
-			try {
-				point.setControlPoint(getShape());
-				properties[i][VALUE_COLUMN] = point;
-				properties[i][EXTRA_COLUMN] = point.isSelected();
-				i++;
-			} catch (IllegalControlPointTypeException e) {
-				e.printStackTrace();
+				/* Call the super class method as he knows how to draw control points */
+				super.draw(g);
 			}
-		}	
+		}
 	}
 	
 	/**
@@ -381,22 +348,7 @@ public abstract class DrawingShape extends AbstractDrawing {
 	public Rectangle2D getBounds2D() {
 		if (shape == null)
 			return null;
-			
 		return shape.getBounds2D();
-	}
-
-	/**
-	 * 
-	 */
-	public void updateControlPoints() {
-		for(ControlPoint point : controlPoints){
-			try {
-				point.setControlPoint(getShape());
-			} catch (IllegalControlPointTypeException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
 	}
 
 	/* (non-Javadoc)
@@ -572,5 +524,4 @@ public abstract class DrawingShape extends AbstractDrawing {
 	public String toString() {
 		return getName();
 	}
-	
 }

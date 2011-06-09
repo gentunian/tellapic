@@ -20,6 +20,7 @@ public class LineTool extends DrawingTool {
 	private static final double ANGLE = 15;
 	private static final double STEP = (ANGLE * Math.PI) / 180;
 	private static final String LINE_ICON_PATH = "/icons/tools/line.png";
+	@SuppressWarnings("unused")
 	private static final String LINE_CURSOR_PATH = "/icons/tools/line-cursor.png";
 	private static final double DEFAULT_WIDTH = 5;
 	private static final double DEFAULT_ALPHA = 1;
@@ -28,16 +29,20 @@ public class LineTool extends DrawingTool {
 	private static final int    DEFAULT_JOINS = 0;
 	private static final float  DEFAULT_MITER_LIMIT = 1;
 	
-	protected Point2D             firstPoint;
-//	private Line2D              line;
-	private DrawingShape        temporalDrawing;
-	private boolean             inUse;
-
-
+	protected Point2D     firstPoint;
+	private boolean       inUse;
+	
+	/**
+	 * 
+	 * @param name
+	 */
 	public LineTool(String name) {
 		this(tellapicConstants.TOOL_LINE, name);
 	}
 	
+	/**
+	 * 
+	 */
 	public LineTool() {
 		this("Line");
 	}
@@ -50,7 +55,6 @@ public class LineTool extends DrawingTool {
 		super(id, name, LINE_ICON_PATH, Utils.msg.getString("linetooltip"), Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 		firstPoint = new Point2D.Double();
 		inUse      = false;
-		temporalDrawing = new DrawingShapeLine(getName(), 0, 0, 0, 0);
 	}
 
 	/*
@@ -173,15 +177,6 @@ public class LineTool extends DrawingTool {
 	}
 
 	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.DrawingTool#getTemporalDrawing()
-	 */
-	@Override
-	public AbstractDrawing getTemporalDrawing() {
-		return temporalDrawing;
-	}
-
-
-	/* (non-Javadoc)
 	 * @see java.awt.event.MouseListener#mouseClicked(java.awt.event.MouseEvent)
 	 */
 	@Override
@@ -214,29 +209,31 @@ public class LineTool extends DrawingTool {
 	@Override
 	public void mousePressed(MouseEvent e) {
 		if (isSelected() && !e.isConsumed()) {
-			if (inUse)
-				throw new IllegalStateException("init cannot be called with the tool being used");
-			AbstractUser user = null;
-			if (e instanceof RemoteMouseEvent) {
-				user = ((RemoteMouseEvent)e).getUser();
-			} else {
-				user = UserManager.getInstance().getLocalUser();
+			if ((e.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK) {
+				if (inUse)
+					throw new IllegalStateException("init cannot be called with the tool being used");
+				AbstractUser user = null;
+				if (e instanceof RemoteMouseEvent) {
+					user = ((RemoteMouseEvent)e).getUser();
+				} else {
+					user = UserManager.getInstance().getLocalUser();
+				}
+				IToolBoxState toolBoxState = user.getToolBoxModel();
+				float zoomX = ZoomTool.getInstance().getZoomValue();
+				firstPoint.setLocation(e.getX()/zoomX, e.getY()/zoomX);
+				inUse = true;
+				temporalDrawing = new DrawingShapeLine(getName(), firstPoint, firstPoint);
+				((DrawingShape) temporalDrawing).setAlpha(toolBoxState.getOpacityProperty());
+				((DrawingShape) temporalDrawing).setColor(toolBoxState.getColorProperty());
+				((DrawingShape) temporalDrawing).setStroke(toolBoxState.getStrokeProperty());
+				temporalDrawing.setRenderingHints(toolBoxState.getRenderingHints());
+				temporalDrawing.setNumber(toolBoxState.getAssignedNumber());
+				temporalDrawing.setUser(user);
+				user.setTemporalDrawing(temporalDrawing);
+				setChanged();
+				notifyObservers(temporalDrawing);
 			}
-			IToolBoxState toolBoxState = user.getToolBoxModel();
-			firstPoint.setLocation(e.getX(), e.getY());
-//			line  = new Line2D.Double(firstPoint, firstPoint);
-			inUse = true;
-			temporalDrawing = new DrawingShapeLine(getName(), firstPoint, firstPoint);
-//			temporalDrawing.setShape(line);
-			temporalDrawing.setAlpha(toolBoxState.getOpacityProperty());
-			temporalDrawing.setColor(toolBoxState.getColorProperty());
-			temporalDrawing.setStroke(toolBoxState.getStrokeProperty());
-			temporalDrawing.setNumber(toolBoxState.getAssignedNumber());
-			temporalDrawing.setUser(user);
-			user.setTemporalDrawing(temporalDrawing);
 			e.consume();
-			setChanged();
-			notifyObservers(temporalDrawing);
 		}
 	}
 
@@ -246,17 +243,19 @@ public class LineTool extends DrawingTool {
 	@Override
 	public void mouseReleased(MouseEvent e) {
 		if (isSelected() && !e.isConsumed()) {
-			if (inUse && ((Line2D)temporalDrawing.getShape()).getP1().distance(((Line2D)temporalDrawing.getShape()).getP2()) > 0.0) {
-				AbstractUser user = null;
-				if (e instanceof RemoteMouseEvent) {
-					user = ((RemoteMouseEvent)e).getUser();
-				} else {
-					user = UserManager.getInstance().getLocalUser();
+			if (e.getButton() == MouseEvent.BUTTON1) {
+				if (inUse && ((Line2D)((DrawingShape) temporalDrawing).getShape()).getP1().distance(((Line2D)((DrawingShape) temporalDrawing).getShape()).getP2()) > 0.0) {
+					AbstractUser user = null;
+					if (e instanceof RemoteMouseEvent) {
+						user = ((RemoteMouseEvent)e).getUser();
+					} else {
+						user = UserManager.getInstance().getLocalUser();
+					}
+					temporalDrawing.cloneProperties();
+					user.addDrawing(temporalDrawing);
+					setChanged();
+					notifyObservers(temporalDrawing);
 				}
-				temporalDrawing.cloneProperties();
-				user.addDrawing(temporalDrawing);
-				setChanged();
-				notifyObservers(temporalDrawing);
 			}
 			inUse = false;
 			e.consume();
@@ -269,27 +268,30 @@ public class LineTool extends DrawingTool {
 	@Override
 	public void mouseDragged(MouseEvent e) {
 		if (isSelected() && !e.isConsumed()) {
-			if (inUse) {
-				boolean symmetric = e.isControlDown();
-				double angle = Math.atan2(e.getX() - firstPoint.getX(), e.getY() - firstPoint.getY()) + Math.PI/2;
-				if ( angle < 0)
-					angle = (Math.PI - Math.abs(angle)) + Math.PI;
+			if ((e.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK) {
+				if (inUse) {
+					float zoomX = ZoomTool.getInstance().getZoomValue();
+					boolean symmetric = e.isControlDown() || isSymmetricModeEnabled();
+					double angle = Math.atan2(e.getX()/zoomX - firstPoint.getX(), e.getY()/zoomX - firstPoint.getY()) + Math.PI/2;
+					if ( angle < 0)
+						angle = (Math.PI - Math.abs(angle)) + Math.PI;
 
-				double newX = e.getX();
-				double newY = e.getY();
+					double newX = e.getX()/zoomX;
+					double newY = e.getY()/zoomX;
 
-				if (symmetric) {
-					double steppedAngle = (Math.round(angle / STEP) * STEP);
-					double dist = firstPoint.distance(e.getX(), e.getY());
-					newX = (int) (dist * Math.cos(steppedAngle - Math.PI) + firstPoint.getX());
-					newY = (int) (dist * Math.sin(steppedAngle) + firstPoint.getY());
-				} 
+					if (symmetric) {
+						double steppedAngle = (Math.round(angle / STEP) * STEP);
+						double dist = firstPoint.distance(e.getX()/zoomX, e.getY()/zoomX);
+						newX = (int) (dist * Math.cos(steppedAngle - Math.PI) + firstPoint.getX());
+						newY = (int) (dist * Math.sin(steppedAngle) + firstPoint.getY());
+					} 
 
-				((Line2D)temporalDrawing.getShape()).setLine(firstPoint.getX(), firstPoint.getY(), newX, newY);
-				setChanged();
-				notifyObservers(temporalDrawing);
+					((Line2D)((DrawingShape) temporalDrawing).getShape()).setLine(firstPoint.getX(), firstPoint.getY(), newX, newY);
+					setChanged();
+					notifyObservers(temporalDrawing);
+				}
+				e.consume();
 			}
-			e.consume();
 		}
 	}
 

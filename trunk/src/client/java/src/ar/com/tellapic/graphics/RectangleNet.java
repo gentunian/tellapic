@@ -78,7 +78,9 @@ final public class RectangleNet extends RectangleTool {
 						//					((BasicStroke)drawing.getStroke()).getDashPhase(),
 						//					((BasicStroke)drawing.getStroke()).getDashArray()
 				);
-			}
+			}			
+			/* This tool has no more temporal drawings */
+			setTemporalDrawing(null);
 		}
 	}
 }

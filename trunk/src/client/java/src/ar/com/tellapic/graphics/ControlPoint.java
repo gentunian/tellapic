@@ -22,7 +22,6 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
-import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -166,10 +165,9 @@ public class ControlPoint extends Ellipse2D{
 	 * @param controlPoint the controlPoint to set
 	 * @throws IllegalControlPointTypeException 
 	 */
-	public void setControlPoint(Shape shape) throws IllegalControlPointTypeException {
-		Rectangle2D bounds = shape.getBounds2D();
+	public void setControlPoint(Rectangle2D bounds) throws IllegalControlPointTypeException {
 		Point2D     point = null;
-		
+
 		switch(getType()) {
 		case LEFT_CONTROL_POINT:
 			point = new Point2D.Double(bounds.getX(), bounds.getCenterY());
@@ -229,16 +227,16 @@ public class ControlPoint extends Ellipse2D{
 		g.setColor(Color.black);
 		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		g.draw(controlPoint);
-		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 		if (!selected)
 			g.setColor(controlPointColor);
 		else {
 			g.setColor(Color.blue);
-			g.setStroke(new BasicStroke(1,0,0));
-			g.drawLine((int)controlPoint.getCenterX(), 0, (int)controlPoint.getCenterX(), Integer.MAX_VALUE);
-			g.drawLine(0, (int)controlPoint.getCenterY(), Integer.MAX_VALUE,(int) controlPoint.getCenterY());
+			g.setStroke(new BasicStroke(1));
+			g.drawLine((int)controlPoint.getCenterX(), 0, (int)controlPoint.getCenterX(), 9500);
+			g.drawLine(0, (int)controlPoint.getCenterY(), 9500,(int) controlPoint.getCenterY());
 		}
 		g.fill(controlPoint);
+		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 	}
 
 	/**
