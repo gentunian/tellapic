@@ -1951,7 +1951,7 @@ tellapic_send_struct(tellapic_socket_t socket, stream_t *stream)
  *
  */
 POSH_PUBLIC_API(ssize_t)
-tellapic_send_text(tellapic_socket_t socket, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int style, int facelen, char *face, int infolen, char *info)
+tellapic_send_text(tellapic_socket_t socket, int idfrom, unsigned long dnum, float w, float op, int red, int green, int blue, int x1, int y1, int style, int facelen, char *face, int infolen, char *info)
 {
   ssize_t         bytesSent = 0;
   tellapic_u32_t ssize = MIN_FIGTXT_STREAM_SIZE + facelen + infolen;
@@ -2018,7 +2018,7 @@ tellapic_send_text(tellapic_socket_t socket, int idfrom, int dnum, float w, floa
  *
  */
 POSH_PUBLIC_API(ssize_t)
-tellapic_send_drw_using(tellapic_socket_t socket, int tool, int dcbyte_ext, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1)
+tellapic_send_drw_using(tellapic_socket_t socket, int tool, int dcbyte_ext, int idfrom, unsigned long dnum, float w, float op, int red, int green, int blue, int x1, int y1)
 {
   ssize_t         bytesSent = 0;
   byte_t         *rawstream = malloc(DRW_USING_STREAM_SIZE);
@@ -2069,7 +2069,7 @@ tellapic_send_drw_using(tellapic_socket_t socket, int tool, int dcbyte_ext, int 
  *
  */
 POSH_PUBLIC_API(ssize_t)
-tellapic_send_drw_init(tellapic_socket_t socket, int tool, int dcbyte_ext, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int x2, int y2, int lj, int ec, float ml, float dp, float da[])
+tellapic_send_drw_init(tellapic_socket_t socket, int tool, int dcbyte_ext, int idfrom, unsigned long dnum, float w, float op, int red, int green, int blue, int x1, int y1, int x2, int y2, int lj, int ec, float ml, float dp, float da[])
 {
   ssize_t        bytesSent = 0;
   byte_t         *rawstream = malloc(DRW_INIT_STREAM_SIZE);
@@ -2140,7 +2140,7 @@ tellapic_send_fig(tellapic_socket_t socket,
 		  int tool,
 		  int dcbyte_ext,
 		  int idfrom,
-		  int dnum,
+		  unsigned long dnum,
 		  float w,
 		  float op,
 		  int red,
