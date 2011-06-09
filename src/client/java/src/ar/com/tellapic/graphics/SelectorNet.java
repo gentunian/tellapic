@@ -30,11 +30,10 @@ import ar.com.tellapic.lib.tellapicConstants;
  *          sebastian.treu(at)gmail.com
  *
  */
-final public class MarkerNet extends MarkerTool {
-	
-	
-	public MarkerNet() {
-		super("MarkerNet");
+public class SelectorNet extends SelectorTool {
+
+	public SelectorNet() {
+		super(tellapicConstants.TOOL_SELECTOR, "SelectorNet", "/icons/tools/selector.png");
 	}
 	
 	
@@ -45,7 +44,11 @@ final public class MarkerNet extends MarkerTool {
 	public void mousePressed(MouseEvent event) {
 		super.mousePressed(event);
 		if (isSelected()) {
-			DrawingShape drawing = (DrawingShape) super.getTemporalDrawing();
+			if (!(temporalDrawing instanceof DrawingShape))
+				return;
+			
+			DrawingShape drawing = (DrawingShape) temporalDrawing;
+			
 			if (NetManager.getInstance().isConnected() && !(event instanceof RemoteMouseEvent)) {
 				int wrappedEvent = getToolId();
 				if (event.getButton() == MouseEvent.BUTTON1)
@@ -59,7 +62,7 @@ final public class MarkerNet extends MarkerTool {
 						wrappedEvent,
 						0,
 						SessionUtils.getId(), 
-						0,
+						drawing.getNumber(),
 						(float) drawing.getPaintPropertyStroke().getWidth(),
 						drawing.getPaintPropertyAlpha().alpha,
 						drawing.getPaintPropertyColor().getRed(),
@@ -87,7 +90,8 @@ final public class MarkerNet extends MarkerTool {
 	public void mouseDragged(MouseEvent event) {
 		super.mouseDragged(event);
 		if (isSelected()) {
-			if (isBeingUsed()) {
+			if (!(temporalDrawing instanceof DrawingShape))
+				return;
 				if (NetManager.getInstance().isConnected() && !(event instanceof RemoteMouseEvent)) {
 					int eventExtMod  = 0;
 					int wrappedEvent = getToolId();
@@ -101,13 +105,13 @@ final public class MarkerNet extends MarkerTool {
 					if ((event.getModifiersEx() & MouseEvent.CTRL_DOWN_MASK) == MouseEvent.CTRL_DOWN_MASK)
 						eventExtMod = tellapicConstants.EVENT_CTL_DOWN;
 
-					DrawingShape drawing = (DrawingShape) super.getTemporalDrawing();
+					DrawingShape drawing = (DrawingShape) temporalDrawing;
 					tellapic.tellapic_send_drw_using(
 							NetManager.getInstance().getSocket(),
 							wrappedEvent,
 							eventExtMod,
 							SessionUtils.getId(), 
-							0,
+							drawing.getNumber(),
 							(float) drawing.getPaintPropertyStroke().getWidth(),
 							drawing.getPaintPropertyAlpha().alpha,
 							drawing.getPaintPropertyColor().getRed(),
@@ -117,7 +121,7 @@ final public class MarkerNet extends MarkerTool {
 							event.getY()
 					);
 				}
-			}
+			
 		}
 	}
 	
@@ -131,7 +135,9 @@ final public class MarkerNet extends MarkerTool {
 		super.mouseReleased(event);
 		
 		if (isSelected()) {
-			DrawingShape drawing = (DrawingShape) super.getTemporalDrawing();
+			if (!(temporalDrawing instanceof DrawingShape))
+				return;
+			DrawingShape drawing = (DrawingShape) temporalDrawing;
 			if (drawing == null)
 				return ;
 
@@ -149,7 +155,7 @@ final public class MarkerNet extends MarkerTool {
 						wrappedEvent,
 						0,
 						SessionUtils.getId(), 
-						0,
+						drawing.getNumber(),
 						(float) drawing.getPaintPropertyStroke().getWidth(),
 						drawing.getPaintPropertyAlpha().alpha,
 						drawing.getPaintPropertyColor().getRed(),
@@ -158,9 +164,45 @@ final public class MarkerNet extends MarkerTool {
 						event.getX(),
 						event.getY()
 				);
-			}			
-			/* This tool has no more temporal drawings */
-			setTemporalDrawing(null);
+			}
 		}
 	}
+//	/**
+//	 * 
+//	 */
+//	@Override
+//	public void mouseReleased(MouseEvent e) {
+//		super.mouseReleased(e);
+//		System.out.println("LOLO: "+temporalDrawing);
+//		if (isSelected() && temporalDrawing != null) {
+//			if (NetManager.getInstance().isConnected() && !(e instanceof RemoteMouseEvent)) {
+//				if (temporalDrawing instanceof DrawingShape) {
+//					DrawingShape drawing = (DrawingShape) temporalDrawing;
+//					java.awt.Rectangle bounds = drawing.getShape().getBounds();
+//
+//					tellapic.tellapic_send_fig(
+//							NetManager.getInstance().getSocket(),
+//							getToolId(), 
+//							0,
+//							SessionUtils.getId(), 
+//							drawing.getNumber(),
+//							(float) drawing.getPaintPropertyStroke().getWidth(),
+//							drawing.getPaintPropertyAlpha().alpha,
+//							drawing.getPaintPropertyColor().getRed(),
+//							drawing.getPaintPropertyColor().getGreen(),
+//							drawing.getPaintPropertyColor().getBlue(),
+//							(int)bounds.getX(),
+//							(int)bounds.getY(),
+//							e.getX(),
+//							e.getY(),
+//							drawing.getPaintPropertyStroke().getLineJoins(),
+//							drawing.getPaintPropertyStroke().getEndCaps(),
+//							drawing.getPaintPropertyStroke().getMiterLimit(),
+//							drawing.getPaintPropertyStroke().getDash_phase(),
+//							drawing.getPaintPropertyStroke().getDash()
+//					);
+//				}
+//			}
+//		}
+//	}
 }

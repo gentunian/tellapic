@@ -17,7 +17,11 @@
  */  
 package ar.com.tellapic.graphics;
 
-import java.awt.Cursor;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.JButton;
+import javax.swing.JPopupMenu;
 
 /**
  * @author 
@@ -25,33 +29,23 @@ import java.awt.Cursor;
  *          sebastian.treu(at)gmail.com
  *
  */
-public abstract class ControlTool extends Tool {
+public class ToolIconActionListener implements ActionListener {
+
+	private JPopupMenu popup;
 	
 	/**
-	 * @param id
-	 * @param name
-	 * @param iconPath
+	 * @param tool
 	 */
-	public ControlTool(int id, String name, String iconPath) {
-		super(id, name, iconPath);
+	public ToolIconActionListener(JPopupMenu p) {
+		popup = p;
 	}
 
-	
-	/**
-	 * 
-	 * @param id
-	 * @param name
-	 * @param iconPath
+	/* (non-Javadoc)
+	 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
 	 */
-	public ControlTool(int id, String name, String iconPath, String description, Cursor cursor) {
-		super(id, name, iconPath, description, cursor);
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		JButton src = (JButton)e.getSource();
+		popup.show(src.getParent(), src.getX(), src.getHeight());
 	}
-	
-	/**
-	 * 
-	 * @return
-	 */
-	public abstract boolean hasZoomCapability();
-	public abstract boolean hasMoveCapability();
-	public abstract boolean hasResizeCapability();
 }

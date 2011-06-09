@@ -21,8 +21,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Frame;
-import java.awt.RenderingHints;
-import java.awt.RenderingHints.Key;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -117,7 +115,7 @@ public class UserGUIBuilder {
 		DrawingAreaView   drawingAreaView  = DrawingAreaView.getInstance();
 		scrollPane = new JScrollPane(drawingAreaView);
 		scrollPane.setName(drawingAreaView.getName());
-		drawingAreaView.setPropertyController(propertyController);
+//		drawingAreaView.setPropertyController(propertyController);
 		toolView.setController(toolViewController);
 		propertyView.setController(propertyController);
 		for(Tool tool : model.getTools().values()) {
@@ -179,27 +177,7 @@ public class UserGUIBuilder {
 	
 	
 	private JMenuBar createMenuBar() {
-		
-//		/* Adds the reconnect option */
-//		fileMenu.add(buildFileMenu());
-//		
-//		/* Adds the Quality menu */
-//		optionsMenu.add(buildQualityMenu());
-//		
-//		/* Adds the Theme menu */
-//		viewMenu.add(buildThemeMenu());
-//
-//		/* Adds the View Menu */
-//		viewMenu.add(buildViewMenu());
-		
-//		menuBar.add(fileMenu);
-//		menuBar.add(viewMenu);
-//		menuBar.add(optionsMenu);
-//		menuBar.add(helpMenu);
-		//		JMenu optionsMenu = new JMenu(Utils.msg.getString("options"));
-//		JMenu helpMenu    = new JMenu("help");
-
-		
+	
 		JMenuBar menuBar  = new JMenuBar();
 		
 		/* Adds the File option */
@@ -207,9 +185,6 @@ public class UserGUIBuilder {
 
 		/* Adds the View Menu */
 		menuBar.add(buildViewMenu());
-		
-		/* Adds the Quality menu */
-		menuBar.add(buildOptionsMenu());
 		
 		/* Adds the Help menu */
 		menuBar.add(buildHelpMenu());
@@ -227,23 +202,6 @@ public class UserGUIBuilder {
 		
 		return helpMenu;
 	}
-
-
-
-	/**
-	 * @return
-	 */
-	private JMenu buildOptionsMenu() {
-		JMenu optionsMenu = new JMenu("Options");
-		
-		optionsMenu.setMnemonic(KeyEvent.VK_O);
-		
-		optionsMenu.add(buildQualityMenu());
-		
-		return optionsMenu;
-	}
-
-
 
 	/**
 	 * @return
@@ -441,191 +399,6 @@ public class UserGUIBuilder {
 		
 		return root;
 	}
-
-
-
-	/*
-	 * Build the quality menu:
-	 * 
-	 *  Quality -> Text Antialising -> Antialias on
-	 *                                 Antialias off
-	 *                                 Antialias default
-	 *                                 Antialias GASP
-	 *                                 Antialias LCD HRGB
-	 *                                 Antialias LCD HBGR
-	 *                                 Antialias LCD VRGB
-	 *                                 Antialias LCD VBGR
-	 *                                 
-	 *          -> Shape Antialiasing -> Antialias ON
-	 *                                -> Antialias DEFAULT
-	 *                                
-	 *          -> Color Rendering -> Quality
-	 *                             -> Speed
-	 *                             -> DEFAULT
-	 *                             
-	 *          -> Dithering -> Disable
-	 *                       -> Enable
-	 *                       -> DEFAULT
-	 *                       
-	 *          -> Image Interpolation -> Bicubic
-	 *                                 -> Bilinear
-	 *                                 -> Near neighbor
-	 *                                 
-	 *          -> Rendering Quality -> Quality
-	 *                               -> Speed
-	 *                               -> Default
-	 *                               
-	 *          -> Stroke Normalization Control -> DEFAULT
-	 *                                          -> Normalize
-	 *                                          -> Pure
-	 */
-	private JMenu buildQualityMenu() {
-		JMenu root                = new JMenu(Utils.msg.getString("quality"));
-		JMenu aaText              = new JMenu("Text Antialising");
-		JMenu aaShape             = new JMenu("Shape Antialising");
-		JMenu colorRendering      = new JMenu("Color Rendering");
-		JMenu dithering           = new JMenu("Dithering");
-		JMenu imageInterpolation  = new JMenu("Image Interpolation");
-		JMenu renderingQuality    = new JMenu("Rendering Quality");
-		JMenu strokeNormalization = new JMenu("Stroke Normalization Control");
-
-		root.add(
-				buildAACheckBoxes(
-						aaText,
-						RenderingHints.KEY_TEXT_ANTIALIASING,
-						new Object[] {RenderingHints.VALUE_TEXT_ANTIALIAS_ON,
-								RenderingHints.VALUE_TEXT_ANTIALIAS_OFF,
-								RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT,
-								RenderingHints.VALUE_TEXT_ANTIALIAS_GASP,
-								RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB,
-								RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HBGR,
-								RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_VRGB,
-								RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_VBGR
-						}
-				)
-		);
-		
-		root.add(
-				buildAACheckBoxes(
-						aaShape,
-						RenderingHints.KEY_ANTIALIASING,
-						new Object[] { 
-								RenderingHints.VALUE_ANTIALIAS_ON,
-								RenderingHints.VALUE_ANTIALIAS_OFF,
-								RenderingHints.VALUE_ANTIALIAS_DEFAULT
-						}
-				)
-		);
-		
-		root.add(
-				buildAACheckBoxes(
-						colorRendering,
-						RenderingHints.KEY_COLOR_RENDERING,
-						new Object[] { 
-								RenderingHints.VALUE_COLOR_RENDER_QUALITY,
-								RenderingHints.VALUE_COLOR_RENDER_SPEED,
-								RenderingHints.VALUE_COLOR_RENDER_DEFAULT
-						}
-				)
-		);
-		
-		root.add(
-				buildAACheckBoxes(
-						dithering,
-						RenderingHints.KEY_DITHERING,
-						new Object[] {
-								RenderingHints.VALUE_DITHER_DISABLE,
-								RenderingHints.VALUE_DITHER_ENABLE,
-								RenderingHints.VALUE_DITHER_DEFAULT
-						}
-				)
-		);
-
-		root.add(
-				buildAACheckBoxes(
-						imageInterpolation,
-						RenderingHints.KEY_INTERPOLATION,
-						new Object[] {
-								RenderingHints.VALUE_INTERPOLATION_BICUBIC,
-								RenderingHints.VALUE_INTERPOLATION_BILINEAR,
-								RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR
-						}
-				)
-		);
-
-		root.add(
-				buildAACheckBoxes(
-						renderingQuality,
-						RenderingHints.KEY_RENDERING,
-						new Object[]  {
-								RenderingHints.VALUE_RENDER_QUALITY,
-								RenderingHints.VALUE_RENDER_SPEED,
-								RenderingHints.VALUE_RENDER_DEFAULT
-						}
-				)
-		);
-		
-		root.add(
-				buildAACheckBoxes(
-						strokeNormalization, 
-						RenderingHints.KEY_STROKE_CONTROL, 
-						new Object[] {
-								RenderingHints.VALUE_STROKE_DEFAULT,
-								RenderingHints.VALUE_STROKE_NORMALIZE,
-								RenderingHints.VALUE_STROKE_PURE
-						}
-				)
-		);
-		
-		return root;
-	}
-	
-	
-	/*
-	 * 
-	 */
-	private JMenu buildAACheckBoxes(JMenu root, Key key, Object[] values) {
-		ButtonGroup group = new ButtonGroup();
-		JCheckBoxMenuItem item = null;
-		for(int i = 0; i < values.length; i++) {
-			item = new JCheckBoxMenuItem(values[i].toString());
-			group.add(item);
-			item.addItemListener(new TextAliasingMenuItemListener(key, values[i]));
-			root.add(item);
-			
-			if (item.getText().matches(".*default.*|.*Default.*|.*DEFAULT.*"))
-				item.setSelected(true);
-		}
-
-		return root;	
-	}
-	
-	
-	/*
-	 * 
-	 */
-	private class TextAliasingMenuItemListener implements ItemListener {
-		private Object value;
-		private Key    key;
-		public TextAliasingMenuItemListener(Key key, Object v) {
-			this.value = v;
-			this.key   = key;
-		}
-		/* (non-Javadoc)
-		 * @see java.awt.event.ItemListener#itemStateChanged(java.awt.event.ItemEvent)
-		 */
-		@Override
-		public void itemStateChanged(ItemEvent e) {
-			RenderingHints rh = DrawingAreaView.getInstance().getRenderingHints();
-			if (e.getStateChange() == ItemEvent.DESELECTED) {
-				rh.remove(key);
-			} else {
-				rh.put(key, value);
-			}
-			DrawingAreaView.getInstance().setRenderingHints(rh);
-		}
-	}
-	
 	
 	/*
 	 * 
@@ -633,48 +406,4 @@ public class UserGUIBuilder {
 	private SingleCDockable wrapToDockable(JComponent view) {
 		return new DefaultSingleCDockable(view.getName(), view.getName(), view);
 	}
-	
-	
-	/*
-	 * 
-	 */
-//	private class Painter implements ActionListener {
-//		private JMenu parent;
-//		
-//		public Painter(JMenu parent) {
-//			this.parent = parent;
-//		}
-//		
-//		/* (non-Javadoc)
-//		 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
-//		 */
-//		@Override
-//		public void actionPerformed(ActionEvent e) {
-//			final JMenuItem  source = (JMenuItem) e.getSource();
-//			final String userName = parent.getText();
-//			Utils.logMessage("Drawing for: "+userName);
-//			Thread t = new Thread(new Runnable() {
-//				public void run() {
-//					RemoteUser user = UserManager.getInstance().getRemoteUser(userName);
-//					java.util.Random r = new Random();
-//					r.setSeed(System.currentTimeMillis());
-//					
-//					user.getToolboxController().selectToolByName(source.getName());
-//					RemoteMouseEvent event = new RemoteMouseEvent(user, DrawingAreaView.getInstance(), 501, System.currentTimeMillis(), InputEvent.BUTTON1_DOWN_MASK, r.nextInt(DrawingAreaView.getInstance().getWidth()), r.nextInt(DrawingAreaView.getInstance().getHeight()), 1, false, MouseEvent.BUTTON1);
-//					DrawingAreaView.getInstance().dispatchEvent(event);
-//					int i = 1;
-//					for(i = 0; i < 300; i++) {
-//						event = new RemoteMouseEvent(user, DrawingAreaView.getInstance(), 506, System.currentTimeMillis(), InputEvent.BUTTON1_DOWN_MASK, i, i, 0, false, MouseEvent.NOBUTTON);
-//						try {
-//							Thread.sleep(100);
-//							DrawingAreaView.getInstance().dispatchEvent(event);
-//						} catch(InterruptedException e1) {}
-//					}
-//					event = new RemoteMouseEvent(user, DrawingAreaView.getInstance(), 502, System.currentTimeMillis(), MouseEvent.NOBUTTON, i, i, 0, false, MouseEvent.BUTTON1);
-//					DrawingAreaView.getInstance().dispatchEvent(event);
-//				}
-//			});
-//			t.start();
-//		}
-//	}
 }

@@ -53,6 +53,7 @@ import javax.swing.text.StyleContext;
 import javax.swing.text.StyledDocument;
 
 import ar.com.tellapic.UserManager;
+import ar.com.tellapic.graphics.PopupButton;
 import ar.com.tellapic.utils.Utils;
 
 /**
@@ -132,7 +133,7 @@ public class ChatView extends JPanel implements Observer {
 		chatTabs   = new ArrayList<JTextPane>();
 		inputText  = new JTextField();
 		tabbedPane = new JTabbedPane();
-		smileyButton = new JButton(new ImageIcon(Utils.createIconImage(16, 16, "/icons/system/smiley-button.png")));
+		smileyButton = new PopupButton(new ImageIcon(Utils.createIconImage(16, 16, "/icons/smileys/smiley.png")));
 		smileyButton.setPreferredSize(new Dimension(24,24));
 		smileyButton.setMaximumSize(new Dimension(24,24));
 		smileyButton.addActionListener(new ActionListener(){

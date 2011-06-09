@@ -428,7 +428,7 @@ public abstract class AbstractUser extends Observable implements Observer {
 	 * @param number
 	 * @return
 	 */
-	private AbstractDrawing findDrawing(long number) {
+	public AbstractDrawing findDrawing(long number) {
 		boolean found   = false;
 		AbstractDrawing drawing = null;
 		

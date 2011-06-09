@@ -35,7 +35,6 @@ public class DrawingText extends AbstractDrawing {
 	private PaintPropertyColor  colorProperty;
 	private PaintPropertyAlpha  alphaProperty;
 	private PaintPropertyFont   fontProperty;
-
 	private int       textX;
 	private int       textY;
 	
@@ -44,19 +43,12 @@ public class DrawingText extends AbstractDrawing {
 	 * @param name
 	 */
 	public DrawingText(String name) {
+		super(name, true, true);
 		colorProperty  = null;
 		alphaProperty  = null;
 		fontProperty   = null;
 		setName(name);
 		setVisible(true);
-	}
-	
-	/**
-	 * 
-	 * @param property
-	 */
-	public void setFont(PaintPropertyFont property) {
-		fontProperty = property;
 	}
 	
 	/* (non-Javadoc)
@@ -66,7 +58,7 @@ public class DrawingText extends AbstractDrawing {
 	public void draw(Graphics2D g) {
 		PaintProperty overridenProperties[] = getUser().getCustomProperties();
 		if (isVisible()) {
-			//g.setRenderingHints(rh);
+			g.setRenderingHints(renderingHints);
 			
 			if (overridenProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_ALPHA] != null)
 				g.setComposite(((PaintPropertyAlpha)overridenProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_ALPHA]).getComposite());
@@ -80,10 +72,12 @@ public class DrawingText extends AbstractDrawing {
 
 			if (overridenProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_FONT] != null) 
 				g.setFont(((PaintPropertyFont)overridenProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_FONT]).getFont());
-			else if (fontProperty != null)
+			else if (fontProperty != null) {
 				g.setFont(getPaintPropertyFont().getFont());
-					
-			g.drawString(getText(), getTextX(), getTextY());
+				g.drawString(getText(), getTextX(), getTextY());
+				/* Call the super class method as he knows how to draw control points */
+				super.draw(g);
+			}
 		}
 	}
 
@@ -131,7 +125,15 @@ public class DrawingText extends AbstractDrawing {
 		fontProperty = (PaintPropertyFont) fontProperty.clone();
 		colorProperty  = (PaintPropertyColor) colorProperty.clone();
 	}
-
+	
+	/**
+	 * 
+	 * @param property
+	 */
+	public void setFont(PaintPropertyFont property) {
+		fontProperty = property;
+	}
+	
 	/**
 	 * @param paintPropertyAlpha
 	 */
@@ -172,27 +174,12 @@ public class DrawingText extends AbstractDrawing {
 	 */
 	@Override
 	public Rectangle2D getBounds2D() {
-		/* TODO: calculate the text frame */
-		return null;
+		Rectangle2D r = fontProperty.getFont().getStringBounds(getText(), ((Graphics2D)DrawingAreaView.getInstance().getGraphics()).getFontRenderContext());
+		r.setFrame(getTextX(), getTextY()-r.getHeight(), r.getWidth(), r.getHeight()); 
+		return  r;
 	}
 
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.AbstractDrawing#setSelected(boolean)
-	 */
-	@Override
-	public void setSelected(boolean value) {
-		// TODO Auto-generated method stub
-		
-	}
-	
-	/*
-	 * (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.AbstractDrawing#isSelected()
-	 */
-	public boolean isSelected() {
-		// TODO: !!
-		return false;
-	}
+
 
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.AbstractDrawing#resize(int, int, ar.com.tellapic.graphics.ControlPoint)
@@ -298,7 +285,17 @@ public class DrawingText extends AbstractDrawing {
 	 */
 	@Override
 	public void move(double xOffset, double yOffset) {
-		// TODO Auto-generated method stub
-		
+		this.textX += xOffset;
+		this.textY += yOffset;
+		updateControlPoints();
+		setChanged();
+		notifyObservers();
+	}
+	
+	/*
+	 */
+	@Override
+	public String toString() {
+		return getName();
 	}
 }

@@ -4,6 +4,7 @@
 package ar.com.tellapic.graphics;
 
 import java.awt.Color;
+import java.awt.RenderingHints;
 
 
 /**
@@ -74,15 +75,23 @@ public interface IPaintPropertyController {
 	 * @param color
 	 */
 	public void handleColorChange(Color color);
+	
+	
+	/**
+	 * 
+	 * @param key
+	 * @param value
+	 */
+	public void handleRenderingHint(RenderingHints.Key key, Object value);
+	
+	/**
+	 * @param b
+	 */
+	public void handleZoomChange(boolean b);
 
-//	/**
-//	 * @param b
-//	 */
-//	public void handleZoomChange(boolean b);
-//
-//	/**
-//	 * @param zoom
-//	 */
-//	public void handleZoomChange(float zoom);
+	/**
+	 * @param zoom
+	 */
+	public void handleZoomChange(float zoom);
 	
 }

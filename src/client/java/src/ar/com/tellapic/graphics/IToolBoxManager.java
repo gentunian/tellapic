@@ -4,6 +4,7 @@
 package ar.com.tellapic.graphics;
 
 import java.awt.Color;
+import java.awt.RenderingHints;
 
 
 /**
@@ -125,18 +126,6 @@ public interface IToolBoxManager {
 	 */
 	public void setAlphaPropertyValue(double value);
 	
-//	/**
-//	 * 
-//	 * @param value
-//	 */
-//	public void setZoomValue(float value);
-//	
-//	/**
-//	 * 
-//	 * @param value
-//	 */
-//	public void setZoomIn(boolean value);
-	
 	/**
 	 * Tools must be registered in the model
 	 * @param toolId
@@ -148,5 +137,24 @@ public interface IToolBoxManager {
 	 * @param color
 	 */
 	public void setColorPropertyValue(Color color);
+	
+	/**
+	 * 
+	 * @param hints
+	 */
+	public void setRenderingHints(RenderingHints hints);
+
+	/**
+	 * 
+	 * @param key
+	 * @param value
+	 */
+	public void addRenderingHint(RenderingHints.Key key, Object value);
+	
+	/**
+	 * 
+	 * @param key
+	 */
+	public void removeRenderingHint(RenderingHints.Key key);
 
 }

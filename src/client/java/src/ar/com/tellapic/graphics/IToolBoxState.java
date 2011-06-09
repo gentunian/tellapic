@@ -3,6 +3,7 @@
  */
 package ar.com.tellapic.graphics;
 
+import java.awt.RenderingHints;
 import java.util.HashMap;
 
 /** 
@@ -57,5 +58,9 @@ public interface IToolBoxState {
 	 * @return
 	 */
 	public long getAssignedNumber();
-		
+
+	/**
+	 * @return
+	 */
+	public RenderingHints getRenderingHints();
 }

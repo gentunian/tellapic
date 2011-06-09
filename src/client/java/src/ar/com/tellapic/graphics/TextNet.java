@@ -35,7 +35,6 @@ final public class TextNet extends TextTool {
 		super("TextNet");
 	}
 	
-	
 	/*
 	 * (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.Ellipse#onRelease(int)
@@ -45,7 +44,7 @@ final public class TextNet extends TextTool {
 		super.mouseReleased(event);
 		 
 		if (isSelected()) {
-			DrawingText drawing = (DrawingText) super.getTemporalDrawing();
+			DrawingText drawing = (DrawingText) getTemporalDrawing();
 			if (drawing == null)
 				return ;
 
@@ -68,7 +67,9 @@ final public class TextNet extends TextTool {
 						drawing.getText().length(),
 						drawing.getText()
 				);
-			}
+			}			
+			/* This tool has no more temporal drawings */
+			setTemporalDrawing(null);
 		}
 	}
 }

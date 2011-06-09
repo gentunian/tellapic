@@ -94,7 +94,7 @@ private Rectangle2D rectangle;
 		properties[PropertyType.X2COORD.ordinal()][VALUE_COLUMN] = rectangle.getMaxX();
 		properties[PropertyType.Y2COORD.ordinal()][VALUE_COLUMN] = rectangle.getMaxY();
 		updateControlPoints();
-		setChanged();
-		notifyObservers();
+//		setChanged();
+//		notifyObservers();
 	}
 }

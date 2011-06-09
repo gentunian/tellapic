@@ -44,8 +44,8 @@ public class DrawingShapePen extends DrawingShape {
 		pen = (GeneralPath) pen.createTransformedShape(AffineTransform.getTranslateInstance(xOffset, yOffset));
 		setShape(pen);
 		updateControlPoints();
-		setChanged();
-		notifyObservers();
+//		setChanged();
+//		notifyObservers();
 	}
 
 	/* (non-Javadoc)

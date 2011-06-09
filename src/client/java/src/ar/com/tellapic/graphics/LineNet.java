@@ -76,7 +76,9 @@ final public class LineNet extends LineTool {
 						drawing.getPaintPropertyStroke().getDash_phase(),
 						drawing.getPaintPropertyStroke().getDash()
 				);
-			}
+			}			
+			/* This tool has no more temporal drawings */
+			setTemporalDrawing(null);
 		}
 	}
 }

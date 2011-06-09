@@ -53,34 +53,34 @@ public class DrawingAreaModel extends Observable implements IDrawingAreaState, I
 	/**
 	 * @param drawing
 	 */
+	@Override
 	public synchronized void removeDrawing(AbstractDrawing drawing) {
 		if (drawing == null)
 			throw new IllegalArgumentException("Drawing cannot be null.");
-		boolean b = drawings.remove(drawing);
-		if (b) {}
+		drawings.remove(drawing);
 	}
 
 
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.IDrawingAreaManager#selectDrawing(ar.com.tellapic.graphics.AbstractDrawing)
-	 */
-	@Override
-	public synchronized void selectDrawing(AbstractDrawing drawing) throws IllegalArgumentException {
-		AbstractDrawing[] da = drawings.toArray(new AbstractDrawing[0]);
-		for(int i = 0; i < da.length; i++)
-			da[i].setSelected(da[i].equals(drawing));
-	}
-
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.IDrawingAreaManager#selectDrawing(long)
-	 */
-	@Override
-	public synchronized void selectDrawing(long number) {
-		AbstractDrawing[] da = drawings.toArray(new AbstractDrawing[0]);
-		for(int i = 0; i < da.length; i++)
-			da[i].setSelected((da[i].getNumber() == number));
-	}
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.IDrawingAreaManager#selectDrawing(ar.com.tellapic.graphics.AbstractDrawing)
+//	 */
+//	@Override
+//	public synchronized void selectDrawing(AbstractDrawing drawing) throws IllegalArgumentException {
+//		AbstractDrawing[] da = drawings.toArray(new AbstractDrawing[0]);
+//		for(int i = 0; i < da.length; i++)
+//			da[i].setSelected(da[i].equals(drawing));
+//	}
+//
+//
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.IDrawingAreaManager#selectDrawing(long)
+//	 */
+//	@Override
+//	public synchronized void selectDrawing(long number) {
+//		AbstractDrawing[] da = drawings.toArray(new AbstractDrawing[0]);
+//		for(int i = 0; i < da.length; i++)
+//			da[i].setSelected((da[i].getNumber() == number));
+//	}
 
 
 	/**

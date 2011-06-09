@@ -17,8 +17,11 @@
  */  
 package ar.com.tellapic.graphics;
 
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.geom.Rectangle2D;
 import java.util.Observable;
 
@@ -36,6 +39,7 @@ import ar.com.tellapic.graphics.ControlPoint.ControlType;
  */
 public abstract class AbstractDrawing extends Observable implements Cloneable, TableModel, ListSelectionListener {
 	
+	protected RenderingHints    renderingHints;
 	protected Object[][]        properties;
 	private String              name;
 	private long                number;
@@ -45,7 +49,51 @@ public abstract class AbstractDrawing extends Observable implements Cloneable, T
 	protected boolean           selected;
 	protected boolean           resizeable;
 	protected boolean           moveable;
+	protected BasicStroke       selectedShapeStroke;
+	protected BasicStroke       selectedEdgesStroke;
+	protected AlphaComposite    selectedAlphaComposite;
 	
+	/**
+	 * 
+	 * @param name
+	 * @param resizeable
+	 * @param moveable
+	 */
+	public AbstractDrawing(String name, boolean resizeable, boolean moveable) {
+		renderingHints = new RenderingHints(null);
+		selectedAlphaComposite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f);
+		selectedShapeStroke = new BasicStroke(2, 0, 0, 1, new float[] { 5, 5}, 0);
+		if (resizeable) {
+			/* Instantiates the control points this drawing will have */
+			controlPoints  = new ControlPoint[8];
+			int i = 0;
+			for(ControlType type : ControlPoint.ControlType.values()) {
+				try {
+					controlPoints[i++] = new ControlPoint(type, Color.white);
+				} catch (IllegalControlPointTypeException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		setResizeable(resizeable);
+		setMoveable(moveable);
+	}
+	
+	/**
+	 * 
+	 */
+	public void updateControlPoints() {
+		if (controlPoints != null) {
+			for(ControlPoint point : controlPoints){
+				try {
+					point.setControlPoint(getBounds2D());
+				} catch (IllegalControlPointTypeException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+	}
 	
 	/**
 	 * 
@@ -86,17 +134,6 @@ public abstract class AbstractDrawing extends Observable implements Cloneable, T
 	 */
 	public void setUser(AbstractUser user) {
 		this.user = user;
-		if (!user.isRemote()) {
-			controlPoints  = new ControlPoint[8];
-			int i = 0;
-			for(ControlType type : ControlPoint.ControlType.values()) {
-				try {
-					controlPoints[i++] = new ControlPoint(type, isResizeable()?Color.white:Color.red);
-				} catch (IllegalControlPointTypeException e) {
-					e.printStackTrace();
-				}
-			}
-		}
 	}
 
 	/**
@@ -212,13 +249,84 @@ public abstract class AbstractDrawing extends Observable implements Cloneable, T
 	
 	/**
 	 * 
+	 * @param hints
+	 */
+	public void setRenderingHints(RenderingHints hints) {
+		renderingHints.add(hints);
+	}
+	
+	/**
+	 * 
+	 * @param key
+	 * @param value
+	 */
+	public void putRenderingHint(RenderingHints.Key key, Object value) {
+		renderingHints.put(key, value);
+	}
+	
+	/**
+	 * 
+	 * @param key
+	 */
+	public void removeRenderingHint(RenderingHints.Key key) {
+		renderingHints.remove(key);
+	}
+	
+	/**
+	 * 
+	 * @param value
+	 */
+	public void setSelected(boolean isSelected) {
+		selected = isSelected;
+		if (isSelected) {
+			for(AbstractDrawing drawing : getUser().getDrawings())
+				if (!drawing.equals(this))
+					drawing.setSelected(false);
+			updateControlPoints();
+		}
+		setChanged();
+		notifyObservers();
+	}
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public boolean isSelected() {
+		return selected;
+	}
+	
+	/**
+	 * 
 	 * @param g
 	 */
-	public abstract void draw(Graphics2D g);
+	public void draw(Graphics2D g) {
+		if (isSelected()) {
+			g.setRenderingHints(renderingHints);
+//			g.setComposite(selectedAlphaComposite);
+			g.setColor(Color.yellow);
+			g.setStroke(selectedShapeStroke);
+			g.draw(getBounds2D());
+			ControlPoint[] points = getControlPoints();
+			if (points != null) {
+				ControlPoint selectedPoint = null;
+				for(ControlPoint p : points)
+					/* If a control point is selected, draw it in the last order */
+					if (p.isSelected())
+						selectedPoint = p;
+					else
+						p.draw(g);
+				/* If a control point is selected, draw it in the last order */
+				if (selectedPoint != null)
+					selectedPoint.draw(g);
+			}
+		}
+	}
 	public abstract void cloneProperties();
-	public abstract void setSelected(boolean value);
-	public abstract boolean isSelected();
+//	public abstract void setSelected(boolean value);
+//	public abstract boolean isSelected();
 	public abstract Rectangle2D getBounds2D();
 	public abstract void resize(double eventX, double eventY, ControlPoint controlPoint);
 	public abstract void move(double xOffset, double yOffset);
+	
 }

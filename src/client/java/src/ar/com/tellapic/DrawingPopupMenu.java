@@ -30,7 +30,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 
 import ar.com.tellapic.graphics.AbstractDrawing;
-import ar.com.tellapic.graphics.DrawingAreaModel;
 import ar.com.tellapic.utils.Utils;
 
 /**

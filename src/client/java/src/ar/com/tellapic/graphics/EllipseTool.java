@@ -14,6 +14,7 @@ import ar.com.tellapic.utils.Utils;
 
 public class EllipseTool extends DrawingTool {
 	private static final String ELLIPSE_ICON_PATH = "/icons/tools/ellipse.png";
+	@SuppressWarnings("unused")
 	private static final String ELLIPSE_CURSOR_PATH = "/icons/tools/ellipse-cursor.png";
 	
 	private static final double DEFAULT_ALPHA = 1;
@@ -23,9 +24,7 @@ public class EllipseTool extends DrawingTool {
 	private static final float  DEFAULT_MITER_LIMIT = 1;
 	private static final double DEFAULT_WIDTH = 5;
 	
-//	private Ellipse2D           ellipse;
 	private Point2D             firstPoint;
-	private DrawingShape        temporalDrawing;
 	private boolean             inUse;
 	
 	
@@ -34,7 +33,6 @@ public class EllipseTool extends DrawingTool {
 		super(tellapicConstants.TOOL_ELLIPSE, name, ELLIPSE_ICON_PATH, Utils.msg.getString("ellipsetooltip"), Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 		firstPoint = new Point2D.Double();
 		inUse      = false;
-		temporalDrawing = new DrawingShapeEllipse(getName(), 0, 0, 0, 0);
 	}
 	
 	
@@ -168,16 +166,6 @@ public class EllipseTool extends DrawingTool {
 		return DEFAULT_WIDTH;
 	}
 
-
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.DrawingTool#getTemporalDrawing()
-	 */
-	@Override
-	public AbstractDrawing getTemporalDrawing() {
-		return temporalDrawing;
-	}
-	
-
 	/* (non-Javadoc)
 	 * @see java.awt.event.MouseListener#mouseClicked(java.awt.event.MouseEvent)
 	 */
@@ -214,27 +202,29 @@ public class EllipseTool extends DrawingTool {
 	@Override
 	public void mousePressed(MouseEvent e) {
 		if (isSelected() && !e.isConsumed()) {
-			AbstractUser user = null;
-			if (e instanceof RemoteMouseEvent) {
-				user = ((RemoteMouseEvent)e).getUser();
-			} else {
-				user = UserManager.getInstance().getLocalUser();
+			if ((e.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK) {
+				AbstractUser user = null;
+				if (e instanceof RemoteMouseEvent) {
+					user = ((RemoteMouseEvent)e).getUser();
+				} else {
+					user = UserManager.getInstance().getLocalUser();
+				}
+				IToolBoxState toolBoxState = user.getToolBoxModel();
+				float zoomX = ZoomTool.getInstance().getZoomValue();
+				firstPoint.setLocation(e.getX()/zoomX, e.getY()/zoomX);
+				inUse   = true;
+				temporalDrawing = new DrawingShapeEllipse(getName(), e.getX()/zoomX, e.getY()/zoomX, 0, 0);
+				((DrawingShape) temporalDrawing).setAlpha(toolBoxState.getOpacityProperty());
+				((DrawingShape) temporalDrawing).setColor(toolBoxState.getColorProperty());
+				((DrawingShape) temporalDrawing).setStroke(toolBoxState.getStrokeProperty());
+				temporalDrawing.setRenderingHints(toolBoxState.getRenderingHints());
+				temporalDrawing.setNumber(toolBoxState.getAssignedNumber());
+				temporalDrawing.setUser(user);
+				user.setTemporalDrawing(temporalDrawing);
+				setChanged();
+				notifyObservers(temporalDrawing);
 			}
-			IToolBoxState toolBoxState = user.getToolBoxModel();
-			firstPoint.setLocation(e.getX(), e.getY());
-//			ellipse = new Ellipse2D.Double(e.getX(), e.getY(), 0, 0);
-			inUse   = true;
-			temporalDrawing = new DrawingShapeEllipse(getName(), e.getX(), e.getY(), 0, 0);
-//			temporalDrawing.setShape(ellipse);
-			temporalDrawing.setAlpha(toolBoxState.getOpacityProperty());
-			temporalDrawing.setColor(toolBoxState.getColorProperty());
-			temporalDrawing.setStroke(toolBoxState.getStrokeProperty());
-			temporalDrawing.setNumber(toolBoxState.getAssignedNumber());
-			temporalDrawing.setUser(user);
-			user.setTemporalDrawing(temporalDrawing);
 			e.consume();
-			setChanged();
-			notifyObservers(temporalDrawing);
 		}
 	}
 
@@ -245,18 +235,20 @@ public class EllipseTool extends DrawingTool {
 	@Override
 	public void mouseReleased(MouseEvent e) {
 		if (isSelected() && !e.isConsumed()) {
-			if (inUse && !temporalDrawing.getShape().getBounds2D().isEmpty()) {
-				AbstractUser user = null;
-				if (e instanceof RemoteMouseEvent) {
-					user = ((RemoteMouseEvent)e).getUser();
-				} else {
-					user = UserManager.getInstance().getLocalUser();
+			if (e.getButton() == MouseEvent.BUTTON1) {
+				if (inUse && !((DrawingShape) temporalDrawing).getShape().getBounds2D().isEmpty()) {
+					AbstractUser user = null;
+					if (e instanceof RemoteMouseEvent) {
+						user = ((RemoteMouseEvent)e).getUser();
+					} else {
+						user = UserManager.getInstance().getLocalUser();
+					}
+					temporalDrawing.cloneProperties();
+					user.addDrawing(temporalDrawing);
+					setChanged();
+					notifyObservers(temporalDrawing);
 				}
-				temporalDrawing.cloneProperties();
-				user.addDrawing(temporalDrawing);
 				inUse = false;
-				setChanged();
-				notifyObservers(temporalDrawing);
 			}
 			e.consume();
 		}
@@ -269,23 +261,26 @@ public class EllipseTool extends DrawingTool {
 	@Override
 	public void mouseDragged(MouseEvent e) {
 		if (isSelected() && !e.isConsumed()) {
-			if (inUse) {
-				boolean symmetric = e.isControlDown();
-				double initX   = firstPoint.getX();
-				double initY   = firstPoint.getY();
-				int    width   = (int) Math.abs(initX - e.getX());
-				int    height  = (int) Math.abs(initY - e.getY());
-				Dimension size = new Dimension(((symmetric)? Math.max(width, height) : width), ((symmetric)? Math.max(width, height) : height));
-				Point2D  point = null;
+			if ((e.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK) {
+				if (inUse) {
+					float zoomX = ZoomTool.getInstance().getZoomValue();
+					boolean symmetric = e.isControlDown() || isSymmetricModeEnabled();
+					double initX   = firstPoint.getX();
+					double initY   = firstPoint.getY();
+					int    width   = (int) Math.abs(initX - e.getX()/zoomX);
+					int    height  = (int) Math.abs(initY - e.getY()/zoomX);
+					Dimension size = new Dimension(((symmetric)? Math.max(width, height) : width), ((symmetric)? Math.max(width, height) : height));
+					Point2D  point = null;
 
-				if (symmetric)
-					point = new Point2D.Double( ((initX < e.getX())? initX : initX - size.getWidth()), ((initY < e.getY())? initY : initY - size.getHeight()));
-				else
-					point = new Point2D.Double( ((initX < e.getX())? initX : e.getX()), ((initY < e.getY())? initY : e.getY()));
+					if (symmetric)
+						point = new Point2D.Double( ((initX < e.getX()/zoomX)? initX : initX - size.getWidth()), ((initY < e.getY()/zoomX)? initY : initY - size.getHeight()));
+					else
+						point = new Point2D.Double( ((initX < e.getX()/zoomX)? initX : e.getX()/zoomX), ((initY < e.getY()/zoomX)? initY : e.getY()/zoomX));
 
-				((Ellipse2D)temporalDrawing.getShape()).setFrame(point, size);
-				setChanged();
-				notifyObservers(temporalDrawing);
+					((Ellipse2D)((DrawingShape) temporalDrawing).getShape()).setFrame(point, size);
+					setChanged();
+					notifyObservers(temporalDrawing);
+				}
 			}
 			e.consume();
 		}
