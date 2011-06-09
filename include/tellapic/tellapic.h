@@ -121,13 +121,13 @@ tellapic_send_struct(tellapic_socket_t socket, stream_t *stream);
  *
  */
 POSH_PUBLIC_API(ssize_t)
-tellapic_send_text(tellapic_socket_t socket, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int style, int facelen, char *face, int textlen, char *text);
+tellapic_send_text(tellapic_socket_t socket, int idfrom, unsigned long dnum, float w, float op, int red, int green, int blue, int x1, int y1, int style, int facelen, char *face, int textlen, char *text);
 
 /**
  *
  */
 POSH_PUBLIC_API(ssize_t)
-tellapic_send_fig(tellapic_socket_t socket, int tool, int dcbyte_ext, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int x2, int y2, int lj, int ec, float ml, float dp, float da[]);
+tellapic_send_fig(tellapic_socket_t socket, int tool, int dcbyte_ext, int idfrom, unsigned long dnum, float w, float op, int red, int green, int blue, int x1, int y1, int x2, int y2, int lj, int ec, float ml, float dp, float da[]);
 
 
 /**
@@ -146,14 +146,14 @@ tellapic_rawsend(tellapic_socket_t socket, byte_t *rawstream);
  *
  */
 POSH_PUBLIC_API(ssize_t)
-tellapic_send_drw_using(tellapic_socket_t socket, int tool, int dcbyte_ext, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1);
+tellapic_send_drw_using(tellapic_socket_t socket, int tool, int dcbyte_ext, int idfrom, unsigned long dnum, float w, float op, int red, int green, int blue, int x1, int y1);
 
 
 /**
  *
  */
 POSH_PUBLIC_API(ssize_t)
-tellapic_send_drw_init(tellapic_socket_t socket, int tool, int dcbyte_ext, int idfrom, int dnum, float w, float op, int red, int green, int blue, int x1, int y1, int x2, int y2, int lj, int ec, float ml, float dp, float da[]);
+tellapic_send_drw_init(tellapic_socket_t socket, int tool, int dcbyte_ext, int idfrom, unsigned long dnum, float w, float op, int red, int green, int blue, int x1, int y1, int x2, int y2, int lj, int ec, float ml, float dp, float da[]);
 
 /**
  *

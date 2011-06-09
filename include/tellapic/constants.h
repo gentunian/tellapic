@@ -173,6 +173,7 @@
 #define TOOL_ERASER     0x60
 #define TOOL_PENCIL     0x70
 #define TOOL_LINE       0x80
+#define TOOL_SELECTOR   0x90
 
 
 /* Events masks */

@@ -876,16 +876,20 @@ fetch_stream(tdata_t *thread)
       break;
 
     case CTL_CL_FIG:
-      item->stream.data.drawing.number = dnumber_inc();
-      char info[MAX_INFO_SIZE];
-      sprintf(info, "%i", item->stream.data.drawing.number);
-      tellapic_send_ctle(thread->client->socket, thread->tnum, CTL_SV_FIGID, strlen(info), info);
+      /* If the drawing has no ID, assign one */
+      if (stream.data.drawing.number == 0)
+	{
+	  item->stream.data.drawing.number = dnumber_inc();
+	  char info[MAX_INFO_SIZE];
+	  sprintf(info, "%i", item->stream.data.drawing.number);
+	  tellapic_send_ctle(thread->client->socket, thread->tnum, CTL_SV_FIGID, strlen(info), info);
+	}
       queue_message(item, thread);
       break;
 
     case CTL_CL_DRW:
       /* Only assign a drawing number when the drawing is created. */
-      if ((stream.data.drawing.dcbyte & EVENT_MASK) == EVENT_PRESS)
+      if ((stream.data.drawing.dcbyte & EVENT_MASK) == EVENT_PRESS && (stream.data.drawing.number == 0))
 	{
 	  item->stream.data.drawing.number = dnumber_inc();
 	  char info[MAX_INFO_SIZE];
