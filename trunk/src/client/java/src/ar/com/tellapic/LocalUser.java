@@ -20,6 +20,8 @@ package ar.com.tellapic;
 import java.util.Observable;
 
 import ar.com.tellapic.graphics.AbstractDrawing;
+import ar.com.tellapic.lib.tellapic;
+import ar.com.tellapic.lib.tellapicConstants;
 
 /**
  * @author 
@@ -35,38 +37,40 @@ public class LocalUser extends AbstractUser {
 		private static final LocalUser INSTANCE = new LocalUser(0, LOCAL_NAME);
 	}
 	
+	/**
+	 * 
+	 * @param id
+	 * @param name
+	 */
 	private LocalUser(int id, String name) {
 		super(id, name);
+		setRemote(false);
 	}
 	
+	/**
+	 * 
+	 * @return
+	 */
 	public static LocalUser getInstance() {
 		return Holder.INSTANCE;
 	}
 
-	/* (non-Javadoc)
-	 * @see com.tellapic.AbstractUser#isRemote()
+	/*
+	 * (non-Javadoc)
+	 * @see ar.com.tellapic.AbstractUser#removeDrawing(ar.com.tellapic.graphics.AbstractDrawing)
 	 */
 	@Override
-	public boolean isRemote() {
-		return false;
+	public synchronized boolean removeDrawing(AbstractDrawing drawing) {
+		boolean removed = super.removeDrawing(drawing);
+		
+		if (removed) {
+			String number = String.valueOf(drawing.getNumber());
+			tellapic.tellapic_send_ctle(NetManager.getInstance().getSocket(), SessionUtils.getId(), tellapicConstants.CTL_CL_RMFIG, number.length(), number);
+		}
+		
+		return removed;
 	}
-
-	/* (non-Javadoc)
-	 * @see com.tellapic.AbstractUser#isSelected()
-	 */
-	@Override
-	public boolean isSelected() {
-		return false;
-	}
-
-	/* (non-Javadoc)
-	 * @see com.tellapic.AbstractUser#isSpecial()
-	 */
-	@Override
-	public boolean isSpecial() {
-		return false;
-	}
-
+	
 	/* (non-Javadoc)
 	 * @see java.util.Observer#update(java.util.Observable, java.lang.Object)
 	 */

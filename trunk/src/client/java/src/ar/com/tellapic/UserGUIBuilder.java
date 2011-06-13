@@ -47,11 +47,8 @@ import ar.com.tellapic.chat.ChatModelController;
 import ar.com.tellapic.chat.ChatView;
 import ar.com.tellapic.chat.ChatViewController;
 import ar.com.tellapic.graphics.DrawingAreaView;
-import ar.com.tellapic.graphics.IToolBoxController;
-import ar.com.tellapic.graphics.PaintPropertyController;
 import ar.com.tellapic.graphics.PaintPropertyView;
 import ar.com.tellapic.graphics.Tool;
-import ar.com.tellapic.graphics.ToolBoxController;
 import ar.com.tellapic.graphics.ToolBoxModel;
 import ar.com.tellapic.graphics.ToolView;
 import ar.com.tellapic.utils.Utils;
@@ -93,11 +90,11 @@ public class UserGUIBuilder {
 		// - toolViewController: Selects the appropiate tool upon user interaction with the ToolView view.
 		//                       For remote user, emulates the user selection on a tool with a received packet
 		//                       from the net.
-		PaintPropertyController propertyController = new PaintPropertyController(model);
-		IToolBoxController      toolViewController = new ToolBoxController(model);
-		
-		user.setToolboxController(toolViewController);
-		user.setPaintController(propertyController);
+//		PaintPropertyController propertyController = new PaintPropertyController(model);
+//		IToolBoxController      toolViewController = new ToolBoxController(model);
+//		
+//		user.setToolboxController(toolViewController);
+//		user.setPaintController(propertyController);
 		
 		// Instantiates all the GUIs.
 		userView     = UsersView.getInstance();
@@ -116,8 +113,8 @@ public class UserGUIBuilder {
 		scrollPane = new JScrollPane(drawingAreaView);
 		scrollPane.setName(drawingAreaView.getName());
 //		drawingAreaView.setPropertyController(propertyController);
-		toolView.setController(toolViewController);
-		propertyView.setController(propertyController);
+		toolView.setToolBoxController(user.getToolboxController());
+		propertyView.setPaintPropertyController(user.getPaintController());
 		for(Tool tool : model.getTools().values()) {
 			drawingAreaView.addMouseListener(tool);
 			drawingAreaView.addMouseMotionListener(tool);

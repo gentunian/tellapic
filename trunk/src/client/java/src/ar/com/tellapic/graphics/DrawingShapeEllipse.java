@@ -97,4 +97,11 @@ public class DrawingShapeEllipse extends DrawingShape {
 //		setChanged();
 //		notifyObservers();
 	}
+
+	/**
+	 * @return
+	 */
+	public boolean isEmpty() {
+		return ellipse.isEmpty();
+	}
 }

@@ -153,4 +153,11 @@ public class DrawingShapeLine extends DrawingShape {
 		setChanged();
 		notifyObservers();
 	}
+
+	/**
+	 * @return
+	 */
+	public double length() {
+		return line.getP1().distance(line.getP2());
+	}
 }

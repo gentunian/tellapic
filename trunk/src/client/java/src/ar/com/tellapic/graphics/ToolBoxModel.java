@@ -33,7 +33,7 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	private PaintPropertyFont     fontProperty;
 	private PaintPropertyAlpha    alphaProperty;
 	private RenderingHints        renderingHints;
-	private long                  lastAssignedNumber;
+	//private long                  lastAssignedNumber;
 	
 	public class ActionData {
 		private int action;
@@ -423,13 +423,13 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	}
 
 
-	/* (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.IToolBoxState#getAssignedNumber()
-	 */
-	@Override
-	public long getAssignedNumber() {
-		return lastAssignedNumber;
-	}
+//	/* (non-Javadoc)
+//	 * @see ar.com.tellapic.graphics.IToolBoxState#getAssignedNumber()
+//	 */
+//	@Override
+//	public long getAssignedNumber() {
+//		return lastAssignedNumber;
+//	}
 
 
 	/* (non-Javadoc)

@@ -29,35 +29,50 @@ import ar.com.tellapic.lib.tellapic_socket_t;
  *          sebastian.treu(at)gmail.com
  *
  */
-public class ChatModelController implements IChatController {
+public class ChatModelController implements IChatController, IChatConnection {
+	
 	private IChatModelManager model;
-	private NetManager netManager;
-	//private IChatConnection   connection;
-
+	
+	/**
+	 * 
+	 */
 	public ChatModelController() {
 		model = ChatClientModel.getInstance();
-		netManager = NetManager.getInstance();
 	}
-
 
 	/* (non-Javadoc)
 	 * @see com.tellapic.chat.IChatController#handleInput(java.lang.String, boolean)
 	 */
 	@Override
 	public void handleInput(Message message, boolean fromView) {//TODO: REVIEW!
-		
 		model.addMessage(message);
 		if (fromView) {
-			//connection.sendMessage(message);
-			tellapic_socket_t socket = netManager.getSocket();
-			int idFrom = UserManager.getInstance().getLocalUser().getUserId();
-			String text = message.getText();
-			if (message.isPrivate()) {
-				int idTo = UserManager.getInstance().getUser(message.getReceiver()).getUserId();
-				tellapic.tellapic_send_chatp(socket, idFrom, idTo, text.length(), text);
-			} else {
-				tellapic.tellapic_send_chatb(socket, idFrom, text.length(), text);
-			}
+			sendMessage(message);
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.chat.IChatConnection#receiveMessage()
+	 */
+	@Override
+	public Message receiveMessage() {
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.chat.IChatConnection#sendMessage(ar.com.tellapic.chat.Message)
+	 */
+	@Override
+	public void sendMessage(Message message) {
+		NetManager netManager = NetManager.getInstance();
+		tellapic_socket_t socket = netManager.getSocket();
+		int idFrom = UserManager.getInstance().getLocalUser().getUserId();
+		String text = message.getText();
+		if (message.isPrivate()) {
+			int idTo = UserManager.getInstance().getUser(message.getReceiver()).getUserId();
+			tellapic.tellapic_send_chatp(socket, idFrom, idTo, text.length(), text);
+		} else {
+			tellapic.tellapic_send_chatb(socket, idFrom, text.length(), text);
 		}
 	}
 }

@@ -41,17 +41,17 @@ public abstract class AbstractDrawing extends Observable implements Cloneable, T
 	
 	protected RenderingHints    renderingHints;
 	protected Object[][]        properties;
-	private String              name;
-	private long                number;
-	private boolean             isVisible;
 	private AbstractUser        user;
 	protected ControlPoint      controlPoints[];
-	protected boolean           selected;
-	protected boolean           resizeable;
-	protected boolean           moveable;
 	protected BasicStroke       selectedShapeStroke;
 	protected BasicStroke       selectedEdgesStroke;
 	protected AlphaComposite    selectedAlphaComposite;
+	protected boolean           selected;
+	protected boolean           resizeable;
+	protected boolean           moveable;
+	private String              name;
+	private long                number;
+	private boolean             isVisible;
 	
 	/**
 	 * 

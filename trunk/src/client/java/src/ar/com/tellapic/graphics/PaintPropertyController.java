@@ -136,7 +136,7 @@ public class PaintPropertyController implements IPaintPropertyController {
 	 */
 	@Override
 	public void handleZoomChange(boolean value) {
-		ZoomTool.getInstance().setZoomIn(value);
+		ControlToolZoom.getInstance().setZoomIn(value);
 	}
 
 
@@ -145,6 +145,6 @@ public class PaintPropertyController implements IPaintPropertyController {
 	 */
 	@Override
 	public void handleZoomChange(float value) {
-		ZoomTool.getInstance().setZoom(value);
+		ControlToolZoom.getInstance().setZoom(value);
 	}
 }

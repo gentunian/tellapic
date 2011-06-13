@@ -313,14 +313,14 @@ main(int argc, char **argv)
   /* We are authed, ask for file */
   tellapic_send_ctl(socket, id, CTL_CL_FILEASK);
   
-  file_stream = tellapic_read_stream_b(socket);
-  if (file_stream.header.cbyte != CTL_SV_FILE)
-    {
-      printf("Not expected packet. Was %d\n", file_stream.header.cbyte);
-      exit(1);
-    }
+  /* file_stream = tellapic_read_stream_b(socket); */
+  /* if (file_stream.header.cbyte != CTL_SV_FILE) */
+  /*   { */
+  /*     printf("Not expected packet. Was %d\n", file_stream.header.cbyte); */
+  /*     exit(1); */
+  /*   } */
 
-  tellapic_free(&file_stream);
+  //  tellapic_free(&file_stream);
   printf("Drawing parabol\n");
   do_parabol(socket, id, 565, 329, 150, 1000);
   /*printf("Drawing sin\n");

@@ -54,4 +54,11 @@ public class DrawingShapePen extends DrawingShape {
 	@Override
 	public void resize(double eventX, double eventY, ControlPoint controlPoint) {
 	}
+
+	/**
+	 * @return
+	 */
+	public boolean hasPoints() {
+		return (pen.getCurrentPoint() != null);
+	}
 }

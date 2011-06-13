@@ -34,6 +34,7 @@ import javax.swing.SwingUtilities;
 
 import ar.com.tellapic.chat.ChatClientModel;
 import ar.com.tellapic.chat.Message;
+import ar.com.tellapic.graphics.ControlToolZoom;
 import ar.com.tellapic.graphics.DrawingAreaView;
 import ar.com.tellapic.graphics.DrawingShape;
 import ar.com.tellapic.graphics.IPaintPropertyController;
@@ -167,7 +168,7 @@ public class NetManager extends Observable implements Runnable {
 		do {
 			/* Send the password to the server */
 			tellapic.tellapic_send_ctle(socket, id, tellapicConstants.CTL_CL_PWD, password.length(), password);
-
+			
 			/* Read server response */
 			stream = tellapic.tellapic_read_stream_b(socket);
 			cbyte  = stream.getHeader().getCbyte();
@@ -555,14 +556,6 @@ public class NetManager extends Observable implements Runnable {
 	}
 
 	/**
-	 * @param socket the socket to set
-	 */
-	public void setSocket(tellapic_socket_t socket) {
-		this.socket = socket;
-	}
-	
-	
-	/**
 	 * @return the socket
 	 */
 	public tellapic_socket_t getSocket() {
@@ -659,7 +652,7 @@ public class NetManager extends Observable implements Runnable {
 			switch(header.getCbyte()) {
 			case tellapicConstants.CTL_SV_CLADD:
 				if (userId != SessionUtils.getId()) {
-					UserManager.getInstance().createUser(userId, info, true);
+					UserManager.getInstance().createRemoteUser(userId, info);
 				}
 				break;
 
@@ -784,6 +777,7 @@ public class NetManager extends Observable implements Runnable {
 		Tool usedTool = remoteUser.getToolBoxModel().getLastUsedTool();
 		IPaintPropertyController c = remoteUser.getPaintController();
 		Color color = null;
+		float zoomX = ControlToolZoom.getInstance().getZoomValue();
 		
 		switch(event) {
 		case tellapicConstants.EVENT_PRESS:
@@ -803,8 +797,8 @@ public class NetManager extends Observable implements Runnable {
 					MouseEvent.MOUSE_PRESSED,
 					System.currentTimeMillis(),
 					swingMask,
-					(int)drawingData.getPoint1().getX(),
-					(int)drawingData.getPoint1().getY(),
+					(int)(drawingData.getPoint1().getX() * zoomX),
+					(int)(drawingData.getPoint1().getY() * zoomX),
 					0,
 					false,
 					swingButton);
@@ -820,11 +814,12 @@ public class NetManager extends Observable implements Runnable {
 					MouseEvent.MOUSE_DRAGGED,
 					System.currentTimeMillis(),
 					swingMask,
-					(int)drawingData.getPoint1().getX(),
-					(int)drawingData.getPoint1().getY(),
+					(int)(drawingData.getPoint1().getX() * zoomX),
+					(int)(drawingData.getPoint1().getY() * zoomX),
 					0,
 					false,
 					swingButton);
+			Utils.logMessage("evdrag");
 			usedTool.mouseDragged(dragEvent);
 			break;
 			
@@ -835,8 +830,8 @@ public class NetManager extends Observable implements Runnable {
 					MouseEvent.MOUSE_RELEASED,
 					System.currentTimeMillis(),
 					swingMask,
-					(int)drawingData.getPoint1().getX(),
-					(int)drawingData.getPoint1().getY(),
+					(int)(drawingData.getPoint1().getX() * zoomX),
+					(int)(drawingData.getPoint1().getY() * zoomX),
 					0,
 					false,
 					swingButton);
@@ -850,9 +845,9 @@ public class NetManager extends Observable implements Runnable {
 					drawingData.getColor().getGreen(),
 					drawingData.getColor().getBlue()
 			);
-			int x1 = (int)drawingData.getPoint1().getX();
+			int x1 = (int)(drawingData.getPoint1().getX() * zoomX);
 			int x2 = x1;
-			int y1 = (int)drawingData.getPoint1().getY();
+			int y1 = (int)(drawingData.getPoint1().getY() * zoomX);
 			int y2 = y1;
 			
 			/* Handle text properties if the used tool was TEXT. Otherwise, handle stroke properties */
@@ -868,8 +863,8 @@ public class NetManager extends Observable implements Runnable {
 				c.handleOpacityChange(drawingData.getOpacity());
 				c.handleWidthChange(drawingData.getWidth());
 				c.handleDashChange(drawingData.getType().getFigure().getDash_array(), drawingData.getType().getFigure().getDash_phase());
-				y2 = (int)drawingData.getType().getFigure().getPoint2().getY();
-				x2 = (int)drawingData.getType().getFigure().getPoint2().getX();
+				y2 = (int)(drawingData.getType().getFigure().getPoint2().getY() * zoomX);
+				x2 = (int)(drawingData.getType().getFigure().getPoint2().getX() * zoomX);
 			}
 			
 			/* Both text and stroke has color properties */
@@ -911,7 +906,7 @@ public class NetManager extends Observable implements Runnable {
 					swingButton);
 
 			if (usedTool.getName().equals("SelectorNet")){
-				DrawingShape d = (DrawingShape) remoteUser.findDrawing(drawingData.getNumber());
+				DrawingShape d = (DrawingShape) remoteUser.getDrawing(drawingData.getNumber());
 				d.setSelected(true);
 				double xOffset = (drawingData.getPoint1().getX() - d.getBounds2D().getX());
 				double yOffset = drawingData.getPoint1().getY() - d.getBounds2D().getY() ;

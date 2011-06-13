@@ -115,12 +115,11 @@ public class ChatView extends JPanel implements Observer {
 	private SmileysPopup             popup;
 	private int                      currentTabIndex;
 	private String                   currentTabTitle;
-	private JTabbedPane              tabbedPane;
-	private JTextField               inputText;
 	private IChatController          controller;
 	private ArrayList<JTextPane>     chatTabs;
 	private JButton                  smileyButton;
-	
+	private JTabbedPane              tabbedPane;
+	private JTextField               inputText;
 	/**
 	 * 
 	 * @param c
@@ -260,6 +259,7 @@ public class ChatView extends JPanel implements Observer {
 	 */
 	private int createNewTab(String title) {
 		int exist = tabbedPane.indexOfTab(title);
+		
 		if (exist != -1)
 			return exist;
 		

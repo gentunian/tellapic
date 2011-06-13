@@ -5,14 +5,14 @@
 #include "tellapic/tellapic.h"
 
 
-POSH_PUBLIC_API(size_t)
+POSH_PUBLIC_API(long)
 _read_nb(tellapic_socket_t socket, size_t totalbytes, byte_t *buf) 
 {
   return 1;
 }
 
 
-POSH_PUBLIC_API(size_t)
+POSH_PUBLIC_API(long)
 _read_b(tellapic_socket_t socket, size_t totalbytes, byte_t *buf) 
 {
   struct timeval tv;
@@ -36,7 +36,7 @@ _read_b(tellapic_socket_t socket, size_t totalbytes, byte_t *buf)
 }
 
 
-static size_t
+static long
 _read_s(SOCKET socket, size_t totalbytes, byte_t *buf) 
 {
 

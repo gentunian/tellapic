@@ -237,11 +237,11 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 	 */
 	@Override
 	public void update(Observable observable, Object data) {
-		if (observable instanceof ZoomTool) {
+		if (observable instanceof ControlToolZoom) {
 			float newZoom = (Float) data;
 			setZoom(
-					(int)((ZoomTool)observable).getInit().getX(),
-					(int) ((ZoomTool)observable).getInit().getY(),
+					(int)((ControlToolZoom)observable).getInit().getX(),
+					(int) ((ControlToolZoom)observable).getInit().getY(),
 					newZoom
 			);
 		}
@@ -616,7 +616,7 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 		AbstractUser localUser = UserManager.getInstance().getLocalUser();
 		Tool tool = localUser.getToolBoxModel().getLastUsedTool();
 		
-		ZoomTool zoomTool = ZoomTool.getInstance();
+		ControlToolZoom zoomTool = ControlToolZoom.getInstance();
 		localUser.getToolBoxModel().setCurrentTool(zoomTool);
 		zoomTool.setZoomIn(step > 0);
 		MouseEvent newEvent = new MouseEvent(
