@@ -52,8 +52,8 @@ public class ControlPoint extends Ellipse2D{
 	private Ellipse2D    controlPoint;
 	private ControlType  controlType;
 	private Color        controlPointColor;
-	private BasicStroke  stroke;
-	private Cursor       cursor;
+	private BasicStroke  controlPointStroke;
+	private Cursor       controlPointCursor;
 	private boolean      selected;
 	
 	/**
@@ -65,7 +65,7 @@ public class ControlPoint extends Ellipse2D{
 	 */
 	public ControlPoint(ControlType type, Color color) throws IllegalControlPointTypeException{
 		controlType = type;
-		stroke = new BasicStroke(2, 0, 0, 10);
+		controlPointStroke = new BasicStroke(2, 0, 0, 10);
 		setControlPointColor(color);
 	}
 	
@@ -223,7 +223,7 @@ public class ControlPoint extends Ellipse2D{
 		if (controlPoint == null)
 			return;
 		
-		g.setStroke(stroke);
+		g.setStroke(controlPointStroke);
 		g.setColor(Color.black);
 		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		g.draw(controlPoint);
@@ -243,14 +243,14 @@ public class ControlPoint extends Ellipse2D{
 	 * @param cursor the cursor to set
 	 */
 	public void setCursor(Cursor cursor) {
-		this.cursor = cursor;
+		controlPointCursor = cursor;
 	}
 
 	/**
 	 * @return the cursor
 	 */
 	public Cursor getCursor() {
-		return cursor;
+		return controlPointCursor;
 	}
 
 	/**

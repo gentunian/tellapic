@@ -25,19 +25,60 @@ package ar.com.tellapic;
  */
 public interface IUserManager {
 	
+	/**
+	 * Adds an existing user to the users list. 
+	 * 
+	 * @param user the user to be added to the users list.
+	 * @return true if the user was succesfully added.
+	 */
 	public boolean addUser(AbstractUser user);
 	
-	public AbstractUser delUser(String userName);
+	/**
+	 * Removes the user with the specified userName.
+	 * 
+	 * @param userName The user name of the user to be removed.
+	 * @return true if the user was removed. False otherwise.
+	 */
+	public boolean delUser(String userName);
 	
-	public AbstractUser delUser(int id);
+	/**
+	 * Removes the user with the specified id.
+	 * 
+	 * @param id the id of the user to be removed.
+	 * @return true if the user was removed. False otherwise.
+	 */
+	public boolean delUser(int id);
 	
-//	public AbstractUser delUser(AbstractUser user);
+	/**
+	 * Removes the user from the users list.
+	 * 
+	 * @param user the user to be removed from the users list.
+	 * @return true if the user is succcessfully removed, false otherwise.
+	 */
+	public boolean delUser(AbstractUser user);
 	
+	/**
+	 * 
+	 * @param userName
+	 * @return
+	 */
 	public boolean requireDisconnection(String userName);
 	
-//	public void setUserVisible(String userName, boolean visible);
+	/**
+	 * Creates a remote user instance with the specified userId and userName.
+	 * 
+	 * @param userId
+	 * @param userName
+	 * @return the remote user instance.
+	 */
+	public RemoteUser createRemoteUser(int userId, String userName);
 	
-	public AbstractUser createUser(int userId, String userName, boolean remote);
-	
-//	public void toggleUserVisibility(String name);
+	/**
+	 * Creates a local user instance with the specified userId and userName.
+	 * 
+	 * @param userId
+	 * @param userName
+	 * @return the local user instance.
+	 */
+	public LocalUser createLocalUser(int userId, String userName);
 }

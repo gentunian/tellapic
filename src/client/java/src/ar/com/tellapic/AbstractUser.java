@@ -28,14 +28,21 @@ import ar.com.tellapic.graphics.IToolBoxController;
 import ar.com.tellapic.graphics.PaintProperty;
 import ar.com.tellapic.graphics.PaintPropertyAlpha;
 import ar.com.tellapic.graphics.PaintPropertyColor;
+import ar.com.tellapic.graphics.PaintPropertyController;
 import ar.com.tellapic.graphics.PaintPropertyFont;
 import ar.com.tellapic.graphics.PaintPropertyStroke;
+import ar.com.tellapic.graphics.Tool;
+import ar.com.tellapic.graphics.ToolBoxController;
 import ar.com.tellapic.graphics.ToolBoxModel;
-import ar.com.tellapic.lib.tellapic;
-import ar.com.tellapic.lib.tellapicConstants;
 import ar.com.tellapic.utils.Utils;
 
 /**
+ * This class encapsulates user information. An User owns a toolbox model with 2 controllers over it.
+ * Each user has a drawing list, that could be not sorted. This drawings are of their own, and only
+ * this user can modify them. The only way drawings can be modified externally, is by setting this
+ * user custom override properties. Although, no real modification is made to the actual drawings.
+ * 
+ * 
  * @author 
  *          Sebastian Treu
  *          sebastian.treu(at)gmail.com
@@ -60,7 +67,6 @@ public abstract class AbstractUser extends Observable implements Observer {
 	//local user wants, that is, if a user gets disconnected, the user will appear as disconnected
 	//and it won't be removed unless the local user wants to.
 	protected ArrayList<AbstractDrawing>      drawingList;
-	
 	
 	// This is the first drawing, added to the list of drawings, that has not been drawn yet on screen.
 	// And, that divides the drawing list in two as follows:
@@ -90,19 +96,18 @@ public abstract class AbstractUser extends Observable implements Observer {
 	//list and to be a 'firstNotDrawn' object accordingly, if the user desires to complete the drawing. Else,
 	//this object will be discarded and not drawn.
 	private AbstractDrawing                 temporalDrawing;
-
 	
-	// User properties
-	//private int     state;
 	private int              userId;
 	private String           name;
 	private boolean          visible;
 	private boolean          removed;
+	private boolean          selected;
+	private boolean          remote;
 	private PaintProperty[]  customProperties;
 	
-	
 	/**
-	 * 
+	 * Create an user instance with a toolbox model, a toolbox controller, a paint property controller
+	 * and an empty drawing list. 
 	 */
 	public AbstractUser() {
 		visible = true;
@@ -111,25 +116,41 @@ public abstract class AbstractUser extends Observable implements Observer {
 		drawingList = new ArrayList<AbstractDrawing>();
 		//TODO: the idea was that local user can set how to paint all paintings of a user
 		customProperties = new PaintProperty[4];
+		
+		toolboxController = new ToolBoxController(toolBox);
+		
+		paintController = new PaintPropertyController(toolBox);
+		
+		for(Tool tool : toolBox.getTools().values())
+			tool.setUser(this);
 	}
 	
-	
 	/**
-	 * 
-	 * @param id
-	 * @param name
-	 */
+	 * Create an user instance with a toolbox model, a toolbox controller, a paint property controller
+	 * and an empty drawing list with the specified name and id.
+	 * @param id the id of this user.
+	 * @param name the name of this user.
+	 */ 
 	public AbstractUser(int id, String name) {
 		this();
 		this.name = name;
 		userId    = id;
 	}
-	
-	
+		
 	/**
+	 * Adds a drawing to this user drawing list. If the drawing has been numbered (f.i. a server) 
+	 * @see {ar.com.tellapic.AbstractUser#setDrawingNumber(java.lang.String info))}, then
+	 * the drawing is also added to the DrawingAreaModel that mantains an ordered list of drawings.
 	 * 
-	 * @param drawing
-	 * @throws NullPointerException
+	 * If the drawing added is the same object as the user temporal drawing, then the temporal drawing is
+	 * set to null. Temporal drawings are drawings that the user is actually drawing.
+	 *
+	 * It's not possible to add a null drawing.
+	 * 
+	 * The user will notify its observer if is visible.
+	 * 
+	 * @param drawing the drawing to be added.
+	 * @throws NullPointerException if the drawing to be added is null.
 	 */
 	public synchronized void addDrawing(AbstractDrawing drawing) throws NullPointerException {
 		if (drawing == null)
@@ -153,20 +174,11 @@ public abstract class AbstractUser extends Observable implements Observer {
 		if (isVisible())
 			notifyObservers(drawing);
 	}
-	
-	
-	/**
-	 * 
-	 * @param id
-	 */
-	public AbstractUser(int id) {
-		this(id, null);
-	}
-	
+
 	
 	/**
-	 * 
-	 * @return
+	 * Gets the model of this user toolbox.
+	 * @return the model of this user toolbox.
 	 */
 	public ToolBoxModel getToolBoxModel() {
 		return toolBox;
@@ -174,16 +186,25 @@ public abstract class AbstractUser extends Observable implements Observer {
 	
 
 	/**
-	 * 
-	 * @return
+	 * Get the user id. 
+	 * @return the id of this user.
 	 */
 	public int getUserId() {
 		return userId;
 	}
 	
+	/**
+	 * Sets the user id.
+	 * @param id the id to set for this user.
+	 */
+	public void setUserId(int id) {
+		this.userId = id;
+		setChanged();
+		notifyObservers();
+	}
 	
 	/**
-	 * 
+	 * A string representation of this user is it's name.
 	 */
 	@Override
 	public String toString() {
@@ -192,8 +213,8 @@ public abstract class AbstractUser extends Observable implements Observer {
 	
 	
 	/**
-	 * 
-	 * @param visible
+	 * Sets this user visibility to visible.
+	 * @param visible the user visibility value to set.
 	 */
 	public void setVisible(boolean visible) {
 		this.visible = visible;
@@ -203,56 +224,67 @@ public abstract class AbstractUser extends Observable implements Observer {
 	
 	
 	/**
-	 * 
-	 * @return
+	 * Returns true if this user visibility is set to true. False otherwise.
+	 * @return the user visibility value.
 	 */
 	public boolean isVisible() {
 		return visible;
 	}
 	
 	/**
-	 * 
-	 * @return
+	 * Returns true if this user is selected. False otherwise.
+	 * @return the selected state of this user (true or false).
 	 */
-	public abstract boolean isSpecial();
+	public boolean isSelected() {
+		return selected;
+	}
+	
+	/**
+	 * Set the selected state of this user
+	 * @param selected the selected state of this user (true or false)
+	 */
+	public void setSelected(boolean selected) {
+		this.selected = selected;
+	}
+	
+	/**
+	 * Returns true if this user is not a local user. Remote users are special in the sense that 
+	 * they mouse events doesn't exist.
+	 * @return true if this user is remote. False otherwise.
+	 */
+	public boolean isRemote() {
+		return remote;
+	}
 	
 	/**
 	 * 
-	 * @return
+	 * @param remote
 	 */
-	public abstract boolean isSelected();
+	public void setRemote(boolean remote) {
+		this.remote = remote;
+	}
 	
 	/**
-	 * 
-	 * @return
-	 */
-	public abstract boolean isRemote();
-	
-	
-	/**
-	 * 
-	 * @return
+	 * Gets the name of this user. 
+	 * @return the name of this user.
 	 */
 	public String getName() {
 		return name;
 	}
 	
-
+	/**
+	 * Sets the name for this user.
+	 * @param name the name to set for this user.
+	 */
 	public void setName(String name) {
 		this.name = name;
 		setChanged();
 		notifyObservers();
 	}
 	
-	public void setUserId(int id) {
-		this.userId = id;
-		setChanged();
-		notifyObservers();
-	}
-	
 	/**
-	 * 
-	 * @return
+	 * Gets the drawings this user owns.
+	 * @return the list of drawings this user has.
 	 */
 	public ArrayList<AbstractDrawing> getDrawings() {
 		return drawingList;
@@ -270,24 +302,30 @@ public abstract class AbstractUser extends Observable implements Observer {
 	
 
 	/**
-	 * @return the removed
+	 * Returns the removed state of this user.
+	 * @return removed true if the user has been removed or disconnected. False otherwise.
 	 */
 	public boolean isRemoved() {
 		return removed;
 	}
 
-
 	/**
+	 * Sets custom properties for all drawings of this user. Overrides each drawing properties and sets
+	 * each drawgin property to property. No actual drawing property modification is made. All drawings
+	 * conserve its properties, but if any custom property is set, the drawing will be drawn with that
+	 * custom property.
 	 * 
-	 * @param property
-	 * @param type
-	 * @throws NoSuchPropertyType
-	 * @throws WrongPropertyType
+	 * Commonly, other users will set custom properties for drawing this user drawings. It could be useful
+	 * to see all drawings black, for example, and quickly identify all the drawings this user have.
+	 * 
+	 * @param property The property to override
+	 * @param type The type of the property to override.
+	 * @throws NoSuchPropertyType if no type does not specify a valid property
+	 * @throws WrongPropertyType if type property is valid, but does not match with the property 'property'.
 	 */
 	public void setCustomProperty(PaintProperty property, int type) throws NoSuchPropertyTypeException, WrongPropertyTypeException {
 		if (type != CUSTOM_PAINT_PROPERTY_COLOR && type != CUSTOM_PAINT_PROPERTY_STROKE && type != CUSTOM_PAINT_PROPERTY_FONT && type != CUSTOM_PAINT_PROPERTY_ALPHA )
 			throw new NoSuchPropertyTypeException("Cannot find type "+type);
-		
 		
 		if ( property != null &&
 				(type == CUSTOM_PAINT_PROPERTY_COLOR && !(property instanceof PaintPropertyColor)) ||
@@ -295,7 +333,6 @@ public abstract class AbstractUser extends Observable implements Observer {
 				(type == CUSTOM_PAINT_PROPERTY_FONT && !(property instanceof PaintPropertyFont)) ||
 				(type == CUSTOM_PAINT_PROPERTY_ALPHA &&!(property instanceof PaintPropertyAlpha)))
 			throw new WrongPropertyTypeException("type and property does not match.");
-	
 		
 		customProperties[type] = property;
 		setChanged();
@@ -303,12 +340,23 @@ public abstract class AbstractUser extends Observable implements Observer {
 	
 	}
 	
+	/**
+	 * Gets a custom property, if any.
+	 * @param type The type of the custom property we want to retrieve.
+	 * @return The custom property if any, or nulll.
+	 * @throws NoSuchPropertyType if no type does not specify a valid property
+	 */
+	public PaintProperty getCustomProperty(int type) throws NoSuchPropertyTypeException {
+		if (type != CUSTOM_PAINT_PROPERTY_COLOR && type != CUSTOM_PAINT_PROPERTY_STROKE && type != CUSTOM_PAINT_PROPERTY_FONT && type != CUSTOM_PAINT_PROPERTY_ALPHA )
+			throw new NoSuchPropertyTypeException("Cannot find type "+type);
+		
+		return customProperties[type];
+	}
 	
 	/**
-	 * 
-	 * @param type
-	 * @throws NoSuchPropertyTypeException
-	 * @throws WrongPropertyTypeException
+	 * Removes a custom property, if set.
+	 * @param type The type of the property to be removed
+	 * @throws NoSuchPropertyTypeException if no type does not specify a valid property
 	 */
 	public void removeCustomProperty(int type) throws NoSuchPropertyTypeException {
 		if (type != CUSTOM_PAINT_PROPERTY_COLOR && type != CUSTOM_PAINT_PROPERTY_STROKE && type != CUSTOM_PAINT_PROPERTY_FONT && type != CUSTOM_PAINT_PROPERTY_ALPHA )
@@ -319,22 +367,9 @@ public abstract class AbstractUser extends Observable implements Observer {
 		notifyObservers();
 	}
 	
-	
 	/**
+	 * Gets the array of custom properties.
 	 * 
-	 * @param type
-	 * @return
-	 * @throws NoSuchPropertyType
-	 */
-	public PaintProperty getCustomProperty(int type) throws NoSuchPropertyTypeException {
-		if (type != CUSTOM_PAINT_PROPERTY_COLOR && type != CUSTOM_PAINT_PROPERTY_STROKE && type != CUSTOM_PAINT_PROPERTY_FONT && type != CUSTOM_PAINT_PROPERTY_ALPHA )
-			throw new NoSuchPropertyTypeException("Cannot find type "+type);
-		
-		return customProperties[type];
-	}
-	
-	
-	/**
 	 * @return the customProperties
 	 */
 	public PaintProperty[] getCustomProperties() {
@@ -343,7 +378,13 @@ public abstract class AbstractUser extends Observable implements Observer {
 
 
 	/**
-	 * @param drawing
+	 * Removes a drawing from the drawing list. It will also remove this drawing from the DrawingAreaModel if
+	 * remove procedure was successful.
+	 * 
+	 * If this user is a local user, it then sends information about the removal to the server.
+	 * 
+	 * @param drawing The drawing to be removed.
+	 * @return true if the drawing was successfully removed. False otherwise.
 	 */
 	public synchronized boolean removeDrawing(AbstractDrawing drawing) {
 		if (drawing == null)
@@ -356,18 +397,15 @@ public abstract class AbstractUser extends Observable implements Observer {
 			DrawingAreaModel.getInstance().removeDrawing(drawing);
 			setChanged();
 			notifyObservers(new Object[]{drawing, index});
-			String number = String.valueOf(drawing.getNumber());
-			if (!isRemote())
-				tellapic.tellapic_send_ctle(NetManager.getInstance().getSocket(), SessionUtils.getId(), tellapicConstants.CTL_CL_RMFIG, number.length(), number);
 		}
 		
 		return removed;
 	}
 	
-	
 	/**
-	 * 
-	 * @return
+	 * Removes last drawing from the drawing list.
+	 *  
+	 * @return true if removal was successfull. False otherwise.
 	 */
 	public synchronized boolean removeLastDrawing() {
 		if (drawingList.isEmpty())
@@ -377,45 +415,50 @@ public abstract class AbstractUser extends Observable implements Observer {
 		
 		return removeDrawing(drawing);
 	}
-
 	
 	/**
-	 * @return
+	 * Gets information about this user action.
+	 * 
+	 * @return true if the user is drawing. False otherwise.
 	 */
 	public boolean isDrawing() {
 		return temporalDrawing != null;
 	}
 
-
 	/**
-	 * @return
+	 * Returns the temporal drawing this user is drawing.
+	 * 
+	 * @return the temporal drawing. Could be null.
 	 */
 	public AbstractDrawing getDrawing() {
 		return temporalDrawing;
 	}
 
-
 	/**
-	 * @param temporalDrawing2
+	 * Sets this user temporal drawing. This is commonly set by this user tool.
+	 * Tools will create drawings as they are used. While a tool is in use by
+	 * this user, the tool will set this user temporal drawing.
+	 * 
+	 * @param temporalDrawing the drawing the current user tool is generating.
 	 */
 	public void setTemporalDrawing(AbstractDrawing temporalDrawing) {
 		this.temporalDrawing = temporalDrawing; 
 	}
 
-
 	/**
-	 * @param number
+	 * Removes a drawing by its number represented by a String.
+	 * @param number the number from the drawing to be removed.
 	 */
 	public synchronized boolean removeDrawing(String number) {
 		return removeDrawing(Long.parseLong(number));
 	}
 	
 	/**
-	 * 
-	 * @param number
+	 * Removes a drawing by its number.
+	 * @param number the number from the drawing to be removed.
 	 */
 	public synchronized boolean removeDrawing(long number) {
-		AbstractDrawing drawing = findDrawing(number);
+		AbstractDrawing drawing = getDrawing(number);
 		
 		if (drawing == null)
 			return false;
@@ -424,11 +467,12 @@ public abstract class AbstractUser extends Observable implements Observer {
 	}
 	
 	/**
+	 * Gets a drawing from this user drawing list with the specified number.
 	 * 
-	 * @param number
-	 * @return
+	 * @param number the number from the drawing we want to gather.
+	 * @return the drawing found, or null if no drawing was found.
 	 */
-	public AbstractDrawing findDrawing(long number) {
+	public AbstractDrawing getDrawing(long number) {
 		boolean found   = false;
 		AbstractDrawing drawing = null;
 		
@@ -441,40 +485,55 @@ public abstract class AbstractUser extends Observable implements Observer {
 	}
 	
 	/**
-	 * @param toolboxController the toolboxController to set
+	 * Sets this user toolbox controller.
+	 * 
+	 * @param toolboxController the toolbox controller to be set.
 	 */
 	public void setToolboxController(IToolBoxController toolboxController) {
 		this.toolboxController = toolboxController;
 	}
 
 	/**
-	 * @return the toolboxController
+	 * Gets this user toolbox controller.
+	 * @return the toolbox controller this user has.
 	 */
 	public IToolBoxController getToolboxController() {
 		return toolboxController;
 	}
 
 	/**
-	 * @param paintController the paintController to set
+	 * Sets this user paint property controller.
+	 * @param paintController the paint property controller this user has.
 	 */
 	public void setPaintController(IPaintPropertyController paintController) {
 		this.paintController = paintController;
 	}
 
 	/**
-	 * @return the paintController
+	 * Gets the paint controller this user has.
+	 * @return
 	 */
 	public IPaintPropertyController getPaintController() {
 		return paintController;
 	}
 
-
 	/**
-	 * @param info
+	 * Sets the drawing number from the first drawing in the drawing list numbered with 0.
+	 * 
+	 * When a local user draws a drawing, it can't generate a drawing with a correct number. The
+	 * drawing must reach the server first as it's the only who can specify drawing order. The 
+	 * server will respond each user with a number for the drawing the user is drawing. Before that,
+	 * local users could have finish drawing. So they add the drawing to their drawing list, and they
+	 * set the drawing number to 0. When each user receives a number packet, they set this number
+	 * to the first drawing unnumbered in their drawing list, that is, the first drawing with number 0.
+	 * 
+	 * Numbered drawings starts at 1. Any number less than 1 is considered an unnumbered drawing.
+	 * 
+	 * @param info The number to set as a string representation.
 	 */
 	public void setDrawingNumber(String info) {
 		Utils.logMessage("setDrawingNumber() call");
-		AbstractDrawing drawing = findDrawing(0);
+		AbstractDrawing drawing = getDrawing(0);
 		Long number = Long.parseLong(info);
 		
 		/* If we find a drawin 'unnumbered' (that is, with number 0), then set the number the server provides us */

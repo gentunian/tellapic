@@ -20,8 +20,6 @@ package ar.com.tellapic;
 import java.util.Observable;
 
 import ar.com.tellapic.graphics.AbstractDrawing;
-import ar.com.tellapic.graphics.PaintPropertyController;
-import ar.com.tellapic.graphics.ToolBoxController;
 
 /**
  * @author 
@@ -31,51 +29,12 @@ import ar.com.tellapic.graphics.ToolBoxController;
  */
 public class RemoteUser extends AbstractUser {
 	
-	public RemoteUser() {
-		super();
-		setToolboxController(new ToolBoxController(getToolBoxModel()));
-		setPaintController(new PaintPropertyController(getToolBoxModel()));
-	}
-	
 	/**
 	 * @param id
 	 */
 	public RemoteUser(int id, String name) {
 		super(id, name);
-		setToolboxController(new ToolBoxController(getToolBoxModel()));
-		setPaintController(new PaintPropertyController(getToolBoxModel()));
-	}
-
-	/*
-	public void selectTool(String name) {
-		toolboxController.selectToolByName(name);
-	}
-	*/
-	
-	/* (non-Javadoc)
-	 * @see com.tellapic.AbstractUser#isRemote()
-	 */
-	@Override
-	public boolean isRemote() {
-		return true;
-	}
-
-	/* (non-Javadoc)
-	 * @see com.tellapic.AbstractUser#isSelected()
-	 */
-	@Override
-	public boolean isSelected() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	/* (non-Javadoc)
-	 * @see com.tellapic.AbstractUser#isSpecial()
-	 */
-	@Override
-	public boolean isSpecial() {
-		// TODO Auto-generated method stub
-		return false;
+		setRemote(true);
 	}
 
 	/* (non-Javadoc)

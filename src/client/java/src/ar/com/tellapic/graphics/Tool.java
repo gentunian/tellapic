@@ -1,9 +1,13 @@
 package ar.com.tellapic.graphics;
 
 import java.awt.Cursor;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.Observable;
+
+import ar.com.tellapic.AbstractUser;
+import ar.com.tellapic.StatusBar;
 
 /**
  * Abstract class Tool.
@@ -44,6 +48,8 @@ public abstract class Tool extends Observable implements MouseListener, MouseMot
 	private Cursor           toolCursor;
 	private boolean          visible;
 	private boolean          selected;
+	private boolean          inUse;
+	protected AbstractUser     user;
 	
 	
 	/**
@@ -72,6 +78,7 @@ public abstract class Tool extends Observable implements MouseListener, MouseMot
 		this.name        = name;
 		this.id          = id;
 		this.toolCursor  = (cursor == null)? Cursor.getDefaultCursor() : cursor;
+		this.inUse       = false;
 	}
 	
 	/**
@@ -89,12 +96,6 @@ public abstract class Tool extends Observable implements MouseListener, MouseMot
 	public int getToolId() {
 		return id;
 	}
-	
-	/**
-	 * 
-	 * @return true if the tool is being used. False otherwise
-	 */
-	public abstract boolean isBeingUsed();
 	
 	/**
 	 * 
@@ -172,5 +173,68 @@ public abstract class Tool extends Observable implements MouseListener, MouseMot
 	 */
 	public boolean isSelected() {
 		return selected;
+	}
+	
+	/*
+	 * (non-Javadoc)
+	 * @see java.awt.event.MouseMotionListener#mouseMoved(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mouseMoved(MouseEvent e) {
+		if(isSelected() && !e.isConsumed()) {
+			StatusBar.getInstance().setToolInfo(getIconPath(), getToolTipText());
+		}
+	}
+	
+	/**
+	 * 
+	 */
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		if (isSelected() && !e.isConsumed()) {
+			if ((e.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK) {
+				setInUse(true);
+			}
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseListener#mouseExited(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mouseExited(MouseEvent e) {
+		if (isSelected() && !e.isConsumed()) {
+			setInUse(false);
+		}
+	}
+	
+	/**
+	 * @param b
+	 */
+	public void setInUse(boolean b) {
+		inUse = b;
+	}
+	
+	/**
+	 * 
+	 */
+	public boolean isBeingUsed() {
+		return inUse;
+	}
+
+
+	/**
+	 * @param user the user to set
+	 */
+	public void setUser(AbstractUser user) {
+		this.user = user;
+	}
+
+
+	/**
+	 * @return the user
+	 */
+	public AbstractUser getUser() {
+		return user;
 	}
 }

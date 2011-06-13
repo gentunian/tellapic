@@ -97,4 +97,11 @@ private Rectangle2D rectangle;
 //		setChanged();
 //		notifyObservers();
 	}
+
+	/**
+	 * @return
+	 */
+	public boolean isEmpty() {
+		return rectangle.isEmpty();
+	}
 }

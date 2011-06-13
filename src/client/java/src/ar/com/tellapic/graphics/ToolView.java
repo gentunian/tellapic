@@ -120,7 +120,7 @@ public class ToolView extends JPanel implements Observer {
 	
 	
 
-	public void setController(IToolBoxController c) {
+	public void setToolBoxController(IToolBoxController c) {
 		controller = c;
 	}
 	

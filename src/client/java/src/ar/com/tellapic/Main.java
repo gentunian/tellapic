@@ -24,15 +24,15 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
 import ar.com.tellapic.NetManager.WrongPacketException;
-import ar.com.tellapic.graphics.EllipseNet;
-import ar.com.tellapic.graphics.LineNet;
-import ar.com.tellapic.graphics.MarkerNet;
-import ar.com.tellapic.graphics.PenNet;
-import ar.com.tellapic.graphics.RectangleNet;
-import ar.com.tellapic.graphics.SelectorNet;
-import ar.com.tellapic.graphics.TextNet;
+import ar.com.tellapic.graphics.ControlToolSelectorNet;
+import ar.com.tellapic.graphics.ControlToolZoom;
+import ar.com.tellapic.graphics.DrawingToolEllipseNet;
+import ar.com.tellapic.graphics.DrawingToolLineNet;
+import ar.com.tellapic.graphics.DrawingToolMarkerNet;
+import ar.com.tellapic.graphics.DrawingToolPenNet;
+import ar.com.tellapic.graphics.DrawingToolRectangleNet;
+import ar.com.tellapic.graphics.DrawingToolTextNet;
 import ar.com.tellapic.graphics.ToolFactory;
-import ar.com.tellapic.graphics.ZoomTool;
 import ar.com.tellapic.lib.tellapicConstants;
 import ar.com.tellapic.utils.Utils;
 
@@ -192,17 +192,17 @@ public class Main {
 	 * @param name
 	 */
 	private static void initiate(final int id, final String name) {
-		ToolFactory.registerToolClassName(99, ZoomTool.class.getName());
-		ToolFactory.registerToolClassName(tellapicConstants.TOOL_ELLIPSE, EllipseNet.class.getName());
-		ToolFactory.registerToolClassName(tellapicConstants.TOOL_LINE, LineNet.class.getName());
-		ToolFactory.registerToolClassName(tellapicConstants.TOOL_RECT, RectangleNet.class.getName());
-		ToolFactory.registerToolClassName(tellapicConstants.TOOL_TEXT, TextNet.class.getName());
-		ToolFactory.registerToolClassName(tellapicConstants.TOOL_MARKER, MarkerNet.class.getName());
-		ToolFactory.registerToolClassName(tellapicConstants.TOOL_PATH, PenNet.class.getName());
-		ToolFactory.registerToolClassName(tellapicConstants.TOOL_SELECTOR, SelectorNet.class.getName());
+		ToolFactory.registerToolClassName(99, ControlToolZoom.class.getName());
+		ToolFactory.registerToolClassName(tellapicConstants.TOOL_ELLIPSE, DrawingToolEllipseNet.class.getName());
+		ToolFactory.registerToolClassName(tellapicConstants.TOOL_LINE, DrawingToolLineNet.class.getName());
+		ToolFactory.registerToolClassName(tellapicConstants.TOOL_RECT, DrawingToolRectangleNet.class.getName());
+		ToolFactory.registerToolClassName(tellapicConstants.TOOL_TEXT, DrawingToolTextNet.class.getName());
+		ToolFactory.registerToolClassName(tellapicConstants.TOOL_MARKER, DrawingToolMarkerNet.class.getName());
+		ToolFactory.registerToolClassName(tellapicConstants.TOOL_PATH, DrawingToolPenNet.class.getName());
+		ToolFactory.registerToolClassName(tellapicConstants.TOOL_SELECTOR, ControlToolSelectorNet.class.getName());
 		
 		final UserManager userManager = UserManager.getInstance();
-		final LocalUser luser = (LocalUser) userManager.createUser(id, name, false);
+		final LocalUser luser = (LocalUser) userManager.createLocalUser(id, name);
 
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {

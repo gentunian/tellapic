@@ -31,8 +31,7 @@
         typedef struct socket_t {
 	  SOCKET   s_socket;
 	  int      s_interrupt;
-       }tellapic_socket_t;
-
+	}tellapic_socket_t;
 #else
 #      error "Fuck you"
 #endif

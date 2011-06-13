@@ -1609,7 +1609,7 @@ tellapic_read_pwd(tellapic_socket_t socket, char *pwd, int *len)
 /**
  *
  */
-POSH_PUBLIC_API(ssize_t)
+POSH_PUBLIC_API(long)
 tellapic_rawsend(tellapic_socket_t socket, byte_t *rawstream)
 {
   tellapic_u32_t ssize = _read_stream_size(rawstream);
@@ -1698,10 +1698,10 @@ tellapic_send(tellapic_socket_t socket, stream_t *stream)
 /**
  *
  */
-POSH_PUBLIC_API(ssize_t)
+POSH_PUBLIC_API(long)
 tellapic_send_file(tellapic_socket_t socket, FILE *file, tellapic_u32_t filesize)
 {
-  ssize_t bytesSent = 0;
+  long bytesSent = 0;
   byte_t         *rawstream = malloc(filesize + HEADER_SIZE);
   void           *pointer = rawstream;
 
@@ -1729,10 +1729,10 @@ tellapic_send_file(tellapic_socket_t socket, FILE *file, tellapic_u32_t filesize
 /**
  *
  */
-POSH_PUBLIC_API(ssize_t)
+POSH_PUBLIC_API(long)
 tellapic_send_struct(tellapic_socket_t socket, stream_t *stream)
 {
-  ssize_t       result = 0;
+  long       result = 0;
   unsigned int  textlen = 0;
   
   /* If stream was a broadcast chat message */
@@ -1950,10 +1950,10 @@ tellapic_send_struct(tellapic_socket_t socket, stream_t *stream)
 /**
  *
  */
-POSH_PUBLIC_API(ssize_t)
+POSH_PUBLIC_API(long)
 tellapic_send_text(tellapic_socket_t socket, int idfrom, unsigned long dnum, float w, float op, int red, int green, int blue, int x1, int y1, int style, int facelen, char *face, int infolen, char *info)
 {
-  ssize_t         bytesSent = 0;
+  long         bytesSent = 0;
   tellapic_u32_t ssize = MIN_FIGTXT_STREAM_SIZE + facelen + infolen;
   byte_t         *rawstream = malloc(ssize);
   void           *pointer = rawstream;
@@ -2017,10 +2017,10 @@ tellapic_send_text(tellapic_socket_t socket, int idfrom, unsigned long dnum, flo
 /**
  *
  */
-POSH_PUBLIC_API(ssize_t)
+POSH_PUBLIC_API(long)
 tellapic_send_drw_using(tellapic_socket_t socket, int tool, int dcbyte_ext, int idfrom, unsigned long dnum, float w, float op, int red, int green, int blue, int x1, int y1)
 {
-  ssize_t         bytesSent = 0;
+  long         bytesSent = 0;
   byte_t         *rawstream = malloc(DRW_USING_STREAM_SIZE);
   void           *pointer   = rawstream;
 
@@ -2068,10 +2068,10 @@ tellapic_send_drw_using(tellapic_socket_t socket, int tool, int dcbyte_ext, int 
 /**
  *
  */
-POSH_PUBLIC_API(ssize_t)
+POSH_PUBLIC_API(long)
 tellapic_send_drw_init(tellapic_socket_t socket, int tool, int dcbyte_ext, int idfrom, unsigned long dnum, float w, float op, int red, int green, int blue, int x1, int y1, int x2, int y2, int lj, int ec, float ml, float dp, float da[])
 {
-  ssize_t        bytesSent = 0;
+  long        bytesSent = 0;
   byte_t         *rawstream = malloc(DRW_INIT_STREAM_SIZE);
   void           *pointer   = rawstream;
   
@@ -2135,7 +2135,7 @@ tellapic_send_drw_init(tellapic_socket_t socket, int tool, int dcbyte_ext, int i
 /**
  *
  */
-POSH_PUBLIC_API(ssize_t)
+POSH_PUBLIC_API(long)
 tellapic_send_fig(tellapic_socket_t socket,
 		  int tool,
 		  int dcbyte_ext,
@@ -2156,7 +2156,7 @@ tellapic_send_fig(tellapic_socket_t socket,
 		  float dp,
 		  float da[])
 {
-  ssize_t         bytesSent = 0;
+  long         bytesSent = 0;
   byte_t         *rawstream = malloc(FIG_STREAM_SIZE);
   void           *pointer   = rawstream;
   
@@ -2221,10 +2221,10 @@ tellapic_send_fig(tellapic_socket_t socket,
 /**
  *
  */
-POSH_PUBLIC_API(ssize_t)
+POSH_PUBLIC_API(long)
 tellapic_send_chatp(tellapic_socket_t socket, int idfrom, int idto, int textlen, char* text)
 {
-  ssize_t        bytesSent = 0;
+  long        bytesSent = 0;
   tellapic_u32_t ssize = HEADER_SIZE + textlen + 2;
   byte_t         *rawstream = malloc(ssize);
   void           *pointer   = rawstream;
@@ -2260,10 +2260,10 @@ tellapic_send_chatp(tellapic_socket_t socket, int idfrom, int idto, int textlen,
 /**
  *
  */
-POSH_PUBLIC_API(ssize_t)
+POSH_PUBLIC_API(long)
 tellapic_send_chatb(tellapic_socket_t socket, int idfrom, int textlen, char* text)
 {
-  ssize_t        bytesSent = 0;
+  long        bytesSent = 0;
   tellapic_u32_t ssize = HEADER_SIZE + textlen + 1;
   byte_t         *rawstream = malloc(ssize);
   void           *pointer   = rawstream;
@@ -2297,10 +2297,10 @@ tellapic_send_chatb(tellapic_socket_t socket, int idfrom, int textlen, char* tex
 /**
  *
  */
-POSH_PUBLIC_API(ssize_t)
+POSH_PUBLIC_API(long)
 tellapic_send_ctle(tellapic_socket_t socket, int idfrom, int ctle, int infolen,  char *info)
 {
-  ssize_t bytesSent = 0;
+  long bytesSent = 0;
   tellapic_u32_t ssize = HEADER_SIZE + infolen + 1;
   byte_t         *rawstream = malloc(ssize);
   void           *pointer = rawstream;
@@ -2333,10 +2333,10 @@ tellapic_send_ctle(tellapic_socket_t socket, int idfrom, int ctle, int infolen, 
 /**
  *
  */
-POSH_PUBLIC_API(ssize_t)
+POSH_PUBLIC_API(long)
 tellapic_send_ctl(tellapic_socket_t socket, int idfrom, int ctl)
 {
-  ssize_t bytesSent = 0;
+  long bytesSent = 0;
   byte_t         *rawstream = malloc(CTL_STREAM_SIZE);
   void           *pointer = rawstream;
 

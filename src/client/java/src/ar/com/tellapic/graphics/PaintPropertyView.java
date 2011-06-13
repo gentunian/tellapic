@@ -234,16 +234,16 @@ public class PaintPropertyView extends JPanel implements Observer {
 		zoomToSizeButton = new JButton();
 		zoomInButton     = new JToggleButton();
 		zoomOutButton    = new JToggleButton();
-		zoomCombo        = new JComboBox(ZoomTool.getInstance());
+		zoomCombo        = new JComboBox(ControlToolZoom.getInstance());
 		
 		ButtonGroup group = new ButtonGroup();
 		group.add(zoomInButton);
 		group.add(zoomOutButton);
 		
-		zoomInButton.setIcon(new ImageIcon(Utils.createIconImage(ToolView.ICON_SIZE, ToolView.ICON_SIZE, ZoomTool.ZOOMIN_ICON_PATH)));
-		zoomOutButton.setIcon(new ImageIcon(Utils.createIconImage(ToolView.ICON_SIZE, ToolView.ICON_SIZE, ZoomTool.ZOOMOUT_ICON_PATH)));
-		zoomToFitButton.setIcon(new ImageIcon(Utils.createIconImage(ToolView.ICON_SIZE, ToolView.ICON_SIZE, ZoomTool.ZOOMTOFIT_ICON_PATH)));
-		zoomToSizeButton.setIcon(new ImageIcon(Utils.createIconImage(ToolView.ICON_SIZE, ToolView.ICON_SIZE, ZoomTool.ZOOMTOSIZE_ICON_PATH)));
+		zoomInButton.setIcon(new ImageIcon(Utils.createIconImage(ToolView.ICON_SIZE, ToolView.ICON_SIZE, ControlToolZoom.ZOOMIN_ICON_PATH)));
+		zoomOutButton.setIcon(new ImageIcon(Utils.createIconImage(ToolView.ICON_SIZE, ToolView.ICON_SIZE, ControlToolZoom.ZOOMOUT_ICON_PATH)));
+		zoomToFitButton.setIcon(new ImageIcon(Utils.createIconImage(ToolView.ICON_SIZE, ToolView.ICON_SIZE, ControlToolZoom.ZOOMTOFIT_ICON_PATH)));
+		zoomToSizeButton.setIcon(new ImageIcon(Utils.createIconImage(ToolView.ICON_SIZE, ToolView.ICON_SIZE, ControlToolZoom.ZOOMTOSIZE_ICON_PATH)));
 		Dimension iconDimension = new Dimension(ToolView.ICON_SIZE + 8, ToolView.ICON_SIZE + 8);
 		zoomInButton.setPreferredSize(iconDimension);
 		zoomOutButton.setPreferredSize(iconDimension);
@@ -759,7 +759,7 @@ public class PaintPropertyView extends JPanel implements Observer {
 	 * 
 	 * @param c the controller to set
 	 */
-	public void setController(IPaintPropertyController c) {
+	public void setPaintPropertyController(IPaintPropertyController c) {
 		controller = c;
 		setDefaultProperties();
 	}
@@ -1236,7 +1236,7 @@ public class PaintPropertyView extends JPanel implements Observer {
 			JSpinner spinner = (JSpinner) e.getSource();
 			SpinnerNumberModel model = (SpinnerNumberModel) spinner.getModel();
 			alpha = (Double) model.getValue()/100;
-			textValue = String.valueOf(alpha*100);
+			textValue = String.valueOf(new DecimalFormat("#.#").format(alpha*100));
 			if (controller != null) {
 				controller.handleOpacityChange(alpha);
 			}

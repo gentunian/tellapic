@@ -225,6 +225,7 @@ public class StatusBar extends JPanel implements Observer {
 	 * @param b
 	 */
 	public void setToolInfo(boolean b) {
+		// WTF?!?!?!!?!??
 		toolInfo.setText("");
 		toolInfo.setIcon(null);
 	}

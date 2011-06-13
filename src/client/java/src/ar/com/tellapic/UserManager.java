@@ -54,21 +54,14 @@ public class UserManager implements IUserManager, IUserManagerState, TreeTableMo
 		String.class
 	};
 	
-
+	/* The users list */
 	private ArrayList<AbstractUser> users;
-	
-	private TreeModelSupport tms;
+	private TreeModelSupport        tms;
 	
 	private static class Holder {
 		private final static UserManager INSTANCE = new UserManager();
 	}
 	
-	private UserManager() {
-		users = new ArrayList<AbstractUser>();
-		tms = new TreeModelSupport(this);
-	}
-	
-
 	/**
 	 * 
 	 * @return
@@ -77,30 +70,44 @@ public class UserManager implements IUserManager, IUserManagerState, TreeTableMo
 		return Holder.INSTANCE;
 	}
 
+	/**
+	 * 
+	 */
+	private UserManager() {
+		users = new ArrayList<AbstractUser>();
+		tms = new TreeModelSupport(this);
+	}
 	
 	/*
 	 * (non-Javadoc)
-	 * @see ar.com.tellapic.IUserManager#createUser(int, java.lang.String, boolean)
+	 * @see ar.com.tellapic.IUserManager#createLocalUser(int, java.lang.String)
 	 */
 	@Override
-	public AbstractUser createUser(int id, String name, boolean remote) {
-		AbstractUser user = null;
-		if (remote)
-			user = new RemoteUser();
-		else
-			user = LocalUser.getInstance();
+	public LocalUser createLocalUser(int id, String name) {
+		LocalUser localUser = LocalUser.getInstance();
 		
-		user.setName(name);
-		user.setUserId(id);
+		localUser.setName(name);
+		localUser.setUserId(id);
 		
-		if (addUser(user))
-			return user;
+		if (addUser(localUser))
+			return localUser;
 		else
 			return null; //TODO: Throw an exception?
 	}
 	
-	
+	/*
+	 * (non-Javadoc)
+	 * @see ar.com.tellapic.IUserManager#createRemoteUser(int, java.lang.String)
+	 */
+	@Override
+	public RemoteUser createRemoteUser(int id, String userName) {
+		RemoteUser remoteUser = new RemoteUser(id, userName);
 		
+		if (addUser(remoteUser))
+			return remoteUser;
+		else
+			return null; //TODO: Throw an exception?
+	}
 	
 	/*
 	 * (non-Javadoc)
@@ -118,7 +125,6 @@ public class UserManager implements IUserManager, IUserManagerState, TreeTableMo
 		return userWasAdded;
 	}
 	
-	
 	/*
 	 * (non-Javadoc)
 	 * @see com.tellapic.IUserManagerState#getLocalUser()
@@ -126,65 +132,20 @@ public class UserManager implements IUserManager, IUserManagerState, TreeTableMo
 	@Override
 	public LocalUser getLocalUser() {
 		for(int i = 0 ; i < users.size(); i++)
-			if (users.get(i) instanceof LocalUser)
+			if (!users.get(i).isRemote())
 				return (LocalUser) users.get(i);
 		return null;
 	}
-
-	
-	/*
-	 * 
-	 */
-	private AbstractUser findUser(String userName) {
-		AbstractUser user = null;
-		boolean found = false;
-		int i;
-		for(i = 0; i < users.size() && !found; i++) {
-			user = users.get(i);
-			found = user.getName().equals(userName);
-		}
-
-		return user;
-	}
-	
-	
-	/*
-	 * 
-	 */
-	private AbstractUser findUser(int id) {
-		AbstractUser user = null;
-		boolean found = false;
-		int i;
-		for(i = 0; i < users.size() && !found; i++) {
-			user = users.get(i);
-			found = (user.getUserId() == id);
-		}
-		
-		return (found)? user : null;
-	}
-	
-	
-	/*
-	 * 
-	 */
-	private void removeUser(AbstractUser user) {
-		if (users.remove(user))
-			user.cleanUp();
-		tms.fireTreeStructureChanged(new TreePath(users));
-	}
-
 
 	/*
 	 * (non-Javadoc)
 	 * @see ar.com.tellapic.IUserManager#delUser(java.lang.String)
 	 */
 	@Override
-	public AbstractUser delUser(String name) {
-		AbstractUser user = findUser(name);
+	public boolean delUser(String name) {
+		AbstractUser user = getUser(name);
 	
-		removeUser(user);
-		
-		return user;
+		return delUser(user);
 	}
 	
 	
@@ -192,15 +153,27 @@ public class UserManager implements IUserManager, IUserManagerState, TreeTableMo
 	 * @see ar.com.tellapic.IUserManager#delUser(int)
 	 */
 	@Override
-	public AbstractUser delUser(int id) {
-		AbstractUser user = findUser(id);
+	public boolean delUser(int id) {
+		AbstractUser user = getUser(id);
 
-		removeUser(user);
-		
-		return user;
+		return delUser(user);
 	}
 	
-	
+	/*
+	 * (non-Javadoc)
+	 * @see ar.com.tellapic.IUserManager#delUser(ar.com.tellapic.AbstractUser)
+	 */
+	@Override
+	public boolean delUser(AbstractUser user) {
+		boolean removed = users.remove(user);
+		
+		if (removed) {
+			user.cleanUp();
+			tms.fireTreeStructureChanged(new TreePath(users));
+		}
+		
+		return removed;
+	}
 	/*
 	 * (non-Javadoc)
 	 * @see com.tellapic.IUserManagerState#getUsers()
@@ -226,17 +199,31 @@ public class UserManager implements IUserManager, IUserManagerState, TreeTableMo
 	 * @see com.tellapic.IUserManagerState#getUser(int)
 	 */
 	@Override
-	public AbstractUser getUser(String name) {
-		return findUser(name);
-	}
+	public AbstractUser getUser(String userName) {
+		AbstractUser user  = null;
+		int i;
+		
+		for(i = 0; i < users.size() && !users.get(i).getName().equals(userName); i++);
 
+		if (i < users.size())
+			user = users.get(i);
+		
+		return user;
+	}
 	
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.IUserManagerState#getUserName(int)
 	 */
 	@Override
 	public AbstractUser getUser(int id) {
-		return findUser(id);
+		AbstractUser user = null;
+		int i;
+		for(i = 0; i < users.size() && users.get(i).getUserId() != id; i++);
+		
+		if (i < users.size())
+			user = users.get(i);
+		
+		return user;
 	}
 	
 	

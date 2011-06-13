@@ -29,9 +29,7 @@ import java.util.ArrayList;
 public interface IUserManagerState {
 
 	public LocalUser                         getLocalUser();
-//	public RemoteUser                        getRemoteUser(String userName);
 	public AbstractUser                      getUser(String userName);
 	public AbstractUser                      getUser(int id);
-//	public HashMap<String, RemoteUser>       getRemoteUsers();
 	public ArrayList<AbstractUser>           getUsers();
 }
