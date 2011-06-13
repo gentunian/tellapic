@@ -28,6 +28,17 @@ import java.awt.Cursor;
 public abstract class ControlTool extends Tool {
 	
 	/**
+	 * 
+	 * @param id
+	 * @param name
+	 * @param iconPath
+	 * @param description
+	 */
+	public ControlTool(int id, String name, String iconPath, String description) {
+		super(id, name, iconPath, description, null);
+	}
+
+	/**
 	 * @param id
 	 * @param name
 	 * @param iconPath
