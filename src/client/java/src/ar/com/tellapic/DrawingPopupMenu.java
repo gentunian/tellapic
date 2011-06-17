@@ -77,8 +77,9 @@ public class DrawingPopupMenu extends JPopupMenu {
 		delete.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				AbstractUser user = drawing.getUser();
+				TellapicAbstractUser user = drawing.getUser();
 				user.removeDrawing(drawing);
+				drawing.setSelected(false);
 			}
 		});
 		properties.addActionListener(new ActionListener() {

@@ -15,10 +15,13 @@
  *         sebastian.treu(at)gmail.com
  *
  */  
-package ar.com.tellapic.chat;
+package ar.com.tellapic;
 
-import ar.com.tellapic.NetManager;
-import ar.com.tellapic.UserManager;
+import ar.com.tellapic.chat.ChatClientModel;
+import ar.com.tellapic.chat.ChatMessage;
+import ar.com.tellapic.chat.IChatConnection;
+import ar.com.tellapic.chat.IChatController;
+import ar.com.tellapic.chat.IChatModelManager;
 import ar.com.tellapic.lib.tellapic;
 import ar.com.tellapic.lib.tellapic_socket_t;
 
@@ -29,14 +32,14 @@ import ar.com.tellapic.lib.tellapic_socket_t;
  *          sebastian.treu(at)gmail.com
  *
  */
-public class ChatModelController implements IChatController, IChatConnection {
+public class TellapicChatModelController implements IChatController, IChatConnection {
 	
 	private IChatModelManager model;
 	
 	/**
 	 * 
 	 */
-	public ChatModelController() {
+	public TellapicChatModelController() {
 		model = ChatClientModel.getInstance();
 	}
 
@@ -44,18 +47,18 @@ public class ChatModelController implements IChatController, IChatConnection {
 	 * @see com.tellapic.chat.IChatController#handleInput(java.lang.String, boolean)
 	 */
 	@Override
-	public void handleInput(Message message, boolean fromView) {//TODO: REVIEW!
-		model.addMessage(message);
-		if (fromView) {
+	public void handleInput(ChatMessage message) {
+		model.addChatMessage(message);
+
+		if (!message.isRemote())
 			sendMessage(message);
-		}
 	}
 
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.chat.IChatConnection#receiveMessage()
 	 */
 	@Override
-	public Message receiveMessage() {
+	public ChatMessage receiveMessage() {
 		return null;
 	}
 
@@ -63,13 +66,15 @@ public class ChatModelController implements IChatController, IChatConnection {
 	 * @see ar.com.tellapic.chat.IChatConnection#sendMessage(ar.com.tellapic.chat.Message)
 	 */
 	@Override
-	public void sendMessage(Message message) {
-		NetManager netManager = NetManager.getInstance();
-		tellapic_socket_t socket = netManager.getSocket();
-		int idFrom = UserManager.getInstance().getLocalUser().getUserId();
-		String text = message.getText();
+	public void sendMessage(ChatMessage message) {
+		NetManager        netManager = NetManager.getInstance();
+		tellapic_socket_t socket     = netManager.getSocket();
+		
+		int    idFrom = TellapicUserManager.getInstance().getUser(SessionUtils.getUsername()).getUserId();
+		String text   = message.getText();
+		
 		if (message.isPrivate()) {
-			int idTo = UserManager.getInstance().getUser(message.getReceiver()).getUserId();
+			int idTo = TellapicUserManager.getInstance().getUser(message.getReceiver()).getUserId();
 			tellapic.tellapic_send_chatp(socket, idFrom, idTo, text.length(), text);
 		} else {
 			tellapic.tellapic_send_chatb(socket, idFrom, text.length(), text);

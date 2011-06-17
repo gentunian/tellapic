@@ -201,9 +201,11 @@ public class Main {
 		ToolFactory.registerToolClassName(tellapicConstants.TOOL_PATH, DrawingToolPenNet.class.getName());
 		ToolFactory.registerToolClassName(tellapicConstants.TOOL_SELECTOR, ControlToolSelectorNet.class.getName());
 		
-		final UserManager userManager = UserManager.getInstance();
-		final LocalUser luser = (LocalUser) userManager.createLocalUser(id, name);
-
+		final TellapicUserManager userManager = TellapicUserManager.getInstance();
+		final TellapicLocalUser   luser       = TellapicLocalUser.getInstance();
+		luser.setUserId(id);
+		luser.setName(name);
+		userManager.addUser(luser);
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				new UserGUIBuilder(luser);

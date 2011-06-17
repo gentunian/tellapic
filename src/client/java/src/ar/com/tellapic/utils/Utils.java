@@ -26,7 +26,6 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 
 import ar.com.tellapic.NetManager;
-import ar.com.tellapic.graphics.RemoteMouseEvent;
 
 /**
  * @author 
@@ -80,7 +79,6 @@ public final class Utils {
 		Utils.logMessage("\tx: "+event.getX());
 		Utils.logMessage("\ty: "+event.getY());
 		Utils.logMessage("\tsource: "+event.getSource());
-		Utils.logMessage("\tinstanceof RemoteMouseEvent?: "+ (event instanceof RemoteMouseEvent));
 	}
 
 	/**

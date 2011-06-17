@@ -15,10 +15,11 @@
  *         sebastian.treu(at)gmail.com
  *
  */  
-package ar.com.tellapic;
+package ar.com.tellapic.chat;
 
-import java.util.ArrayList;
+import java.util.Observable;
 
+import ar.com.tellapic.adm.AbstractUser;
 
 /**
  * @author 
@@ -26,10 +27,30 @@ import java.util.ArrayList;
  *          sebastian.treu(at)gmail.com
  *
  */
-public interface IUserManagerState {
+public class ChatUser extends AbstractUser {
 
-	public LocalUser                         getLocalUser();
-	public AbstractUser                      getUser(String userName);
-	public AbstractUser                      getUser(int id);
-	public ArrayList<AbstractUser>           getUsers();
+	/**
+	 * 
+	 * @param name
+	 */
+	public ChatUser(String name) {
+		setName(name);
+	}
+	
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return getName();
+	}
+	
+	/* (non-Javadoc)
+	 * @see java.util.Observer#update(java.util.Observable, java.lang.Object)
+	 */
+	@Override
+	public void update(Observable o, Object arg) {
+
+	}
 }

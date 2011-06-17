@@ -20,6 +20,7 @@ package ar.com.tellapic.graphics;
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.geom.Rectangle2D;
@@ -28,7 +29,7 @@ import java.util.Observable;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableModel;
 
-import ar.com.tellapic.AbstractUser;
+import ar.com.tellapic.TellapicAbstractUser;
 import ar.com.tellapic.graphics.ControlPoint.ControlType;
 
 /**
@@ -38,20 +39,24 @@ import ar.com.tellapic.graphics.ControlPoint.ControlType;
  *
  */
 public abstract class AbstractDrawing extends Observable implements Cloneable, TableModel, ListSelectionListener {
+	public static final int      RESIZED            = -2;
+	public static final int      MOVED              = -1;
+	public static final int      VISIBILITY_CHANGED = 0;
+	public static final int      SELECTION_CHANGED  = 1;
 	
-	protected RenderingHints    renderingHints;
-	protected Object[][]        properties;
-	private AbstractUser        user;
-	protected ControlPoint      controlPoints[];
-	protected BasicStroke       selectedShapeStroke;
-	protected BasicStroke       selectedEdgesStroke;
-	protected AlphaComposite    selectedAlphaComposite;
-	protected boolean           selected;
-	protected boolean           resizeable;
-	protected boolean           moveable;
-	private String              name;
-	private long                number;
-	private boolean             isVisible;
+	protected RenderingHints     renderingHints;
+	protected Object[][]         properties;
+	private TellapicAbstractUser user;
+	protected ControlPoint       controlPoints[];
+	protected BasicStroke        selectedShapeStroke;
+	protected BasicStroke        selectedEdgesStroke;
+	protected AlphaComposite     selectedAlphaComposite;
+	private String               name;
+	protected boolean            selected;
+	protected boolean            resizeable;
+	protected boolean            moveable;
+	private long                 number;
+	private boolean              isVisible;
 	
 	/**
 	 * 
@@ -126,20 +131,20 @@ public abstract class AbstractDrawing extends Observable implements Cloneable, T
 	public void setVisible(boolean visible) {
 		isVisible = visible;
 		setChanged();
-		notifyObservers();
+		notifyObservers(new Object[] {VISIBILITY_CHANGED, visible});
 	}
 
 	/**
 	 * @param user the user to set
 	 */
-	public void setUser(AbstractUser user) {
+	public void setUser(TellapicAbstractUser user) {
 		this.user = user;
 	}
 
 	/**
 	 * @return the user
 	 */
-	public AbstractUser getUser() {
+	public TellapicAbstractUser getUser() {
 		return user;
 	}
 	
@@ -285,7 +290,7 @@ public abstract class AbstractDrawing extends Observable implements Cloneable, T
 			updateControlPoints();
 		}
 		setChanged();
-		notifyObservers();
+		notifyObservers(new Object[] {SELECTION_CHANGED, selected});
 	}
 	
 	/**
@@ -298,15 +303,16 @@ public abstract class AbstractDrawing extends Observable implements Cloneable, T
 	
 	/**
 	 * 
-	 * @param g
+	 * @param graphics
 	 */
-	public void draw(Graphics2D g) {
+	public void draw(Graphics g) {
+		Graphics2D graphics = (Graphics2D) g;
 		if (isSelected()) {
-			g.setRenderingHints(renderingHints);
+			graphics.setRenderingHints(renderingHints);
 //			g.setComposite(selectedAlphaComposite);
-			g.setColor(Color.yellow);
-			g.setStroke(selectedShapeStroke);
-			g.draw(getBounds2D());
+			graphics.setColor(Color.yellow);
+			graphics.setStroke(selectedShapeStroke);
+			graphics.draw(getBounds2D());
 			ControlPoint[] points = getControlPoints();
 			if (points != null) {
 				ControlPoint selectedPoint = null;
@@ -315,18 +321,16 @@ public abstract class AbstractDrawing extends Observable implements Cloneable, T
 					if (p.isSelected())
 						selectedPoint = p;
 					else
-						p.draw(g);
+						p.draw(graphics);
 				/* If a control point is selected, draw it in the last order */
 				if (selectedPoint != null)
-					selectedPoint.draw(g);
+					selectedPoint.draw(graphics);
 			}
 		}
 	}
+	
 	public abstract void cloneProperties();
-//	public abstract void setSelected(boolean value);
-//	public abstract boolean isSelected();
 	public abstract Rectangle2D getBounds2D();
 	public abstract void resize(double eventX, double eventY, ControlPoint controlPoint);
 	public abstract void move(double xOffset, double yOffset);
-	
 }

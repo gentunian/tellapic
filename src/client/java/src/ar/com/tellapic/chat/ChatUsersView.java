@@ -15,11 +15,12 @@
  *         sebastian.treu(at)gmail.com
  *
  */  
-package ar.com.tellapic;
+package ar.com.tellapic.chat;
 
-import java.util.Observable;
+import java.awt.FlowLayout;
 
-import ar.com.tellapic.graphics.AbstractDrawing;
+import javax.swing.JList;
+import javax.swing.JPanel;
 
 /**
  * @author 
@@ -27,23 +28,17 @@ import ar.com.tellapic.graphics.AbstractDrawing;
  *          sebastian.treu(at)gmail.com
  *
  */
-public class RemoteUser extends AbstractUser {
-	
-	/**
-	 * @param id
-	 */
-	public RemoteUser(int id, String name) {
-		super(id, name);
-		setRemote(true);
-	}
+public class ChatUsersView extends JPanel {
+	private static final long serialVersionUID = 1L;
 
-	/* (non-Javadoc)
-	 * @see java.util.Observer#update(java.util.Observable, java.lang.Object)
+	/**
+	 * Create the panel.
 	 */
-	@Override
-	public void update(Observable o, Object arg) {
-		AbstractDrawing drawing = (AbstractDrawing) o;
-		setChanged();
-		notifyObservers(drawingList.indexOf(drawing));
+	public ChatUsersView() {
+		setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
+		
+		JList list = new JList();
+		add(list);
+		list.setModel(ChatUserManager.getInstance());
 	}
 }

@@ -15,7 +15,8 @@
  *         sebastian.treu(at)gmail.com
  *
  */  
-package ar.com.tellapic.chat;
+package ar.com.tellapic;
+
 
 /**
  * @author 
@@ -23,17 +24,13 @@ package ar.com.tellapic.chat;
  *          sebastian.treu(at)gmail.com
  *
  */
-public interface IChatConnection {
-
-	/**
-	 * Uses a connection to send a message over the net.
-	 * @param message The message to be sent.
-	 */
-	public void sendMessage(ChatMessage message);
+public class TellapicRemoteUser extends TellapicAbstractUser {
 	
 	/**
-	 * Receives a message from the net. 
-	 * @return The message as a String based on the Chat internal protocol.
+	 * @param id
 	 */
-	public ChatMessage receiveMessage();
+	public TellapicRemoteUser(int id, String name) {
+		super(id, name);
+		setRemote(true);
+	}
 }

@@ -62,7 +62,7 @@ public class CustomPropertiesDialog extends JDialog {
 	
 	private Color             defaultColor = Color.white;
 	private boolean           customColor = false;
-	private AbstractUser      user;
+	private TellapicAbstractUser      user;
 	private JCheckBox         enablePreview;
 	
 
@@ -73,7 +73,7 @@ public class CustomPropertiesDialog extends JDialog {
 	 * @param user
 	 * @param color
 	 */
-	public CustomPropertiesDialog(Frame parent, boolean modal, AbstractUser user, PaintPropertyColor color) {
+	public CustomPropertiesDialog(Frame parent, boolean modal, TellapicAbstractUser user, PaintPropertyColor color) {
 		super(parent, modal);
 		this.user = user;
 		if (color != null) {
@@ -133,7 +133,7 @@ public class CustomPropertiesDialog extends JDialog {
 			public void propertyChange(PropertyChangeEvent evt) {
 				if (enablePreview.isSelected()) {
 					try {
-						user.setCustomProperty(new PaintPropertyColor(colorLabel.getBackground()), AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
+						user.setCustomProperty(new PaintPropertyColor(colorLabel.getBackground()), TellapicAbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
 					} catch (NoSuchPropertyTypeException e) {
 						e.printStackTrace();
 					} catch (WrongPropertyTypeException e) {

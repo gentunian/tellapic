@@ -136,7 +136,7 @@ public class DrawingShapeLine extends DrawingShape {
 		properties[PropertyType.X2COORD.ordinal()][VALUE_COLUMN] = line.getX2();
 		properties[PropertyType.Y2COORD.ordinal()][VALUE_COLUMN] = line.getY2();
 		setChanged();
-		notifyObservers();
+		notifyObservers(new Object[]{RESIZED});
 	}
 
 	/* (non-Javadoc)
@@ -151,7 +151,7 @@ public class DrawingShapeLine extends DrawingShape {
 		properties[PropertyType.Y2COORD.ordinal()][VALUE_COLUMN] = line.getY2();
 		updateControlPoints();
 		setChanged();
-		notifyObservers();
+		notifyObservers(new Object[]{MOVED});
 	}
 
 	/**

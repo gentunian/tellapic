@@ -32,7 +32,7 @@ import ar.com.tellapic.lib.tellapic;
 final public class DrawingToolTextNet extends DrawingToolText {
 
 	public DrawingToolTextNet() {
-		super("TextNet");
+		super("DrawingToolTextNet");
 	}
 	
 	/*
@@ -48,7 +48,7 @@ final public class DrawingToolTextNet extends DrawingToolText {
 			if (drawing == null)
 				return ;
 
-			if (NetManager.getInstance().isConnected() && !(event instanceof RemoteMouseEvent)) {
+			if (NetManager.getInstance().isConnected() && !getUser().isRemote()) {
 
 				tellapic.tellapic_send_text(
 						NetManager.getInstance().getSocket(),

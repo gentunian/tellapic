@@ -31,7 +31,7 @@ import ar.com.tellapic.utils.Utils;
  */
 public class ChatClientModel extends Observable implements IChatModelManager, IChatModelState {
 
-	private ArrayList<Message> messages;
+	private ArrayList<ChatMessage> messages;
 //	private ArrayList<User>    users;
 	
 	private static class Holder {
@@ -39,7 +39,7 @@ public class ChatClientModel extends Observable implements IChatModelManager, IC
 	}
 	
 	private ChatClientModel() {
-		messages = new ArrayList<Message>();
+		messages = new ArrayList<ChatMessage>();
 //		users    = new ArrayList<User>();
 	}
 	
@@ -48,10 +48,10 @@ public class ChatClientModel extends Observable implements IChatModelManager, IC
 	}
 
 	/* (non-Javadoc)
-	 * @see com.tellapic.chat.IChatModelManager#addMessage(com.tellapic.chat.Message)
+	 * @see com.tellapic.chat.IChatModelManager#addChatMessage(com.tellapic.chat.ChatMessage)
 	 */
 	@Override
-	public void addMessage(Message message) {
+	public void addChatMessage(ChatMessage message) {
 		if (message == null)
 			return;
 		
@@ -75,10 +75,10 @@ public class ChatClientModel extends Observable implements IChatModelManager, IC
 //	}
 
 	/* (non-Javadoc)
-	 * @see com.tellapic.chat.IChatModelManager#removeFirstMessage()
+	 * @see com.tellapic.chat.IChatModelManager#removeFirstChatMessage()
 	 */
 	@Override
-	public boolean removeFirstMessage() {
+	public boolean removeFirstChatMessage() {
 		if (!messages.isEmpty())
 			return false;
 		
@@ -89,10 +89,10 @@ public class ChatClientModel extends Observable implements IChatModelManager, IC
 	}
 
 	/* (non-Javadoc)
-	 * @see com.tellapic.chat.IChatModelManager#removeLastMessage()
+	 * @see com.tellapic.chat.IChatModelManager#removeLastChatMessage()
 	 */
 	@Override
-	public boolean removeLastMessage() {
+	public boolean removeLastChatMessage() {
 		if (!messages.isEmpty())
 			return false;
 		
@@ -103,10 +103,10 @@ public class ChatClientModel extends Observable implements IChatModelManager, IC
 	}
 
 	/* (non-Javadoc)
-	 * @see com.tellapic.chat.IChatModelManager#removeMessage(int)
+	 * @see com.tellapic.chat.IChatModelManager#removeChatMessage(int)
 	 */
 	@Override
-	public boolean removeMessage(int i) {
+	public boolean removeChatMessage(int i) {
 		if (i < 0 || i >= messages.size())
 			return false;
 		
@@ -117,10 +117,10 @@ public class ChatClientModel extends Observable implements IChatModelManager, IC
 	}
 
 //	/* (non-Javadoc)
-//	 * @see com.tellapic.chat.IChatModelManager#removeMessageFrom(com.tellapic.chat.User)
+//	 * @see com.tellapic.chat.IChatModelManager#removeChatMessageFrom(com.tellapic.chat.User)
 //	 */
 //	@Override
-//	public boolean removeMessageFrom(User user) {
+//	public boolean removeChatMessageFrom(User user) {
 //		if (user == null)
 //			return false;
 //		
@@ -130,20 +130,20 @@ public class ChatClientModel extends Observable implements IChatModelManager, IC
 //	}
 
 	/* (non-Javadoc)
-	 * @see com.tellapic.chat.IChatModelManager#removeMessageFrom(int)
+	 * @see com.tellapic.chat.IChatModelManager#removeChatMessageFrom(int)
 	 */
 	@Override
-	public boolean removeMessageFrom(int userId) {
+	public boolean removeChatMessageFrom(int userId) {
 		setChanged();
 		notifyObservers();
 		return false;
 	}
 
 	/* (non-Javadoc)
-	 * @see com.tellapic.chat.IChatModelState#getLastMessage()
+	 * @see com.tellapic.chat.IChatModelState#getLastChatMessage()
 	 */
 	@Override
-	public Message getLastMessage() {
+	public ChatMessage getLastChatMessage() {
 		if (!messages.isEmpty())
 			return messages.get(messages.size() - 1);
 		
@@ -151,10 +151,10 @@ public class ChatClientModel extends Observable implements IChatModelManager, IC
 	}
 
 	/* (non-Javadoc)
-	 * @see com.tellapic.chat.IChatModelState#getMessage(int)
+	 * @see com.tellapic.chat.IChatModelState#getChatMessage(int)
 	 */
 	@Override
-	public Message getMessage(int i) {
+	public ChatMessage getChatMessage(int i) {
 		if (i < 0 || i >= messages.size())
 			return null;
 		
@@ -162,10 +162,10 @@ public class ChatClientModel extends Observable implements IChatModelManager, IC
 	}
 
 	/* (non-Javadoc)
-	 * @see com.tellapic.chat.IChatModelState#getMessages()
+	 * @see com.tellapic.chat.IChatModelState#getChatMessages()
 	 */
 	@Override
-	public List<Message> getMessages() {
+	public List<ChatMessage> getChatMessages() {
 		return messages;
 	}
 

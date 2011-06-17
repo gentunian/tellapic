@@ -26,7 +26,7 @@ import java.awt.geom.Rectangle2D;
  *
  */
 public class DrawingShapeRectangle extends DrawingShape {
-private Rectangle2D rectangle;
+	private Rectangle2D rectangle;
 	
 	public DrawingShapeRectangle(String name, double x, double y, double w, double h) {
 		super(name, true, true);
@@ -80,7 +80,7 @@ private Rectangle2D rectangle;
 		properties[PropertyType.X2COORD.ordinal()][VALUE_COLUMN] = rectangle.getMaxX();
 		properties[PropertyType.Y2COORD.ordinal()][VALUE_COLUMN] = rectangle.getMaxY();
 		setChanged();
-		notifyObservers();
+		notifyObservers(new Object[] {RESIZED});
 	}
 
 	/* (non-Javadoc)
@@ -94,8 +94,8 @@ private Rectangle2D rectangle;
 		properties[PropertyType.X2COORD.ordinal()][VALUE_COLUMN] = rectangle.getMaxX();
 		properties[PropertyType.Y2COORD.ordinal()][VALUE_COLUMN] = rectangle.getMaxY();
 		updateControlPoints();
-//		setChanged();
-//		notifyObservers();
+		setChanged();
+		notifyObservers(new Object[] {MOVED});
 	}
 
 	/**

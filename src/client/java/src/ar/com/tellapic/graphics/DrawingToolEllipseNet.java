@@ -35,7 +35,7 @@ final public class DrawingToolEllipseNet extends DrawingToolEllipse {
 	 * 
 	 */
 	public DrawingToolEllipseNet() {
-		super("EllipseNet");
+		super("DrawingToolEllipseNet");
 	}
 
 	
@@ -53,7 +53,7 @@ final public class DrawingToolEllipseNet extends DrawingToolEllipse {
 			if (drawing == null)
 				return ;
 
-			if (NetManager.getInstance().isConnected() && !(e instanceof RemoteMouseEvent)) {
+			if (NetManager.getInstance().isConnected() && !getUser().isRemote()) {
 				java.awt.Rectangle bounds = drawing.getShape().getBounds();
 				tellapic.tellapic_send_fig(
 						NetManager.getInstance().getSocket(),

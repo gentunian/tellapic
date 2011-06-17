@@ -27,7 +27,7 @@ public class DrawingToolMarker extends DrawingToolLine {
 	}
 	
 	public DrawingToolMarker() {
-		this("Marker");
+		this("DrawingToolMarker");
 	}
 
 	/* (non-Javadoc)

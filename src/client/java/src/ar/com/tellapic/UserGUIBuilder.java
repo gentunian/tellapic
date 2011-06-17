@@ -43,8 +43,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
-import ar.com.tellapic.chat.ChatModelController;
-import ar.com.tellapic.chat.ChatView;
+import ar.com.tellapic.adm.IUserManagerState;
+import ar.com.tellapic.chat.ChatMessagesView;
 import ar.com.tellapic.chat.ChatViewController;
 import ar.com.tellapic.graphics.DrawingAreaView;
 import ar.com.tellapic.graphics.PaintPropertyView;
@@ -70,12 +70,12 @@ public class UserGUIBuilder {
 	private UsersView               userView;
 	private ToolView                toolView;
 	private PaintPropertyView       propertyView;
-	private ChatView                chatView;
+	private ChatMessagesView        chatView;
 	private JFrame                  mainWindow;
 	private JScrollPane             scrollPane;
 
 	
-	public UserGUIBuilder(LocalUser user) throws NullPointerException{
+	public UserGUIBuilder(TellapicLocalUser user) throws NullPointerException{
 		if (user == null)
 			throw new NullPointerException("LocalUser cannot be null.");
 		
@@ -100,7 +100,7 @@ public class UserGUIBuilder {
 		userView     = UsersView.getInstance();
 		toolView     = new ToolView(model);
 		propertyView = new PaintPropertyView();	
-		chatView     = new ChatView(new ChatModelController());
+		chatView     = new ChatMessagesView(new TellapicChatModelController(), user.getName(), new TellapicChatViewCustomProtocol((IUserManagerState) TellapicUserManager.getInstance()));
 		
 		model.addObserver(propertyView);
 		model.addObserver(toolView);

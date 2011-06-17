@@ -52,7 +52,6 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
 import javax.swing.text.StyledDocument;
 
-import ar.com.tellapic.UserManager;
 import ar.com.tellapic.graphics.PopupButton;
 import ar.com.tellapic.utils.Utils;
 
@@ -62,7 +61,7 @@ import ar.com.tellapic.utils.Utils;
  *          sebastian.treu(at)gmail.com
  *
  */
-public class ChatView extends JPanel implements Observer {
+public class ChatMessagesView extends JPanel implements Observer {
 
 	private static final long serialVersionUID = -4356214471573728672L;
 
@@ -120,19 +119,22 @@ public class ChatView extends JPanel implements Observer {
 	private JButton                  smileyButton;
 	private JTabbedPane              tabbedPane;
 	private JTextField               inputText;
-	/**
-	 * 
-	 * @param c
-	 */
-	public ChatView(IChatController c) {
+	private String                   userViewOwner;
+	private IChatViewProtocol        chatViewProtocol;
+
+	
+	public ChatMessagesView(IChatController c, String user, IChatViewProtocol protocol) {
 		setName(Utils.msg.getString("chatview"));
 		ChatClientModel.getInstance().addObserver(this);
 		
-		controller = c;
-		chatTabs   = new ArrayList<JTextPane>();
-		inputText  = new JTextField();
-		tabbedPane = new JTabbedPane();
-		smileyButton = new PopupButton(new ImageIcon(Utils.createIconImage(16, 16, "/icons/smileys/smiley.png")));
+		chatViewProtocol = protocol;
+		userViewOwner    = user;
+		controller       = c;
+		chatTabs         = new ArrayList<JTextPane>();
+		inputText        = new JTextField();
+		tabbedPane       = new JTabbedPane();
+		smileyButton     = new PopupButton(new ImageIcon(Utils.createIconImage(16, 16, "/icons/smileys/smiley.png")));
+		
 		smileyButton.setPreferredSize(new Dimension(24,24));
 		smileyButton.setMaximumSize(new Dimension(24,24));
 		smileyButton.addActionListener(new ActionListener(){
@@ -146,9 +148,8 @@ public class ChatView extends JPanel implements Observer {
 			}
 		});
 		
-		GroupLayout layout = new GroupLayout(ChatView.this);
+		GroupLayout layout = new GroupLayout(this);
 		setLayout(layout);
-		
 		layout.setHorizontalGroup(
 				layout.createParallelGroup(GroupLayout.Alignment.LEADING)
 				.addGroup(layout.createSequentialGroup()
@@ -159,7 +160,6 @@ public class ChatView extends JPanel implements Observer {
 										.addComponent(inputText, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
 										.addComponent(smileyButton, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, 24))))
 		);
-		
 		layout.setVerticalGroup(
 				layout.createParallelGroup(GroupLayout.Alignment.LEADING)
 				.addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
@@ -172,46 +172,38 @@ public class ChatView extends JPanel implements Observer {
 		inputText.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				// TODO: The input should be recognized by some chat protocol.
-				// then, it should build a Message object to be sent to the model
-				// and through the net.
-
-				// If we are in the general tab, then the message will be 
-				// broadcasted to all connected clients. However, if the message is
-				// like: "/msg <to> <text>" it won't be deliver to all connected clients.
-				// So, as a general rule, the text is first analyzed by Message.build().
-				// If "/msg" is found, the currentTabTitle will be ignored. 
-				// If "/msg" is not found and the current tab is the general tab, 
-				// then 'null' will be passed as the 'to' argument for Message.build(). Finally,
-				// if "/msg" is not found and we aren't in the general tab, the currentTabTitle
-				// will be set as an argument indicating the recipient of the message.
 				boolean pvt = (currentTabIndex != 0);
-
-				// The input text
 				String text = inputText.getText();
+				
 				if (text.length() == 0)
 					return;
 				
 				if (controller != null) {
-					Map.Entry<String, Message> mapEntry = Message.build(UserManager.getInstance().getLocalUser().getName(), pvt? currentTabTitle : null, text);
-					Message message = mapEntry.getValue();
-					if (message == null) {
-						updateTab(currentTabIndex, new String[]{mapEntry.getKey(), ""});
-					} else {
-						controller.handleInput(message, true);
-					}
+					Map.Entry<String, ChatMessage> mapEntry = chatViewProtocol.buildChatMessage(userViewOwner, pvt? currentTabTitle : null, text);
+					
+					ChatMessage message = mapEntry.getValue();
+					
+					if (message == null)
+						
+						updateTab(currentTabIndex, new String[]{ mapEntry.getKey(), ""});
+					else
+						
+						controller.handleInput(message);
+					
 				}
+				
 				// clears the input field
 				inputText.setText("");
 			}
 		});
+		
 		createNewTab(Utils.msg.getString("main"));
 		tabbedPane.addChangeListener(new ChangeListener(){
 			@Override
 			public void stateChanged(ChangeEvent e) {
 				if (((JTabbedPane)e.getSource()).getSelectedIndex() == -1)
 					return;
-				System.out.println("selected tab: "+((JTabbedPane)e.getSource()).getSelectedIndex());
+				//System.out.println("selected tab: "+((JTabbedPane)e.getSource()).getSelectedIndex());
 				currentTabIndex = ((JTabbedPane)e.getSource()).getSelectedIndex();
 				currentTabTitle = ((JTabbedPane)e.getSource()).getTitleAt(currentTabIndex);
 				inputText.requestFocus();
@@ -302,12 +294,12 @@ public class ChatView extends JPanel implements Observer {
 		JTextPane   textArea   = (JTextPane) viewPort.getView();
 		
 		StyledDocument doc = textArea.getStyledDocument();
-		Style def = StyleContext.getDefaultStyleContext().getStyle(StyleContext.DEFAULT_STYLE);
+		Style def  = StyleContext.getDefaultStyleContext().getStyle(StyleContext.DEFAULT_STYLE);
 		Style user = doc.addStyle("user", def);
 		Style text = doc.addStyle("text", def);
 		StyleConstants.setBold(user, true);
 	
-		if (message[0].equals(UserManager.getInstance().getLocalUser().getName())) {
+		if (message[0].equals(userViewOwner)) {
 			StyleConstants.setItalic(user, true);
 			StyleConstants.setItalic(text, true);
 		}
@@ -343,8 +335,10 @@ public class ChatView extends JPanel implements Observer {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
 		if (tabIndex != currentTabIndex)
 			((ChatViewTabComponent)tabbedPane.getTabComponentAt(tabIndex)).setTitleColor(Color.red);
+		
 		DefaultCaret caret = (DefaultCaret)textArea.getCaret();
 		caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
 
@@ -356,42 +350,42 @@ public class ChatView extends JPanel implements Observer {
 	@Override
 	public void update(Observable o, Object data) {
 		Utils.logMessage("Updating ChatView with: "+data);
-		if (data != null) {
-			if (data instanceof Message) {
-				Message message = (Message) data;
-				String[] str = new String[] {
-						message.getSender(),
-						message.getText()
-				};
+		if (data instanceof ChatMessage) {
+			
+			ChatMessage  message = (ChatMessage) data;
+			String[] str     = new String[] {
+					message.getSender(),
+					message.getText()
+			};
+
+			if (message.isPrivate()){
+				String tabTitle = null;
+
+				// Ensure that we aren't being loopbacked with our own messages.
+				if (str[0].equals(userViewOwner))
+					tabTitle = message.getReceiver();
+				else
+					tabTitle = str[0];
 				
-				if (message.isPrivate()){
-					String tabTitle = null;
-					
-					// Ensure that we aren't being loopbacked with our own messages.
-					if (str[0].equals(UserManager.getInstance().getLocalUser().getName()))
-						tabTitle = message.getReceiver();
-					else
-						tabTitle = str[0];
-					// Check if the tab already exists
-					int tabIndex = tabbedPane.indexOfTab(tabTitle);
-					
-					if ( tabIndex == -1) {
-						// Create a new tab
-						int newTab = createNewTab(tabTitle);
-						// Set the message
-						updateTab(newTab, str);
-					}
-					else
-						// Set the message
-						updateTab(tabIndex, str);
-				} else {
-					int mainTabIndex = tabbedPane.indexOfTab(Utils.msg.getString("main"));
-					updateTab(mainTabIndex, str);
+				// Check if the tab already exists
+				int tabIndex = tabbedPane.indexOfTab(tabTitle);
+
+				if ( tabIndex == -1) {
+					// Create a new tab
+					int newTab = createNewTab(tabTitle);
+					// Set the message
+					updateTab(newTab, str);
 				}
+				else
+					// Set the message
+					updateTab(tabIndex, str);
+				
+			} else {
+				int mainTabIndex = tabbedPane.indexOfTab(Utils.msg.getString("main"));
+				updateTab(mainTabIndex, str);
 			}
 		}
 	}
-
 
 	/**
 	 * @param name
@@ -413,14 +407,12 @@ public class ChatView extends JPanel implements Observer {
 		private static final long serialVersionUID = 1L;
 
 		public SmileysPopup() {
-//			setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-			GridLayout layout = new GridLayout(0, SMILEY.length/4);
-			setLayout(layout);
+			setLayout(new GridLayout(0, SMILEY.length/4));
+			
 			for(int i = 0; i < SMILEY.length; i++) {
 				final JButton smiley = new JButton(new ImageIcon(Utils.createIconImage(16, 16, SMILEY[i])));
 				smiley.setName(SMILEY_TEXT[i]);
 				smiley.addActionListener(new ActionListener(){
-					@Override
 					public void actionPerformed(ActionEvent e) {
 						String oldText = inputText.getText();
 						inputText.setText(oldText+" "+smiley.getName());

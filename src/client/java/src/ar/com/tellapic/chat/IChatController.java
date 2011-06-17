@@ -25,6 +25,6 @@ package ar.com.tellapic.chat;
  */
 public interface IChatController {
 
-	public abstract void handleInput(Message message, boolean fromView);
+	public void handleInput(ChatMessage message);
 	
 }

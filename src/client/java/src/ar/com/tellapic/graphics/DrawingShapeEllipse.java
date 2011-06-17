@@ -80,7 +80,7 @@ public class DrawingShapeEllipse extends DrawingShape {
 		properties[PropertyType.X2COORD.ordinal()][VALUE_COLUMN] = ellipse.getMaxX();
 		properties[PropertyType.Y2COORD.ordinal()][VALUE_COLUMN] = ellipse.getMaxY();
 		setChanged();
-		notifyObservers();
+		notifyObservers(new Object[]{RESIZED});
 	}
 
 	/* (non-Javadoc)
@@ -94,8 +94,8 @@ public class DrawingShapeEllipse extends DrawingShape {
 		properties[PropertyType.X2COORD.ordinal()][VALUE_COLUMN] = ellipse.getMaxX();
 		properties[PropertyType.Y2COORD.ordinal()][VALUE_COLUMN] = ellipse.getMaxY();
 		updateControlPoints();
-//		setChanged();
-//		notifyObservers();
+		setChanged();
+		notifyObservers(new Object[]{MOVED});
 	}
 
 	/**

@@ -17,23 +17,24 @@
  */  
 package ar.com.tellapic.chat;
 
+import java.util.Map;
+
 /**
  * @author 
  *          Sebastian Treu
  *          sebastian.treu(at)gmail.com
  *
  */
-public interface IChatConnection {
+public interface IChatViewProtocol {
 
 	/**
-	 * Uses a connection to send a message over the net.
-	 * @param message The message to be sent.
+	 * Constructs a Message instance.
+	 * 
+	 * @param from The user owner of the message
+	 * @param to The user the message is directed to
+	 * @param text The protocol-dependent text to be procesed
+	 * @return Returns a map that contains a Message if creating was ok. If Message is null, contains a String
+	 * indicating the error.
 	 */
-	public void sendMessage(ChatMessage message);
-	
-	/**
-	 * Receives a message from the net. 
-	 * @return The message as a String based on the Chat internal protocol.
-	 */
-	public ChatMessage receiveMessage();
+	public  Map.Entry<String,ChatMessage> buildChatMessage(String from, String to, String text);
 }

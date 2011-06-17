@@ -44,12 +44,17 @@ import ar.com.tellapic.utils.Utils;
 public class UserPopupMenu extends JPopupMenu {
 
 	private static final long serialVersionUID = 1L;
-	private AbstractUser user;
+	private TellapicAbstractUser user;
+	private ChatViewController   controller;
 	protected int y;
 	protected int x;
-	private ChatViewController controller;
 	
-	public UserPopupMenu(AbstractUser user, ChatViewController c) {
+	/**
+	 * 
+	 * @param user
+	 * @param c
+	 */
+	public UserPopupMenu(TellapicAbstractUser user, ChatViewController c) {
 		this.user  = user;
 		controller = c;
 		buildUserPopup();
@@ -96,7 +101,7 @@ public class UserPopupMenu extends JPopupMenu {
 				CustomPropertiesDialog popup = null;
 				PaintPropertyColor c = null;
 				try {
-					c = (PaintPropertyColor) user.getCustomProperty(AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
+					c = (PaintPropertyColor) user.getCustomProperty(TellapicAbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
 				} catch (NoSuchPropertyTypeException e2) {
 					e2.printStackTrace();
 				}
@@ -107,9 +112,9 @@ public class UserPopupMenu extends JPopupMenu {
 					try {
 						Color color = popup.getCustomColor();
 						if (color != null)
-							user.setCustomProperty(new PaintPropertyColor(color), AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
+							user.setCustomProperty(new PaintPropertyColor(color), TellapicAbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
 						else
-							user.removeCustomProperty(AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
+							user.removeCustomProperty(TellapicAbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
 					} catch (NoSuchPropertyTypeException e1) {
 						e1.printStackTrace();
 					} catch (WrongPropertyTypeException e1) {
@@ -117,7 +122,7 @@ public class UserPopupMenu extends JPopupMenu {
 					}
 				} else
 					try {
-						user.removeCustomProperty(AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
+						user.removeCustomProperty(TellapicAbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
 					} catch (NoSuchPropertyTypeException e1) {
 						e1.printStackTrace();
 					}

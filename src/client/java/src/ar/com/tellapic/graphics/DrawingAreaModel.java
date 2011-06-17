@@ -5,7 +5,7 @@ import java.util.Comparator;
 import java.util.Observable;
 import java.util.TreeSet;
 
-import ar.com.tellapic.AbstractUser;
+import ar.com.tellapic.TellapicAbstractUser;
 
 public class DrawingAreaModel extends Observable implements IDrawingAreaState, IDrawingAreaManager{
 
@@ -92,7 +92,7 @@ public class DrawingAreaModel extends Observable implements IDrawingAreaState, I
 		AbstractDrawing[] da = drawings.toArray(new AbstractDrawing[0]);
 		for(i = 0; i < da.length; i++) {
 			if (da[i].isSelected()) {
-				AbstractUser user = da[i].getUser();
+				TellapicAbstractUser user = da[i].getUser();
 				user.removeDrawing(da[i]);
 				return;
 			}
