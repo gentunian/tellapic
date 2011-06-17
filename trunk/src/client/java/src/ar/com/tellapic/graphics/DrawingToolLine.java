@@ -42,7 +42,7 @@ public class DrawingToolLine extends DrawingTool {
 	 * 
 	 */
 	public DrawingToolLine() {
-		this("Line");
+		this("DrawingToolLine");
 	}
 
 	/**

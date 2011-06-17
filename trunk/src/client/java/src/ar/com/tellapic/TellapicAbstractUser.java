@@ -19,8 +19,8 @@ package ar.com.tellapic;
 
 import java.util.ArrayList;
 import java.util.Observable;
-import java.util.Observer;
 
+import ar.com.tellapic.adm.AbstractUser;
 import ar.com.tellapic.graphics.AbstractDrawing;
 import ar.com.tellapic.graphics.DrawingAreaModel;
 import ar.com.tellapic.graphics.IPaintPropertyController;
@@ -48,69 +48,50 @@ import ar.com.tellapic.utils.Utils;
  *          sebastian.treu(at)gmail.com
  *
  */
-public abstract class AbstractUser extends Observable implements Observer {
+public abstract class TellapicAbstractUser extends AbstractUser {
 	
 	public static final int CUSTOM_PAINT_PROPERTY_COLOR  = 0;
 	public static final int CUSTOM_PAINT_PROPERTY_STROKE = 1;
 	public static final int CUSTOM_PAINT_PROPERTY_FONT   = 2;
 	public static final int CUSTOM_PAINT_PROPERTY_ALPHA  = 3;
+	public static final int DRAWING_NUMBER_SET           = 4;
+	public static final int REMOVE_DRAWING               = 5;
+	public static final int PROPERTY_REMOVE              = 6;
+	public static final int PROPERTY_SET                 = 7;
+	public static final int CLEANUP                      = 8;
+	public static final int ADD_DRAWING                  = 9;
+	public static final int DRAWING_CHANGED              = 10;
 
 	//Each user will have control over its own tool box. The tool box model, for remote users
 	//will be updated from wrapped remote events dispatched to the actual model controller.
 	//Local user will update its model from mouse events.
-	private ToolBoxModel             toolBox;
-	private IToolBoxController       toolboxController;
-	private IPaintPropertyController paintController;
+	private ToolBoxModel                     toolBox;
+	private IToolBoxController               toolboxController;
+	private IPaintPropertyController         paintController;
 	
 	//Each user, will also have a list of drawing objects. Each of this objects holds the
 	//complete information to be drawn on the screen. This objects will live as long as the
 	//local user wants, that is, if a user gets disconnected, the user will appear as disconnected
 	//and it won't be removed unless the local user wants to.
-	protected ArrayList<AbstractDrawing>      drawingList;
-	
-	// This is the first drawing, added to the list of drawings, that has not been drawn yet on screen.
-	// And, that divides the drawing list in two as follows:
-	//
-	//                            firstNotDrawn
-	//                                  ^
-	//                                 not   not
-	//  drawn drawn drawn drawn       drawn drawn
-	//    ^     ^     ^     ^           ^     ^
-	// +-----+-----+-----+-----+ ... +-----+-----+
-	// |     |     |     |     |     |     |     |
-	// +-----+-----+-----+-----+ ... +-----+-----+
-	//
-	// That means that updating 'firstNotDrawn' is just selecting the next not drawn object if applicable.
-//	private AbstractDrawing                 firstNotDrawn;
-
-	
-	// The firstNotDrawn is a candidate to be the lastDrawn when it gets drawn. This is useful to know
-	// which drawing was the last being drawn, and views can get this field instead of searching the whole
-	// list.
-//	private AbstractDrawing                 lastDrawn;
-	
+	protected ArrayList<AbstractDrawing>     drawingList;
 	
 	//This is the actual drawing object. That is, the object that the user *is* drawing. This is used
 	//to create a drawing animation effect. Commonly, this drawing is updated while dragging the mouse (if local)
 	//and creating the desired form, size, transparency, etc. This is a candidate to be added to the drawing
 	//list and to be a 'firstNotDrawn' object accordingly, if the user desires to complete the drawing. Else,
 	//this object will be discarded and not drawn.
-	private AbstractDrawing                 temporalDrawing;
+	private AbstractDrawing                  temporalDrawing;
+	private PaintProperty[]                  customProperties;
+	private boolean                          removed;
 	
-	private int              userId;
-	private String           name;
-	private boolean          visible;
-	private boolean          removed;
-	private boolean          selected;
-	private boolean          remote;
-	private PaintProperty[]  customProperties;
+	
 	
 	/**
 	 * Create an user instance with a toolbox model, a toolbox controller, a paint property controller
 	 * and an empty drawing list. 
 	 */
-	public AbstractUser() {
-		visible = true;
+	public TellapicAbstractUser() {
+		setVisible(true);
 		removed = false;
 		toolBox   = new ToolBoxModel();
 		drawingList = new ArrayList<AbstractDrawing>();
@@ -131,10 +112,10 @@ public abstract class AbstractUser extends Observable implements Observer {
 	 * @param id the id of this user.
 	 * @param name the name of this user.
 	 */ 
-	public AbstractUser(int id, String name) {
+	public TellapicAbstractUser(int id, String name) {
 		this();
-		this.name = name;
-		userId    = id;
+		setName(name);
+		setUserId(id);
 	}
 		
 	/**
@@ -172,7 +153,7 @@ public abstract class AbstractUser extends Observable implements Observer {
 		
 		setChanged();
 		if (isVisible())
-			notifyObservers(drawing);
+			notifyObservers(new Object[] {ADD_DRAWING, drawing});
 	}
 
 	
@@ -184,104 +165,14 @@ public abstract class AbstractUser extends Observable implements Observer {
 		return toolBox;
 	}
 	
-
-	/**
-	 * Get the user id. 
-	 * @return the id of this user.
-	 */
-	public int getUserId() {
-		return userId;
-	}
-	
-	/**
-	 * Sets the user id.
-	 * @param id the id to set for this user.
-	 */
-	public void setUserId(int id) {
-		this.userId = id;
-		setChanged();
-		notifyObservers();
-	}
-	
 	/**
 	 * A string representation of this user is it's name.
 	 */
 	@Override
 	public String toString() {
-		return name;
+		return getName();
 	}
-	
-	
-	/**
-	 * Sets this user visibility to visible.
-	 * @param visible the user visibility value to set.
-	 */
-	public void setVisible(boolean visible) {
-		this.visible = visible;
-		setChanged();
-		notifyObservers(visible);
-	}
-	
-	
-	/**
-	 * Returns true if this user visibility is set to true. False otherwise.
-	 * @return the user visibility value.
-	 */
-	public boolean isVisible() {
-		return visible;
-	}
-	
-	/**
-	 * Returns true if this user is selected. False otherwise.
-	 * @return the selected state of this user (true or false).
-	 */
-	public boolean isSelected() {
-		return selected;
-	}
-	
-	/**
-	 * Set the selected state of this user
-	 * @param selected the selected state of this user (true or false)
-	 */
-	public void setSelected(boolean selected) {
-		this.selected = selected;
-	}
-	
-	/**
-	 * Returns true if this user is not a local user. Remote users are special in the sense that 
-	 * they mouse events doesn't exist.
-	 * @return true if this user is remote. False otherwise.
-	 */
-	public boolean isRemote() {
-		return remote;
-	}
-	
-	/**
-	 * 
-	 * @param remote
-	 */
-	public void setRemote(boolean remote) {
-		this.remote = remote;
-	}
-	
-	/**
-	 * Gets the name of this user. 
-	 * @return the name of this user.
-	 */
-	public String getName() {
-		return name;
-	}
-	
-	/**
-	 * Sets the name for this user.
-	 * @param name the name to set for this user.
-	 */
-	public void setName(String name) {
-		this.name = name;
-		setChanged();
-		notifyObservers();
-	}
-	
+
 	/**
 	 * Gets the drawings this user owns.
 	 * @return the list of drawings this user has.
@@ -296,7 +187,7 @@ public abstract class AbstractUser extends Observable implements Observer {
 	public void cleanUp() {
 		removed = true;
 		setChanged();
-		notifyObservers();
+		notifyObservers(new Object[] {CLEANUP});
 		deleteObservers();
 	}
 	
@@ -336,7 +227,7 @@ public abstract class AbstractUser extends Observable implements Observer {
 		
 		customProperties[type] = property;
 		setChanged();
-		notifyObservers(property);
+		notifyObservers(new Object[] {PROPERTY_SET, property});
 	
 	}
 	
@@ -364,7 +255,7 @@ public abstract class AbstractUser extends Observable implements Observer {
 		
 		customProperties[type] = null;
 		setChanged();
-		notifyObservers();
+		notifyObservers(new Object[] {PROPERTY_REMOVE});
 	}
 	
 	/**
@@ -396,7 +287,7 @@ public abstract class AbstractUser extends Observable implements Observer {
 		if (removed) {
 			DrawingAreaModel.getInstance().removeDrawing(drawing);
 			setChanged();
-			notifyObservers(new Object[]{drawing, index});
+			notifyObservers(new Object[]{REMOVE_DRAWING, drawing, index});
 		}
 		
 		return removed;
@@ -542,12 +433,53 @@ public abstract class AbstractUser extends Observable implements Observer {
 			/* Drawings with number 0 are not added to the model, so add it now */
 			DrawingAreaModel.getInstance().addDrawing(drawing);
 			setChanged();
-			notifyObservers();
+			notifyObservers(new Object[] {DRAWING_NUMBER_SET});
 			/* If no drawing with no number is found, then it must be the temporalDrawing */
 		} else if (temporalDrawing != null){
 			temporalDrawing.setNumber(number);
 		} else {
 			throw new IllegalStateException("Something is probably wrong with drawing numbers.");
 		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see java.util.Observer#update(java.util.Observable, java.lang.Object)
+	 */
+	public void update(Observable o, Object arg) {
+//		if (o instanceof DrawingShape) {
+//			DrawingShape drawingShape = (DrawingShape) o;
+//			int action = (Integer)((Object[]) arg)[0];
+//			
+//			switch(action) {
+//			case DrawingShape.ALPHA_PROPERTY_SET:
+//				break;
+//			case DrawingShape.BOTTOM_EDGE_SELECTION_CHANGED:
+//				break;
+//			case DrawingShape.COLOR_PROPERTY_SET:
+//				break;
+//			case DrawingShape.LEFT_EDGE_SELECTION_CHANGED:
+//				break;
+//			case DrawingShape.RIGHT_EDGE_SELECTION_CHANGED:
+//				break;
+//			case DrawingShape.STROKE_PROPERTY_SET:
+//				break;
+//			case DrawingShape.TOP_EDGE_SELECTION_CHANGED:
+//				break;
+//			case DrawingShape.MOVED:
+//				break;
+//			case DrawingShape.RESIZED:
+//				break;
+//			case DrawingShape.SELECTION_CHANGED:
+//				break;
+//			case DrawingShape.VISIBILITY_CHANGED:
+//				break;
+//			}
+//		} else if (o instanceof DrawingText) {
+//			DrawingText drawingText = (DrawingText) o;
+//			
+//		}
+		AbstractDrawing drawing = (AbstractDrawing) o;
+		setChanged();
+		notifyObservers(new Object[]{DRAWING_CHANGED, drawing, drawingList.indexOf(drawing)});
 	}
 }

@@ -48,7 +48,7 @@ public class DrawingToolPen extends DrawingTool {
 	 * 
 	 */
 	public DrawingToolPen() {
-		this("Pen");
+		this("DrawingToolPen");
 	}
 	
 	

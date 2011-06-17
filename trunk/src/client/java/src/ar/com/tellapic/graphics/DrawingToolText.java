@@ -31,7 +31,7 @@ public class DrawingToolText extends DrawingTool {
 	}
 	
 	public DrawingToolText() {
-		this("Text");
+		this("DrawingToolText");
 	}
 
 	/* (non-Javadoc)

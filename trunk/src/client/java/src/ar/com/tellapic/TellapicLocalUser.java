@@ -17,8 +17,6 @@
  */  
 package ar.com.tellapic;
 
-import java.util.Observable;
-
 import ar.com.tellapic.graphics.AbstractDrawing;
 import ar.com.tellapic.lib.tellapic;
 import ar.com.tellapic.lib.tellapicConstants;
@@ -29,12 +27,12 @@ import ar.com.tellapic.lib.tellapicConstants;
  *          sebastian.treu(at)gmail.com
  *
  */
-public class LocalUser extends AbstractUser {
+public class TellapicLocalUser extends TellapicAbstractUser {
 	
 	public static final String LOCAL_NAME = "Local";
 	
 	private static class Holder {
-		private static final LocalUser INSTANCE = new LocalUser(0, LOCAL_NAME);
+		private static final TellapicLocalUser INSTANCE = new TellapicLocalUser(0, LOCAL_NAME);
 	}
 	
 	/**
@@ -42,7 +40,7 @@ public class LocalUser extends AbstractUser {
 	 * @param id
 	 * @param name
 	 */
-	private LocalUser(int id, String name) {
+	private TellapicLocalUser(int id, String name) {
 		super(id, name);
 		setRemote(false);
 	}
@@ -51,7 +49,7 @@ public class LocalUser extends AbstractUser {
 	 * 
 	 * @return
 	 */
-	public static LocalUser getInstance() {
+	public static TellapicLocalUser getInstance() {
 		return Holder.INSTANCE;
 	}
 
@@ -69,15 +67,5 @@ public class LocalUser extends AbstractUser {
 		}
 		
 		return removed;
-	}
-	
-	/* (non-Javadoc)
-	 * @see java.util.Observer#update(java.util.Observable, java.lang.Object)
-	 */
-	@Override
-	public void update(Observable o, Object arg) {
-		AbstractDrawing drawing = (AbstractDrawing) o;
-		setChanged();
-		notifyObservers(drawingList.indexOf(drawing));
 	}
 }

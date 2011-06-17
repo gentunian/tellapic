@@ -33,7 +33,7 @@ import ar.com.tellapic.lib.tellapicConstants;
 final public class DrawingToolPenNet extends DrawingToolPen {
 
 	public DrawingToolPenNet() {
-		super("PenNet");
+		super("DrawingToolPenNet");
 	}
 	
 	
@@ -51,7 +51,7 @@ final public class DrawingToolPenNet extends DrawingToolPen {
 					if (drawing == null)
 						return;
 
-					if (NetManager.getInstance().isConnected() && !(event instanceof RemoteMouseEvent)) {
+					if (NetManager.getInstance().isConnected() && !getUser().isRemote()) {
 						int wrappedEvent = getToolId();
 						if (event.getButton() == MouseEvent.BUTTON1)
 							wrappedEvent |= tellapicConstants.EVENT_PLEFT;
@@ -96,7 +96,7 @@ final public class DrawingToolPenNet extends DrawingToolPen {
 		if (isSelected()) {
 			if ((event.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK) {
 				if (isBeingUsed()) {
-					if (NetManager.getInstance().isConnected() && !(event instanceof RemoteMouseEvent)) {
+					if (NetManager.getInstance().isConnected() && !getUser().isRemote()) {
 						int eventExtMod  = 0;
 						int wrappedEvent = getToolId();
 						if ((event.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK)
@@ -150,7 +150,7 @@ final public class DrawingToolPenNet extends DrawingToolPen {
 				if (drawing == null)
 					return;
 
-				if (NetManager.getInstance().isConnected() && !(event instanceof RemoteMouseEvent)) {
+				if (NetManager.getInstance().isConnected() && !getUser().isRemote()) {
 					int wrappedEvent = getToolId();
 					if (event.getButton() == MouseEvent.BUTTON1)
 						wrappedEvent |= tellapicConstants.EVENT_RLEFT;

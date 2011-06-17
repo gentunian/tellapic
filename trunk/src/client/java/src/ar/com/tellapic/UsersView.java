@@ -53,6 +53,7 @@ import org.jdesktop.swingx.renderer.JRendererCheckBox;
 import org.jdesktop.swingx.renderer.LabelProvider;
 import org.jdesktop.swingx.renderer.StringValue;
 
+import ar.com.tellapic.adm.AbstractUser;
 import ar.com.tellapic.chat.ChatViewController;
 import ar.com.tellapic.graphics.AbstractDrawing;
 import ar.com.tellapic.graphics.DrawingAreaModel;
@@ -90,7 +91,7 @@ public class UsersView extends JPanel {
 		super(new GridLayout(1,0));
 		setName(Utils.msg.getString("usersview"));
 		JScrollPane treeView;
-		final JXTreeTable tree = new JXTreeTable(UserManager.getInstance());;
+		final JXTreeTable tree = new JXTreeTable(TellapicUserManager.getInstance());;
 		addKeyShortcuts(tree);
 		tree.addMouseListener(new MouseAdapter(){
 			/* This is a workarround to manage mouse events in the Tree View */
@@ -103,8 +104,8 @@ public class UsersView extends JPanel {
 				
 				Object o = path.getLastPathComponent();
 				if (chatViewController != null) {
-					if (o instanceof AbstractUser) {
-						AbstractUser user = (AbstractUser) o;
+					if (o instanceof TellapicAbstractUser) {
+						TellapicAbstractUser user = (TellapicAbstractUser) o;
 						switch(colSel) {
 						case 1:
 							boolean oldValue = user.isVisible();
@@ -144,8 +145,8 @@ public class UsersView extends JPanel {
 						JPopupMenu popup = null;
 						if (data instanceof AbstractDrawing) {
 							popup = new DrawingPopupMenu(null, (AbstractDrawing) data);
-						} else if (data instanceof AbstractUser) {
-							popup = new UserPopupMenu((AbstractUser) data, chatViewController);
+						} else if (data instanceof TellapicAbstractUser) {
+							popup = new UserPopupMenu((TellapicAbstractUser) data, chatViewController);
 						}
 						popup.show(UsersView.this, e.getX(), e.getY());
 					}
@@ -161,8 +162,8 @@ public class UsersView extends JPanel {
 						JPopupMenu popup = null;
 						if (data instanceof AbstractDrawing) {
 							popup = new DrawingPopupMenu(null, (AbstractDrawing) data);
-						} else if (data instanceof AbstractUser) {
-							popup = new UserPopupMenu((AbstractUser) data, chatViewController);
+						} else if (data instanceof TellapicAbstractUser) {
+							popup = new UserPopupMenu((TellapicAbstractUser) data, chatViewController);
 						}
 						popup.show(UsersView.this, e.getX(), e.getY());
 					}
@@ -253,7 +254,7 @@ public class UsersView extends JPanel {
 				int row = tree.getSelectedRow();
 				Object value = tree.getValueAt(row, tree.getHierarchicalColumn());
 				if (value instanceof AbstractUser) {
-					showCustomColorPopup((AbstractUser) value, getLocationOnScreen().x, getLocationOnScreen().y);
+					showCustomColorPopup((TellapicAbstractUser) value, getLocationOnScreen().x, getLocationOnScreen().y);
 				}
 			}
 		});
@@ -305,12 +306,12 @@ public class UsersView extends JPanel {
 		protected void format(CellContext context) {
 			super.format(context);
 			Object value = context.getValue();
-			if (value instanceof AbstractUser) {
-				AbstractUser user = (AbstractUser) value;
+			if (value instanceof TellapicAbstractUser) {
+				TellapicAbstractUser user = (TellapicAbstractUser) value;
 				PaintPropertyColor customColor = null;
 				Font usedFont = null;
 				try {
-					customColor = (PaintPropertyColor) user.getCustomProperty(AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
+					customColor = (PaintPropertyColor) user.getCustomProperty(TellapicAbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
 					if (customColor != null) {
 						rendererComponent.setForeground(customColor.getColor());
 						usedFont = rendererComponent.getFont().deriveFont(Font.BOLD);
@@ -393,11 +394,11 @@ public class UsersView extends JPanel {
 	 * 
 	 * @param user
 	 */
-	private void showCustomColorPopup(AbstractUser user, int x, int y) {
+	private void showCustomColorPopup(TellapicAbstractUser user, int x, int y) {
 		CustomPropertiesDialog popup = null;
 		PaintPropertyColor c = null;
 		try {
-			c = (PaintPropertyColor) user.getCustomProperty(AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
+			c = (PaintPropertyColor) user.getCustomProperty(TellapicAbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
 		} catch (NoSuchPropertyTypeException e) {
 			e.printStackTrace();
 		}
@@ -408,9 +409,9 @@ public class UsersView extends JPanel {
 			try {
 				Color color = popup.getCustomColor();
 				if (color != null)
-					user.setCustomProperty(new PaintPropertyColor(color), AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
+					user.setCustomProperty(new PaintPropertyColor(color), TellapicAbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
 				else
-					user.removeCustomProperty(AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
+					user.removeCustomProperty(TellapicAbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
 			} catch (NoSuchPropertyTypeException e1) {
 				e1.printStackTrace();
 			} catch (WrongPropertyTypeException e1) {
@@ -418,7 +419,7 @@ public class UsersView extends JPanel {
 			}
 		} else
 			try {
-				user.removeCustomProperty(AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
+				user.removeCustomProperty(TellapicAbstractUser.CUSTOM_PAINT_PROPERTY_COLOR);
 			} catch (NoSuchPropertyTypeException e) {
 				e.printStackTrace();
 			}

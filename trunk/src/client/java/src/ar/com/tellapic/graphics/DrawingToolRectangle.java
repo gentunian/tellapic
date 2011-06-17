@@ -32,7 +32,7 @@ public class DrawingToolRectangle extends DrawingTool {
 	
 	
 	public DrawingToolRectangle() {
-		this("Rectangle");
+		this("DrawingToolRectangle");
 	}
 
 	/* (non-Javadoc)
@@ -166,16 +166,10 @@ public class DrawingToolRectangle extends DrawingTool {
 	public void mousePressed(MouseEvent e) {
 		if (isSelected() && !e.isConsumed()) {
 			if ((e.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK) {
-//				AbstractUser user = null;
-//				if (e instanceof RemoteMouseEvent)
-//					user = ((RemoteMouseEvent)e).getUser();
-//				else
-//					user = UserManager.getInstance().getLocalUser();
-				
 				float zoomX = ControlToolZoom.getInstance().getZoomValue();
 				IToolBoxState toolBoxState = user.getToolBoxModel();
-				firstPoint.setLocation(e.getX() / zoomX, e.getY() / zoomX);
 				setInUse(true);
+				firstPoint.setLocation(e.getX() / zoomX, e.getY() / zoomX);
 				temporalDrawing = new DrawingShapeRectangle(getName(), firstPoint.getX(), firstPoint.getY(), 0, 0);
 				((DrawingShape) temporalDrawing).setAlpha(toolBoxState.getOpacityProperty());
 				((DrawingShape) temporalDrawing).setColor(toolBoxState.getColorProperty());
@@ -200,13 +194,6 @@ public class DrawingToolRectangle extends DrawingTool {
 			if (e.getButton() == MouseEvent.BUTTON1) {
 				DrawingShapeRectangle drawingRectangle = (DrawingShapeRectangle) temporalDrawing;
 				if (drawingRectangle != null && !drawingRectangle.isEmpty()) {
-//					AbstractUser user = null;
-//					if (e instanceof RemoteMouseEvent) {
-//						user = ((RemoteMouseEvent)e).getUser();
-//					} else {
-//						user = UserManager.getInstance().getLocalUser();
-//					}
-					
 					temporalDrawing.cloneProperties();
 					user.addDrawing(temporalDrawing);
 					setChanged();

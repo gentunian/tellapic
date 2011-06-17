@@ -17,7 +17,7 @@
  */  
 package ar.com.tellapic.chat;
 
-import ar.com.tellapic.AbstractUser;
+import ar.com.tellapic.adm.AbstractUser;
 
 /**
  * @author 
@@ -27,14 +27,14 @@ import ar.com.tellapic.AbstractUser;
  */
 public class ChatViewController {
 	
-	private ChatView chatView;
+	private ChatMessagesView chatView;
 	
 	
 	/**
 	 * 
 	 * @param view
 	 */
-	public ChatViewController(ChatView view) {
+	public ChatViewController(ChatMessagesView view) {
 		chatView = view;
 	}
 	

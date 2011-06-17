@@ -20,6 +20,8 @@ package ar.com.tellapic.chat;
 import java.util.List;
 
 /**
+ * An interface that provides methods for query the chat model.
+ * 
  * @author 
  *          Sebastian Treu
  *          sebastian.treu(at)gmail.com
@@ -27,11 +29,24 @@ import java.util.List;
  */
 public interface IChatModelState {
 
-	public abstract Message getMessage(int i);
+	/**
+	 * Gets the ith message from the list of messages.
+	 * @param i the desired numbered message to retrieve.
+	 * @return The ith message if exist. Null otherwise.
+	 */
+	public abstract ChatMessage getChatMessage(int i);
 	
-	public abstract List<Message> getMessages();
+	/**
+	 * Gets the list of messages.
+	 * @return the list of messages.
+	 */
+	public abstract List<ChatMessage> getChatMessages();
 	
-	public abstract Message getLastMessage();
+	/**
+	 * Gets the last message in the list of messages.
+	 * @return the last message in the list of messages or null if no there are no messages.
+	 */
+	public abstract ChatMessage getLastChatMessage();
 	
 //	public abstract User getUser(String name);
 //	

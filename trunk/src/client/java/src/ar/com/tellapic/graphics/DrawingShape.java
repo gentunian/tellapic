@@ -3,6 +3,7 @@ package ar.com.tellapic.graphics;
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Shape;
@@ -11,11 +12,19 @@ import java.awt.geom.Rectangle2D;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.TableModelListener;
 
-import ar.com.tellapic.AbstractUser;
+import ar.com.tellapic.TellapicAbstractUser;
 import ar.com.tellapic.graphics.ControlPoint.ControlType;
 import ar.com.tellapic.utils.Utils;
 
 public abstract class DrawingShape extends AbstractDrawing {
+	public static final int LEFT_EDGE_SELECTION_CHANGED   = 2;
+	public static final int RIGHT_EDGE_SELECTION_CHANGED  = 3;
+	public static final int TOP_EDGE_SELECTION_CHANGED    = 4;
+	public static final int BOTTOM_EDGE_SELECTION_CHANGED = 5;
+	public static final int STROKE_PROPERTY_SET           = 6;
+	public static final int COLOR_PROPERTY_SET            = 7;
+	public static final int ALPHA_PROPERTY_SET            = 8;
+	
 	public static enum PropertyType {
 		NAME,
 		OWNER,
@@ -122,10 +131,10 @@ public abstract class DrawingShape extends AbstractDrawing {
 	
 	/*
 	 * (non-Javadoc)
-	 * @see ar.com.tellapic.graphics.AbstractDrawing#setUser(ar.com.tellapic.AbstractUser)
+	 * @see ar.com.tellapic.graphics.AbstractDrawing#setUser(ar.com.tellapic.TellapicAbstractUser)
 	 */
 	@Override
-	public void setUser(AbstractUser user) {
+	public void setUser(TellapicAbstractUser user) {
 		properties[PropertyType.OWNER.ordinal()][VALUE_COLUMN] = user.getName();
 		super.setUser(user);
 	}
@@ -181,6 +190,8 @@ public abstract class DrawingShape extends AbstractDrawing {
 	 */
 	public void setStroke(PaintPropertyStroke property) {
 		strokeProperty = property;
+		setChanged();
+		notifyObservers(new Object[] {STROKE_PROPERTY_SET});
 	}
 	
 	/**
@@ -189,6 +200,8 @@ public abstract class DrawingShape extends AbstractDrawing {
 	 */
 	public void setColor(PaintPropertyColor property) {
 		colorProperty = property;
+		setChanged();
+		notifyObservers(new Object[] {COLOR_PROPERTY_SET});
 	}
 
 	/**
@@ -197,6 +210,8 @@ public abstract class DrawingShape extends AbstractDrawing {
 	 */
 	public void setAlpha(PaintPropertyAlpha property) {
 		alphaProperty = property;
+		setChanged();
+		notifyObservers(new Object[] {ALPHA_PROPERTY_SET});
 	}
 	
 	/**
@@ -236,23 +251,24 @@ public abstract class DrawingShape extends AbstractDrawing {
 	 * @param g
 	 */
 	@Override
-	public void draw(Graphics2D g) {
+	public void draw(Graphics g1) {
+		Graphics2D g = (Graphics2D) g1;
 		PaintProperty overridenProperties[] = getUser().getCustomProperties();
 		if (isVisible()) {
 			g.setRenderingHints(renderingHints);
 			
-			if (overridenProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_ALPHA] != null)
-				g.setComposite(((PaintPropertyAlpha)overridenProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_ALPHA]).getComposite());
+			if (overridenProperties[TellapicAbstractUser.CUSTOM_PAINT_PROPERTY_ALPHA] != null)
+				g.setComposite(((PaintPropertyAlpha)overridenProperties[TellapicAbstractUser.CUSTOM_PAINT_PROPERTY_ALPHA]).getComposite());
 			else if (alphaProperty != null)
 				g.setComposite(getPaintPropertyAlpha().getComposite());
 
-			if (overridenProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR] != null)
-				g.setColor(((PaintPropertyColor)overridenProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR]).getColor());
+			if (overridenProperties[TellapicAbstractUser.CUSTOM_PAINT_PROPERTY_COLOR] != null)
+				g.setColor(((PaintPropertyColor)overridenProperties[TellapicAbstractUser.CUSTOM_PAINT_PROPERTY_COLOR]).getColor());
 			else if (colorProperty != null)
 				g.setColor(getPaintPropertyColor().getColor());
 
-			if (overridenProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_STROKE] != null)
-				g.setStroke(((PaintPropertyStroke)overridenProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_STROKE]).getStroke());
+			if (overridenProperties[TellapicAbstractUser.CUSTOM_PAINT_PROPERTY_STROKE] != null)
+				g.setStroke(((PaintPropertyStroke)overridenProperties[TellapicAbstractUser.CUSTOM_PAINT_PROPERTY_STROKE]).getStroke());
 			else if (strokeProperty != null)
 				g.setStroke(getPaintPropertyStroke().getStroke());
 
@@ -282,7 +298,7 @@ public abstract class DrawingShape extends AbstractDrawing {
 	public void setLeftEdgeSelected(boolean isLeftEdgeSelected) {
 		this.isLeftEdgeSelected = isLeftEdgeSelected;
 		setChanged();
-		notifyObservers();
+		notifyObservers(new Object[] {LEFT_EDGE_SELECTION_CHANGED, isLeftEdgeSelected});
 
 	}
 
@@ -299,7 +315,7 @@ public abstract class DrawingShape extends AbstractDrawing {
 	public void setRightEdgeSelected(boolean isRightEdgeSelected) {
 		this.isRightEdgeSelected = isRightEdgeSelected;
 		setChanged();
-		notifyObservers();
+		notifyObservers(new Object[] {RIGHT_EDGE_SELECTION_CHANGED, isRightEdgeSelected});
 	}
 
 	/**
@@ -315,7 +331,7 @@ public abstract class DrawingShape extends AbstractDrawing {
 	public void setTopEdgeSelected(boolean isTopEdgeSelected) {
 		this.isTopEdgeSelected = isTopEdgeSelected;
 		setChanged();
-		notifyObservers();
+		notifyObservers(new Object[] {TOP_EDGE_SELECTION_CHANGED, isTopEdgeSelected});
 	}
 
 	/**
@@ -331,7 +347,7 @@ public abstract class DrawingShape extends AbstractDrawing {
 	public void setBottomEdgeSelected(boolean isBottomEdgeSelected) {
 		this.isBottomEdgeSelected = isBottomEdgeSelected;
 		setChanged();
-		notifyObservers();
+		notifyObservers(new Object[] {BOTTOM_EDGE_SELECTION_CHANGED, isBottomEdgeSelected});
 	}
 
 	/**

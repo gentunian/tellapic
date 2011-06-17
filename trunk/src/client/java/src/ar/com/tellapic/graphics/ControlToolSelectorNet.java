@@ -33,7 +33,7 @@ import ar.com.tellapic.lib.tellapicConstants;
 public class ControlToolSelectorNet extends ControlToolSelector {
 
 	public ControlToolSelectorNet() {
-		super("SelectorNet");
+		super("ControlToolSelectorNet");
 	}
 	
 	
@@ -51,7 +51,7 @@ public class ControlToolSelectorNet extends ControlToolSelector {
 			
 			float zoomX = ControlToolZoom.getInstance().getZoomValue();
 			
-			if (NetManager.getInstance().isConnected() && !(event instanceof RemoteMouseEvent)) {
+			if (NetManager.getInstance().isConnected() && !getUser().isRemote()) {
 				int wrappedEvent = getToolId();
 				if (event.getButton() == MouseEvent.BUTTON1)
 					wrappedEvent |= tellapicConstants.EVENT_PLEFT;
@@ -97,7 +97,7 @@ public class ControlToolSelectorNet extends ControlToolSelector {
 			
 			float zoomX = ControlToolZoom.getInstance().getZoomValue();
 
-			if (NetManager.getInstance().isConnected() && !(event instanceof RemoteMouseEvent)) {
+			if (NetManager.getInstance().isConnected() && !getUser().isRemote()) {
 				int eventExtMod  = 0;
 				int wrappedEvent = getToolId();
 				if ((event.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK)
@@ -145,7 +145,7 @@ public class ControlToolSelectorNet extends ControlToolSelector {
 			
 			float zoomX = ControlToolZoom.getInstance().getZoomValue();
 			
-			if (NetManager.getInstance().isConnected() && !(event instanceof RemoteMouseEvent)) {
+			if (NetManager.getInstance().isConnected() && !getUser().isRemote()) {
 				int wrappedEvent = getToolId();
 				if (event.getButton() == MouseEvent.BUTTON1)
 					wrappedEvent |= tellapicConstants.EVENT_RLEFT;

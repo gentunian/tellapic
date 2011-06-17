@@ -50,7 +50,7 @@ public class ControlToolSelector extends ControlTool {
 	 * 
 	 */
 	public ControlToolSelector() {
-		this("Selector");
+		this("ControlToolSelector");
 	}
 
 	/**
@@ -98,6 +98,7 @@ public class ControlToolSelector extends ControlTool {
 			if (e.isPopupTrigger() & temporalDrawing != null) {
 				DrawingPopupMenu popup = new DrawingPopupMenu(null, temporalDrawing);
 				popup.show(e.getComponent(), e.getX(), e.getY());
+				Utils.logMessage("NOT");
 				e.consume();
 				return;
 			}
@@ -105,11 +106,6 @@ public class ControlToolSelector extends ControlTool {
 			/* Use this tool only while pressing LEFT button. Right button should popup a menu. */
 			if ((e.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK) {
 				setInUse(true);
-//				AbstractUser user = null;
-//				if (e instanceof RemoteMouseEvent)
-//					user = ((RemoteMouseEvent)e).getUser();
-//				else
-//					user = UserManager.getInstance().getLocalUser();
 
 				float zoomX = ControlToolZoom.getInstance().getZoomValue();
 

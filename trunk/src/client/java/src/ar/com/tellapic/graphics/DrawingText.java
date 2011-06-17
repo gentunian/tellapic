@@ -17,13 +17,14 @@
  */  
 package ar.com.tellapic.graphics;
 
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;
 
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.TableModelListener;
 
-import ar.com.tellapic.AbstractUser;
+import ar.com.tellapic.TellapicAbstractUser;
 
 /**
  * @author 
@@ -32,11 +33,18 @@ import ar.com.tellapic.AbstractUser;
  *
  */
 public class DrawingText extends AbstractDrawing {
+	
+	public static final int TEXT_X_SET         = 2;
+	public static final int TEXT_Y_SET         = 3;
+	public static final int FONT_PROPERTY_SET  = 4;
+	public static final int ALPHA_PROPERTY_SET = 5;
+	public static final int COLOR_PROPERTY_SET = 6;
+	
 	private PaintPropertyColor  colorProperty;
 	private PaintPropertyAlpha  alphaProperty;
 	private PaintPropertyFont   fontProperty;
-	private int       textX;
-	private int       textY;
+	private int                 textX;
+	private int                 textY;
 	
 	/**
 	 * 
@@ -55,23 +63,24 @@ public class DrawingText extends AbstractDrawing {
 	 * @see ar.com.tellapic.graphics.AbstractDrawing#draw(java.awt.Graphics2D)
 	 */
 	@Override
-	public void draw(Graphics2D g) {
+	public void draw(Graphics g1) {
+		Graphics2D g = (Graphics2D) g1;
 		PaintProperty overridenProperties[] = getUser().getCustomProperties();
 		if (isVisible()) {
 			g.setRenderingHints(renderingHints);
 			
-			if (overridenProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_ALPHA] != null)
-				g.setComposite(((PaintPropertyAlpha)overridenProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_ALPHA]).getComposite());
+			if (overridenProperties[TellapicAbstractUser.CUSTOM_PAINT_PROPERTY_ALPHA] != null)
+				g.setComposite(((PaintPropertyAlpha)overridenProperties[TellapicAbstractUser.CUSTOM_PAINT_PROPERTY_ALPHA]).getComposite());
 			else if (alphaProperty != null)
 				g.setComposite(getPaintPropertyAlpha().getComposite());
 
-			if (overridenProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR] != null)
-				g.setColor(((PaintPropertyColor)overridenProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_COLOR]).getColor());
+			if (overridenProperties[TellapicAbstractUser.CUSTOM_PAINT_PROPERTY_COLOR] != null)
+				g.setColor(((PaintPropertyColor)overridenProperties[TellapicAbstractUser.CUSTOM_PAINT_PROPERTY_COLOR]).getColor());
 			else if (colorProperty != null)
 				g.setColor(getPaintPropertyColor().getColor());
 
-			if (overridenProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_FONT] != null) 
-				g.setFont(((PaintPropertyFont)overridenProperties[AbstractUser.CUSTOM_PAINT_PROPERTY_FONT]).getFont());
+			if (overridenProperties[TellapicAbstractUser.CUSTOM_PAINT_PROPERTY_FONT] != null) 
+				g.setFont(((PaintPropertyFont)overridenProperties[TellapicAbstractUser.CUSTOM_PAINT_PROPERTY_FONT]).getFont());
 			else if (fontProperty != null) {
 				g.setFont(getPaintPropertyFont().getFont());
 				g.drawString(getText(), getTextX(), getTextY());
@@ -93,6 +102,8 @@ public class DrawingText extends AbstractDrawing {
 	 */
 	public void setTextX(int textX) {
 		this.textX = textX;
+		setChanged();
+		notifyObservers(new Object[] {TEXT_X_SET});
 	}
 
 	/**
@@ -107,6 +118,8 @@ public class DrawingText extends AbstractDrawing {
 	 */
 	public void setTextY(int textY) {
 		this.textY = textY;
+		setChanged();
+		notifyObservers(new Object[] {TEXT_Y_SET});
 	}
 
 	/**
@@ -132,6 +145,8 @@ public class DrawingText extends AbstractDrawing {
 	 */
 	public void setFont(PaintPropertyFont property) {
 		fontProperty = property;
+		setChanged();
+		notifyObservers(new Object[] {FONT_PROPERTY_SET});
 	}
 	
 	/**
@@ -139,6 +154,8 @@ public class DrawingText extends AbstractDrawing {
 	 */
 	public void setAlpha(PaintPropertyAlpha paintPropertyAlpha) {
 		alphaProperty = paintPropertyAlpha;
+		setChanged();
+		notifyObservers(new Object[] {ALPHA_PROPERTY_SET});
 	}
 
 	/**
@@ -146,6 +163,8 @@ public class DrawingText extends AbstractDrawing {
 	 */
 	public void setColor(PaintPropertyColor paintPropertyColor) {
 		colorProperty = paintPropertyColor;
+		setChanged();
+		notifyObservers(new Object[] {COLOR_PROPERTY_SET});
 	}
 
 	/**
@@ -288,8 +307,8 @@ public class DrawingText extends AbstractDrawing {
 		this.textX += xOffset;
 		this.textY += yOffset;
 		updateControlPoints();
-		setChanged();
-		notifyObservers();
+//		setChanged();
+//		notifyObservers();
 	}
 	
 	/*

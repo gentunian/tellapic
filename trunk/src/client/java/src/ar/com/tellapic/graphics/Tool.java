@@ -6,8 +6,8 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.Observable;
 
-import ar.com.tellapic.AbstractUser;
 import ar.com.tellapic.StatusBar;
+import ar.com.tellapic.TellapicAbstractUser;
 
 /**
  * Abstract class Tool.
@@ -49,7 +49,7 @@ public abstract class Tool extends Observable implements MouseListener, MouseMot
 	private boolean          visible;
 	private boolean          selected;
 	private boolean          inUse;
-	protected AbstractUser     user;
+	protected TellapicAbstractUser     user;
 	
 	
 	/**
@@ -226,7 +226,7 @@ public abstract class Tool extends Observable implements MouseListener, MouseMot
 	/**
 	 * @param user the user to set
 	 */
-	public void setUser(AbstractUser user) {
+	public void setUser(TellapicAbstractUser user) {
 		this.user = user;
 	}
 
@@ -234,7 +234,7 @@ public abstract class Tool extends Observable implements MouseListener, MouseMot
 	/**
 	 * @return the user
 	 */
-	public AbstractUser getUser() {
+	public TellapicAbstractUser getUser() {
 		return user;
 	}
 }

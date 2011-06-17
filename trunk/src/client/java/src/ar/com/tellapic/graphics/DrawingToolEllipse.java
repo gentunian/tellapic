@@ -37,7 +37,7 @@ public class DrawingToolEllipse extends DrawingTool {
 	 * 
 	 */
 	public DrawingToolEllipse() {
-		this("Ellipse");
+		this("DrawingToolEllipse");
 	}
 
 	/* (non-Javadoc)
@@ -172,12 +172,6 @@ public class DrawingToolEllipse extends DrawingTool {
 	public void mousePressed(MouseEvent e) {
 		if (isSelected() && !e.isConsumed()) {
 			if ((e.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK) {
-//				AbstractUser user = null;
-//				if (e instanceof RemoteMouseEvent) {
-//					user = ((RemoteMouseEvent)e).getUser();
-//				} else {
-//					user = UserManager.getInstance().getLocalUser();
-//				}
 				IToolBoxState toolBoxState = user.getToolBoxModel();
 				float zoomX = ControlToolZoom.getInstance().getZoomValue();
 				firstPoint.setLocation(e.getX()/zoomX, e.getY()/zoomX);
@@ -206,13 +200,6 @@ public class DrawingToolEllipse extends DrawingTool {
 			if (e.getButton() == MouseEvent.BUTTON1) {
 				DrawingShapeEllipse drawingEllipse = (DrawingShapeEllipse) temporalDrawing;
 				if (drawingEllipse != null && !drawingEllipse.isEmpty()) {
-//				if (!((DrawingShape) temporalDrawing).getShape().getBounds2D().isEmpty()) {
-//					AbstractUser user = null;
-//					if (e instanceof RemoteMouseEvent)
-//						user = ((RemoteMouseEvent)e).getUser();
-//					else
-//						user = UserManager.getInstance().getLocalUser();
-//					
 					temporalDrawing.cloneProperties();
 					user.addDrawing(temporalDrawing);
 					setChanged();

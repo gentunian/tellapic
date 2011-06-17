@@ -34,7 +34,7 @@ final public class DrawingToolLineNet extends DrawingToolLine {
 	
 	
 	public DrawingToolLineNet() {
-		super("LineNet");
+		super("DrawingToolLineNet");
 	}
 	
 	
@@ -52,7 +52,7 @@ final public class DrawingToolLineNet extends DrawingToolLine {
 			if (drawing == null)
 				return ;
 
-			if (NetManager.getInstance().isConnected() && !(event instanceof RemoteMouseEvent)) {
+			if (NetManager.getInstance().isConnected() && !getUser().isRemote()) {
 				Line2D line = (Line2D) drawing.getShape();
 
 				tellapic.tellapic_send_fig(

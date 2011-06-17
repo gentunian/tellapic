@@ -32,14 +32,14 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
+import ar.com.tellapic.adm.AbstractUser;
 import ar.com.tellapic.chat.ChatClientModel;
-import ar.com.tellapic.chat.Message;
+import ar.com.tellapic.chat.ChatMessage;
 import ar.com.tellapic.graphics.ControlToolZoom;
 import ar.com.tellapic.graphics.DrawingAreaView;
 import ar.com.tellapic.graphics.DrawingShape;
 import ar.com.tellapic.graphics.IPaintPropertyController;
 import ar.com.tellapic.graphics.IToolBoxController;
-import ar.com.tellapic.graphics.RemoteMouseEvent;
 import ar.com.tellapic.graphics.Tool;
 import ar.com.tellapic.graphics.ToolFactory;
 import ar.com.tellapic.lib.ddata_t;
@@ -630,7 +630,7 @@ public class NetManager extends Observable implements Runnable {
 			switch(header.getCbyte()) {
 			case tellapicConstants.CTL_SV_CLRM:
 				int id = stream.getData().getControl().getIdfrom();
-				UserManager.getInstance().delUser(id);
+				TellapicUserManager.getInstance().delUser(id);
 				break;
 
 			case tellapicConstants.CTL_CL_DISC:
@@ -640,31 +640,33 @@ public class NetManager extends Observable implements Runnable {
 			
 		} else if (tellapic.tellapic_isctle(header) == 1) {
 			System.out.println("Was ctl extended");
-			AbstractUser user = null;
+			TellapicAbstractUser user = null;
 			svcontrol_t ctlExtended = stream.getData().getControl();
 			int         userId      = ctlExtended.getIdfrom();
 			short[]     userInfo    = ctlExtended.getInfo();
 			long        userInfoLen = stream.getHeader().getSsize() - tellapicConstants.HEADER_SIZE - 1;
 			String      info = "";
+			
 			for(int i =0 ; i < userInfoLen; i++)
 				info += (char)userInfo[i];
 
 			switch(header.getCbyte()) {
 			case tellapicConstants.CTL_SV_CLADD:
 				if (userId != SessionUtils.getId()) {
-					UserManager.getInstance().createRemoteUser(userId, info);
+					TellapicRemoteUser remoteUser = new TellapicRemoteUser(userId, info);
+					TellapicUserManager.getInstance().addUser(remoteUser);
 				}
 				break;
 
 			case tellapicConstants.CTL_CL_RMFIG:
-				user = UserManager.getInstance().getUser(userId);
+				user = (TellapicAbstractUser) TellapicUserManager.getInstance().getUser(userId);
 				if (user != null && user.isRemote())
 					user.removeDrawing(info);
 				break;
 
 			case tellapicConstants.CTL_SV_FIGID:
 				Utils.logMessage("RECEIVEING NUMBER ID");
-				user = UserManager.getInstance().getLocalUser();
+				user = (TellapicAbstractUser) TellapicUserManager.getInstance().getUser(SessionUtils.getUsername());
 				user.setDrawingNumber(info);
 				break;
 			}
@@ -672,10 +674,10 @@ public class NetManager extends Observable implements Runnable {
 		} else if (tellapic.tellapic_ischatb(header) == 1) {
 			message_t chatmsg = stream.getData().getChat();
 			int       idFrom  = chatmsg.getIdfrom();
-			AbstractUser userFrom = UserManager.getInstance().getUser(idFrom);
+			AbstractUser userFrom = TellapicUserManager.getInstance().getUser(idFrom);
 			String text    = chatmsg.getType().getBroadmsg();
-			Message message = new Message(userFrom.getName(), null, text);
-			ChatClientModel.getInstance().addMessage(message);
+			ChatMessage message = new ChatMessage(userFrom.getName(), null, text, true);
+			ChatClientModel.getInstance().addChatMessage(message);
 			System.out.println("Was broadcast chat");
 
 		} else if  (tellapic.tellapic_ischatp(header) == 1) {
@@ -683,14 +685,15 @@ public class NetManager extends Observable implements Runnable {
 			String    text    = chatmsg.getType().getPrivmsg().getText();
 			int       idFrom  = chatmsg.getIdfrom();
 			int       idTo    = chatmsg.getType().getPrivmsg().getIdto();
-			AbstractUser userFrom = UserManager.getInstance().getUser(idFrom);
-			AbstractUser userTo   = UserManager.getInstance().getUser(idTo);
-			Message message = new Message(
+			AbstractUser userFrom = TellapicUserManager.getInstance().getUser(idFrom);
+			AbstractUser userTo   = TellapicUserManager.getInstance().getUser(idTo);
+			ChatMessage message = new ChatMessage(
 					userFrom.getName(),
 					userTo.getName(),
-					text
+					text,
+					true
 			);
-			ChatClientModel.getInstance().addMessage(message);
+			ChatClientModel.getInstance().addChatMessage(message);
 			System.out.println("Was private chat");
 
 		} else if (tellapic.tellapic_isdrw(header) == 1 ) {
@@ -698,7 +701,6 @@ public class NetManager extends Observable implements Runnable {
 			SwingUtilities.invokeLater(new Runnable() {
 				@Override
 				public void run() {
-//					createAndAddDrawing(drawing);
 					configureUserToolBox(drawing);
 				}
 			});
@@ -709,7 +711,6 @@ public class NetManager extends Observable implements Runnable {
 			SwingUtilities.invokeLater(new Runnable() {
 				@Override
 				public void run() {
-//					createAndAddFigure(drawing);
 					configureUserToolBox(drawing);
 				}
 			});
@@ -734,7 +735,7 @@ public class NetManager extends Observable implements Runnable {
 	 */
 	private void configureUserToolBox(ddata_t drawingData) {
 		/* Get the remote user who has drawn this figure */
-		AbstractUser remoteUser = UserManager.getInstance().getUser(drawingData.getIdfrom());
+		TellapicAbstractUser remoteUser = (TellapicAbstractUser) TellapicUserManager.getInstance().getUser(drawingData.getIdfrom());
 
 		if (remoteUser == null) {
 			Utils.logMessage("Warning: Received packet from an unexisting user yet.");
@@ -761,7 +762,7 @@ public class NetManager extends Observable implements Runnable {
 	 */
 	private void configureUserEvents(ddata_t drawingData) {
 		/* Get the remote user who has drawn this figure */
-		AbstractUser remoteUser = UserManager.getInstance().getUser(drawingData.getIdfrom());
+		TellapicAbstractUser remoteUser = (TellapicAbstractUser) TellapicUserManager.getInstance().getUser(drawingData.getIdfrom());
 	
 		/* Get the mouse and event protocol data used in this figure */
 		int button   = drawingData.getDcbyte() & tellapicConstants.EVENT_MASK;
@@ -791,8 +792,7 @@ public class NetManager extends Observable implements Runnable {
 			c.handleOpacityChange(drawingData.getOpacity());
 			c.handleWidthChange(drawingData.getWidth());
 			c.handleColorChange(color);
-			RemoteMouseEvent pressEvent = new RemoteMouseEvent(
-					remoteUser,
+			MouseEvent pressEvent = new MouseEvent(
 					DrawingAreaView.getInstance(),
 					MouseEvent.MOUSE_PRESSED,
 					System.currentTimeMillis(),
@@ -808,8 +808,7 @@ public class NetManager extends Observable implements Runnable {
 			break;
 			
 		case tellapicConstants.EVENT_DRAG:
-			RemoteMouseEvent dragEvent = new RemoteMouseEvent(
-					remoteUser,
+			MouseEvent dragEvent = new MouseEvent(
 					DrawingAreaView.getInstance(),
 					MouseEvent.MOUSE_DRAGGED,
 					System.currentTimeMillis(),
@@ -819,13 +818,11 @@ public class NetManager extends Observable implements Runnable {
 					0,
 					false,
 					swingButton);
-			Utils.logMessage("evdrag");
 			usedTool.mouseDragged(dragEvent);
 			break;
 			
 		case tellapicConstants.EVENT_RELEASE:
-			RemoteMouseEvent releaseEvent = new RemoteMouseEvent(
-					remoteUser,
+			MouseEvent releaseEvent = new MouseEvent(
 					DrawingAreaView.getInstance(),
 					MouseEvent.MOUSE_RELEASED,
 					System.currentTimeMillis(),
@@ -869,8 +866,7 @@ public class NetManager extends Observable implements Runnable {
 			
 			/* Both text and stroke has color properties */
 			c.handleColorChange(color);
-			RemoteMouseEvent pressEvent1 = new RemoteMouseEvent(
-					remoteUser,
+			MouseEvent pressEvent1 = new MouseEvent(
 					DrawingAreaView.getInstance(),
 					MouseEvent.MOUSE_PRESSED,
 					System.currentTimeMillis(),
@@ -881,8 +877,7 @@ public class NetManager extends Observable implements Runnable {
 					false,
 					swingButton);
 
-			RemoteMouseEvent dragEvent1 = new RemoteMouseEvent(
-					remoteUser,
+			MouseEvent dragEvent1 = new MouseEvent(
 					DrawingAreaView.getInstance(),
 					MouseEvent.MOUSE_DRAGGED,
 					System.currentTimeMillis(),
@@ -893,8 +888,8 @@ public class NetManager extends Observable implements Runnable {
 					false,
 					swingButton);
 
-			RemoteMouseEvent releaseEvent1 = new RemoteMouseEvent(
-					remoteUser,
+			MouseEvent releaseEvent1 = new MouseEvent(
+
 					DrawingAreaView.getInstance(),
 					MouseEvent.MOUSE_RELEASED,
 					System.currentTimeMillis(),

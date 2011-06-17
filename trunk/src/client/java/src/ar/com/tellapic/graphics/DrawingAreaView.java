@@ -43,10 +43,11 @@ import javax.swing.SwingConstants;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 
-import ar.com.tellapic.AbstractUser;
 import ar.com.tellapic.SessionUtils;
 import ar.com.tellapic.StatusBar;
-import ar.com.tellapic.UserManager;
+import ar.com.tellapic.TellapicAbstractUser;
+import ar.com.tellapic.TellapicUserManager;
+import ar.com.tellapic.adm.AbstractUser;
 import ar.com.tellapic.utils.Utils;
 
 /**
@@ -170,7 +171,8 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 			private static final long serialVersionUID = 1L;
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				UserManager.getInstance().getLocalUser().removeLastDrawing();
+				TellapicAbstractUser u = (TellapicAbstractUser) TellapicUserManager.getInstance().getUser(SessionUtils.getUsername());
+				u.removeLastDrawing();
 			}
 		});
 		actionMap.put("removeSelectedDrawing", new AbstractAction(){
@@ -262,11 +264,12 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 			if (drawingArray[i].isSelected() && drawingArray[i].isVisible())
 				drawingArray[i].draw(drawingArea);
 		
-		List<AbstractUser> users  = UserManager.getInstance().getUsers(); 
-		for(int i = 0; i < users.size(); i++)
-			if (users.get(i).isDrawing() && users.get(i).isVisible())
-				users.get(i).getDrawing().draw(drawingArea);
-				
+		List<AbstractUser> users  =  TellapicUserManager.getInstance().getUsers();
+		for(int i = 0; i < users.size(); i++) {
+			TellapicAbstractUser user = (TellapicAbstractUser) users.get(i);
+			if (user.isDrawing() && user.isVisible())
+				user.getDrawing().draw(drawingArea);
+		}
 		repaint();
 	}
 	
@@ -613,7 +616,7 @@ public class DrawingAreaView extends JLabel implements Observer, Scrollable, Mou
 	public void mouseWheelMoved(MouseWheelEvent event) {
 		event.consume();
 		int step = (event.getWheelRotation() < 0)? 1 : -1;
-		AbstractUser localUser = UserManager.getInstance().getLocalUser();
+		TellapicAbstractUser localUser = (TellapicAbstractUser) TellapicUserManager.getInstance().getUser(SessionUtils.getUsername());
 		Tool tool = localUser.getToolBoxModel().getLastUsedTool();
 		
 		ControlToolZoom zoomTool = ControlToolZoom.getInstance();

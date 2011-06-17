@@ -33,7 +33,7 @@ final public class DrawingToolRectangleNet extends DrawingToolRectangle {
 	
 
 	public DrawingToolRectangleNet() {
-		super("RectangleNet");
+		super("DrawingToolRectangleNet");
 	}
 	
 	
@@ -50,7 +50,7 @@ final public class DrawingToolRectangleNet extends DrawingToolRectangle {
 			if (drawing == null)
 				return ;
 
-			if (NetManager.getInstance().isConnected() && !(event instanceof RemoteMouseEvent)) {
+			if (NetManager.getInstance().isConnected() && !getUser().isRemote()) {
 				java.awt.Rectangle bounds = drawing.getShape().getBounds();
 				tellapic.tellapic_send_fig(
 						NetManager.getInstance().getSocket(),
@@ -72,11 +72,6 @@ final public class DrawingToolRectangleNet extends DrawingToolRectangle {
 						drawing.getPaintPropertyStroke().getMiterLimit(),
 						drawing.getPaintPropertyStroke().getDash_phase(),
 						drawing.getPaintPropertyStroke().getDash()
-						//					((BasicStroke)drawing.getStroke()).getLineJoin(),
-						//					((BasicStroke)drawing.getStroke()).getEndCap(),
-						//					((BasicStroke)drawing.getStroke()).getMiterLimit(),
-						//					((BasicStroke)drawing.getStroke()).getDashPhase(),
-						//					((BasicStroke)drawing.getStroke()).getDashArray()
 				);
 			}			
 			/* This tool has no more temporal drawings */
