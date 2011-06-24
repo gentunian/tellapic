@@ -7,6 +7,11 @@ public class PaintPropertyColor extends PaintProperty {
 	
 	private Color color;
 	
+	public PaintPropertyColor(String color) {
+		super(PaintPropertyType.COLOR);
+		this.color = Color.decode(color);
+	}
+	
 	public PaintPropertyColor(Color color) {
 		super(PaintPropertyType.COLOR);
 		this.color = color;
@@ -27,6 +32,14 @@ public class PaintPropertyColor extends PaintProperty {
 		this.color = color;
 	}
 
+	/**
+	 * 
+	 * @param color
+	 */
+	public void setColor(String color) {
+		this.color = Color.decode(color);
+	}
+	
 	/**
 	 * @return
 	 */

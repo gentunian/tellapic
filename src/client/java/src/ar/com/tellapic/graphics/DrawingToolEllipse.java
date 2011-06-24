@@ -31,6 +31,12 @@ public class DrawingToolEllipse extends DrawingTool {
 	public DrawingToolEllipse(String name) {
 		super(tellapicConstants.TOOL_ELLIPSE, name, ELLIPSE_ICON_PATH, Utils.msg.getString("ellipsetooltip"), Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 		firstPoint = new Point2D.Double();
+		setAlias("Ellipse");
+		COMMANDS = new String[][] {
+				{ "circle", "ellipse" },
+				{ getClass().getPackage().getName()+".DrawingShape", "int x", "int y", "int diameter" },
+				{ getClass().getPackage().getName()+".DrawingShape", "int left", "int top", "int width", "int height" }
+		};
 	}
 	
 	/**
@@ -177,9 +183,9 @@ public class DrawingToolEllipse extends DrawingTool {
 				firstPoint.setLocation(e.getX()/zoomX, e.getY()/zoomX);
 				setInUse(true);
 				temporalDrawing = new DrawingShapeEllipse(getName(), e.getX()/zoomX, e.getY()/zoomX, 0, 0);
-				((DrawingShape) temporalDrawing).setAlpha(toolBoxState.getOpacityProperty());
-				((DrawingShape) temporalDrawing).setColor(toolBoxState.getColorProperty());
-				((DrawingShape) temporalDrawing).setStroke(toolBoxState.getStrokeProperty());
+				((DrawingShape) temporalDrawing).setPaintPropertyAlpha(toolBoxState.getOpacityProperty());
+				((DrawingShape) temporalDrawing).setPaintPropertyColor(toolBoxState.getColorProperty());
+				((DrawingShape) temporalDrawing).setPaintPropertyStroke(toolBoxState.getStrokeProperty());
 				temporalDrawing.setRenderingHints(toolBoxState.getRenderingHints());
 				temporalDrawing.setUser(user);
 				user.setTemporalDrawing(temporalDrawing);
@@ -242,5 +248,51 @@ public class DrawingToolEllipse extends DrawingTool {
 			}
 			e.consume();
 		}
+	}
+	
+	/**
+	 * 
+	 * @param x
+	 * @param y
+	 * @param radius
+	 * @return
+	 */
+	public DrawingShape circle(String x, String y, String diameter) {
+		int left = Integer.parseInt(x) - Integer.parseInt(diameter)/2;
+		int top  = Integer.parseInt(y) - Integer.parseInt(diameter)/2;
+
+		
+		return ellipse(String.valueOf(left), String.valueOf(top), diameter, diameter);
+	}
+	
+	/**
+	 * 
+	 * @param left
+	 * @param top
+	 * @param width
+	 * @param height
+	 * @return
+	 */
+	public DrawingShape ellipse(String left, String top, String width, String height) {
+		DrawingShapeEllipse drawing = new DrawingShapeEllipse("CustomEllipse",
+				Double.parseDouble(left),
+				Double.parseDouble(top),
+				Double.parseDouble(width),
+				Double.parseDouble(height)
+		);
+		
+		IToolBoxState toolBoxState = user.getToolBoxModel();
+		
+		drawing.setPaintPropertyAlpha(toolBoxState.getOpacityProperty());
+		drawing.setPaintPropertyColor(toolBoxState.getColorProperty());
+		drawing.setPaintPropertyStroke(toolBoxState.getStrokeProperty());
+		drawing.setRenderingHints(toolBoxState.getRenderingHints());
+		drawing.setUser(user);
+		drawing.cloneProperties();
+		user.addDrawing(drawing);
+		setChanged();
+		notifyObservers(drawing);
+		
+		return drawing;
 	}
 }

@@ -4,10 +4,14 @@ import java.awt.Cursor;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Observable;
 
 import ar.com.tellapic.StatusBar;
 import ar.com.tellapic.TellapicAbstractUser;
+import ar.com.tellapic.console.IConsoleCommand;
+import ar.com.tellapic.utils.Utils;
 
 /**
  * Abstract class Tool.
@@ -40,16 +44,18 @@ import ar.com.tellapic.TellapicAbstractUser;
  * @author Sebastián Treu, mailTo: sebastian.treu (at) gmail.com
  *
  */
-public abstract class Tool extends Observable implements MouseListener, MouseMotionListener {
-	private int              id;
-	private String           name;
-	private String           iconPath;
-	private String           toolTipText;
-	private Cursor           toolCursor;
-	private boolean          visible;
-	private boolean          selected;
-	private boolean          inUse;
+public abstract class Tool extends Observable implements MouseListener, MouseMotionListener, IConsoleCommand {
+	private int                        id;
+	private String                     name;
+	private String                     alias;
+	private String                     iconPath;
+	private String                     toolTipText;
+	private Cursor                     toolCursor;
+	private boolean                    visible;
+	private boolean                    selected;
+	private boolean                    inUse;
 	protected TellapicAbstractUser     user;
+	protected String[][]               COMMANDS;
 	
 	
 	/**
@@ -222,7 +228,6 @@ public abstract class Tool extends Observable implements MouseListener, MouseMot
 		return inUse;
 	}
 
-
 	/**
 	 * @param user the user to set
 	 */
@@ -230,11 +235,141 @@ public abstract class Tool extends Observable implements MouseListener, MouseMot
 		this.user = user;
 	}
 
-
 	/**
 	 * @return the user
 	 */
 	public TellapicAbstractUser getUser() {
 		return user;
+	}
+	
+	/**
+	 * @param alias the alias to set
+	 */
+	public void setAlias(String alias) {
+		this.alias = alias;
+	}
+
+	/**
+	 * @return the alias
+	 */
+	public String getAlias() {
+		return alias;
+	}
+	
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.console.IConsoleCommand#executeCommand(java.lang.String, java.lang.Object[])
+	 */
+	@Override
+	public IConsoleCommand executeCommand(String cmd, Object[] args) {
+		String[] cmdList = getCommandList();
+		IConsoleCommand value = null;
+		boolean executed = false;
+		int j = 0;
+		for(int i = 0; i < cmdList.length && !executed; i++) {
+			if (cmd.equals(cmdList[i])) {
+				try {
+//					Class<Tool> toolClass      = (Class<Tool>) Class.forName(toolClassName);
+//					Method method = getClass().getMethod(cmd, getArgumentTypesForCommand(cmd));
+					Method[] methods = getClass().getMethods();
+					Method method = null;
+					for(j = 0; j < methods.length && !methods[j].getName().equals(cmd); j++);
+					if (j == methods.length)
+						throw new NoSuchMethodException("No method "+cmd+" was found.");
+					
+					method = methods[j];
+					value = (IConsoleCommand) method.invoke(this, args);
+					executed = true;
+				} catch (SecurityException e) {
+					e.printStackTrace();
+				} catch (NoSuchMethodException e) {
+					e.printStackTrace();
+				} catch (IllegalArgumentException e) {
+					e.printStackTrace();
+				} catch (IllegalAccessException e) {
+					e.printStackTrace();
+				} catch (InvocationTargetException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		return value;
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.console.IConsoleCommand#getCommandList()
+	 */
+	@Override
+	public String[] getCommandList() {
+		if (COMMANDS == null)
+			return null;
+		
+		String[] cmds = new String[COMMANDS[0].length];
+		
+		for (int i = 0; i < COMMANDS[0].length; i++)
+			cmds[i] = COMMANDS[0][i];
+		
+		return cmds;
+	}
+	
+	/*
+	 * (non-Javadoc)
+	 * @see ar.com.tellapic.console.IConsoleCommand#getReturnTypeForCommand(java.lang.String)
+	 */
+	@Override
+	public String getReturnTypeForCommand(String cmd){
+		String[] cmdList = getCommandList();
+		String type = null;
+		
+		for(int i = 0; i < cmdList.length; i++) {
+			if (cmd.equals(cmdList[i])) {
+				type = COMMANDS[i+1][0];
+			}
+		}
+		
+		return type;
+	}
+	
+	/*
+	 * (non-Javadoc)
+	 * @see ar.com.tellapic.console.IConsoleCommand#getArgumentsTypesForCommand(java.lang.String)
+	 */
+	@Override
+	public String[] getArgumentsTypesForCommand(String cmd){
+		return getArgsNamesOrTypesForCommand(cmd, false);
+	}
+	
+	/*
+	 * (non-Javadoc)
+	 * @see ar.com.tellapic.console.IConsoleCommand#getArgumentsNamesForCommand(java.lang.String)
+	 */
+	@Override
+	public String[] getArgumentsNamesForCommand(String cmd){
+		return getArgsNamesOrTypesForCommand(cmd, true);
+	}
+
+	/**
+	 * 
+	 * @param cmd
+	 * @param name
+	 * @return
+	 */
+	private String[] getArgsNamesOrTypesForCommand(String cmd, boolean name) {
+		String[] cmdList = getCommandList();
+		if (cmdList == null)
+			return null;
+		
+		String[] args = null;
+		
+		for(int i = 0; i < cmdList.length; i++) {
+			if (cmd.equals(cmdList[i])) {
+				args = new String[COMMANDS[i+1].length - 1];
+				for(int j = 1; j < COMMANDS[i+1].length; j++) {
+					args[j-1] = (COMMANDS[i+1][j]).split(" ")[name?1:0];
+				}
+			}
+		}
+		
+		return args;
 	}
 }

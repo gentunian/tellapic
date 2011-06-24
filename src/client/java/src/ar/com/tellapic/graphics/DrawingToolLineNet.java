@@ -81,4 +81,39 @@ final public class DrawingToolLineNet extends DrawingToolLine {
 			setTemporalDrawing(null);
 		}
 	}
+	
+	@Override
+	public DrawingShape line(String x1, String y1, String x2, String y2) {
+		DrawingShape drawing = super.line(x1, y1, x2, y2);
+		
+		if (drawing != null) {
+			if (NetManager.getInstance().isConnected() && !getUser().isRemote()) {
+				Line2D line = (Line2D) drawing.getShape();
+
+				tellapic.tellapic_send_fig(
+						NetManager.getInstance().getSocket(),
+						getToolId(), 
+						0,
+						SessionUtils.getId(), 
+						0,
+						(float) drawing.getPaintPropertyStroke().getWidth(),
+						drawing.getPaintPropertyAlpha().alpha,
+						drawing.getPaintPropertyColor().getRed(),
+						drawing.getPaintPropertyColor().getGreen(),
+						drawing.getPaintPropertyColor().getBlue(),
+						(int)line.getX1(),
+						(int)line.getY1(),
+						(int)line.getX2(),
+						(int)line.getY2(),
+						drawing.getPaintPropertyStroke().getLineJoins(),
+						drawing.getPaintPropertyStroke().getEndCaps(),
+						drawing.getPaintPropertyStroke().getMiterLimit(),
+						drawing.getPaintPropertyStroke().getDash_phase(),
+						drawing.getPaintPropertyStroke().getDash()
+				);
+			}
+		}
+		
+		return drawing;
+	}
 }

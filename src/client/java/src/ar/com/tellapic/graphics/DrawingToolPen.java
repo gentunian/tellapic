@@ -59,6 +59,11 @@ public class DrawingToolPen extends DrawingTool {
 	public DrawingToolPen(String name) {
 		super(tellapicConstants.TOOL_PATH, name, PEN_ICON_PATH, Utils.msg.getString("pentooltip") ,Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 		firstPoint = new Point2D.Double();
+		setAlias("Pen");
+		COMMANDS = new String[][] {
+				{ "nothing" },
+				{ "void" }
+		};
 	}
 
 	
@@ -201,9 +206,9 @@ public class DrawingToolPen extends DrawingTool {
 				firstPoint.setLocation(e.getX()/zoomX, e.getY()/zoomX);
 				setInUse(true);
 				temporalDrawing = new DrawingShapePen(getName(), firstPoint.getX(), firstPoint.getY());
-				((DrawingShape) temporalDrawing).setAlpha(toolBoxState.getOpacityProperty());
-				((DrawingShape) temporalDrawing).setColor(toolBoxState.getColorProperty());
-				((DrawingShape) temporalDrawing).setStroke(toolBoxState.getStrokeProperty());
+				((DrawingShape) temporalDrawing).setPaintPropertyAlpha(toolBoxState.getOpacityProperty());
+				((DrawingShape) temporalDrawing).setPaintPropertyColor(toolBoxState.getColorProperty());
+				((DrawingShape) temporalDrawing).setPaintPropertyStroke(toolBoxState.getStrokeProperty());
 				temporalDrawing.setRenderingHints(toolBoxState.getRenderingHints());
 				temporalDrawing.setUser(user);
 				user.setTemporalDrawing(temporalDrawing);

@@ -36,6 +36,36 @@ final public class DrawingToolRectangleNet extends DrawingToolRectangle {
 		super("DrawingToolRectangleNet");
 	}
 	
+	@Override
+	public DrawingShape frame(String x, String y, String w, String h) {
+		DrawingShape drawing = super.frame(x, y, w, h);
+		
+		if (NetManager.getInstance().isConnected() && !getUser().isRemote()) {
+			java.awt.Rectangle bounds = drawing.getShape().getBounds();
+			tellapic.tellapic_send_fig(
+					NetManager.getInstance().getSocket(),
+					getToolId(), 
+					0,
+					SessionUtils.getId(), 
+					0,
+					(float) drawing.getPaintPropertyStroke().getWidth(),
+					drawing.getPaintPropertyAlpha().alpha,
+					drawing.getPaintPropertyColor().getRed(),
+					drawing.getPaintPropertyColor().getGreen(),
+					drawing.getPaintPropertyColor().getBlue(),
+					(int)bounds.getX(),
+					(int)bounds.getY(),
+					(int)(bounds.getX() + bounds.getWidth()),
+					(int)(bounds.getY() + bounds.getHeight()),
+					drawing.getPaintPropertyStroke().getLineJoins(),
+					drawing.getPaintPropertyStroke().getEndCaps(),
+					drawing.getPaintPropertyStroke().getMiterLimit(),
+					drawing.getPaintPropertyStroke().getDash_phase(),
+					drawing.getPaintPropertyStroke().getDash()
+			);
+		}			
+		return drawing;
+	}
 	
 	/*
 	 * (non-Javadoc)

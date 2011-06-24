@@ -374,9 +374,15 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 		
 		Tool tool = tools.get(toolName);
 		
-		if (tool == null)
+		if (tool == null) {
+			for(Tool t: tools.values()) {
+				if (t.getAlias().equals(toolName)) {
+					setCurrentTool(t);
+					return;
+				}
+			}
 			throw new NoSuchElementException("No tool with name "+toolName+" found.");
-		
+		}
 		setCurrentTool(tool);
 	}
 

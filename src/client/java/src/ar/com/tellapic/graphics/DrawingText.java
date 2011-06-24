@@ -20,11 +20,14 @@ package ar.com.tellapic.graphics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.TableModelListener;
 
 import ar.com.tellapic.TellapicAbstractUser;
+import ar.com.tellapic.console.IConsoleCommand;
 
 /**
  * @author 
@@ -45,6 +48,11 @@ public class DrawingText extends AbstractDrawing {
 	private PaintPropertyFont   fontProperty;
 	private int                 textX;
 	private int                 textY;
+	public static String[][]    COMMANDS = new String[][] {
+		{ "setText", "setTextPosition" },
+		{ "DrawingText", "String text"},
+		{ "DrawingText", "int x", "int y"}
+	};
 	
 	/**
 	 * 
@@ -57,6 +65,7 @@ public class DrawingText extends AbstractDrawing {
 		fontProperty   = null;
 		setName(name);
 		setVisible(true);
+		
 	}
 	
 	/* (non-Javadoc)
@@ -143,7 +152,7 @@ public class DrawingText extends AbstractDrawing {
 	 * 
 	 * @param property
 	 */
-	public void setFont(PaintPropertyFont property) {
+	public void setPaintPropertyFont(PaintPropertyFont property) {
 		fontProperty = property;
 		setChanged();
 		notifyObservers(new Object[] {FONT_PROPERTY_SET});
@@ -152,7 +161,7 @@ public class DrawingText extends AbstractDrawing {
 	/**
 	 * @param paintPropertyAlpha
 	 */
-	public void setAlpha(PaintPropertyAlpha paintPropertyAlpha) {
+	public void setPaintPropertyAlpha(PaintPropertyAlpha paintPropertyAlpha) {
 		alphaProperty = paintPropertyAlpha;
 		setChanged();
 		notifyObservers(new Object[] {ALPHA_PROPERTY_SET});
@@ -161,7 +170,7 @@ public class DrawingText extends AbstractDrawing {
 	/**
 	 * @param paintPropertyColor
 	 */
-	public void setColor(PaintPropertyColor paintPropertyColor) {
+	public void setPaintPropertyColor(PaintPropertyColor paintPropertyColor) {
 		colorProperty = paintPropertyColor;
 		setChanged();
 		notifyObservers(new Object[] {COLOR_PROPERTY_SET});
@@ -317,4 +326,75 @@ public class DrawingText extends AbstractDrawing {
 	public String toString() {
 		return getName();
 	}
+	
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.console.IConsoleCommand#executeCommand(java.lang.String, java.lang.Object[])
+	 */
+	@Override
+	public IConsoleCommand executeCommand(String cmd, Object[] args) {
+		String[] cmdList = getCommandList();
+		IConsoleCommand value = null;
+		boolean executed = false;
+		
+		for(int i = 0; i < cmdList.length && !executed; i++) {
+			if (cmd.equals(cmdList[i])) {
+				try {
+//					Class<Tool> toolClass      = (Class<Tool>) Class.forName(toolClassName);
+					Method method = DrawingToolRectangle.class.getMethod(cmd);
+//					Method method = DrawingToolRectangle.class.getMethod(cmd);
+					value = (IConsoleCommand) method.invoke(this, args);
+					executed = true;
+				} catch (SecurityException e) {
+					e.printStackTrace();
+				} catch (NoSuchMethodException e) {
+					e.printStackTrace();
+				} catch (IllegalArgumentException e) {
+					e.printStackTrace();
+				} catch (IllegalAccessException e) {
+					e.printStackTrace();
+				} catch (InvocationTargetException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		return value;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.console.IConsoleCommand#getCommandList()
+	 */
+	@Override
+	public String[] getCommandList() {
+		return (String[]) COMMANDS[0];
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.console.IConsoleCommand#getArgumentsNamesForCommand(java.lang.String)
+	 */
+	@Override
+	public String[] getArgumentsNamesForCommand(String cmd) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.console.IConsoleCommand#getArgumentsTypesForCommand(java.lang.String)
+	 */
+	@Override
+	public String[] getArgumentsTypesForCommand(String cmd) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.console.IConsoleCommand#getReturnTypeForCommand(java.lang.String)
+	 */
+	@Override
+	public String getReturnTypeForCommand(String cmd) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

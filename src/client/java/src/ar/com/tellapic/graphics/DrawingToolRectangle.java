@@ -10,7 +10,6 @@ import ar.com.tellapic.lib.tellapicConstants;
 import ar.com.tellapic.utils.Utils;
 
 public class DrawingToolRectangle extends DrawingTool {
-	private Point2D             firstPoint;
 	private static final String RECTANGLE_ICON_PATH = "/icons/tools/rectangle.png"; 
 	@SuppressWarnings("unused")
 	private static final String RECTANGLE_CURSOR_PATH = "/icons/tools/rectangle-cursor.png";
@@ -19,8 +18,10 @@ public class DrawingToolRectangle extends DrawingTool {
 	private static final int    DEFAULT_CAPS = 0;
 	private static final Color  DEFAULT_COLOR = Color.black;
 	private static final int    DEFAULT_JOINS = 0;
-	private static final float  DEFAULT_MITER_LIMIT = 1; 
-
+	private static final float  DEFAULT_MITER_LIMIT = 1;
+	private Point2D             firstPoint;
+	 
+	
 	/**
 	 * 
 	 * @param name
@@ -28,6 +29,13 @@ public class DrawingToolRectangle extends DrawingTool {
 	public DrawingToolRectangle(String name) {
 		super(tellapicConstants.TOOL_RECT, name, RECTANGLE_ICON_PATH, Utils.msg.getString("rectangletooltip"), Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 		firstPoint = new Point2D.Double();
+		COMMANDS = new String[][] {
+				{ "rectangle", "frame", "square" },
+				{ getClass().getPackage().getName()+".DrawingShape", "int x1", "int y1", "int x2", "int y2" },
+				{ getClass().getPackage().getName()+".DrawingShape", "int x", "int y", "int w", "int h"},
+				{ getClass().getPackage().getName()+".DrawingShape", "int x", "int y", "int size"}
+		};
+		setAlias("Rectangle");
 	}
 	
 	
@@ -171,9 +179,9 @@ public class DrawingToolRectangle extends DrawingTool {
 				setInUse(true);
 				firstPoint.setLocation(e.getX() / zoomX, e.getY() / zoomX);
 				temporalDrawing = new DrawingShapeRectangle(getName(), firstPoint.getX(), firstPoint.getY(), 0, 0);
-				((DrawingShape) temporalDrawing).setAlpha(toolBoxState.getOpacityProperty());
-				((DrawingShape) temporalDrawing).setColor(toolBoxState.getColorProperty());
-				((DrawingShape) temporalDrawing).setStroke(toolBoxState.getStrokeProperty());
+				((DrawingShape) temporalDrawing).setPaintPropertyAlpha(toolBoxState.getOpacityProperty());
+				((DrawingShape) temporalDrawing).setPaintPropertyColor(toolBoxState.getColorProperty());
+				((DrawingShape) temporalDrawing).setPaintPropertyStroke(toolBoxState.getStrokeProperty());
 				temporalDrawing.setRenderingHints(toolBoxState.getRenderingHints());
 				temporalDrawing.setUser(user);
 				user.setTemporalDrawing(temporalDrawing);
@@ -238,5 +246,69 @@ public class DrawingToolRectangle extends DrawingTool {
 			}
 			e.consume();
 		}
+	}
+	
+	/**
+	 * This tool knows how to build DrawingShapeRectangle objects. This helper method, creates a DrawingShapeRectangle object
+	 * with the specified values and the default user toolbox configuration. Its provides an easy way to create the mentioned
+	 * object, for clients such as: a command line, external events, etc, that are not necessarily mouse events.
+	 *
+	 * @param x the left x coordinate
+	 * @param y the top y coordinate
+	 * @param w the rectangle width
+	 * @param h the rectangle height
+	 * @return A DrawingShapeRectangle will be created, with default user toolbox configuration.
+	 */
+	public DrawingShape frame(String x, String y, String w, String h) {
+		
+		DrawingShapeRectangle drawing = new DrawingShapeRectangle(
+				"CustomRectangle",
+				Integer.valueOf(x),
+				Integer.valueOf(y),
+				Integer.valueOf(w),
+				Integer.valueOf(h)
+		);
+		IToolBoxState toolBoxState = user.getToolBoxModel();
+		
+		drawing.setPaintPropertyAlpha(toolBoxState.getOpacityProperty());
+		drawing.setPaintPropertyColor(toolBoxState.getColorProperty());
+		drawing.setPaintPropertyStroke(toolBoxState.getStrokeProperty());
+		drawing.setRenderingHints(toolBoxState.getRenderingHints());
+		drawing.setUser(user);
+		drawing.cloneProperties();
+		user.addDrawing(drawing);
+		setChanged();
+		notifyObservers(drawing);
+		
+		return drawing;
+	}
+	
+	/**
+	 * 
+	 * @param x1
+	 * @param y1
+	 * @param x2
+	 * @param y2
+	 * @return
+	 */
+	public DrawingShape rectangle(String x1, String y1, String x2, String y2) {
+		int x = Integer.parseInt(x1) < Integer.parseInt(x2)? Integer.parseInt(x1) : Integer.parseInt(x2) ;
+		int y = Integer.parseInt(y1) < Integer.parseInt(y2)? Integer.parseInt(y1) : Integer.parseInt(y2);
+		int width  = Math.abs(Integer.parseInt(x1) - Integer.parseInt(x2));
+		int height = Math.abs(Integer.parseInt(y1) - Integer.parseInt(y2));
+		
+		return frame(String.valueOf(x), String.valueOf(y), String.valueOf(width), String.valueOf(height));
+	}
+	
+	
+	/**
+	 * 
+	 * @param x
+	 * @param y
+	 * @param size
+	 * @return
+	 */
+	public DrawingShape square(String x, String y, String size) {
+		return frame(x, y, size, size);
 	}
 }
