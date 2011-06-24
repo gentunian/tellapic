@@ -28,6 +28,14 @@ import java.awt.geom.Rectangle2D;
 public class DrawingShapeRectangle extends DrawingShape {
 	private Rectangle2D rectangle;
 	
+	/**
+	 * 
+	 * @param name
+	 * @param x
+	 * @param y
+	 * @param w
+	 * @param h
+	 */
 	public DrawingShapeRectangle(String name, double x, double y, double w, double h) {
 		super(name, true, true);
 		rectangle = new Rectangle2D.Double(x, y, w, h);

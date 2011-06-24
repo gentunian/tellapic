@@ -8,11 +8,14 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.geom.Rectangle2D;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.TableModelListener;
 
 import ar.com.tellapic.TellapicAbstractUser;
+import ar.com.tellapic.console.IConsoleCommand;
 import ar.com.tellapic.graphics.ControlPoint.ControlType;
 import ar.com.tellapic.utils.Utils;
 
@@ -78,6 +81,15 @@ public abstract class DrawingShape extends AbstractDrawing {
 	private boolean             isTopEdgeSelected;
 	private boolean             isBottomEdgeSelected;
 	
+	public static String[][]    COMMANDS = new String[][] {
+			{ "setColor", "setAlpha", "setWidth", "setMiterLimit", "setLineJoins", "setEndCaps" },
+			{ "ar.com.tellapic.graphics.DrawingShape", "number colorHexa"},
+			{ "ar.com.tellapic.graphics.DrawingShape", "float alpha"},
+			{ "ar.com.tellapic.graphics.DrawingShape", "float width"},
+			{ "ar.com.tellapic.graphics.DrawingShape", "float width"},
+			{ "ar.com.tellapic.graphics.DrawingShape", "int lj"},
+			{ "ar.com.tellapic.graphics.DrawingShape", "int ec"}
+	};
 	
 	/**
 	 * 
@@ -106,6 +118,15 @@ public abstract class DrawingShape extends AbstractDrawing {
 		/* This is initially visible */
 		setVisible(true);
 		setName(name);
+		COMMANDS = new String[][] {
+				{ "setColor", "setAlpha", "setWidth", "setMiterLimit", "setLineJoins", "setEndCaps" },
+				{ "DrawingShape", "number colorHexa"},
+				{ "DrawingShape", "float alpha"},
+				{ "DrawingShape", "float width"},
+				{ "DrawingShape", "float width"},
+				{ "DrawingShape", "int lj"},
+				{ "DrawingShape", "int ec"}
+		};
 	}
 	
 	/*
@@ -188,7 +209,7 @@ public abstract class DrawingShape extends AbstractDrawing {
 	 * 
 	 * @param property
 	 */
-	public void setStroke(PaintPropertyStroke property) {
+	public void setPaintPropertyStroke(PaintPropertyStroke property) {
 		strokeProperty = property;
 		setChanged();
 		notifyObservers(new Object[] {STROKE_PROPERTY_SET});
@@ -198,7 +219,7 @@ public abstract class DrawingShape extends AbstractDrawing {
 	 * 
 	 * @param property
 	 */
-	public void setColor(PaintPropertyColor property) {
+	public void setPaintPropertyColor(PaintPropertyColor property) {
 		colorProperty = property;
 		setChanged();
 		notifyObservers(new Object[] {COLOR_PROPERTY_SET});
@@ -208,7 +229,7 @@ public abstract class DrawingShape extends AbstractDrawing {
 	 * 
 	 * @param property
 	 */
-	public void setAlpha(PaintPropertyAlpha property) {
+	public void setPaintPropertyAlpha(PaintPropertyAlpha property) {
 		alphaProperty = property;
 		setChanged();
 		notifyObservers(new Object[] {ALPHA_PROPERTY_SET});
@@ -531,7 +552,47 @@ public abstract class DrawingShape extends AbstractDrawing {
 //		DrawingAreaView.getInstance().update(null, null);
 	}
 	
+	public DrawingShape setColor(String color) {
+		colorProperty.setColor(color);
+		setPaintPropertyColor(colorProperty);
+		return this;
+	}
 	
+	public DrawingShape setWidth(String width) {
+		strokeProperty.setWidth(Double.parseDouble(width));
+		setPaintPropertyStroke(strokeProperty);
+		return this;
+	}
+	
+	public DrawingShape setMiterLimit(String ml) {
+		strokeProperty.setMiterLimit(Float.parseFloat(ml));
+		setPaintPropertyStroke(strokeProperty);
+		return this;
+	}
+	
+	public DrawingShape setLineJoins(String lj) {
+		for(PaintPropertyStroke.LINE_JOIN_TYPE ljType : PaintPropertyStroke.LINE_JOIN_TYPE.values())
+			if (ljType.toString().equals(lj))
+				strokeProperty.setLineJoins(ljType.ordinal());
+
+		setPaintPropertyStroke(strokeProperty);
+		return this;
+	}
+	
+	public DrawingShape setEndCaps(String ec) {
+		for(PaintPropertyStroke.END_CAPS_TYPE ecType : PaintPropertyStroke.END_CAPS_TYPE.values())
+			if (ecType.toString().equals(ec))
+				strokeProperty.setLineJoins(ecType.ordinal());
+
+		setPaintPropertyStroke(strokeProperty);
+		return this;
+	}
+	
+	public DrawingShape setAlpha(String opacity) {
+		alphaProperty.alpha = Float.parseFloat(opacity);
+		setPaintPropertyAlpha(alphaProperty);
+		return this;
+	}
 	/*
 	 * (non-Javadoc)
 	 * @see java.lang.Object#toString()
@@ -539,5 +600,117 @@ public abstract class DrawingShape extends AbstractDrawing {
 	@Override
 	public String toString() {
 		return getName();
+	}
+	
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.console.IConsoleCommand#executeCommand(java.lang.String, java.lang.Object[])
+	 */
+	@Override
+	public IConsoleCommand executeCommand(String cmd, Object[] args) {
+		String[]        cmdList  = getCommandList();
+		IConsoleCommand value    = null;
+		boolean         executed = false;
+		int j = 0;
+		for(int i = 0; i < cmdList.length && !executed; i++) {
+			if (cmd.equals(cmdList[i])) {
+				try {
+//					Method method = getClass().getMethod(cmd, getArgumentTypesForCommand(cmd));
+					Method[] methods = getClass().getMethods();
+					Method method = null;
+					for(j = 0; j < methods.length && !methods[j].getName().equals(cmd); j++);
+					if (j == methods.length)
+						throw new NoSuchMethodException("No method "+cmd+" was found.");
+					method = methods[j];
+					value  = (IConsoleCommand) method.invoke(this, args);
+					executed = true;
+				} catch (SecurityException e) {
+					e.printStackTrace();
+				} catch (NoSuchMethodException e) {
+					e.printStackTrace();
+				} catch (IllegalArgumentException e) {
+					e.printStackTrace();
+				} catch (IllegalAccessException e) {
+					e.printStackTrace();
+				} catch (InvocationTargetException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		return value;
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.console.IConsoleCommand#getCommandList()
+	 */
+	@Override
+	public String[] getCommandList() {
+		String[] cmds = new String[COMMANDS[0].length];
+		
+		for (int i = 0; i < COMMANDS[0].length; i++)
+			cmds[i] = COMMANDS[0][i];
+		
+		return cmds;
+	}
+	
+	/*
+	 * (non-Javadoc)
+	 * @see ar.com.tellapic.console.IConsoleCommand#getReturnTypeForCommand(java.lang.String)
+	 */
+	@Override
+	public String getReturnTypeForCommand(String cmd){
+		String[] cmdList = getCommandList();
+		String type = null;
+		
+		for(int i = 0; i < cmdList.length; i++) {
+			if (cmd.equals(cmdList[i])) {
+				type = COMMANDS[i+1][0];
+			}
+		}
+		
+		return type;
+	}
+	
+	/*
+	 * (non-Javadoc)
+	 * @see ar.com.tellapic.console.IConsoleCommand#getArgumentsTypesForCommand(java.lang.String)
+	 */
+	@Override
+	public String[] getArgumentsTypesForCommand(String cmd){
+		return getArgsNamesOrTypesForCommand(cmd, false);
+	}
+	
+	/*
+	 * (non-Javadoc)
+	 * @see ar.com.tellapic.console.IConsoleCommand#getArgumentsNamesForCommand(java.lang.String)
+	 */
+	@Override
+	public String[] getArgumentsNamesForCommand(String cmd){
+		return getArgsNamesOrTypesForCommand(cmd, true);
+	}
+
+	/**
+	 * 
+	 * @param cmd
+	 * @param name
+	 * @return
+	 */
+	private String[] getArgsNamesOrTypesForCommand(String cmd, boolean name) {
+		String[] cmdList = getCommandList();
+		if (cmdList == null)
+			return null;
+		
+		String[] args = null;
+		
+		for(int i = 0; i < cmdList.length; i++) {
+			if (cmd.equals(cmdList[i])) {
+				args = new String[COMMANDS[i+1].length - 1];
+				for(int j = 1; j < COMMANDS[i+1].length; j++) {
+					args[j-1] = (COMMANDS[i+1][j]).split(" ")[name?1:0];
+				}
+			}
+		}
+		
+		return args;
 	}
 }

@@ -52,6 +52,11 @@ public class DrawingToolLine extends DrawingTool {
 	public DrawingToolLine(int id, String name) {
 		super(id, name, LINE_ICON_PATH, Utils.msg.getString("linetooltip"), Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 		firstPoint = new Point2D.Double();
+		setAlias("Line");
+		COMMANDS = new String[][] {
+				{ "line" },
+				{ getClass().getPackage().getName()+".DrawingShape", "int x1", "int y1", "int x2", "int y2" }
+		};
 	}
 
 	/*
@@ -181,20 +186,14 @@ public class DrawingToolLine extends DrawingTool {
 			if ((e.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK) {
 				if (isBeingUsed())
 					throw new IllegalStateException("init cannot be called with the tool being used");
-//				AbstractUser user = null;
-//				if (e instanceof RemoteMouseEvent) {
-//					user = ((RemoteMouseEvent)e).getUser();
-//				} else {
-//					user = UserManager.getInstance().getLocalUser();
-//				}
 				IToolBoxState toolBoxState = user.getToolBoxModel();
 				float zoomX = ControlToolZoom.getInstance().getZoomValue();
 				firstPoint.setLocation(e.getX()/zoomX, e.getY()/zoomX);
 				setInUse(true);
 				temporalDrawing = new DrawingShapeLine(getName(), firstPoint, firstPoint);
-				((DrawingShape) temporalDrawing).setAlpha(toolBoxState.getOpacityProperty());
-				((DrawingShape) temporalDrawing).setColor(toolBoxState.getColorProperty());
-				((DrawingShape) temporalDrawing).setStroke(toolBoxState.getStrokeProperty());
+				((DrawingShape) temporalDrawing).setPaintPropertyAlpha(toolBoxState.getOpacityProperty());
+				((DrawingShape) temporalDrawing).setPaintPropertyColor(toolBoxState.getColorProperty());
+				((DrawingShape) temporalDrawing).setPaintPropertyStroke(toolBoxState.getStrokeProperty());
 				temporalDrawing.setRenderingHints(toolBoxState.getRenderingHints());
 				temporalDrawing.setUser(user);
 				user.setTemporalDrawing(temporalDrawing);
@@ -213,15 +212,7 @@ public class DrawingToolLine extends DrawingTool {
 		if (isSelected() && !e.isConsumed()) {
 			if (e.getButton() == MouseEvent.BUTTON1) {
 				DrawingShapeLine drawingLine = (DrawingShapeLine) temporalDrawing;
-
 				if (drawingLine != null && drawingLine.length() > 0) {
-//				if (line.getP1().distance(line.getP2()) > 0.0) {
-//					AbstractUser user = null;
-//					if (e instanceof RemoteMouseEvent)
-//						user = ((RemoteMouseEvent)e).getUser();
-//					else
-//						user = UserManager.getInstance().getLocalUser();
-					
 					temporalDrawing.cloneProperties();
 					user.addDrawing(temporalDrawing);
 					setChanged();
@@ -265,5 +256,35 @@ public class DrawingToolLine extends DrawingTool {
 				e.consume();
 			}
 		}
+	}
+	
+	/**
+	 * 
+	 * @param x
+	 * @param y
+	 * @return
+	 */
+	public DrawingShape line(String x1, String y1, String x2, String y2) {
+		DrawingShapeLine drawing = new DrawingShapeLine(
+				"CustomLine",
+				Double.parseDouble(x1),
+				Double.parseDouble(y1),
+				Double.parseDouble(x2),
+				Double.parseDouble(y2)
+		);
+		
+		IToolBoxState toolBoxState = user.getToolBoxModel();
+		
+		drawing.setPaintPropertyAlpha(toolBoxState.getOpacityProperty());
+		drawing.setPaintPropertyColor(toolBoxState.getColorProperty());
+		drawing.setPaintPropertyStroke(toolBoxState.getStrokeProperty());
+		drawing.setRenderingHints(toolBoxState.getRenderingHints());
+		drawing.setUser(user);
+		drawing.cloneProperties();
+		user.addDrawing(drawing);
+		setChanged();
+		notifyObservers(drawing);
+		
+		return drawing;
 	}
 }

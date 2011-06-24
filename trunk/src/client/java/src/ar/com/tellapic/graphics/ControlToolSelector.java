@@ -60,6 +60,11 @@ public class ControlToolSelector extends ControlTool {
 	public ControlToolSelector(String name) {
 		super(tellapicConstants.TOOL_SELECTOR, name, SELECTOR_ICON_PATH, Utils.msg.getString("selectortooltip"));
 		action = Action.ACTION_NONE;
+		setAlias("Selector");
+		COMMANDS = new String[][] {
+				{ "nothing" },
+				{ "void" }
+		};
 	}
 	
 	/* (non-Javadoc)

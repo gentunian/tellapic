@@ -4,6 +4,18 @@ import java.awt.BasicStroke;
 import java.awt.Stroke;
 
 public final class PaintPropertyStroke extends PaintProperty {
+	public enum LINE_JOIN_TYPE {
+		JOIN_MITER,
+		JOIN_ROUND,
+		JOIN_BEVEL
+	};
+	
+	public enum END_CAPS_TYPE {
+		CAP_BUTT,
+		CAP_ROUND,
+		CAP_SQUARE
+	}
+	
 	private double width;
 	private int   endCaps;
 	private int   lineJoins;

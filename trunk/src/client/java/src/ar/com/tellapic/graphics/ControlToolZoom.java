@@ -54,6 +54,11 @@ public final class ControlToolZoom extends ControlTool implements ComboBoxModel{
 		zoomInCursor = toolkit.createCustomCursor(image, new Point(10,10), getName()+"In");
 		
 		setZoomIn(true);
+		setAlias("Zoom");
+		COMMANDS = new String[][] {
+				{ "nothing" },
+				{ "void" }
+		};
 	}
 	
 	

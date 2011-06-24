@@ -82,4 +82,41 @@ final public class DrawingToolEllipseNet extends DrawingToolEllipse {
 			setTemporalDrawing(null);
 		}
 	}
+	
+	/*
+	 * (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingToolEllipse#ellipse(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 */
+	public DrawingShape ellipse(String left, String top, String width, String height) {
+		DrawingShape drawing = super.ellipse(left, top, width, height);
+		
+		if (drawing != null) {
+			if (NetManager.getInstance().isConnected() && !getUser().isRemote()) {
+				java.awt.Rectangle bounds = drawing.getShape().getBounds();
+				tellapic.tellapic_send_fig(
+						NetManager.getInstance().getSocket(),
+						getToolId(), 
+						0,
+						SessionUtils.getId(), 
+						0,
+						(float) drawing.getPaintPropertyStroke().getWidth(),
+						drawing.getPaintPropertyAlpha().alpha,
+						drawing.getPaintPropertyColor().getRed(),
+						drawing.getPaintPropertyColor().getGreen(),
+						drawing.getPaintPropertyColor().getBlue(),
+						(int)bounds.getX(),
+						(int)bounds.getY(),
+						(int)(bounds.getX() + bounds.getWidth()),
+						(int)(bounds.getY() + bounds.getHeight()),
+						drawing.getPaintPropertyStroke().getLineJoins(),
+						drawing.getPaintPropertyStroke().getEndCaps(),
+						drawing.getPaintPropertyStroke().getMiterLimit(),
+						drawing.getPaintPropertyStroke().getDash_phase(),
+						drawing.getPaintPropertyStroke().getDash()
+				);
+			}
+		}
+		
+		return drawing;
+	}
 }

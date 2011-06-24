@@ -24,6 +24,11 @@ public class DrawingToolMarker extends DrawingToolLine {
 		super(tellapicConstants.TOOL_MARKER, name);
 		setIconPath(MARKER_ICON_PATH);
 		setToolTipText(Utils.msg.getString("markertooltip"));
+		setAlias("Marker");
+		COMMANDS = new String[][] {
+				{ "nothing" },
+				{ "void" }
+		};
 	}
 	
 	public DrawingToolMarker() {

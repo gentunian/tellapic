@@ -30,6 +30,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableModel;
 
 import ar.com.tellapic.TellapicAbstractUser;
+import ar.com.tellapic.console.IConsoleCommand;
 import ar.com.tellapic.graphics.ControlPoint.ControlType;
 
 /**
@@ -38,7 +39,7 @@ import ar.com.tellapic.graphics.ControlPoint.ControlType;
  *          sebastian.treu(at)gmail.com
  *
  */
-public abstract class AbstractDrawing extends Observable implements Cloneable, TableModel, ListSelectionListener {
+public abstract class AbstractDrawing extends Observable implements Cloneable, TableModel, ListSelectionListener, IConsoleCommand {
 	public static final int      RESIZED            = -2;
 	public static final int      MOVED              = -1;
 	public static final int      VISIBILITY_CHANGED = 0;
@@ -57,6 +58,7 @@ public abstract class AbstractDrawing extends Observable implements Cloneable, T
 	protected boolean            moveable;
 	private long                 number;
 	private boolean              isVisible;
+
 	
 	/**
 	 * 
