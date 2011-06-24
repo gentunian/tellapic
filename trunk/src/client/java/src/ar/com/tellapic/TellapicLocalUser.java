@@ -17,6 +17,8 @@
  */  
 package ar.com.tellapic;
 
+import ar.com.tellapic.console.ConsoleModel;
+import ar.com.tellapic.console.IConsoleModelController;
 import ar.com.tellapic.graphics.AbstractDrawing;
 import ar.com.tellapic.lib.tellapic;
 import ar.com.tellapic.lib.tellapicConstants;
@@ -28,6 +30,8 @@ import ar.com.tellapic.lib.tellapicConstants;
  *
  */
 public class TellapicLocalUser extends TellapicAbstractUser {
+	private ConsoleModel                     console;
+	private IConsoleModelController          consoleController;
 	
 	public static final String LOCAL_NAME = "Local";
 	
@@ -43,6 +47,8 @@ public class TellapicLocalUser extends TellapicAbstractUser {
 	private TellapicLocalUser(int id, String name) {
 		super(id, name);
 		setRemote(false);
+		console           = new ConsoleModel();
+		setConsoleController(new TellapicConsoleModelController(console, getToolboxController(), this));
 	}
 	
 	/**
@@ -67,5 +73,33 @@ public class TellapicLocalUser extends TellapicAbstractUser {
 		}
 		
 		return removed;
+	}
+
+	/**
+	 * @param consoleController the consoleController to set
+	 */
+	public void setConsoleController(IConsoleModelController consoleController) {
+		this.consoleController = consoleController;
+	}
+
+	/**
+	 * @return the consoleController
+	 */
+	public IConsoleModelController getConsoleController() {
+		return consoleController;
+	}
+
+	/**
+	 * @return the console
+	 */
+	public ConsoleModel getConsole() {
+		return this.console;
+	}
+
+	/**
+	 * @param console the console to set
+	 */
+	public void setConsole(ConsoleModel console) {
+		this.console = console;
 	}
 }

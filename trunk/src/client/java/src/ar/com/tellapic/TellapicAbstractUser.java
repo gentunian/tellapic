@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.Observable;
 
 import ar.com.tellapic.adm.AbstractUser;
+import ar.com.tellapic.console.ConsoleModel;
+import ar.com.tellapic.console.IConsoleModelController;
 import ar.com.tellapic.graphics.AbstractDrawing;
 import ar.com.tellapic.graphics.DrawingAreaModel;
 import ar.com.tellapic.graphics.IPaintPropertyController;
@@ -92,15 +94,16 @@ public abstract class TellapicAbstractUser extends AbstractUser {
 	 */
 	public TellapicAbstractUser() {
 		setVisible(true);
-		removed = false;
-		toolBox   = new ToolBoxModel();
+		removed     = false;
+		toolBox     = new ToolBoxModel();
 		drawingList = new ArrayList<AbstractDrawing>();
+		
 		//TODO: the idea was that local user can set how to paint all paintings of a user
-		customProperties = new PaintProperty[4];
+		customProperties  = new PaintProperty[4];
 		
 		toolboxController = new ToolBoxController(toolBox);
 		
-		paintController = new PaintPropertyController(toolBox);
+		paintController   = new PaintPropertyController(toolBox);
 		
 		for(Tool tool : toolBox.getTools().values())
 			tool.setUser(this);
