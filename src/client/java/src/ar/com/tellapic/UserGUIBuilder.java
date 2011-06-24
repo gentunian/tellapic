@@ -39,6 +39,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -46,6 +47,8 @@ import javax.swing.UnsupportedLookAndFeelException;
 import ar.com.tellapic.adm.IUserManagerState;
 import ar.com.tellapic.chat.ChatMessagesView;
 import ar.com.tellapic.chat.ChatViewController;
+import ar.com.tellapic.console.ConsoleDialog;
+import ar.com.tellapic.console.ConsolePanel;
 import ar.com.tellapic.graphics.DrawingAreaView;
 import ar.com.tellapic.graphics.PaintPropertyView;
 import ar.com.tellapic.graphics.Tool;
@@ -73,7 +76,8 @@ public class UserGUIBuilder {
 	private ChatMessagesView        chatView;
 	private JFrame                  mainWindow;
 	private JScrollPane             scrollPane;
-
+//	private ConsolePanel            consolePanel;
+	
 	
 	public UserGUIBuilder(TellapicLocalUser user) throws NullPointerException{
 		if (user == null)
@@ -90,17 +94,13 @@ public class UserGUIBuilder {
 		// - toolViewController: Selects the appropiate tool upon user interaction with the ToolView view.
 		//                       For remote user, emulates the user selection on a tool with a received packet
 		//                       from the net.
-//		PaintPropertyController propertyController = new PaintPropertyController(model);
-//		IToolBoxController      toolViewController = new ToolBoxController(model);
-//		
-//		user.setToolboxController(toolViewController);
-//		user.setPaintController(propertyController);
 		
 		// Instantiates all the GUIs.
 		userView     = UsersView.getInstance();
 		toolView     = new ToolView(model);
 		propertyView = new PaintPropertyView();	
 		chatView     = new ChatMessagesView(new TellapicChatModelController(), user.getName(), new TellapicChatViewCustomProtocol((IUserManagerState) TellapicUserManager.getInstance()));
+//		consolePanel = new ConsolePanel(user.getConsoleController());
 		
 		model.addObserver(propertyView);
 		model.addObserver(toolView);
@@ -127,6 +127,7 @@ public class UserGUIBuilder {
 		mainWindow.setIconImage(Utils.createIconImage(112, 75, "/icons/system/logo_small.png"));
 		mainWindow.getContentPane().add(StatusBar.getInstance(), BorderLayout.SOUTH);
 		mainWindow.getContentPane().add(propertyView, BorderLayout.NORTH);
+		
 		
 		CControl     control1 = new CControl(mainWindow);
 		CGrid            grid = new CGrid(control1);
@@ -207,7 +208,20 @@ public class UserGUIBuilder {
 		JMenu     fileMenu  = new JMenu(Utils.msg.getString("file"));
 		JMenuItem reconnect = new JMenuItem(Utils.msg.getString("reconnect"));
 		JMenuItem exit      = new JMenuItem(Utils.msg.getString("exit"));
-
+		JMenuItem console   = new JMenuItem("console");
+		
+		console.setAccelerator(KeyStroke.getKeyStroke("control R"));
+		console.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				TellapicLocalUser u = (TellapicLocalUser) TellapicUserManager.getInstance().getUser(SessionUtils.getUsername());
+				ConsoleDialog consoleDialog = new ConsoleDialog(mainWindow, u.getConsoleController());
+				u.getConsole().addObserver(consoleDialog);
+				consoleDialog.setLocationRelativeTo(null);
+				consoleDialog.setVisible(true);
+			}
+		});
+		
 		fileMenu.setMnemonic(KeyEvent.VK_F);
 		
 		reconnect.addActionListener(new ActionListener() {
@@ -230,6 +244,8 @@ public class UserGUIBuilder {
 		});
 		
 		fileMenu.add(reconnect);
+		fileMenu.addSeparator();
+		fileMenu.add(console);
 		fileMenu.addSeparator();
 		fileMenu.add(exit);
 		
