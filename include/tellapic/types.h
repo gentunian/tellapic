@@ -48,6 +48,7 @@ typedef struct {
   byte_t red;
   byte_t green;
   byte_t blue;
+  byte_t alpha;
 } color_t;
 
 
@@ -94,21 +95,23 @@ typedef struct {
 
 
 typedef struct {
-  point_t        point2;       /* byte 22   4 bytes on stream */
-  byte_t         linejoin;     /* byte 26   1 byte on stream */
-  byte_t         endcaps;      /* byte 27   1 byte on stream */
-  tellapic_float miterlimit;   /* byte 28   4 bytes on stream */
-  tellapic_float dash_phase;   /* byte 32   4 bytes on stream */
-  tellapic_float dash_array[2]; /* byte 36  8 bytes on stream */
+  color_t        color;         /* byte 23  4 bytes on stream */
+  point_t        point2;        /* byte 27  4 bytes on stream */
+  byte_t         linejoin;      /* byte 31  1 byte on stream */
+  byte_t         endcaps;       /* byte 32  1 byte on stream */
+  tellapic_float miterlimit;    /* byte 33  4 bytes on stream */
+  tellapic_float dash_phase;    /* byte 37  4 bytes on stream */
+  tellapic_float dash_array[4]; /* byte 41  16 bytes on stream */
 } figure_t;
 
 
 typedef struct {
-  byte_t         style;                     /* byte 22 */
-  byte_t         facelen;                   /* byte 23 */
-  tellapic_u16_t infolen;                   /* byte 24 */
-  byte_t         face[MAX_FONTFACE_LEN];    /* byte 26 */
-  byte_t         info[MAX_TEXT_SIZE];       /* byte 26 + facelen */ 
+  color_t        color;                     /* byte 23 4 bytes on stream */
+  byte_t         style;                     /* byte 27 1 byte on stream */
+  byte_t         facelen;                   /* byte 28 1 byte on stream */
+  tellapic_u16_t infolen;                   /* byte 29 2 bytes on stream */
+  byte_t         face[MAX_FONTFACE_LEN];    /* byte 31 */
+  byte_t         info[MAX_TEXT_SIZE];       /* byte (31 + facelen) */ 
 } text_t;
 
 
@@ -119,8 +122,8 @@ typedef struct {
   tellapic_u32_t             number;       /* byte 3    4 bytes on stream */
   tellapic_float             width;        /* byte 7    4 bytes on stream */
   tellapic_float             opacity;      /* byte 11   4 bytes on stream */
-  color_t                    color;        /* byte 15   3 bytes on stream */
-  point_t                    point1;       /* byte 18   4 bytes on stream */
+  color_t                    fillcolor;    /* byte 15   4 bytes on stream */
+  point_t                    point1;       /* byte 19   4 bytes on stream */
   union {
     figure_t                 figure;
     text_t                   text;         /* total: FONT_FACE_LEN + MAX_TEX_SIZE + 1 bytes on stream */
