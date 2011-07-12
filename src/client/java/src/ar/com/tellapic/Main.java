@@ -24,14 +24,14 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
 import ar.com.tellapic.NetManager.WrongPacketException;
-import ar.com.tellapic.graphics.ControlToolSelectorNet;
+import ar.com.tellapic.graphics.ControlToolSelector;
 import ar.com.tellapic.graphics.ControlToolZoom;
-import ar.com.tellapic.graphics.DrawingToolEllipseNet;
-import ar.com.tellapic.graphics.DrawingToolLineNet;
-import ar.com.tellapic.graphics.DrawingToolMarkerNet;
-import ar.com.tellapic.graphics.DrawingToolPenNet;
-import ar.com.tellapic.graphics.DrawingToolRectangleNet;
-import ar.com.tellapic.graphics.DrawingToolTextNet;
+import ar.com.tellapic.graphics.DrawingToolEllipse;
+import ar.com.tellapic.graphics.DrawingToolLine;
+import ar.com.tellapic.graphics.DrawingToolMarker;
+import ar.com.tellapic.graphics.DrawingToolPen;
+import ar.com.tellapic.graphics.DrawingToolRectangle;
+import ar.com.tellapic.graphics.DrawingToolText;
 import ar.com.tellapic.graphics.ToolFactory;
 import ar.com.tellapic.lib.tellapicConstants;
 import ar.com.tellapic.utils.Utils;
@@ -193,13 +193,13 @@ public class Main {
 	 */
 	private static void initiate(final int id, final String name) {
 		ToolFactory.registerToolClassName(99, ControlToolZoom.class.getName());
-		ToolFactory.registerToolClassName(tellapicConstants.TOOL_ELLIPSE, DrawingToolEllipseNet.class.getName());
-		ToolFactory.registerToolClassName(tellapicConstants.TOOL_LINE, DrawingToolLineNet.class.getName());
-		ToolFactory.registerToolClassName(tellapicConstants.TOOL_RECT, DrawingToolRectangleNet.class.getName());
-		ToolFactory.registerToolClassName(tellapicConstants.TOOL_TEXT, DrawingToolTextNet.class.getName());
-		ToolFactory.registerToolClassName(tellapicConstants.TOOL_MARKER, DrawingToolMarkerNet.class.getName());
-		ToolFactory.registerToolClassName(tellapicConstants.TOOL_PATH, DrawingToolPenNet.class.getName());
-		ToolFactory.registerToolClassName(tellapicConstants.TOOL_SELECTOR, ControlToolSelectorNet.class.getName());
+		ToolFactory.registerToolClassName(tellapicConstants.TOOL_ELLIPSE, DrawingToolEllipse.class.getName());
+		ToolFactory.registerToolClassName(tellapicConstants.TOOL_LINE, DrawingToolLine.class.getName());
+		ToolFactory.registerToolClassName(tellapicConstants.TOOL_RECT, DrawingToolRectangle.class.getName());
+		ToolFactory.registerToolClassName(tellapicConstants.TOOL_TEXT, DrawingToolText.class.getName());
+		ToolFactory.registerToolClassName(tellapicConstants.TOOL_MARKER, DrawingToolMarker.class.getName());
+		ToolFactory.registerToolClassName(tellapicConstants.TOOL_PATH, DrawingToolPen.class.getName());
+		ToolFactory.registerToolClassName(90, ControlToolSelector.class.getName());
 		
 		final TellapicUserManager userManager = TellapicUserManager.getInstance();
 		final TellapicLocalUser   luser       = TellapicLocalUser.getInstance();

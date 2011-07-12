@@ -2,7 +2,6 @@ package ar.com.tellapic.graphics;
 
 import java.awt.Color;
 import java.awt.event.MouseEvent;
-import java.awt.geom.Line2D;
 
 import ar.com.tellapic.lib.tellapicConstants;
 import ar.com.tellapic.utils.Utils;
@@ -27,7 +26,7 @@ public class DrawingToolMarker extends DrawingToolLine {
 		setAlias("Marker");
 		COMMANDS = new String[][] {
 				{ "nothing" },
-				{ "void" }
+				{ "void nothing" }
 		};
 	}
 	
@@ -126,17 +125,26 @@ public class DrawingToolMarker extends DrawingToolLine {
 			if ((e.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK) {
 				if (isBeingUsed()) {
 					float zoomX = ControlToolZoom.getInstance().getZoomValue();
-					DrawingShape t = (DrawingShape) getTemporalDrawing();
+					DrawingShapeLine t = (DrawingShapeLine) getTemporalDrawing();
 					boolean symmetric = e.isControlDown() | isSymmetricModeEnabled();
 					if (symmetric)
-						((Line2D)t.getShape()).setLine(firstPoint.getX(), firstPoint.getY(), firstPoint.getX(), e.getY()/zoomX);
+						t.setLine(firstPoint.getX(), firstPoint.getY(), firstPoint.getX(), e.getY()/zoomX);
 					else
-						((Line2D)t.getShape()).setLine(firstPoint.getX(), firstPoint.getY(), e.getX()/zoomX, firstPoint.getY());
+						t.setLine(firstPoint.getX(), firstPoint.getY(), e.getX()/zoomX, firstPoint.getY());
 					setChanged();
 					notifyObservers(t);
 				}
 			}
 			e.consume();
 		}
+	}
+	
+	/*
+	 * (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingToolLine#isLiveModeSupported()
+	 */
+	@Override
+	public boolean isLiveModeSupported() {
+		return true;
 	}
 }

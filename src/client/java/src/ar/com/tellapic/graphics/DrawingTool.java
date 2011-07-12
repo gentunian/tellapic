@@ -116,6 +116,7 @@ public abstract class DrawingTool extends Tool {
 	public abstract boolean hasColorCapability();
 	public abstract boolean hasFontCapability();
 	public abstract boolean hasStrokeCapability();
+	public abstract boolean hasFillCapability();
 	public abstract double getDefaultAlpha();
 	public abstract Color  getDefaultColor();
 	public abstract String getDefaultFontFace();

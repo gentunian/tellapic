@@ -20,9 +20,9 @@ package ar.com.tellapic.graphics;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.geom.Rectangle2D;
 
-import ar.com.tellapic.DrawingPopupMenu;
-import ar.com.tellapic.lib.tellapicConstants;
 import ar.com.tellapic.utils.Utils;
 
 /**
@@ -58,12 +58,12 @@ public class ControlToolSelector extends ControlTool {
 	 * @param name
 	 */
 	public ControlToolSelector(String name) {
-		super(tellapicConstants.TOOL_SELECTOR, name, SELECTOR_ICON_PATH, Utils.msg.getString("selectortooltip"));
+		super(90, name, SELECTOR_ICON_PATH, Utils.msg.getString("selectortooltip"));
 		action = Action.ACTION_NONE;
 		setAlias("Selector");
 		COMMANDS = new String[][] {
 				{ "nothing" },
-				{ "void" }
+				{ "void nothing" }
 		};
 	}
 	
@@ -183,12 +183,6 @@ public class ControlToolSelector extends ControlTool {
 				double eventX = e.getX()/zoomX;
 				double eventY = e.getY()/zoomX;
 				
-//				AbstractUser user = null;
-//				if (e instanceof RemoteMouseEvent)
-//					user = ((RemoteMouseEvent)e).getUser();
-//				else
-//					user = UserManager.getInstance().getLocalUser();
-
 				/* We can't modify drawing from other users */
 				if (temporalDrawing != null  && !temporalDrawing.getUser().equals(user))
 					return;
@@ -219,7 +213,7 @@ public class ControlToolSelector extends ControlTool {
 		super.mouseMoved(e);
 		if (isSelected() && !e.isConsumed()) {
 			Component component = e.getComponent();
-			
+			user.setTemporalDrawing(null);
 			/* While moving the mouse and no drawing was selected, do nothing */
 			if (temporalDrawing == null) {
 				component.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
@@ -268,7 +262,8 @@ public class ControlToolSelector extends ControlTool {
 		AbstractDrawing[] drawings = DrawingAreaModel.getInstance().getDrawings().toArray(new AbstractDrawing[0]);
 		
 		for(int i = 0; i < drawings.length; i++) {
-			if (drawings[i].getBounds2D().contains(e.getX()/zoomX, e.getY()/zoomX) && drawings[i].isVisible()) {
+			Rectangle2D bounds = drawings[i].getBounds2D();
+			if (bounds != null && bounds.contains(e.getX()/zoomX, e.getY()/zoomX) && drawings[i].isVisible()) {
 				drawings[i].setSelected(true);
 				temporalDrawing = drawings[i];
 				selectControlPointBelow(e);
@@ -323,6 +318,20 @@ public class ControlToolSelector extends ControlTool {
 		return (controlPoint != null);
 	}
 	
+	/**
+	 * 
+	 * @param drawing
+	 */
+	public void selectDrawing(AbstractDrawing drawing) {
+		if (temporalDrawing != null)
+			temporalDrawing.setSelected(false);
+		
+		temporalDrawing = drawing;
+		temporalDrawing.setSelected(true);
+		setChanged();
+		notifyObservers(temporalDrawing);
+	}
+	
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.ControlTool#hasMoveCapability()
 	 */
@@ -337,5 +346,23 @@ public class ControlToolSelector extends ControlTool {
 	@Override
 	public boolean hasResizeCapability() {
 		return true;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseWheelListener#mouseWheelMoved(java.awt.event.MouseWheelEvent)
+	 */
+	@Override
+	public void mouseWheelMoved(MouseWheelEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#isLiveModeSupported()
+	 */
+	@Override
+	public boolean isLiveModeSupported() {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }

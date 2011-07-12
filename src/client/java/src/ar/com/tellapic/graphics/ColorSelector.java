@@ -23,18 +23,22 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Robot;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
@@ -43,8 +47,12 @@ import javax.swing.BorderFactory;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSlider;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import ar.com.tellapic.utils.Utils;
 
@@ -55,14 +63,28 @@ import ar.com.tellapic.utils.Utils;
  *
  */
 public class ColorSelector extends JDialog {
-	private static final long serialVersionUID = 1L;
-	private static final int SELECT_BUTTON_WIDTH = 200;
-	private static final int BACK_BUTTON_WIDTH   = 150;
-	private JLabel oldColor;
-	private JLabel selectColor;
-	private boolean newColor;
-	boolean animating = false;
+	private static final long        serialVersionUID = 1L;
+	private static final int         SELECT_BUTTON_WIDTH = 200;
+	private static final int         BACK_BUTTON_WIDTH   = 150;
+	private ColorLabel               oldColor;
+	private ColorLabel               selectColor;
+	private boolean                  newColor;
+	private IColorSelectorController controller;
+	private int                      alpha = 255;
 	
+	/**
+	 * 
+	 * @param parent
+	 * @param color
+	 * @param xPosition
+	 * @param yPosition
+	 * @param alignLeft
+	 * @param c
+	 */
+	public ColorSelector(JDialog parent, Color color, int xPosition, int yPosition, boolean alignLeft, IColorSelectorController c) {
+		this(parent, color, xPosition, yPosition, alignLeft);
+		controller = c;
+	}
 	
 	/**
 	 * 
@@ -74,62 +96,111 @@ public class ColorSelector extends JDialog {
 	 */
 	public ColorSelector(JDialog parent, Color color, int xPosition, int yPosition, boolean alignLeft) {
 		super(parent);
-		oldColor    = new JLabel("Previous Color");
-		selectColor = new JLabel("New Color");
+		/* Use this two labels as buttons for choosing the actual color */
+		oldColor    = new ColorLabel("Previous Color");
+		selectColor = new ColorLabel("New Color");
 		
+		/* Set the labels properties */
 		selectColor.setFont(Font.decode("Droid-10-bold"));
-		oldColor.setFont(Font.decode("Droid-10-bold"));
-		selectColor.setOpaque(true);
-		oldColor.setOpaque(true);
 		selectColor.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-		oldColor.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		selectColor.setOpaque(true);
 		selectColor.setPreferredSize(new Dimension(SELECT_BUTTON_WIDTH, 30));
 		selectColor.setHorizontalTextPosition((int)JLabel.CENTER_ALIGNMENT);
 		selectColor.setHorizontalAlignment(JLabel.CENTER);
-		oldColor.setPreferredSize(new Dimension(BACK_BUTTON_WIDTH, 30));
-		oldColor.setHorizontalTextPosition((int)JLabel.CENTER_ALIGNMENT);
-		oldColor.setHorizontalAlignment(JLabel.CENTER);
-		oldColor.setBorder(BorderFactory.createRaisedBevelBorder());
-		oldColor.setBackground(color);
-		oldColor.setForeground(reverseColor(color));
 		selectColor.setBorder(new LineBorder(Color.black, 2, true));
 		selectColor.setDoubleBuffered(true);
-		oldColor.setDoubleBuffered(true);
+		
+		/* When "new color" button is pressed, hide this dialog with the newColor boolean value set to true */
 		selectColor.addMouseListener(new MouseAdapter(){
 			public void mouseClicked(MouseEvent e) {
 				newColor = true;
 				setVisible(false);
 			}
 		});
+		
+		/* Set the labels properties */
+		oldColor.setOpaque(true);
+		oldColor.setFont(Font.decode("Droid-10-bold"));
+		oldColor.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		oldColor.setPreferredSize(new Dimension(BACK_BUTTON_WIDTH, 30));
+		oldColor.setHorizontalTextPosition((int)JLabel.CENTER_ALIGNMENT);
+		oldColor.setHorizontalAlignment(JLabel.CENTER);
+		oldColor.setBorder(BorderFactory.createRaisedBevelBorder());
+		oldColor.setBackground(color);
+		oldColor.setForeground(reverseColor(color));
+		oldColor.setDoubleBuffered(true);
+		
+		/* When "previous color" button is pressed, hide this dialog with the newColor boolean value set to false */
 		oldColor.addMouseListener(new MouseAdapter(){
 			public void mouseClicked(MouseEvent e) {
 				newColor = false;
 				setVisible(false);
 			}
 		});
-		
+
+		/* Creates the color panel */
 		ColorSelectorPanel colorPanel = new ColorSelectorPanel();
+		
+		/* Creates the panel where the "new color" and "previous color" buttons will be placed */
+		JPanel labelPanel = new JPanel();
+		
+		/* Sets the buttons panel properties */
+		labelPanel.setOpaque(true);
+		labelPanel.setBackground(Color.white);
+		labelPanel.add(oldColor, BorderLayout.LINE_START);
+		labelPanel.add(selectColor, BorderLayout.LINE_END);
+		
+		/* Creates the slider for the transparency value */
+		JSlider alphaSlider = new JSlider(0, 255, alpha);
+		
+		/* Sets the slider properties */
+		alphaSlider.setOrientation(SwingConstants.VERTICAL);
+		alphaSlider.addChangeListener(new ChangeListener(){
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				JSlider src = (JSlider) e.getSource();
+				alpha = src.getValue();
+				selectColor.repaint();
+			}
+		});
+		
+		/* Add the slider, the color panel and the button panel to this dialog */
+		add(alphaSlider, BorderLayout.LINE_END);
+		add(colorPanel, BorderLayout.CENTER);
+		add(labelPanel, BorderLayout.PAGE_END);
+
 		setIconImage(Utils.createIconImage(12, 12, "/icons/tools/color1.png"));
 		setTitle("Tellapic -"+Utils.msg.getString("pickcolor"));
-		addFocusListener(new FocusListener(){
-			public void focusGained(FocusEvent e) {}
-			public void focusLost(FocusEvent e) {
+		
+		/* Even if we don't press any button, but we lost focus, hide this dialog */
+		addWindowFocusListener(new WindowAdapter(){
+			public void windowLostFocus(WindowEvent e) {
 				ColorSelector.this.setVisible(false);
 			}
 		});
-		add(colorPanel, BorderLayout.NORTH);
-		add(oldColor, BorderLayout.LINE_START);
-		add(selectColor, BorderLayout.LINE_END);
+		
+		/* Notify controller if any, that this dialog is disposing */
+		addComponentListener(new ComponentAdapter(){
+			@Override
+			public void componentHidden(ComponentEvent e) {
+				if (controller != null)
+					controller.handleColorChange(getSelectedColor());
+				dispose();
+			}
+		});
+		
+		/* Undecorate this dialog */
 		setUndecorated(true);
 		setResizable(false);
+		setDefaultCloseOperation(JDialog.HIDE_ON_CLOSE);
+		
 		if (alignLeft)
 			setLocation(xPosition, yPosition);
 		else
 			setLocation(xPosition - SELECT_BUTTON_WIDTH - BACK_BUTTON_WIDTH, yPosition);
-		setVisible(true);
-		pack();	
+		
+		pack();
 	}
-	
 	
 	/**
 	 * 
@@ -142,39 +213,16 @@ public class ColorSelector extends JDialog {
 		this(null, color, xPosition, yPosition, alignLeft);
 	}
 	
-	
-	/**
-	 * 
-	 * @param g
-	 */
-	public void paint(Graphics g) {
-		super.paint(g);
-//		Image image = createImage(ColorSelectorPanel.PANEL_WIDTH, 250);
-//		Graphics2D i = (Graphics2D) image.getGraphics();
-//		if (newColor)
-//			i.setColor(selectColor.getBackground());
-//		else
-//			i.setColor(oldColor.getBackground());
-//		i.fillRect(0, 0, ColorSelectorPanel.PANEL_WIDTH, 250);
-//		i.setColor(Color.black);
-//		i.drawRect(0, 0, ColorSelectorPanel.PANEL_WIDTH - 1, getHeight());
-//		g2.drawImage(image, 0, 0, null);
-//		Paint p = new GradientPaint(0.0f, 0.0f, new Color(200, 200, 200, 0), 0.0f, getHeight(), new Color(200, 200, 200, 255), true);
-//		g2.setPaint(p);
-	}
-	
-	
 	/**
 	 * 
 	 * @return
 	 */
 	public Color getSelectedColor() {
 		if (newColor)
-			return selectColor.getBackground();
+			return selectColor.getColor();
 		else
-			return oldColor.getBackground();
+			return oldColor.getColor();
 	}
-	
 	
 	/**
 	 * 
@@ -185,10 +233,10 @@ public class ColorSelector extends JDialog {
 		return new Color(
 				((color.getRed() < 128)? 255 : 0),
 				((color.getGreen() < 128)? 255 : 0),
-				((color.getBlue()< 128)? 255:0)
+				((color.getBlue()< 128)? 255:0),
+				color.getAlpha()
 		);
 	}
-	
 	
 	/**
 	 * 
@@ -199,34 +247,33 @@ public class ColorSelector extends JDialog {
 	 */
 	class ColorSelectorPanel extends JPanel implements MouseListener, MouseMotionListener {
 		private static final long serialVersionUID = 1L;
-		public static final int COLOR_WHEEL_RADIUS = 84;
-		public static final int COLOR_WHEEL_DIAMETER = COLOR_WHEEL_RADIUS * 2;
-		public static final int COLOR_WHEEL_WIDTH  = 20;
-		public static final int COLOR_BOX_SIZE = 100;
-		public static final int IMAGE_SIZE = 195;
-		private static final int GAP = 5;
-		public static final int PANEL_WIDTH = IMAGE_SIZE + GAP*2;
-		public static final int PANEL_HEIGHT = 200;
-		private static final int BOX_X = 47; 
-		private static final int BOX_Y = 148; 
+		public static final int   COLOR_WHEEL_RADIUS = 84;
+		public static final int   COLOR_WHEEL_DIAMETER = COLOR_WHEEL_RADIUS * 2;
+		public static final int   COLOR_WHEEL_WIDTH  = 20;
+		public static final int   COLOR_BOX_SIZE = 100;
+		public static final int   IMAGE_SIZE = 195;
+		private static final int  GAP = 5;
+		public static final int   PANEL_WIDTH = IMAGE_SIZE + GAP*2;
+		public static final int   PANEL_HEIGHT = 200;
+		private static final int  BOX_X = 47; 
+		private static final int  BOX_Y = 148; 
 
 		private RenderingHints rh;
-		private Robot robot;
-		private Color color;
-		private BufferedImage wheel;
-		private BufferedImage marker;
-		private BufferedImage mask;
-		private int x;
-		private int y;
-		private int squareMarkX;
-		private int squareMarkY;
-		private int wheelMarkX;
-		private int wheelMarkY;
-		//private boolean squareMarkSet = false;
-		private boolean wheelMarkSet  = false;
-		private boolean dragingWheel  = false;
-		private boolean dragingSquare = false;
-		private GradientPaint gradient;
+		private Robot          robot;
+		private Color          color;
+		private BufferedImage  wheel;
+		private BufferedImage  marker;
+		private BufferedImage  mask;
+		private int            x;
+		private int            y;
+		private int            squareMarkX;
+		private int            squareMarkY;
+		private int            wheelMarkX;
+		private int            wheelMarkY;
+		private boolean        wheelMarkSet  = false;
+		private boolean        dragingWheel  = false;
+		private boolean        dragingSquare = false;
+		private GradientPaint  gradient;
 
 		
 		/**
@@ -248,7 +295,6 @@ public class ColorSelector extends JDialog {
 				addMouseMotionListener(this);
 				LineBorder roundedLineBorder = new LineBorder(Color.black, 4, true);
 				setBorder(roundedLineBorder);
-
 			} catch (IOException e) {
 				e.printStackTrace();
 			} catch (AWTException e) {
@@ -291,6 +337,7 @@ public class ColorSelector extends JDialog {
 			Point point = new Point(squareMarkX, squareMarkY);
 			SwingUtilities.convertPointToScreen(point, this);
 			Color newColor = robot.getPixelColor(point.x, point.y);
+
 			selectColor.setBackground(newColor);
 			selectColor.setForeground(reverseColor(newColor));
 		}
@@ -366,7 +413,6 @@ public class ColorSelector extends JDialog {
 			repaint();
 		}
 
-
 		/* (non-Javadoc)
 		 * @see java.awt.event.MouseMotionListener#mouseDragged(java.awt.event.MouseEvent)
 		 */
@@ -397,7 +443,6 @@ public class ColorSelector extends JDialog {
 			repaint();
 		}
 
-
 		/* (non-Javadoc)
 		 * @see java.awt.event.MouseMotionListener#mouseMoved(java.awt.event.MouseEvent)
 		 */
@@ -406,6 +451,82 @@ public class ColorSelector extends JDialog {
 			x = e.getX();
 			y = e.getY();
 			repaint();
+		}
+	}
+	
+	
+	private class ColorLabel extends JLabel {
+		private static final long serialVersionUID = 1L;
+		private Color color;
+		private int   textWidth;
+		/**
+		 * @param string
+		 */
+		public ColorLabel(String string) {
+			super(string);
+			if (string != null)
+				textWidth = getStringWidth(string);
+		}
+
+		/**
+		 * 
+		 * @return
+		 */
+		private int getStringWidth(String text) {
+			FontMetrics metrics = getFontMetrics(getFont());
+			return metrics.stringWidth(text);
+		}
+		
+		/*
+		 * (non-Javadoc)
+		 * @see javax.swing.JLabel#setText(java.lang.String)
+		 */
+		@Override
+		public void setFont(Font font) {
+			super.setFont(font);
+			textWidth = getStringWidth(getText());
+		}
+	
+		/**
+		 * 
+		 */
+		public void paint(Graphics g) {
+			Graphics2D g2 = (Graphics2D) g;
+			Color c = getBackground();
+			Rectangle r = getVisibleRect();
+			
+			for(int j = 0; j < r.height/10; j++) {
+				Color firstColor;
+				Color secondColor;
+				if (j % 2 == 0) {
+					firstColor = Color.black;
+					secondColor = Color.gray;
+				} else {
+					firstColor = Color.gray;
+					secondColor = Color.black;
+				}
+				for(int i = 0; i < r.width/10; i++) {
+					if (i % 2 == 0) 
+						g2.setColor(firstColor);
+					else
+						g2.setColor(secondColor);
+					g2.fillRect(i + i*10, j + j*10, 10, 10);
+				}
+			}
+			color = new MyColor(c.getRed(), c.getGreen(), c.getBlue(), alpha);
+			g2.setColor(color);
+			g2.fill(r);
+			g2.setFont(getFont());
+			g2.setColor(getForeground());
+			g2.drawString(getText(), (getWidth() - textWidth) / 2, getHeight()/2);
+		}
+		
+		/**
+		 * 
+		 * @return
+		 */
+		public Color getColor() {
+			return color;
 		}
 	}
 }

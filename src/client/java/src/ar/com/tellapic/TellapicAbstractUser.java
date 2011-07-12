@@ -17,12 +17,10 @@
  */  
 package ar.com.tellapic;
 
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Observable;
 
 import ar.com.tellapic.adm.AbstractUser;
-import ar.com.tellapic.console.ConsoleModel;
-import ar.com.tellapic.console.IConsoleModelController;
 import ar.com.tellapic.graphics.AbstractDrawing;
 import ar.com.tellapic.graphics.DrawingAreaModel;
 import ar.com.tellapic.graphics.IPaintPropertyController;
@@ -50,7 +48,7 @@ import ar.com.tellapic.utils.Utils;
  *          sebastian.treu(at)gmail.com
  *
  */
-public abstract class TellapicAbstractUser extends AbstractUser {
+public abstract class TellapicAbstractUser extends AbstractUser implements PropertyChangeListener {
 	
 	public static final int CUSTOM_PAINT_PROPERTY_COLOR  = 0;
 	public static final int CUSTOM_PAINT_PROPERTY_STROKE = 1;
@@ -136,7 +134,7 @@ public abstract class TellapicAbstractUser extends AbstractUser {
 	 * @param drawing the drawing to be added.
 	 * @throws NullPointerException if the drawing to be added is null.
 	 */
-	public synchronized void addDrawing(AbstractDrawing drawing) throws NullPointerException {
+	public synchronized boolean addDrawing(AbstractDrawing drawing) throws NullPointerException {
 		if (drawing == null)
 			throw new NullPointerException("Drawing should not be null");
 		
@@ -144,19 +142,21 @@ public abstract class TellapicAbstractUser extends AbstractUser {
 		if (temporalDrawing != null && temporalDrawing.equals(drawing))
 			temporalDrawing = null;
 		
-		drawingList.add(drawing);
+		drawing.addPropertyChangeListener(this);
+		boolean added = drawingList.add(drawing);
 		
+		Utils.logMessage("ADDING drawing TO DrawingList. drawing.hasCode(): "+drawing.hashCode());
 		/* Shouldn't we set this line outside this object??? */
 		drawing.setUser(this);
 		
 		if (drawing.getNumber() != 0)
 			DrawingAreaModel.getInstance().addDrawing(drawing);
 		
-		drawing.addObserver(this);
-		
 		setChanged();
 		if (isVisible())
 			notifyObservers(new Object[] {ADD_DRAWING, drawing});
+		
+		return added;
 	}
 
 	
@@ -292,6 +292,8 @@ public abstract class TellapicAbstractUser extends AbstractUser {
 			setChanged();
 			notifyObservers(new Object[]{REMOVE_DRAWING, drawing, index});
 		}
+		
+		drawing.removePropertyChangeListener(this);
 		
 		return removed;
 	}
@@ -445,10 +447,8 @@ public abstract class TellapicAbstractUser extends AbstractUser {
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see java.util.Observer#update(java.util.Observable, java.lang.Object)
-	 */
-	public void update(Observable o, Object arg) {
+//	@Override
+//	public void update(Observable o, Object arg) {
 //		if (o instanceof DrawingShape) {
 //			DrawingShape drawingShape = (DrawingShape) o;
 //			int action = (Integer)((Object[]) arg)[0];
@@ -481,8 +481,8 @@ public abstract class TellapicAbstractUser extends AbstractUser {
 //			DrawingText drawingText = (DrawingText) o;
 //			
 //		}
-		AbstractDrawing drawing = (AbstractDrawing) o;
-		setChanged();
-		notifyObservers(new Object[]{DRAWING_CHANGED, drawing, drawingList.indexOf(drawing)});
-	}
+//		AbstractDrawing drawing = (AbstractDrawing) o;
+//		setChanged();
+//		notifyObservers(new Object[]{DRAWING_CHANGED, drawing, drawingList.indexOf(drawing)});
+//	}
 }

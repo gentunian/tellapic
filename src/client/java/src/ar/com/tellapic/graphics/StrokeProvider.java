@@ -15,7 +15,9 @@
  *         sebastian.treu(at)gmail.com
  *
  */  
-package ar.com.tellapic.console;
+package ar.com.tellapic.graphics;
+
+import java.awt.Stroke;
 
 /**
  * @author 
@@ -23,19 +25,17 @@ package ar.com.tellapic.console;
  *          sebastian.treu(at)gmail.com
  *
  */
-public interface IConsoleCommand {
+public interface StrokeProvider {
 
-	public IConsoleCommand executeCommand(String cmd, Object[] args) throws WrongCommandExecution;
-	
-	public String[] getCommandList();
-	
-	public String getDescriptionForCommand(String cmd);
-	
-	public String getReturnTypeForCommand(String cmd);
-	
-	public String[] getArgumentsTypesForCommand(String cmd);
-	
-	public String[] getArgumentsNamesForCommand(String cmd);
+	/**
+	 * @param width
+	 * @param ordinal
+	 * @param ordinal2
+	 * @param miterLimit
+	 * @param newdash
+	 * @param dashPhase
+	 * @return
+	 */
+	Stroke buildStroke(float width, int endCaps, int lineJoins, float miterLimit, float[] newdash, float dashPhase);
 
-	public String[] getArgumentsDescriptionsForCommand(String cmd);
 }

@@ -15,21 +15,24 @@
  *         sebastian.treu(at)gmail.com
  *
  */  
-package ar.com.tellapic;
+package ar.com.tellapic.graphics;
 
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 
-import ar.com.tellapic.graphics.AbstractDrawing;
+import ar.com.tellapic.TellapicAbstractUser;
+import ar.com.tellapic.UserGUIBuilder;
 import ar.com.tellapic.utils.Utils;
 
 /**
@@ -82,14 +85,14 @@ public class DrawingPopupMenu extends JPopupMenu {
 				drawing.setSelected(false);
 			}
 		});
-		properties.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				DrawingPropertiesDialog dialog = new DrawingPropertiesDialog(parent, false, drawing);
-				dialog.setLocationRelativeTo(null);
-				dialog.setVisible(true);
-			}
-		});
+//		properties.addActionListener(new ActionListener() {
+//			@Override
+//			public void actionPerformed(ActionEvent e) {
+//				DrawingPropertiesDialog dialog = new DrawingPropertiesDialog(parent, false, drawing);
+//				dialog.setLocationRelativeTo(null);
+//				dialog.setVisible(true);
+//			}
+//		});
 		hide.setSelected(!drawing.isVisible());
 		name.setFont(Utils.MAIN_FONT);
 		name.setAlignmentX(JPopupMenu.CENTER_ALIGNMENT);

@@ -11,6 +11,9 @@ import java.util.HashMap;
 import java.util.NoSuchElementException;
 import java.util.Observable;
 
+import ar.com.tellapic.graphics.PaintPropertyFont.FontStyle;
+import ar.com.tellapic.graphics.PaintPropertyStroke.EndCapsType;
+import ar.com.tellapic.graphics.PaintPropertyStroke.LineJoinsType;
 import ar.com.tellapic.utils.Utils;
 
 /**
@@ -32,6 +35,7 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	private PaintPropertyColor    colorProperty;
 	private PaintPropertyFont     fontProperty;
 	private PaintPropertyAlpha    alphaProperty;
+	private PaintPropertyFill     fillProperty;
 	private RenderingHints        renderingHints;
 	//private long                  lastAssignedNumber;
 	
@@ -85,6 +89,7 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 		colorProperty  = new PaintPropertyColor();
 		fontProperty   = new PaintPropertyFont();
 		alphaProperty  = new PaintPropertyAlpha();
+		fillProperty   = new PaintPropertyFill();
 		lastUsedTool   = null;
 		renderingHints = new RenderingHints(null);
 	}
@@ -104,6 +109,13 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 		lastUsedTool = tool;
 		lastUsedTool.setSelected(true);
 		
+		if (lastUsedTool instanceof DrawingToolMarker) {
+			strokeProperty.setStrokeProvider(new MarkerStroke(Math.PI/3));
+			strokeProperty.setTransparency(200);
+		} else {
+			strokeProperty.setTransparency(255);
+			strokeProperty.setStrokeProvider(null);
+		}
 		setChanged();
 		notifyObservers(new ActionData(SHOW_TOOL, lastUsedTool));
 	}
@@ -142,8 +154,6 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 		tools.put(tool.getName(), tool);
 		Utils.logMessage("Tool added: "+tool.getName()+". Notifying observers...");
 		tool.addObserver(DrawingAreaView.getInstance());
-//		DrawingAreaView.getInstance().addMouseListener(tool);
-//		DrawingAreaView.getInstance().addMouseMotionListener(tool);
 		setChanged();
 		notifyObservers(new ActionData(ADD_TOOL, tool));
 	}
@@ -153,8 +163,8 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	 * @see ar.com.tellapic.graphics.IToolBoxManager#setStrokePropertyCaps(int)
 	 */
 	@Override
-	public void setStrokePropertyCaps(int cap) throws IllegalArgumentException {
-		if (cap != BasicStroke.CAP_BUTT && cap != BasicStroke.CAP_ROUND && cap != BasicStroke.CAP_SQUARE)
+	public void setStrokePropertyCaps(EndCapsType cap) throws IllegalArgumentException {
+		if (cap.ordinal() != BasicStroke.CAP_BUTT && cap.ordinal() != BasicStroke.CAP_ROUND && cap.ordinal() != BasicStroke.CAP_SQUARE)
 			throw new IllegalArgumentException("cap value must be one of CAP_SQUARE, CAP_ROUND or CAP_BUTT");
 		
 		strokeProperty.setEndCaps(cap);
@@ -171,8 +181,8 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	public void setStrokePropertyDash(float[] dash, float dashPhase) throws IllegalArgumentException {
 		if (dash == null)
 			throw new IllegalArgumentException("dash cannot be null.");
-		if (dash.length != 2)
-			throw new IllegalArgumentException("dash must have only 2 elements.");
+		if (dash.length != 4)
+			throw new IllegalArgumentException("dash must have only 4 elements.");
 		if (dashPhase < 0)
 			throw new IllegalArgumentException("dashPhase must be a non-negative number.");
 		
@@ -188,8 +198,8 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	 * @see ar.com.tellapic.graphics.IToolBoxManager#setStrokePropertyJoins(int)
 	 */
 	@Override
-	public void setStrokePropertyJoins(int join) throws IllegalArgumentException {
-		if (join != BasicStroke.JOIN_BEVEL && join != BasicStroke.JOIN_MITER && join != BasicStroke.JOIN_ROUND)
+	public void setStrokePropertyJoins(LineJoinsType join) throws IllegalArgumentException {
+		if (join.ordinal() != BasicStroke.JOIN_BEVEL && join.ordinal() != BasicStroke.JOIN_MITER && join.ordinal() != BasicStroke.JOIN_ROUND)
 			throw new IllegalArgumentException("join value must be one of JOIN_MITER, JOIN_BEVEL or JOIN_ROUND");
 		
 		strokeProperty.setLineJoins(join);
@@ -253,7 +263,7 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	 * @see ar.com.tellapic.graphics.IToolBoxManager#setFontPropertyStyle(int)
 	 */
 	@Override
-	public void setFontPropertyStyle(int style) {
+	public void setFontPropertyStyle(FontStyle style) {
 		fontProperty.setStyle(style);
 //		if (lastUsedTool instanceof DrawingTool) {
 //			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {fontProperty});
@@ -266,7 +276,7 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	 */
 	@Override
 	public void setAlphaPropertyValue(double value) {
-		alphaProperty.alpha = (float) value;
+		alphaProperty.setAlpha((float) value);
 //		if (lastUsedTool instanceof DrawingTool) {
 //			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {alphaProperty});
 //		}
@@ -310,6 +320,14 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 		return strokeProperty;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.IToolBoxState#getFillProperty()
+	 */
+	@Override
+	public PaintPropertyFill getFillProperty() {
+		return fillProperty;
+	}
 
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.IToolBoxManager#registerTool(int)
@@ -334,7 +352,6 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 		}
 	}
 
-
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.IToolBoxManager#enableTool(ar.com.tellapic.graphics.Tool)
 	 */
@@ -348,17 +365,23 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 		}
 	}
 
-
+	/*
+	 * (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.IToolBoxManager#setFillPropertyColor(java.awt.Color)
+	 */
+	@Override
+	public void setFillPropertyColor(Color color) {
+		fillProperty.setFillColor(color);
+		setChanged();
+		notifyObservers(new ActionData(UPDATE_TOOL, lastUsedTool));
+	}
+	
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.IToolBoxManager#setFontPropertyText(java.lang.String)
 	 */
 	@Override
 	public void setFontPropertyText(String text) {
 		fontProperty.setText(text);
-
-//		if (lastUsedTool instanceof DrawingTool) {
-//			((DrawingTool) lastUsedTool).setPaintProperties(new PaintProperty[] {fontProperty});
-//		}
 		setChanged();
 		notifyObservers(new ActionData(UPDATE_TOOL, lastUsedTool));
 	}
@@ -405,27 +428,27 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	 * 
 	 */
 	public void setCurrentToolDefaultValues() {
-		if (lastUsedTool instanceof DrawingTool) {
-			if (((DrawingTool) lastUsedTool).hasAlphaCapability())
-				setAlphaPropertyValue(((DrawingTool)lastUsedTool).getDefaultAlpha());
-			
-			if (((DrawingTool) lastUsedTool).hasColorCapability())
-				setColorPropertyValue(((DrawingTool)lastUsedTool).getDefaultColor());
-			
-			if (((DrawingTool) lastUsedTool).hasFontCapability()) {
-				setFontPropertyFace(((DrawingTool)lastUsedTool).getDefaultFontFace());
-				setFontPropertySize((int) ((DrawingTool)lastUsedTool).getDefaultFontSize());
-				setFontPropertyStyle(((DrawingTool)lastUsedTool).getDefaultFontStyle());
-//				this.setFontPropertyText(((DrawingTool)lastUsedTool).getDefaultTe());
-			}
-			
-			if (((DrawingTool) lastUsedTool).hasStrokeCapability()) {
-				setStrokePropertyCaps(((DrawingTool)lastUsedTool).getDefaultCaps());
-				setStrokePropertyJoins(((DrawingTool)lastUsedTool).getDefaultJoins());
-				setStrokePropertyWidth(((DrawingTool)lastUsedTool).getDefaultWidth());
-				setStrokePropertyMiterLimit(((DrawingTool)lastUsedTool).getDefaultMiterLimit());
-			}
-		}
+//		if (lastUsedTool instanceof DrawingTool) {
+//			if (((DrawingTool) lastUsedTool).hasAlphaCapability())
+//				setAlphaPropertyValue(((DrawingTool)lastUsedTool).getDefaultAlpha());
+//			
+//			if (((DrawingTool) lastUsedTool).hasColorCapability())
+//				setColorPropertyValue(((DrawingTool)lastUsedTool).getDefaultColor());
+//			
+//			if (((DrawingTool) lastUsedTool).hasFontCapability()) {
+//				setFontPropertyFace(((DrawingTool)lastUsedTool).getDefaultFontFace());
+//				setFontPropertySize((int) ((DrawingTool)lastUsedTool).getDefaultFontSize());
+//				setFontPropertyStyle(((DrawingTool)lastUsedTool).getDefaultFontStyle());
+////				this.setFontPropertyText(((DrawingTool)lastUsedTool).getDefaultTe());
+//			}
+//			
+//			if (((DrawingTool) lastUsedTool).hasStrokeCapability()) {
+//				setStrokePropertyCaps(((DrawingTool)lastUsedTool).getDefaultCaps());
+//				setStrokePropertyJoins(((DrawingTool)lastUsedTool).getDefaultJoins());
+//				setStrokePropertyWidth(((DrawingTool)lastUsedTool).getDefaultWidth());
+//				setStrokePropertyMiterLimit(((DrawingTool)lastUsedTool).getDefaultMiterLimit());
+//			}
+//		}
 	}
 
 
@@ -466,5 +489,14 @@ public class ToolBoxModel extends Observable implements IToolBoxManager, IToolBo
 	@Override
 	public RenderingHints getRenderingHints() {
 		return renderingHints;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.IToolBoxManager#setStrokePropertyColorValue(java.awt.Color)
+	 */
+	@Override
+	public void setStrokePropertyColorValue(Color color) {
+		strokeProperty.setColor(color);
 	}
 }

@@ -17,6 +17,7 @@
  */  
 package ar.com.tellapic.graphics;
 
+import java.awt.Color;
 import java.awt.event.MouseEvent;
 
 import ar.com.tellapic.NetManager;
@@ -52,32 +53,9 @@ final public class DrawingToolEllipseNet extends DrawingToolEllipse {
 
 			if (drawing == null)
 				return ;
-
-			if (NetManager.getInstance().isConnected() && !getUser().isRemote()) {
-				java.awt.Rectangle bounds = drawing.getShape().getBounds();
-				tellapic.tellapic_send_fig(
-						NetManager.getInstance().getSocket(),
-						getToolId(), 
-						0,
-						SessionUtils.getId(), 
-						0,
-						(float) drawing.getPaintPropertyStroke().getWidth(),
-						drawing.getPaintPropertyAlpha().alpha,
-						drawing.getPaintPropertyColor().getRed(),
-						drawing.getPaintPropertyColor().getGreen(),
-						drawing.getPaintPropertyColor().getBlue(),
-						(int)bounds.getX(),
-						(int)bounds.getY(),
-						(int)(bounds.getX() + bounds.getWidth()),
-						(int)(bounds.getY() + bounds.getHeight()),
-						drawing.getPaintPropertyStroke().getLineJoins(),
-						drawing.getPaintPropertyStroke().getEndCaps(),
-						drawing.getPaintPropertyStroke().getMiterLimit(),
-						drawing.getPaintPropertyStroke().getDash_phase(),
-						drawing.getPaintPropertyStroke().getDash()
-				);
-			}
 			
+			sendGeneratedDrawing(drawing);
+
 			/* This tool has no more temporal drawings */
 			setTemporalDrawing(null);
 		}
@@ -90,33 +68,45 @@ final public class DrawingToolEllipseNet extends DrawingToolEllipse {
 	public DrawingShape ellipse(String left, String top, String width, String height) {
 		DrawingShape drawing = super.ellipse(left, top, width, height);
 		
-		if (drawing != null) {
-			if (NetManager.getInstance().isConnected() && !getUser().isRemote()) {
-				java.awt.Rectangle bounds = drawing.getShape().getBounds();
-				tellapic.tellapic_send_fig(
-						NetManager.getInstance().getSocket(),
-						getToolId(), 
-						0,
-						SessionUtils.getId(), 
-						0,
-						(float) drawing.getPaintPropertyStroke().getWidth(),
-						drawing.getPaintPropertyAlpha().alpha,
-						drawing.getPaintPropertyColor().getRed(),
-						drawing.getPaintPropertyColor().getGreen(),
-						drawing.getPaintPropertyColor().getBlue(),
-						(int)bounds.getX(),
-						(int)bounds.getY(),
-						(int)(bounds.getX() + bounds.getWidth()),
-						(int)(bounds.getY() + bounds.getHeight()),
-						drawing.getPaintPropertyStroke().getLineJoins(),
-						drawing.getPaintPropertyStroke().getEndCaps(),
-						drawing.getPaintPropertyStroke().getMiterLimit(),
-						drawing.getPaintPropertyStroke().getDash_phase(),
-						drawing.getPaintPropertyStroke().getDash()
-				);
-			}
-		}
-		
+		if (drawing != null)
+			sendGeneratedDrawing(drawing);
+			
 		return drawing;
+	}
+	
+	/**
+	 * 
+	 * @param drawing
+	 */
+	private void sendGeneratedDrawing(DrawingShape drawing) {
+		if (NetManager.getInstance().isConnected() && !getUser().isRemote()) {
+			java.awt.Rectangle bounds = drawing.getShape().getBounds();
+			tellapic.tellapic_send_fig(
+					NetManager.getInstance().getSocket(),
+					getToolId(), 
+					0,
+					SessionUtils.getId(), 
+					0,
+					(float) drawing.getPaintPropertyStroke().getWidth(),
+					drawing.getPaintPropertyAlpha().getAlpha(),
+					((Color) drawing.getPaintPropertyFill().getFillPaint()).getRed(),
+					((Color) drawing.getPaintPropertyFill().getFillPaint()).getGreen(),
+					((Color) drawing.getPaintPropertyFill().getFillPaint()).getBlue(),
+					((Color) drawing.getPaintPropertyFill().getFillPaint()).getAlpha(),
+					(int)bounds.getX(),
+					(int)bounds.getY(),
+					drawing.getPaintPropertyStroke().getColor().getRed(),
+					drawing.getPaintPropertyStroke().getColor().getGreen(),
+					drawing.getPaintPropertyStroke().getColor().getBlue(),
+					drawing.getPaintPropertyStroke().getColor().getAlpha(),
+					(int)(bounds.getX() + bounds.getWidth()),
+					(int)(bounds.getY() + bounds.getHeight()),
+					drawing.getPaintPropertyStroke().getLineJoins().ordinal(),
+					drawing.getPaintPropertyStroke().getEndCaps().ordinal(),
+					drawing.getPaintPropertyStroke().getMiterLimit(),
+					drawing.getPaintPropertyStroke().getDash_phase(),
+					drawing.getPaintPropertyStroke().getDash()
+			);
+		}
 	}
 }

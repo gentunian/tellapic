@@ -1,5 +1,7 @@
 package ar.com.tellapic.graphics;
 
+import ar.com.tellapic.lib.stream_t;
+
 
 /**
  * 
@@ -24,7 +26,7 @@ public abstract class PaintProperty implements Cloneable {
 		COLOR,
 		ALPHA,
 		FONT,
-		ZOOM
+		FILL
 	}
 
 	public PaintProperty(PaintPropertyType type) throws IllegalArgumentException {
@@ -67,4 +69,11 @@ public abstract class PaintProperty implements Cloneable {
 			throw new InternalError(e.toString());
 		}
 	}
+	
+	/**
+	 * 
+	 * @param stream
+	 * @return
+	 */
+//	public abstract void setWrappedStructure(stream_t stream);
 }

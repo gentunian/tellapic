@@ -17,6 +17,12 @@
  */  
 package ar.com.tellapic;
 
+import java.beans.PropertyChangeEvent;
+
+import ar.com.tellapic.graphics.AbstractDrawing;
+import ar.com.tellapic.graphics.DrawingShape;
+import ar.com.tellapic.utils.Utils;
+
 
 /**
  * @author 
@@ -32,5 +38,25 @@ public class TellapicRemoteUser extends TellapicAbstractUser {
 	public TellapicRemoteUser(int id, String name) {
 		super(id, name);
 		setRemote(true);
+	}
+
+	/* (non-Javadoc)
+	 * @see java.beans.PropertyChangeListener#propertyChange(java.beans.PropertyChangeEvent)
+	 */
+	@Override
+	public void propertyChange(PropertyChangeEvent evt) {
+		AbstractDrawing drawing = (AbstractDrawing) evt.getSource();
+		String property = evt.getPropertyName();
+		Utils.logMessage("property changed: "+property+" to value: "+evt.getNewValue()+" on object: "+drawing.hashCode());
+		if (property.endsWith(DrawingShape.PROPERTY_SELECTION)) {
+			boolean selected = (Boolean) evt.getNewValue();
+			if (selected) {
+				for(AbstractDrawing d : getDrawings())
+					if (!d.equals(drawing))
+						d.setSelected(false);
+			}
+		}
+		setChanged();
+		notifyObservers(new Object[]{DRAWING_CHANGED, drawing, drawingList.indexOf(drawing)});
 	}
 }

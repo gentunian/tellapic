@@ -35,11 +35,19 @@ import javax.swing.SwingUtilities;
 import ar.com.tellapic.adm.AbstractUser;
 import ar.com.tellapic.chat.ChatClientModel;
 import ar.com.tellapic.chat.ChatMessage;
+import ar.com.tellapic.graphics.AbstractDrawing;
 import ar.com.tellapic.graphics.ControlToolZoom;
+import ar.com.tellapic.graphics.DrawingAreaModel;
 import ar.com.tellapic.graphics.DrawingAreaView;
 import ar.com.tellapic.graphics.DrawingShape;
+import ar.com.tellapic.graphics.DrawingText;
 import ar.com.tellapic.graphics.IPaintPropertyController;
 import ar.com.tellapic.graphics.IToolBoxController;
+import ar.com.tellapic.graphics.PaintPropertyAlpha;
+import ar.com.tellapic.graphics.PaintPropertyColor;
+import ar.com.tellapic.graphics.PaintPropertyFill;
+import ar.com.tellapic.graphics.PaintPropertyFont;
+import ar.com.tellapic.graphics.PaintPropertyStroke;
 import ar.com.tellapic.graphics.Tool;
 import ar.com.tellapic.graphics.ToolFactory;
 import ar.com.tellapic.lib.ddata_t;
@@ -72,7 +80,9 @@ public class NetManager extends Observable implements Runnable {
 	private static final int FILE_OK = 1;
 	static final int CONNECTION_OK = 1;
 	
-	
+	private final PaintPropertyStroke.EndCapsType[]   ecValues = PaintPropertyStroke.EndCapsType.values();
+	private final PaintPropertyStroke.LineJoinsType[] ljValues = PaintPropertyStroke.LineJoinsType.values();
+	private final PaintPropertyFont.FontStyle[]       fsValues = PaintPropertyFont.FontStyle.values();
 	private int               monitorStep;
 	private double            ping;
 	private double            pingSentTime;
@@ -706,7 +716,7 @@ public class NetManager extends Observable implements Runnable {
 			});
 
 		} else if (tellapic.tellapic_isfig(header) == 1) {
-			System.out.println("Was fig");
+//			System.out.println("Was fig");
 			final ddata_t    drawing    = stream.getData().getDrawing();
 			SwingUtilities.invokeLater(new Runnable() {
 				@Override
@@ -716,7 +726,7 @@ public class NetManager extends Observable implements Runnable {
 			});
 
 		} else if (tellapic.tellapic_isfigtxt(stream) == 1) {
-			System.out.println("Was text");
+//			System.out.println("Was text");
 
 		} else if (tellapic.tellapic_ispong(header) == 1) {
 			setPing((double) ((System.nanoTime() - pingSentTime) / 1000000));
@@ -746,17 +756,123 @@ public class NetManager extends Observable implements Runnable {
 
 		/* Get the remote tool id he/she has used */
 		int remoteTool = dcbyte & tellapicConstants.TOOL_MASK;
+//		Utils.logMessage("remote tool: "+remoteTool);
 		
-		/* Get the tool class name for this local user */
-		String toolClassName = ToolFactory.getRegisteredToolsClassNames().get(remoteTool);
-
-		IToolBoxController       toolControl  = remoteUser.getToolboxController();
-
-		toolControl.selectToolByName(toolClassName.split("[a-z].*\\.")[1]);
-
-		configureUserEvents(drawingData);
+		long dnum = drawingData.getNumber();
+		AbstractDrawing drawing = DrawingAreaModel.getInstance().getDrawing(dnum);
+		if (drawing != null) {
+			editUserDrawing(drawingData, drawing);
+		} else {
+		
+//		if (remoteTool != tellapicConstants.TOOL_EDIT_FIG && remoteTool != tellapicConstants.TOOL_EDIT_TXT) {
+			/* Get the tool class name for this local user */
+			String             toolClassName = ToolFactory.getRegisteredToolsClassNames().get(remoteTool);
+			if (toolClassName == null) {
+				Utils.logMessage("No such tool with id "+remoteTool+" found.");
+			} else {
+				IToolBoxController toolControl   = remoteUser.getToolboxController();
+				toolControl.selectToolByName(toolClassName.split("[a-z].*\\.")[1]);
+				configureUserEvents(drawingData);
+			}
+//		} else {
+//			editUserDrawing(drawingData);
+		}
 	}
 	
+	/**
+	 * @param drawingData
+	 */
+	private void editUserDrawing(ddata_t drawingData, AbstractDrawing drawing) {
+//		long dnum = drawingData.getNumber();
+//		
+////		Utils.logMessage("Editing drawing with number: "+dnum);
+//		
+//		AbstractDrawing drawing = DrawingAreaModel.getInstance().getDrawing(dnum);
+		float zoomX = ControlToolZoom.getInstance().getZoomValue();
+//		
+//		if (drawing != null) {
+			if ((drawingData.getDcbyte() & tellapicConstants.TOOL_MASK) == tellapicConstants.TOOL_EDIT_FIG) {
+				DrawingShape shape = (DrawingShape) drawing;
+				
+				int x1 = (int)(drawingData.getPoint1().getX() * zoomX);
+				int x2 = (int)(drawingData.getType().getFigure().getPoint2().getX() * zoomX);
+				int y1 = (int)(drawingData.getPoint1().getY() * zoomX);
+				int y2 = (int)(drawingData.getType().getFigure().getPoint2().getY() * zoomX);
+				
+				Color strokeColor = new Color(
+						drawingData.getType().getFigure().getColor().getRed(),
+						drawingData.getType().getFigure().getColor().getGreen(),
+						drawingData.getType().getFigure().getColor().getBlue(),
+						drawingData.getType().getFigure().getColor().getAlpha()
+				);
+				Color fillColor = new Color(
+						drawingData.getFillcolor().getRed(),
+						drawingData.getFillcolor().getGreen(),
+						drawingData.getFillcolor().getBlue(),
+						drawingData.getFillcolor().getAlpha()
+				);
+				PaintPropertyAlpha  alphaProperty  = new PaintPropertyAlpha();
+				PaintPropertyFill   fillProperty   = new PaintPropertyFill();
+				PaintPropertyStroke strokeProperty = new PaintPropertyStroke();
+				
+				alphaProperty.setAlpha(drawingData.getOpacity());
+				fillProperty.setFillColor(fillColor);
+				strokeProperty.setColor(strokeColor);
+				strokeProperty.setDash(drawingData.getType().getFigure().getDash_array());
+				strokeProperty.setDash_phase(drawingData.getType().getFigure().getDash_phase());
+				strokeProperty.setEndCaps(ecValues[drawingData.getType().getFigure().getEndcaps()]);
+				strokeProperty.setLineJoins(ljValues[drawingData.getType().getFigure().getLinejoin()]);
+				strokeProperty.setMiterLimit(drawingData.getType().getFigure().getMiterlimit());
+				strokeProperty.setWidth(drawingData.getWidth());
+				
+				shape.setPaintPropertyAlpha(alphaProperty);
+				shape.setPaintPropertyFill(fillProperty);
+				shape.setPaintPropertyStroke(strokeProperty);
+				shape.setBounds(x1, y1, x2, y2);
+			} else {
+				
+				DrawingText text = (DrawingText) drawing;
+				
+				int x1 = (int)(drawingData.getPoint1().getX() * zoomX);
+				int y1 = (int)(drawingData.getPoint1().getY() * zoomX);
+				
+				Color textColor = new Color(
+						drawingData.getType().getText().getColor().getRed(),
+						drawingData.getType().getText().getColor().getGreen(),
+						drawingData.getType().getText().getColor().getBlue(),
+						drawingData.getType().getText().getColor().getAlpha()
+				);
+				Color fillColor = new Color(
+						drawingData.getFillcolor().getRed(),
+						drawingData.getFillcolor().getGreen(),
+						drawingData.getFillcolor().getBlue(),
+						drawingData.getFillcolor().getAlpha()
+				);
+				PaintPropertyAlpha  alphaProperty = new PaintPropertyAlpha();
+				PaintPropertyFill   fillProperty  = new PaintPropertyFill();
+				PaintPropertyFont   fontProperty  = new PaintPropertyFont();
+				PaintPropertyColor  colorProperty = new PaintPropertyColor(textColor);
+				
+				alphaProperty.setAlpha(drawingData.getOpacity());
+				fillProperty.setFillColor(fillColor);
+				fontProperty.setColor(textColor);
+				fontProperty.setSize(drawingData.getWidth());
+				fontProperty.setStyle(fsValues[drawingData.getType().getText().getStyle()]);
+				fontProperty.setText(drawingData.getType().getText().getInfo());
+				fontProperty.setFace(drawingData.getType().getText().getFace());
+				Utils.logMessage("info: "+drawingData.getType().getText().getInfo()) ;
+				Utils.logMessage("info len: "+drawingData.getType().getText().getInfolen());
+				Utils.logMessage("face. "+drawingData.getType().getText().getFace());
+				Utils.logMessage("face len: "+drawingData.getType().getText().getFacelen());
+				text.setPaintPropertyAlpha(alphaProperty);
+				text.setPaintPropertyFill(fillProperty);
+				text.setPaintPropertyColor(colorProperty);
+				text.setPaintPropertyFont(fontProperty);
+				text.setBounds(x1, y1, 0, 0);
+			}
+//		}
+	}
+
 	/**
 	 * @param drawingData
 	 */
@@ -777,21 +893,31 @@ public class NetManager extends Observable implements Runnable {
 		
 		Tool usedTool = remoteUser.getToolBoxModel().getLastUsedTool();
 		IPaintPropertyController c = remoteUser.getPaintController();
-		Color color = null;
+		Color strokeColor = null;
+		Color fillColor   = null;
 		float zoomX = ControlToolZoom.getInstance().getZoomValue();
 		
 		switch(event) {
 		case tellapicConstants.EVENT_PRESS:
-			color = new Color(
-					drawingData.getColor().getRed(),
-					drawingData.getColor().getGreen(),
-					drawingData.getColor().getBlue()
+			Utils.logMessage("Event PRESS:");
+			strokeColor = new Color(
+					drawingData.getType().getFigure().getColor().getRed(),
+					drawingData.getType().getFigure().getColor().getGreen(),
+					drawingData.getType().getFigure().getColor().getBlue(),
+					drawingData.getType().getFigure().getColor().getAlpha()
 			);
-			c.handleEndCapsChange(drawingData.getType().getFigure().getEndcaps());
-			c.handleLineJoinsChange(drawingData.getType().getFigure().getLinejoin());
+			fillColor = new Color(
+					drawingData.getFillcolor().getRed(),
+					drawingData.getFillcolor().getGreen(),
+					drawingData.getFillcolor().getBlue(),
+					drawingData.getFillcolor().getAlpha()
+			);
+			c.handleEndCapsChange(ecValues[drawingData.getType().getFigure().getEndcaps()]);
+			c.handleLineJoinsChange(ljValues[drawingData.getType().getFigure().getLinejoin()]);
 			c.handleOpacityChange(drawingData.getOpacity());
 			c.handleWidthChange(drawingData.getWidth());
-			c.handleColorChange(color);
+			c.handleStrokeColorChange(strokeColor);
+//			c.handleFillColorChange(fillColor);
 			MouseEvent pressEvent = new MouseEvent(
 					DrawingAreaView.getInstance(),
 					MouseEvent.MOUSE_PRESSED,
@@ -803,11 +929,12 @@ public class NetManager extends Observable implements Runnable {
 					false,
 					swingButton);
 			usedTool.mousePressed(pressEvent);
-			if (!usedTool.getName().equals("SelectorNet"))
-				remoteUser.getDrawing().setNumber(drawingData.getNumber());
+			if (!usedTool.getName().equals("Selector"))
+				remoteUser.getDrawing().setNumber(drawingData.getNumber()); //FIXME: NullPointerException
 			break;
 			
 		case tellapicConstants.EVENT_DRAG:
+			Utils.logMessage("Event DRAG:");
 			MouseEvent dragEvent = new MouseEvent(
 					DrawingAreaView.getInstance(),
 					MouseEvent.MOUSE_DRAGGED,
@@ -822,6 +949,7 @@ public class NetManager extends Observable implements Runnable {
 			break;
 			
 		case tellapicConstants.EVENT_RELEASE:
+			Utils.logMessage("Event RELEASE:");
 			MouseEvent releaseEvent = new MouseEvent(
 					DrawingAreaView.getInstance(),
 					MouseEvent.MOUSE_RELEASED,
@@ -833,15 +961,24 @@ public class NetManager extends Observable implements Runnable {
 					false,
 					swingButton);
 			usedTool.mouseReleased(releaseEvent);
+
 			break;
 			
 		case tellapicConstants.EVENT_NULL:
 			/* Create a color instance upon the remote color used */
-			color = new Color(
-					drawingData.getColor().getRed(),
-					drawingData.getColor().getGreen(),
-					drawingData.getColor().getBlue()
+			strokeColor = new Color(
+					drawingData.getType().getFigure().getColor().getRed(),
+					drawingData.getType().getFigure().getColor().getGreen(),
+					drawingData.getType().getFigure().getColor().getBlue(),
+					drawingData.getType().getFigure().getColor().getAlpha()
 			);
+			fillColor = new Color(
+					drawingData.getFillcolor().getRed(),
+					drawingData.getFillcolor().getGreen(),
+					drawingData.getFillcolor().getBlue(),
+					drawingData.getFillcolor().getAlpha()
+			);
+
 			int x1 = (int)(drawingData.getPoint1().getX() * zoomX);
 			int x2 = x1;
 			int y1 = (int)(drawingData.getPoint1().getY() * zoomX);
@@ -850,13 +987,13 @@ public class NetManager extends Observable implements Runnable {
 			/* Handle text properties if the used tool was TEXT. Otherwise, handle stroke properties */
 			if ((drawingData.getDcbyte() & tellapicConstants.TOOL_TEXT) == tellapicConstants.TOOL_TEXT) {
 				c.handleFontSizeChange(drawingData.getWidth());
-				c.handleFontStyleChange(drawingData.getType().getText().getStyle());
+				c.handleFontStyleChange(fsValues[drawingData.getType().getText().getStyle()]);
 				c.handleTextChange(drawingData.getType().getText().getInfo());
 				c.handleFontFaceChange(drawingData.getType().getText().getFace());
 
 			} else {
-				c.handleEndCapsChange(drawingData.getType().getFigure().getEndcaps());
-				c.handleLineJoinsChange(drawingData.getType().getFigure().getLinejoin());
+				c.handleEndCapsChange(ecValues[drawingData.getType().getFigure().getEndcaps()]);
+				c.handleLineJoinsChange(ljValues[drawingData.getType().getFigure().getLinejoin()]);
 				c.handleOpacityChange(drawingData.getOpacity());
 				c.handleWidthChange(drawingData.getWidth());
 				c.handleDashChange(drawingData.getType().getFigure().getDash_array(), drawingData.getType().getFigure().getDash_phase());
@@ -865,7 +1002,8 @@ public class NetManager extends Observable implements Runnable {
 			}
 			
 			/* Both text and stroke has color properties */
-			c.handleColorChange(color);
+			c.handleStrokeColorChange(strokeColor);
+			c.handleFillColorChange(fillColor);
 			MouseEvent pressEvent1 = new MouseEvent(
 					DrawingAreaView.getInstance(),
 					MouseEvent.MOUSE_PRESSED,

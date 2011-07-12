@@ -21,8 +21,8 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Frame;
+import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
@@ -153,31 +153,13 @@ public class CustomPropertiesDialog extends JDialog {
 							colorLabel.getLocationOnScreen().y + colorLabel.getHeight(),
 							false
 					);
-					color.addComponentListener(new ComponentListener(){
-
+					color.addComponentListener(new ComponentAdapter(){
 						@Override
 						public void componentHidden(ComponentEvent e) {
 							colorLabel.setBackground(color.getSelectedColor());
 						}
-
-						@Override
-						public void componentMoved(ComponentEvent e) {
-							// TODO Auto-generated method stub
-							
-						}
-
-						@Override
-						public void componentResized(ComponentEvent e) {
-							// TODO Auto-generated method stub
-							
-						}
-
-						@Override
-						public void componentShown(ComponentEvent e) {
-							// TODO Auto-generated method stub
-							
-						}});
-					
+					});
+					color.setVisible(true);
 				}
 			}
 			@Override

@@ -3,6 +3,7 @@ package ar.com.tellapic.graphics;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
 
 import ar.com.tellapic.lib.tellapicConstants;
@@ -30,15 +31,26 @@ public class DrawingToolText extends DrawingTool {
 		setInUse(true);
 		setAlias("Text");
 		COMMANDS = new String[][] {
-				{ "nothing" },
-				{ "void" }
+				{ "setLocation" },
+				{ getClass().getPackage().getName()+".DrawingText Sets the location for the text.", "int x The x coordinate", "int y The y coordinate" },
 		};
 	}
 	
+	/**
+	 * 
+	 */
 	public DrawingToolText() {
 		this("DrawingToolText");
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#hasFillCapability()
+	 */
+	public boolean hasFillCapability() {
+		return true;
+	}
+	
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.Tool#hasAlphaCapability()
 	 */
@@ -156,15 +168,11 @@ public class DrawingToolText extends DrawingTool {
 	@Override
 	public void mouseEntered(MouseEvent e) {
 		if (isSelected() && !e.isConsumed()) {
-			IToolBoxState toolBoxState = user.getToolBoxModel();
 			float zoomX = ControlToolZoom.getInstance().getZoomValue();
 			firstPoint.setLocation(e.getX()/zoomX, e.getY()/zoomX);
-			temporalDrawing = new DrawingText(getName());
+			temporalDrawing = new DrawingText(user, getName());
 			((DrawingText) temporalDrawing).setTextX((int) firstPoint.getX());
 			((DrawingText) temporalDrawing).setTextY((int) firstPoint.getY());
-			((DrawingText) temporalDrawing).setPaintPropertyAlpha(toolBoxState.getOpacityProperty());
-			((DrawingText) temporalDrawing).setPaintPropertyFont(toolBoxState.getFontProperty());
-			((DrawingText) temporalDrawing).setPaintPropertyColor(toolBoxState.getColorProperty());
 			user.setTemporalDrawing(temporalDrawing);
 			temporalDrawing.setUser(user);
 			setChanged();
@@ -179,8 +187,10 @@ public class DrawingToolText extends DrawingTool {
 	@Override
 	public void mouseExited(MouseEvent e) {
 		if (isSelected() && !e.isConsumed()) {
-			if (temporalDrawing != null)
-				((DrawingText) temporalDrawing).setPaintPropertyFont(null);
+			temporalDrawing = new DrawingText(user, getName());
+			((DrawingText) temporalDrawing).setPaintPropertyFont(null);
+			user.setTemporalDrawing(temporalDrawing);
+			temporalDrawing.setUser(user);
 			setChanged();
 			notifyObservers(temporalDrawing);
 			e.consume();
@@ -195,16 +205,12 @@ public class DrawingToolText extends DrawingTool {
 		if (isSelected() && !e.isConsumed()) {
 			if ((e.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK) {
 				if (temporalDrawing == null)
-					temporalDrawing = new DrawingText(getName());
-				IToolBoxState toolBoxState = user.getToolBoxModel();
+					temporalDrawing = new DrawingText(user, getName());
 
-				float zoomX = ControlToolZoom.getInstance().getZoomValue();
-				firstPoint.setLocation(e.getX()/zoomX, e.getY()/zoomX);
-				((DrawingText) temporalDrawing).setTextX((int) firstPoint.getX());
-				((DrawingText) temporalDrawing).setTextY((int) firstPoint.getY());
-				((DrawingText) temporalDrawing).setPaintPropertyAlpha(toolBoxState.getOpacityProperty());
-				((DrawingText) temporalDrawing).setPaintPropertyFont(toolBoxState.getFontProperty());
-				((DrawingText) temporalDrawing).setPaintPropertyColor(toolBoxState.getColorProperty());
+//				float zoomX = ControlToolZoom.getInstance().getZoomValue();
+//				firstPoint.setLocation(e.getX()/zoomX, e.getY()/zoomX);
+//				((DrawingText) temporalDrawing).setTextX((int) firstPoint.getX());
+//				((DrawingText) temporalDrawing).setTextY((int) firstPoint.getY());
 				user.setTemporalDrawing(temporalDrawing);
 				temporalDrawing.setUser(user);
 				setChanged();
@@ -220,11 +226,16 @@ public class DrawingToolText extends DrawingTool {
 	@Override
 	public void mouseReleased(MouseEvent e) {
 		if (isSelected() && !e.isConsumed() && e.getButton() == MouseEvent.BUTTON1) {
-			temporalDrawing.cloneProperties();
-			user.addDrawing((AbstractDrawing) temporalDrawing.clone());
+			float zoomX = ControlToolZoom.getInstance().getZoomValue();
+			firstPoint.setLocation(e.getX()/zoomX, e.getY()/zoomX);
+			((DrawingText) temporalDrawing).setTextX((int) firstPoint.getX());
+			((DrawingText) temporalDrawing).setTextY((int) firstPoint.getY());
+			if (getUser().isRemote())
+				user.addDrawing((AbstractDrawing) temporalDrawing);
 			setChanged();
 			notifyObservers(temporalDrawing);
 			e.consume();
+			temporalDrawing = null;
 		}
 	}
 
@@ -246,17 +257,7 @@ public class DrawingToolText extends DrawingTool {
 		super.mouseMoved(e);
 		if (isSelected() && !e.isConsumed()) {
 			if (temporalDrawing == null) {
-//				AbstractUser user = null;
-//				if (e instanceof RemoteMouseEvent) {
-//					user = ((RemoteMouseEvent)e).getUser();
-//				} else {
-//					user = UserManager.getInstance().getLocalUser();
-//				}
-				IToolBoxState toolBoxState = user.getToolBoxModel();
-				temporalDrawing = new DrawingText(getName());
-				((DrawingText) temporalDrawing).setPaintPropertyAlpha(toolBoxState.getOpacityProperty());
-				((DrawingText) temporalDrawing).setPaintPropertyFont(toolBoxState.getFontProperty());
-				((DrawingText) temporalDrawing).setPaintPropertyColor(toolBoxState.getColorProperty());
+				temporalDrawing = new DrawingText(user, getName());
 				user.setTemporalDrawing(temporalDrawing);
 				temporalDrawing.setUser(user);
 			}
@@ -268,5 +269,46 @@ public class DrawingToolText extends DrawingTool {
 			notifyObservers(temporalDrawing);
 			e.consume();
 		}
+	}
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseWheelListener#mouseWheelMoved(java.awt.event.MouseWheelEvent)
+	 */
+	@Override
+	public void mouseWheelMoved(MouseWheelEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#isLiveModeSupported()
+	 */
+	@Override
+	public boolean isLiveModeSupported() {
+		return false;
+	}
+
+	/**
+	 * 
+	 * @param x
+	 * @param y
+	 * @return
+	 */
+	public DrawingText setLocation(String x, String y) {
+		DrawingText   drawing      = new DrawingText(user, "CustomText");
+
+		try {
+			drawing.setTextX(Integer.valueOf(x));
+			drawing.setTextY(Integer.valueOf(y));
+		} catch(Exception e) {
+			Utils.logMessage("Wrong format. Setting text coordinates to (0,0).");
+			drawing.setTextCoordinates(0, 0);
+		}
+		drawing.setUser(user);
+		user.addDrawing(drawing);
+		setChanged();
+		notifyObservers(drawing);
+
+		return drawing;
 	}
 }

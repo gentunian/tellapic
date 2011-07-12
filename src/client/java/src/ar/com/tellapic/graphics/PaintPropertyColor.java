@@ -5,6 +5,10 @@ import java.awt.Color;
 
 public class PaintPropertyColor extends PaintProperty {
 	
+	public static final String[] CLI_CMDS = new String[] { 
+		"ar.com.tellapic.graphics.AbstractDrawing setColor({number_colorHexa_The_color_in_hexadecimal,_e.g._0xffaabb}) Sets this shape color in an hexadecimal fashion."
+	};
+	
 	private Color color;
 	
 	public PaintPropertyColor(String color) {
@@ -19,6 +23,7 @@ public class PaintPropertyColor extends PaintProperty {
 	
 	public PaintPropertyColor() {
 		super(PaintPropertyType.COLOR);
+		this.color = Color.black;
 	}
 	
 	public Color getColor() {
@@ -59,5 +64,14 @@ public class PaintPropertyColor extends PaintProperty {
 	 */
 	public int getBlue() {
 		return color.getBlue();
+	}
+	
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "0x" + Integer.toHexString(color.getRed()) + Integer.toHexString(color.getGreen()) + Integer.toHexString(color.getBlue());
 	}
 }

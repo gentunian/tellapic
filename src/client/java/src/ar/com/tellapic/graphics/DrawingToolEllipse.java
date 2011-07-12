@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.event.MouseEvent;
-import java.awt.geom.Ellipse2D;
+import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
 
 import ar.com.tellapic.lib.tellapicConstants;
@@ -34,8 +34,8 @@ public class DrawingToolEllipse extends DrawingTool {
 		setAlias("Ellipse");
 		COMMANDS = new String[][] {
 				{ "circle", "ellipse" },
-				{ getClass().getPackage().getName()+".DrawingShape", "int x", "int y", "int diameter" },
-				{ getClass().getPackage().getName()+".DrawingShape", "int left", "int top", "int width", "int height" }
+				{ getClass().getPackage().getName()+".DrawingShape Draws a circle with center (x, y) and the specified diameter.", "int x The center x coordinate", "int y The center y coordinate", "int diameter The circle diameter" },
+				{ getClass().getPackage().getName()+".DrawingShape Draws the ellipse that fits in the rectangle specified by (top, left) (left + width, top + height)", "int left The left coordinate", "int top The top coordinate ", "int width The ellipse width frame", "int height The ellipse frame height" }
 		};
 	}
 	
@@ -54,7 +54,14 @@ public class DrawingToolEllipse extends DrawingTool {
 		return true;
 	}
 
-
+	/*
+	 * (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#hasFillCapability()
+	 */
+	public boolean hasFillCapability() {
+		return true;
+	}
+	
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.DrawingTool#hasColorCapability()
 	 */
@@ -178,15 +185,10 @@ public class DrawingToolEllipse extends DrawingTool {
 	public void mousePressed(MouseEvent e) {
 		if (isSelected() && !e.isConsumed()) {
 			if ((e.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK) {
-				IToolBoxState toolBoxState = user.getToolBoxModel();
 				float zoomX = ControlToolZoom.getInstance().getZoomValue();
 				firstPoint.setLocation(e.getX()/zoomX, e.getY()/zoomX);
 				setInUse(true);
-				temporalDrawing = new DrawingShapeEllipse(getName(), e.getX()/zoomX, e.getY()/zoomX, 0, 0);
-				((DrawingShape) temporalDrawing).setPaintPropertyAlpha(toolBoxState.getOpacityProperty());
-				((DrawingShape) temporalDrawing).setPaintPropertyColor(toolBoxState.getColorProperty());
-				((DrawingShape) temporalDrawing).setPaintPropertyStroke(toolBoxState.getStrokeProperty());
-				temporalDrawing.setRenderingHints(toolBoxState.getRenderingHints());
+				temporalDrawing = new DrawingShapeEllipse(user, getName(), e.getX()/zoomX, e.getY()/zoomX, 0, 0);
 				temporalDrawing.setUser(user);
 				user.setTemporalDrawing(temporalDrawing);
 				setChanged();
@@ -206,8 +208,8 @@ public class DrawingToolEllipse extends DrawingTool {
 			if (e.getButton() == MouseEvent.BUTTON1) {
 				DrawingShapeEllipse drawingEllipse = (DrawingShapeEllipse) temporalDrawing;
 				if (drawingEllipse != null && !drawingEllipse.isEmpty()) {
-					temporalDrawing.cloneProperties();
-					user.addDrawing(temporalDrawing);
+					if (getUser().isRemote())
+						user.addDrawing(temporalDrawing);
 					setChanged();
 					notifyObservers(temporalDrawing);
 				} else
@@ -241,7 +243,8 @@ public class DrawingToolEllipse extends DrawingTool {
 					else
 						point = new Point2D.Double( ((initX < e.getX()/zoomX)? initX : e.getX()/zoomX), ((initY < e.getY()/zoomX)? initY : e.getY()/zoomX));
 
-					((Ellipse2D)((DrawingShape) temporalDrawing).getShape()).setFrame(point, size);
+					((DrawingShapeEllipse) temporalDrawing).setFrame(point, size);
+					
 					setChanged();
 					notifyObservers(temporalDrawing);
 				}
@@ -258,9 +261,14 @@ public class DrawingToolEllipse extends DrawingTool {
 	 * @return
 	 */
 	public DrawingShape circle(String x, String y, String diameter) {
-		int left = Integer.parseInt(x) - Integer.parseInt(diameter)/2;
-		int top  = Integer.parseInt(y) - Integer.parseInt(diameter)/2;
-
+		int left = 0;
+		int top  = 0;
+		try {
+			left = Integer.parseInt(x) - Integer.parseInt(diameter)/2;
+			top  = Integer.parseInt(y) - Integer.parseInt(diameter)/2;
+		} catch(Exception e) {
+			Utils.logMessage("Wrong format. Setting circle default values");
+		}
 		
 		return ellipse(String.valueOf(left), String.valueOf(top), diameter, diameter);
 	}
@@ -274,25 +282,55 @@ public class DrawingToolEllipse extends DrawingTool {
 	 * @return
 	 */
 	public DrawingShape ellipse(String left, String top, String width, String height) {
-		DrawingShapeEllipse drawing = new DrawingShapeEllipse("CustomEllipse",
-				Double.parseDouble(left),
-				Double.parseDouble(top),
-				Double.parseDouble(width),
-				Double.parseDouble(height)
+		double ileft   = 0;
+		double itop    = 0;
+		double iwidth  = 100;
+		double iheight = 100;
+		try {
+			ileft   = Double.parseDouble(left);
+			itop    = Double.parseDouble(top);
+			iwidth  = Double.parseDouble(width);
+			iheight =Double.parseDouble(height);
+		} catch(Exception e) {
+			Utils.logMessage("Wrong format. Setting ellipse default values.");
+		}
+		DrawingShapeEllipse drawing = new DrawingShapeEllipse(user, "CustomEllipse",
+				ileft,
+				itop,
+				iwidth,
+				iheight
 		);
-		
-		IToolBoxState toolBoxState = user.getToolBoxModel();
-		
-		drawing.setPaintPropertyAlpha(toolBoxState.getOpacityProperty());
-		drawing.setPaintPropertyColor(toolBoxState.getColorProperty());
-		drawing.setPaintPropertyStroke(toolBoxState.getStrokeProperty());
-		drawing.setRenderingHints(toolBoxState.getRenderingHints());
+
+//		IToolBoxState toolBoxState = user.getToolBoxModel();
+
+//		drawing.setPaintPropertyAlpha(toolBoxState.getOpacityProperty());
+//		drawing.setPaintPropertyColor(toolBoxState.getColorProperty());
+//		drawing.setPaintPropertyStroke(toolBoxState.getStrokeProperty());
+//		drawing.setRenderingHints(toolBoxState.getRenderingHints());
 		drawing.setUser(user);
-		drawing.cloneProperties();
+//		drawing.cloneProperties();
 		user.addDrawing(drawing);
 		setChanged();
 		notifyObservers(drawing);
 		
 		return drawing;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseWheelListener#mouseWheelMoved(java.awt.event.MouseWheelEvent)
+	 */
+	@Override
+	public void mouseWheelMoved(MouseWheelEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#isLiveModeSupported()
+	 */
+	@Override
+	public boolean isLiveModeSupported() {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }

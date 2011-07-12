@@ -17,11 +17,13 @@
  */  
 package ar.com.tellapic.graphics;
 
+import java.awt.Color;
 import java.awt.event.MouseEvent;
 
 import ar.com.tellapic.NetManager;
 import ar.com.tellapic.SessionUtils;
 import ar.com.tellapic.lib.tellapic;
+import ar.com.tellapic.lib.tellapicConstants;
 
 /**
  * @author 
@@ -45,31 +47,58 @@ final public class DrawingToolTextNet extends DrawingToolText {
 		 
 		if (isSelected() && event.getButton() == MouseEvent.BUTTON1) {
 			DrawingText drawing = (DrawingText) getTemporalDrawing();
+			
 			if (drawing == null)
 				return ;
+			
+			sendGeneratedDrawing(drawing);
 
-			if (NetManager.getInstance().isConnected() && !getUser().isRemote()) {
-
-				tellapic.tellapic_send_text(
-						NetManager.getInstance().getSocket(),
-						SessionUtils.getId(),
-						0,
-						drawing.getPaintPropertyFont().getFont().getSize2D(),
-						drawing.getPaintPropertyAlpha().alpha,
-						drawing.getPaintPropertyColor().getRed(),
-						drawing.getPaintPropertyColor().getGreen(),
-						drawing.getPaintPropertyColor().getBlue(),
-						drawing.getTextX(),
-						drawing.getTextY(),
-						drawing.getPaintPropertyFont().getStyle(),
-						drawing.getPaintPropertyFont().getFace().length(),
-						drawing.getPaintPropertyFont().getFace(),
-						drawing.getText().length(),
-						drawing.getText()
-				);
-			}			
 			/* This tool has no more temporal drawings */
 			setTemporalDrawing(null);
+		}
+	}
+	
+	/**
+	 * 
+	 */
+	@Override
+	public DrawingText setLocation(String x, String y) {
+		DrawingText drawing = super.setLocation(x, y);
+		
+		sendGeneratedDrawing(drawing);
+		
+		return drawing;
+	}
+	
+		/**
+	 * 
+	 * @param drawing
+	 */
+	private void sendGeneratedDrawing(DrawingText drawing) {
+		if (NetManager.getInstance().isConnected() && !getUser().isRemote()) {
+			tellapic.tellapic_send_text(
+					NetManager.getInstance().getSocket(),
+					tellapicConstants.TOOL_TEXT,
+					SessionUtils.getId(), 
+					0,
+					drawing.getPaintPropertyFont().getFont().getSize2D(),
+					drawing.getPaintPropertyAlpha().getAlpha(),
+					((Color) drawing.getPaintPropertyFill().getFillPaint()).getRed(),
+					((Color) drawing.getPaintPropertyFill().getFillPaint()).getGreen(),
+					((Color) drawing.getPaintPropertyFill().getFillPaint()).getBlue(),
+					((Color) drawing.getPaintPropertyFill().getFillPaint()).getAlpha(),
+					drawing.getFirstX(),
+					drawing.getFirstY(),
+					drawing.getPaintPropertyFont().getColor().getRed(),
+					drawing.getPaintPropertyFont().getColor().getGreen(),
+					drawing.getPaintPropertyFont().getColor().getBlue(),
+					drawing.getPaintPropertyFont().getColor().getAlpha(),
+					drawing.getPaintPropertyFont().getStyle().ordinal(),
+					drawing.getPaintPropertyFont().getFace().length(),
+					drawing.getPaintPropertyFont().getFace(),
+					drawing.getText().length(),
+					drawing.getText()
+			);
 		}
 	}
 }
