@@ -18,7 +18,6 @@
 package ar.com.tellapic.adm;
 
 import java.util.Observable;
-import java.util.Observer;
 
 /**
  * @author 
@@ -26,7 +25,7 @@ import java.util.Observer;
  *          sebastian.treu(at)gmail.com
  *
  */
-public abstract class AbstractUser extends Observable implements Observer {
+public abstract class AbstractUser extends Observable {
 	
 	
 	public static final int REMOTE_CHANGED     = -10;

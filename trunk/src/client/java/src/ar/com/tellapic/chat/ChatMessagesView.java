@@ -261,7 +261,8 @@ public class ChatMessagesView extends JPanel implements Observer {
 		content.setAutoscrolls(true);
 		//content.setLineWrap(true);
 		content.setFocusable(true);
-
+		content.setOpaque(true);
+		content.setBackground(Color.white);
 		// Set a scroll bar to the tab text area and set scrollbar's properties
 		JScrollPane areaScrollPane = new JScrollPane(content);
 		areaScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);

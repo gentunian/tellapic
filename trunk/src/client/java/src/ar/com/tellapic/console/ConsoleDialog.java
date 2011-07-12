@@ -19,28 +19,31 @@ package ar.com.tellapic.console;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.KeyboardFocusManager;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Observable;
-import java.util.Set;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.ActionMap;
 import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
+import javax.swing.InputMap;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
@@ -58,9 +61,6 @@ import org.fife.ui.rtextarea.RTextScrollPane;
 import ar.com.tellapic.ObjectCompletion;
 import ar.com.tellapic.ObjectMethodCompletion;
 import ar.com.tellapic.ObjectOrientedLanguageCompletionProvider;
-import javax.swing.border.BevelBorder;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 
 /**
  * @author 
@@ -72,10 +72,11 @@ public class ConsoleDialog extends JDialog implements IConsoleView{
 	private static final long serialVersionUID = 1L;
 	
 	private final JPanel            contentPanel = new JPanel();
-	private JTextArea               thistextField;
+//	private JTextArea               thistextField;
 	private final Action            cancelAction = new CancelAction();
 	private final Action            okAction = new OkAction();
 	private IConsoleModelController consoleController;
+	private RSyntaxTextArea         textArea;
 	
 	/**
 	 * Launch the application.
@@ -95,44 +96,29 @@ public class ConsoleDialog extends JDialog implements IConsoleView{
 	 */
 	public ConsoleDialog(JFrame parent, IConsoleModelController controller) {
 		super(parent);
-		consoleController = controller;
-		setTitle("Execute...");
-		setIconImage(Toolkit.getDefaultToolkit().getImage(ConsoleDialog.class.getResource("/icons/tools/console.png")));
-		setBounds(100, 100, 467, 202);
-		getContentPane().setLayout(new BorderLayout());
+		
+		textArea = new RSyntaxTextArea();
+		RTextScrollPane areaScrollPane  = new RTextScrollPane(textArea);
+		JLabel          lblNewLabel     = new JLabel("Try pressing Ctrl + Space. Compose command with ';'. Example:");
+		lblNewLabel.setHorizontalAlignment(SwingConstants.LEFT);
+		JLabel          lblNewLabel_1   = new JLabel("Rectangle.square(10,20,30).setColor(0xff00aa); Line.line(1,2,3,4);");
+		GroupLayout     gl_contentPanel = new GroupLayout(contentPanel);
+		Container       contentPane     = getContentPane();
+		textArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVA);
 		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
-		getContentPane().add(contentPanel, BorderLayout.CENTER);
-		thistextField = new JTextArea();
-		thistextField.setCaretColor(Color.GREEN);
-		thistextField.addKeyListener(new KeyAdapter() {
-			@Override
-			public void keyTyped(KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_ENTER)
-					textInput(thistextField);
-			}
-		});
-		thistextField.setBorder(new BevelBorder(BevelBorder.LOWERED, null, Color.WHITE, null, Color.WHITE));
-		thistextField.setForeground(Color.GREEN);
-		thistextField.setBackground(new Color(0, 0, 0));
-		thistextField.setRows(1);
-		thistextField.setToolTipText("Try hitting Ctrl+Space to get some hints.");
-		thistextField.setFont(new Font("SansSerif", Font.BOLD, 14));
-		thistextField.setColumns(10);
-		JScrollPane areaScrollPane = new JScrollPane(thistextField);
+		contentPane.setLayout(new BorderLayout());
+		contentPane.add(contentPanel, BorderLayout.CENTER);
 		areaScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		areaScrollPane.setPreferredSize(new Dimension(250, 250));
 		areaScrollPane.setAutoscrolls(true);
 		areaScrollPane.setWheelScrollingEnabled(true);
-		
-		JLabel lblNewLabel = new JLabel("Tools can be used through this command line. Try something like:");
 		lblNewLabel.setFont(new Font("Dialog", Font.ITALIC, 11));
 		lblNewLabel.setIcon(new ImageIcon(ConsoleDialog.class.getResource("/icons/system/information-balloon.png")));
-		JLabel lblNewLabel_1 = new JLabel("Rectangle.square(10,20,30).setColor(0xff00aa)");
 		lblNewLabel_1.setBackground(Color.PINK);
 		lblNewLabel_1.setHorizontalAlignment(SwingConstants.CENTER);
 		lblNewLabel_1.setFont(new Font("SansSerif", Font.BOLD, 10));
 		lblNewLabel_1.setOpaque(true);
-		GroupLayout gl_contentPanel = new GroupLayout(contentPanel);
+		
 		gl_contentPanel.setHorizontalGroup(
 			gl_contentPanel.createParallelGroup(Alignment.LEADING)
 				.addComponent(lblNewLabel, GroupLayout.PREFERRED_SIZE, 412, Short.MAX_VALUE)
@@ -150,15 +136,24 @@ public class ConsoleDialog extends JDialog implements IConsoleView{
 					.addContainerGap())
 		);
 		contentPanel.setLayout(gl_contentPanel);
+		
 		{
 			JPanel buttonPane = new JPanel();
 			buttonPane.setLayout(new FlowLayout(FlowLayout.RIGHT));
-			getContentPane().add(buttonPane, BorderLayout.SOUTH);
+			contentPane.add(buttonPane, BorderLayout.SOUTH);
+			
+			JCheckBox shouldClose = new JCheckBox("Close this dialog after Run?");
+			shouldClose.addItemListener(new ItemListener() {
+				public void itemStateChanged(ItemEvent e) {
+					okAction.putValue("RUN_AND_CLOSE", e.getStateChange() == ItemEvent.SELECTED);
+				}
+			});
+			buttonPane.add(shouldClose);
 			{
-				JButton okButton = new JButton("");
+				JButton okButton = new JButton("Run");
 				okButton.setIcon(new ImageIcon(ConsoleDialog.class.getResource("/icons/system/ok.png")));
 				okButton.setAction(okAction);
-				okButton.setActionCommand("OK");
+				okButton.setActionCommand("Run");
 				buttonPane.add(okButton);
 				getRootPane().setDefaultButton(okButton);
 			}
@@ -169,27 +164,35 @@ public class ConsoleDialog extends JDialog implements IConsoleView{
 				cancelButton.setActionCommand("Cancel");
 				buttonPane.add(cancelButton);
 			}
-			Set<KeyStroke> newForwardKeys = new HashSet<KeyStroke>();
-			Set<KeyStroke> newBackwardKeys = new HashSet<KeyStroke>();
-			newForwardKeys.add(KeyStroke.getKeyStroke("control TAB"));
-			newBackwardKeys.add(KeyStroke.getKeyStroke("control shift TAB"));
-			setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, newForwardKeys);
-			setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, newBackwardKeys);
-//			int i = 0;
-//			if (i ==1)
-//				this.setContentPane(negrada(i));
-//			else
-//				negrada(i);
-			
-			controller.getAutocompletion().install(thistextField);
 		}
+		
+		setTitle("Execute...");
+		setIconImage(Toolkit.getDefaultToolkit().getImage(ConsoleDialog.class.getResource("/icons/tools/console.png")));
+		setBounds(100, 100, 461, 230);
+		InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "Cancel");
+		ActionMap actionMap = getRootPane().getActionMap();
+		actionMap.put("Cancel", cancelAction);
+		
+		consoleController = controller;
+		controller.getAutocompletion().install(textArea);
 	}
 	
-	private void textInput(JTextArea thistextField2) {
-		consoleController.handleInput(thistextField.getText());
-		thistextField.setText("");
+	/**
+	 * 
+	 */
+	private void textInput() {
+		consoleController.handleInput(textArea.getText().replaceAll("\n", ""));
+		textArea.setText("");
 	}
-	
+
+	/**
+	 * 
+	 * @author 
+	 *          Sebastian Treu
+	 *          sebastian.treu(at)gmail.com
+	 *
+	 */
 	private class CancelAction extends AbstractAction {
 		private static final long serialVersionUID = 1L;
 		public CancelAction() {
@@ -202,16 +205,26 @@ public class ConsoleDialog extends JDialog implements IConsoleView{
 		}
 	}
 	
+	/**
+	 * 
+	 * @author 
+	 *          Sebastian Treu
+	 *          sebastian.treu(at)gmail.com
+	 *
+	 */
 	private class OkAction extends AbstractAction {
 		private static final long serialVersionUID = 1L;
 		public OkAction() {
 			putValue(SMALL_ICON, null);
 			putValue(LARGE_ICON_KEY, new ImageIcon(ConsoleDialog.class.getResource("/icons/system/ok.png")));
-			putValue(NAME, "Ok");
+			putValue(NAME, "Run");
 			putValue(SHORT_DESCRIPTION, "Execute the specified action.");
+			putValue("RUN_AND_CLOSE", false);
 		}
 		public void actionPerformed(ActionEvent e) {
-			textInput(thistextField);
+			textInput();
+			if ((Boolean)getValue("RUN_AND_CLOSE"))
+				dispose();
 		}
 	}
 
@@ -220,7 +233,7 @@ public class ConsoleDialog extends JDialog implements IConsoleView{
 	 */
 	@Override
 	public void update(Observable o, Object arg) {
-		thistextField.setText((String) arg);
+//		thistextField.setText((String) arg);
 	}
 	
 	private JPanel negrada(int i) {
@@ -232,6 +245,7 @@ public class ConsoleDialog extends JDialog implements IConsoleView{
 		cp.add(sp);
 
 		ObjectOrientedLanguageCompletionProvider oolp = new ObjectOrientedLanguageCompletionProvider();
+		
 		oolp.setAutoActivationRules(false, ".");
 //		DefaultCompletionProvider oolp = new DefaultCompletionProvider();
 		ObjectCompletion o1 = new ObjectCompletion(oolp, "Rectangle");
@@ -266,9 +280,9 @@ public class ConsoleDialog extends JDialog implements IConsoleView{
 		ac.setParameterAssistanceEnabled(true);
 
 //		ac.setTriggerKey(KeyStroke.getKeyStroke('.'));
-		if (i == 0)
-			ac.install(thistextField);
-		else
+//		if (i == 0)
+//			ac.install(thistextField);
+//		else
 			ac.install(textArea);
 		
 		return cp;

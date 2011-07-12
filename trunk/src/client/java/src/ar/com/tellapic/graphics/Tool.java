@@ -4,6 +4,7 @@ import java.awt.Cursor;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelListener;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Observable;
@@ -11,7 +12,6 @@ import java.util.Observable;
 import ar.com.tellapic.StatusBar;
 import ar.com.tellapic.TellapicAbstractUser;
 import ar.com.tellapic.console.IConsoleCommand;
-import ar.com.tellapic.utils.Utils;
 
 /**
  * Abstract class Tool.
@@ -44,7 +44,7 @@ import ar.com.tellapic.utils.Utils;
  * @author Sebastián Treu, mailTo: sebastian.treu (at) gmail.com
  *
  */
-public abstract class Tool extends Observable implements MouseListener, MouseMotionListener, IConsoleCommand {
+public abstract class Tool extends Observable implements MouseListener, MouseMotionListener, MouseWheelListener, IConsoleCommand {
 	private int                        id;
 	private String                     name;
 	private String                     alias;
@@ -323,7 +323,7 @@ public abstract class Tool extends Observable implements MouseListener, MouseMot
 		
 		for(int i = 0; i < cmdList.length; i++) {
 			if (cmd.equals(cmdList[i])) {
-				type = COMMANDS[i+1][0];
+				type = COMMANDS[i+1][0].split(" ")[0];
 			}
 		}
 		
@@ -336,7 +336,7 @@ public abstract class Tool extends Observable implements MouseListener, MouseMot
 	 */
 	@Override
 	public String[] getArgumentsTypesForCommand(String cmd){
-		return getArgsNamesOrTypesForCommand(cmd, false);
+		return getArgsNamesOrTypesOrDescsForCommand(cmd, 0); //TODO: USE CONSTANTS
 	}
 	
 	/*
@@ -345,16 +345,25 @@ public abstract class Tool extends Observable implements MouseListener, MouseMot
 	 */
 	@Override
 	public String[] getArgumentsNamesForCommand(String cmd){
-		return getArgsNamesOrTypesForCommand(cmd, true);
+		return getArgsNamesOrTypesOrDescsForCommand(cmd, 1); //TODO: USE CONSTANTS
 	}
 
+	/**
+	 * @param cmd
+	 * @return
+	 */
+	@Override
+	public String[] getArgumentsDescriptionsForCommand(String cmd) {
+		return getArgsNamesOrTypesOrDescsForCommand(cmd, 2); //TODO: USE CONSTANTS
+	}
+	
 	/**
 	 * 
 	 * @param cmd
 	 * @param name
 	 * @return
 	 */
-	private String[] getArgsNamesOrTypesForCommand(String cmd, boolean name) {
+	private String[] getArgsNamesOrTypesOrDescsForCommand(String cmd, int arg) {
 		String[] cmdList = getCommandList();
 		if (cmdList == null)
 			return null;
@@ -365,11 +374,41 @@ public abstract class Tool extends Observable implements MouseListener, MouseMot
 			if (cmd.equals(cmdList[i])) {
 				args = new String[COMMANDS[i+1].length - 1];
 				for(int j = 1; j < COMMANDS[i+1].length; j++) {
-					args[j-1] = (COMMANDS[i+1][j]).split(" ")[name?1:0];
+					args[j-1] = (COMMANDS[i+1][j]).split(" ", 3)[arg];
 				}
+				break; //FIXME: Write a better loop
 			}
 		}
 		
 		return args;
 	}
+	
+	/*
+	 * (non-Javadoc)
+	 * @see ar.com.tellapic.console.IConsoleCommand#getDescriptionForCommand(java.lang.String)
+	 */
+	@Override
+	public String getDescriptionForCommand(String cmd) {
+		String[] cmdList = getCommandList();
+		if (cmdList == null)
+			return null;
+		
+		String desc = null;
+		
+		for(int i = 0; i < cmdList.length; i++) {
+			if (cmd.equals(cmdList[i])) {
+				desc = COMMANDS[i+1][0].split(" ", 2)[1];
+				break; //FIXME: Write a better loop
+			}
+		}
+		
+		return desc;
+	}
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public abstract boolean isLiveModeSupported();
+	
 }

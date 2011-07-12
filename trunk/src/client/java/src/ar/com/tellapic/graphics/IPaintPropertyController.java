@@ -6,6 +6,10 @@ package ar.com.tellapic.graphics;
 import java.awt.Color;
 import java.awt.RenderingHints;
 
+import ar.com.tellapic.graphics.PaintPropertyFont.FontStyle;
+import ar.com.tellapic.graphics.PaintPropertyStroke.EndCapsType;
+import ar.com.tellapic.graphics.PaintPropertyStroke.LineJoinsType;
+
 
 /**
  * 
@@ -38,13 +42,13 @@ public interface IPaintPropertyController {
 	 * 
 	 * @param value
 	 */
-	public void handleEndCapsChange(int value);
+	public void handleEndCapsChange(EndCapsType value);
 	
 	/**
 	 * 
 	 * @param value
 	 */
-	public void handleLineJoinsChange(int value);
+	public void handleLineJoinsChange(LineJoinsType value);
 	
 	/**
 	 * 
@@ -62,7 +66,7 @@ public interface IPaintPropertyController {
 	 * 
 	 * @param style
 	 */
-	public void handleFontStyleChange(int style);
+	public void handleFontStyleChange(FontStyle style);
 	
 	/**
 	 * 
@@ -74,7 +78,7 @@ public interface IPaintPropertyController {
 	 * 
 	 * @param color
 	 */
-	public void handleColorChange(Color color);
+	public void handleStrokeColorChange(Color color);
 	
 	
 	/**
@@ -93,5 +97,10 @@ public interface IPaintPropertyController {
 	 * @param zoom
 	 */
 	public void handleZoomChange(float zoom);
+
+	/**
+	 * @param c
+	 */
+	public void handleFillColorChange(Color c);
 	
 }

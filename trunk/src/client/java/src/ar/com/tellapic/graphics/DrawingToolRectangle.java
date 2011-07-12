@@ -3,8 +3,8 @@ package ar.com.tellapic.graphics;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 
 import ar.com.tellapic.lib.tellapicConstants;
 import ar.com.tellapic.utils.Utils;
@@ -20,6 +20,7 @@ public class DrawingToolRectangle extends DrawingTool {
 	private static final int    DEFAULT_JOINS = 0;
 	private static final float  DEFAULT_MITER_LIMIT = 1;
 	private Point2D             firstPoint;
+//	private Point2D             lastPoint;
 	 
 	
 	/**
@@ -29,20 +30,39 @@ public class DrawingToolRectangle extends DrawingTool {
 	public DrawingToolRectangle(String name) {
 		super(tellapicConstants.TOOL_RECT, name, RECTANGLE_ICON_PATH, Utils.msg.getString("rectangletooltip"), Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 		firstPoint = new Point2D.Double();
+//		lastPoint  = new Point2D.Double();
 		COMMANDS = new String[][] {
 				{ "rectangle", "frame", "square" },
-				{ getClass().getPackage().getName()+".DrawingShape", "int x1", "int y1", "int x2", "int y2" },
-				{ getClass().getPackage().getName()+".DrawingShape", "int x", "int y", "int w", "int h"},
-				{ getClass().getPackage().getName()+".DrawingShape", "int x", "int y", "int size"}
+				{ getClass().getPackage().getName()+".DrawingShape Draws a rectangle with frame (x1, y1) and (x2, y2).", "int x1 The first x coordinate", "int y1 The first y coordinate", "int x2 The second x coordinate", "int y2 The second y coordinate" },
+				{ getClass().getPackage().getName()+".DrawingShape Draws a rectangle with frame (left, top) and (left + width, top + height).", "int x The left coordinate", "int y The top coordinate", "int w The width size", "int h The height size"},
+				{ getClass().getPackage().getName()+".DrawingShape Draws a square in the specified position.", "int x The left coordinate", "int y The top coordinate", "int size The size of the sides"}
 		};
 		setAlias("Rectangle");
 	}
 	
-	
+	/**
+	 * 
+	 */
 	public DrawingToolRectangle() {
 		this("DrawingToolRectangle");
 	}
 
+//	/**
+//	 * 
+//	 * @return
+//	 */
+//	public Point2D getLastPoint() {
+//		return lastPoint;
+//	}
+//	
+//	/**
+//	 * 
+//	 * @return
+//	 */
+//	public Point2D getFirstPoint() {
+//		return firstPoint;
+//	}
+	
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.Tool#hasAlphaCapability()
 	 */
@@ -51,6 +71,13 @@ public class DrawingToolRectangle extends DrawingTool {
 		return true;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#hasFillCapability()
+	 */
+	public boolean hasFillCapability() {
+		return true;
+	}
 
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.Tool#hasColorCapability()
@@ -175,15 +202,9 @@ public class DrawingToolRectangle extends DrawingTool {
 		if (isSelected() && !e.isConsumed()) {
 			if ((e.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK) {
 				float zoomX = ControlToolZoom.getInstance().getZoomValue();
-				IToolBoxState toolBoxState = user.getToolBoxModel();
 				setInUse(true);
 				firstPoint.setLocation(e.getX() / zoomX, e.getY() / zoomX);
-				temporalDrawing = new DrawingShapeRectangle(getName(), firstPoint.getX(), firstPoint.getY(), 0, 0);
-				((DrawingShape) temporalDrawing).setPaintPropertyAlpha(toolBoxState.getOpacityProperty());
-				((DrawingShape) temporalDrawing).setPaintPropertyColor(toolBoxState.getColorProperty());
-				((DrawingShape) temporalDrawing).setPaintPropertyStroke(toolBoxState.getStrokeProperty());
-				temporalDrawing.setRenderingHints(toolBoxState.getRenderingHints());
-				temporalDrawing.setUser(user);
+				temporalDrawing = new DrawingShapeRectangle(user, getName(), firstPoint.getX(), firstPoint.getY(), 0, 0);
 				user.setTemporalDrawing(temporalDrawing);
 				setChanged();
 				notifyObservers(temporalDrawing);
@@ -202,8 +223,8 @@ public class DrawingToolRectangle extends DrawingTool {
 			if (e.getButton() == MouseEvent.BUTTON1) {
 				DrawingShapeRectangle drawingRectangle = (DrawingShapeRectangle) temporalDrawing;
 				if (drawingRectangle != null && !drawingRectangle.isEmpty()) {
-					temporalDrawing.cloneProperties();
-					user.addDrawing(temporalDrawing);
+					if (getUser().isRemote())
+						user.addDrawing(temporalDrawing);
 					setChanged();
 					notifyObservers(temporalDrawing);
 				} else
@@ -239,7 +260,10 @@ public class DrawingToolRectangle extends DrawingTool {
 						initX  = (initX <  e.getX()/zoomX)? initX :  e.getX()/zoomX;
 						initY  = (initY < e.getY()/zoomX)? initY : e.getY()/zoomX;
 					}
-					((Rectangle2D)((DrawingShape) temporalDrawing).getShape()).setRect(initX, initY, width, height);
+//					firstPoint.setLocation(initX, initY);
+//					lastPoint.setLocation(initX + width, initY + height);
+					((DrawingShapeRectangle) temporalDrawing).setRect(initX, initY, width, height);
+//					((DrawingShapeRectangle) temporalDrawing).setRect(firstPoint, lastPoint);
 					setChanged();
 					notifyObservers(temporalDrawing);
 				}
@@ -260,22 +284,35 @@ public class DrawingToolRectangle extends DrawingTool {
 	 * @return A DrawingShapeRectangle will be created, with default user toolbox configuration.
 	 */
 	public DrawingShape frame(String x, String y, String w, String h) {
+		int iX = 0;
+		int iY = 0;
+		int iW = 100;
+		int iH = 100;
+		try {
+			iX = Integer.valueOf(x);
+			iY = Integer.valueOf(y);
+			iW = Integer.valueOf(w);
+			iH = Integer.valueOf(h);
+		} catch(Exception e) {
+			Utils.logMessage("Wrong format. Setting frame to default values at (0,0).");
+		}
 		
 		DrawingShapeRectangle drawing = new DrawingShapeRectangle(
+				user,
 				"CustomRectangle",
-				Integer.valueOf(x),
-				Integer.valueOf(y),
-				Integer.valueOf(w),
-				Integer.valueOf(h)
+				iX,
+				iY,
+				iW,
+				iH
 		);
-		IToolBoxState toolBoxState = user.getToolBoxModel();
-		
-		drawing.setPaintPropertyAlpha(toolBoxState.getOpacityProperty());
-		drawing.setPaintPropertyColor(toolBoxState.getColorProperty());
-		drawing.setPaintPropertyStroke(toolBoxState.getStrokeProperty());
-		drawing.setRenderingHints(toolBoxState.getRenderingHints());
+//		IToolBoxState toolBoxState = user.getToolBoxModel();
+//		
+//		drawing.setPaintPropertyAlpha(toolBoxState.getOpacityProperty());
+//		drawing.setPaintPropertyColor(toolBoxState.getColorProperty());
+//		drawing.setPaintPropertyStroke(toolBoxState.getStrokeProperty());
+//		drawing.setRenderingHints(toolBoxState.getRenderingHints());
 		drawing.setUser(user);
-		drawing.cloneProperties();
+//		drawing.cloneProperties();
 		user.addDrawing(drawing);
 		setChanged();
 		notifyObservers(drawing);
@@ -310,5 +347,25 @@ public class DrawingToolRectangle extends DrawingTool {
 	 */
 	public DrawingShape square(String x, String y, String size) {
 		return frame(x, y, size, size);
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseWheelListener#mouseWheelMoved(java.awt.event.MouseWheelEvent)
+	 */
+	@Override
+	public void mouseWheelMoved(MouseWheelEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#isLiveModeSupported()
+	 */
+	@Override
+	public boolean isLiveModeSupported() {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }

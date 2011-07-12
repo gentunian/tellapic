@@ -3,6 +3,10 @@ package ar.com.tellapic.graphics;
 import java.awt.Color;
 import java.awt.RenderingHints.Key;
 
+import ar.com.tellapic.graphics.PaintPropertyFont.FontStyle;
+import ar.com.tellapic.graphics.PaintPropertyStroke.EndCapsType;
+import ar.com.tellapic.graphics.PaintPropertyStroke.LineJoinsType;
+
 public class PaintPropertyController implements IPaintPropertyController {
 	
 	private IToolBoxManager        model;
@@ -25,9 +29,6 @@ public class PaintPropertyController implements IPaintPropertyController {
 			return;
 		
 		model.setAlphaPropertyValue(value);
-		
-//		if (drawingController != null)
-//			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
 	}
 	
 	/* (non-Javadoc)
@@ -40,28 +41,22 @@ public class PaintPropertyController implements IPaintPropertyController {
 			return;
 		
 		model.setStrokePropertyWidth(value);
-//		if (drawingController != null)
-//			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
 	}
 	
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleEndCapsChange(int)
 	 */
 	@Override
-	public void handleEndCapsChange(int value) {
+	public void handleEndCapsChange(EndCapsType value) {
 		model.setStrokePropertyCaps(value);
-//		if (drawingController != null)
-//			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
 	}
 	
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleLineJoinsChange(int)
 	 */
 	@Override
-	public void handleLineJoinsChange(int value) {
+	public void handleLineJoinsChange(LineJoinsType value) {
 		model.setStrokePropertyJoins(value);
-//		if (drawingController != null)
-//			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
 	}
 	
 	/* (non-Javadoc)
@@ -70,8 +65,6 @@ public class PaintPropertyController implements IPaintPropertyController {
 	@Override
 	public void handleFontFaceChange(String face) {
 		model.setFontPropertyFace(face);
-//		if (drawingController != null)
-//			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
 	}
 
 	/* (non-Javadoc)
@@ -80,18 +73,14 @@ public class PaintPropertyController implements IPaintPropertyController {
 	@Override
 	public void handleFontSizeChange(float size) {
 		model.setFontPropertySize(size);
-//		if (drawingController != null)
-//			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
 	}
 
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleFontStyleChange(int)
 	 */
 	@Override
-	public void handleFontStyleChange(int style) {
+	public void handleFontStyleChange(FontStyle style) {
 		model.setFontPropertyStyle(style);
-//		if (drawingController != null)
-//			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
 	}
 
 	/* (non-Javadoc)
@@ -100,16 +89,14 @@ public class PaintPropertyController implements IPaintPropertyController {
 	@Override
 	public void handleTextChange(String text) {
 		model.setFontPropertyText(text);
-//		if (drawingController != null)
-//			drawingController.updateFromOutside(((ToolBoxModel)model).getLastUsedTool().getDrawing());
 	}
 	
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleColorChange(java.awt.Color)
 	 */
 	@Override
-	public void handleColorChange(Color color) {
-		model.setColorPropertyValue(color);
+	public void handleStrokeColorChange(Color color) {
+		model.setStrokePropertyColorValue(color);
 	}
 
 	/* (non-Javadoc)
@@ -146,5 +133,13 @@ public class PaintPropertyController implements IPaintPropertyController {
 	@Override
 	public void handleZoomChange(float value) {
 		ControlToolZoom.getInstance().setZoom(value);
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.IPaintPropertyController#handleFillColorChange(java.awt.Color)
+	 */
+	@Override
+	public void handleFillColorChange(Color c) {
+		model.setFillPropertyColor(c);
 	}
 }

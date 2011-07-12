@@ -49,34 +49,12 @@ final public class DrawingToolLineNet extends DrawingToolLine {
 		/* The model guarentees that no 2 tools are selected */
 		if (isSelected() && event.getButton() == MouseEvent.BUTTON1) {
 			DrawingShape drawing = (DrawingShape) getTemporalDrawing();
+
 			if (drawing == null)
 				return ;
 
-			if (NetManager.getInstance().isConnected() && !getUser().isRemote()) {
-				Line2D line = (Line2D) drawing.getShape();
+			sendGeneratedDrawing(drawing);
 
-				tellapic.tellapic_send_fig(
-						NetManager.getInstance().getSocket(),
-						getToolId(), 
-						0,
-						SessionUtils.getId(), 
-						0,
-						(float) drawing.getPaintPropertyStroke().getWidth(),
-						drawing.getPaintPropertyAlpha().alpha,
-						drawing.getPaintPropertyColor().getRed(),
-						drawing.getPaintPropertyColor().getGreen(),
-						drawing.getPaintPropertyColor().getBlue(),
-						(int)line.getX1(),
-						(int)line.getY1(),
-						(int)line.getX2(),
-						(int)line.getY2(),
-						drawing.getPaintPropertyStroke().getLineJoins(),
-						drawing.getPaintPropertyStroke().getEndCaps(),
-						drawing.getPaintPropertyStroke().getMiterLimit(),
-						drawing.getPaintPropertyStroke().getDash_phase(),
-						drawing.getPaintPropertyStroke().getDash()
-				);
-			}			
 			/* This tool has no more temporal drawings */
 			setTemporalDrawing(null);
 		}
@@ -86,34 +64,45 @@ final public class DrawingToolLineNet extends DrawingToolLine {
 	public DrawingShape line(String x1, String y1, String x2, String y2) {
 		DrawingShape drawing = super.line(x1, y1, x2, y2);
 		
-		if (drawing != null) {
-			if (NetManager.getInstance().isConnected() && !getUser().isRemote()) {
-				Line2D line = (Line2D) drawing.getShape();
-
-				tellapic.tellapic_send_fig(
-						NetManager.getInstance().getSocket(),
-						getToolId(), 
-						0,
-						SessionUtils.getId(), 
-						0,
-						(float) drawing.getPaintPropertyStroke().getWidth(),
-						drawing.getPaintPropertyAlpha().alpha,
-						drawing.getPaintPropertyColor().getRed(),
-						drawing.getPaintPropertyColor().getGreen(),
-						drawing.getPaintPropertyColor().getBlue(),
-						(int)line.getX1(),
-						(int)line.getY1(),
-						(int)line.getX2(),
-						(int)line.getY2(),
-						drawing.getPaintPropertyStroke().getLineJoins(),
-						drawing.getPaintPropertyStroke().getEndCaps(),
-						drawing.getPaintPropertyStroke().getMiterLimit(),
-						drawing.getPaintPropertyStroke().getDash_phase(),
-						drawing.getPaintPropertyStroke().getDash()
-				);
-			}
-		}
+		if (drawing != null)
+			sendGeneratedDrawing(drawing);
 		
 		return drawing;
+	}
+	
+	/**
+	 * 
+	 * @param drawing
+	 */
+	private void sendGeneratedDrawing(DrawingShape drawing) {
+		if (NetManager.getInstance().isConnected() && !getUser().isRemote()) {
+			Line2D line = (Line2D) drawing.getShape();
+			tellapic.tellapic_send_fig(
+					NetManager.getInstance().getSocket(),
+					getToolId(), 
+					0,
+					SessionUtils.getId(), 
+					0,
+					(float) drawing.getPaintPropertyStroke().getWidth(),
+					drawing.getPaintPropertyAlpha().getAlpha(),
+					0,
+					0,
+					0,
+					0,
+					(int)line.getX1(),
+					(int)line.getY1(),
+					drawing.getPaintPropertyStroke().getColor().getRed(),
+					drawing.getPaintPropertyStroke().getColor().getGreen(),
+					drawing.getPaintPropertyStroke().getColor().getBlue(),
+					drawing.getPaintPropertyStroke().getColor().getAlpha(),
+					(int)line.getX2(),
+					(int)line.getY2(),
+					drawing.getPaintPropertyStroke().getLineJoins().ordinal(),
+					drawing.getPaintPropertyStroke().getEndCaps().ordinal(),
+					drawing.getPaintPropertyStroke().getMiterLimit(),
+					drawing.getPaintPropertyStroke().getDash_phase(),
+					drawing.getPaintPropertyStroke().getDash()
+			);
+		}
 	}
 }

@@ -43,20 +43,20 @@ import javax.swing.ListSelectionModel;
 import javax.swing.tree.TreePath;
 
 import org.jdesktop.swingx.JXTreeTable;
-import org.jdesktop.swingx.renderer.BooleanValue;
 import org.jdesktop.swingx.renderer.CellContext;
 import org.jdesktop.swingx.renderer.ComponentProvider;
 import org.jdesktop.swingx.renderer.DefaultTableRenderer;
 import org.jdesktop.swingx.renderer.DefaultTreeRenderer;
 import org.jdesktop.swingx.renderer.IconValue;
-import org.jdesktop.swingx.renderer.JRendererCheckBox;
 import org.jdesktop.swingx.renderer.LabelProvider;
 import org.jdesktop.swingx.renderer.StringValue;
 
 import ar.com.tellapic.adm.AbstractUser;
 import ar.com.tellapic.chat.ChatViewController;
 import ar.com.tellapic.graphics.AbstractDrawing;
+import ar.com.tellapic.graphics.ControlToolSelector;
 import ar.com.tellapic.graphics.DrawingAreaModel;
+import ar.com.tellapic.graphics.DrawingPopupMenu;
 import ar.com.tellapic.graphics.PaintPropertyColor;
 import ar.com.tellapic.utils.Utils;
 
@@ -122,7 +122,11 @@ public class UsersView extends JPanel {
 						AbstractDrawing drawing = (AbstractDrawing) o;
 						switch(colSel) {
 						case 0:
-							drawing.setSelected(true);
+							TellapicLocalUser luser = (TellapicLocalUser) TellapicUserManager.getInstance().getUser(SessionUtils.getUsername());
+							luser.getToolboxController().selectToolByName("ControlToolSelector");
+							ControlToolSelector t = (ControlToolSelector) luser.getToolBoxModel().getLastUsedTool();
+							t.selectDrawing(drawing);
+//							drawing.setSelected(true);
 							break;
 						case 1:
 							drawing.setVisible(!drawing.isVisible());
@@ -176,7 +180,7 @@ public class UsersView extends JPanel {
 		tree.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		tree.setSortable(false);
 		tree.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-		ComponentProvider<AbstractButton> visibilityProvider = new CheckBoxProvider("/icons/system/eye.png", "/icons/system/eye-close.png");
+		ComponentProvider<AbstractButton> visibilityProvider = new CheckBoxProvider("/icons/system/eye.png", "/icons/system/eye-close.png", "Enable/disable item's visibility.");
 		ComponentProvider<JLabel> userProvider = new CustomLabelProvider(new UserValue(), (int)JLabel.CENTER_ALIGNMENT);
 		tree.setDefaultRenderer(MyEyeCheckBox.class, new DefaultTableRenderer(visibilityProvider));
 		tree.setDefaultRenderer(String.class, new DefaultTableRenderer(userProvider));
@@ -322,73 +326,15 @@ public class UsersView extends JPanel {
 					usedFont = rendererComponent.getFont().deriveFont(Font.PLAIN); 
 				}
 				rendererComponent.setFont(usedFont);
-				int newWidth  = rendererComponent.getFontMetrics(usedFont).stringWidth(rendererComponent.getText());
-				int iconWidth = rendererComponent.getIcon().getIconWidth();
-				rendererComponent.setPreferredSize(new Dimension(newWidth + iconWidth + 10, 22));
+				String text = rendererComponent.getText();
+				if (text != null) {
+					int newWidth  = rendererComponent.getFontMetrics(usedFont).stringWidth(text);
+					int iconWidth = rendererComponent.getIcon().getIconWidth();
+					rendererComponent.setPreferredSize(new Dimension(newWidth + iconWidth + 10, 22));
+				}
 			}
 		}
 	}
-	
-	
-	/**
-	 * 
-	 * @author 
-	 *          Sebastian Treu
-	 *          sebastian.treu(at)gmail.com
-	 *
-	 */
-	private class CheckBoxProvider extends ComponentProvider<AbstractButton> {
-		private static final long serialVersionUID = 1L;
-		private Icon selectedIcon;
-		private Icon deselectedIcon;
-
-		CheckBoxProvider(String selIconPath, String deselIconPath) {
-			selectedIcon   = new ImageIcon(Utils.createIconImage(12, 12, selIconPath));
-			deselectedIcon = new ImageIcon(Utils.createIconImage(12, 12, deselIconPath));
-		}
-		
-		
-		/* (non-Javadoc)
-		 * @see org.jdesktop.swingx.renderer.ComponentProvider#configureState(org.jdesktop.swingx.renderer.CellContext)
-		 */
-		@Override
-		protected void configureState(CellContext context) {
-			rendererComponent.setHorizontalAlignment((int) AbstractButton.CENTER_ALIGNMENT);
-			rendererComponent.setPreferredSize(new Dimension(12,12));
-		}
-
-		/* (non-Javadoc)
-		 * @see org.jdesktop.swingx.renderer.ComponentProvider#createRendererComponent()
-		 */
-		@Override
-		protected AbstractButton createRendererComponent() {
-			return new JRendererCheckBox();
-		}
-
-		/*
-		 * 
-		 */
-		protected boolean getValueAsBoolean(CellContext context) {
-			if (formatter instanceof BooleanValue) {
-				return ((BooleanValue) formatter).getBoolean(context.getValue());
-			}
-			return Boolean.TRUE.equals(context.getValue());
-		}
-		
-		/* (non-Javadoc)
-		 * @see org.jdesktop.swingx.renderer.ComponentProvider#format(org.jdesktop.swingx.renderer.CellContext)
-		 */
-		@Override
-		protected void format(CellContext context) {
-			rendererComponent.setIcon(deselectedIcon);
-			rendererComponent.setSelectedIcon(selectedIcon);
-			rendererComponent.setSelected(getValueAsBoolean(context));
-			rendererComponent.setPreferredSize(new Dimension(12,12));
-			rendererComponent.setToolTipText("Enable/Disable item visibility");
-//			rendererComponent.setText(getValueAsString(context));
-		}
-	}
-	
 	
 	/**
 	 * 

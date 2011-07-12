@@ -3,7 +3,7 @@
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.event.MouseEvent;
-import java.awt.geom.Line2D;
+import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
 
 import ar.com.tellapic.lib.tellapicConstants;
@@ -55,7 +55,7 @@ public class DrawingToolLine extends DrawingTool {
 		setAlias("Line");
 		COMMANDS = new String[][] {
 				{ "line" },
-				{ getClass().getPackage().getName()+".DrawingShape", "int x1", "int y1", "int x2", "int y2" }
+				{ getClass().getPackage().getName()+".DrawingShape Draws a line from (x1, y1) to (x2, y2).", "int x1 The first point x coordinate", "int y1 The first point y  coordinate", "int x2 The second point x coordinate", "int y2 The second point y coordinate" }
 		};
 	}
 
@@ -95,6 +95,14 @@ public class DrawingToolLine extends DrawingTool {
 		return true;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#hasFillCapability()
+	 */
+	public boolean hasFillCapability() {
+		return false;
+	}
+	
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.DrawingTool#getDefaultWidth()
 	 */
@@ -186,15 +194,10 @@ public class DrawingToolLine extends DrawingTool {
 			if ((e.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK) {
 				if (isBeingUsed())
 					throw new IllegalStateException("init cannot be called with the tool being used");
-				IToolBoxState toolBoxState = user.getToolBoxModel();
 				float zoomX = ControlToolZoom.getInstance().getZoomValue();
 				firstPoint.setLocation(e.getX()/zoomX, e.getY()/zoomX);
 				setInUse(true);
-				temporalDrawing = new DrawingShapeLine(getName(), firstPoint, firstPoint);
-				((DrawingShape) temporalDrawing).setPaintPropertyAlpha(toolBoxState.getOpacityProperty());
-				((DrawingShape) temporalDrawing).setPaintPropertyColor(toolBoxState.getColorProperty());
-				((DrawingShape) temporalDrawing).setPaintPropertyStroke(toolBoxState.getStrokeProperty());
-				temporalDrawing.setRenderingHints(toolBoxState.getRenderingHints());
+				temporalDrawing = new DrawingShapeLine(user, getName(), firstPoint, firstPoint);
 				temporalDrawing.setUser(user);
 				user.setTemporalDrawing(temporalDrawing);
 				setChanged();
@@ -213,12 +216,14 @@ public class DrawingToolLine extends DrawingTool {
 			if (e.getButton() == MouseEvent.BUTTON1) {
 				DrawingShapeLine drawingLine = (DrawingShapeLine) temporalDrawing;
 				if (drawingLine != null && drawingLine.length() > 0) {
-					temporalDrawing.cloneProperties();
-					user.addDrawing(temporalDrawing);
+					drawingLine.closeLine();
+					if (getUser().isRemote())
+						user.addDrawing(temporalDrawing);
 					setChanged();
 					notifyObservers(temporalDrawing);
-				} else 
-					temporalDrawing = null;
+				} 
+//				else 
+//					temporalDrawing = null;
 			}
 			setInUse(false);
 			e.consume();
@@ -233,9 +238,11 @@ public class DrawingToolLine extends DrawingTool {
 		if (isSelected() && !e.isConsumed()) {
 			if ((e.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK) {
 				if (isBeingUsed()) {
+					
 					float zoomX = ControlToolZoom.getInstance().getZoomValue();
 					boolean symmetric = e.isControlDown() || isSymmetricModeEnabled();
 					double angle = Math.atan2(e.getX()/zoomX - firstPoint.getX(), e.getY()/zoomX - firstPoint.getY()) + Math.PI/2;
+					
 					if ( angle < 0)
 						angle = (Math.PI - Math.abs(angle)) + Math.PI;
 
@@ -247,9 +254,9 @@ public class DrawingToolLine extends DrawingTool {
 						double dist = firstPoint.distance(e.getX()/zoomX, e.getY()/zoomX);
 						newX = (int) (dist * Math.cos(steppedAngle - Math.PI) + firstPoint.getX());
 						newY = (int) (dist * Math.sin(steppedAngle) + firstPoint.getY());
-					} 
-
-					((Line2D)((DrawingShape) temporalDrawing).getShape()).setLine(firstPoint.getX(), firstPoint.getY(), newX, newY);
+					}
+					
+					((DrawingShapeLine) temporalDrawing).setLine(firstPoint.getX(), firstPoint.getY(), newX, newY);
 					setChanged();
 					notifyObservers(temporalDrawing);
 				}
@@ -265,26 +272,50 @@ public class DrawingToolLine extends DrawingTool {
 	 * @return
 	 */
 	public DrawingShape line(String x1, String y1, String x2, String y2) {
-		DrawingShapeLine drawing = new DrawingShapeLine(
+		double iX1 = 0;
+		double iY1 = 0;
+		double iX2 = 10;
+		double iY2 = 10;
+		
+		try {
+			iX1 = Double.parseDouble(x1);
+			iY1 = Double.parseDouble(y1);
+			iX2 = Double.parseDouble(x2);
+			iY2 = Double.parseDouble(y2);
+		} catch(Exception e) {
+			Utils.logMessage("Wrong format. Setting line to default values.");
+		}
+		
+		DrawingShapeLine drawing = new DrawingShapeLine(user,
 				"CustomLine",
-				Double.parseDouble(x1),
-				Double.parseDouble(y1),
-				Double.parseDouble(x2),
-				Double.parseDouble(y2)
+				iX1,
+				iY1,
+				iX2,
+				iY2
 		);
 		
-		IToolBoxState toolBoxState = user.getToolBoxModel();
-		
-		drawing.setPaintPropertyAlpha(toolBoxState.getOpacityProperty());
-		drawing.setPaintPropertyColor(toolBoxState.getColorProperty());
-		drawing.setPaintPropertyStroke(toolBoxState.getStrokeProperty());
-		drawing.setRenderingHints(toolBoxState.getRenderingHints());
 		drawing.setUser(user);
-		drawing.cloneProperties();
 		user.addDrawing(drawing);
 		setChanged();
 		notifyObservers(drawing);
 		
 		return drawing;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseWheelListener#mouseWheelMoved(java.awt.event.MouseWheelEvent)
+	 */
+	@Override
+	public void mouseWheelMoved(MouseWheelEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#isLiveModeSupported()
+	 */
+	@Override
+	public boolean isLiveModeSupported() {
+		return false;
 	}
 }

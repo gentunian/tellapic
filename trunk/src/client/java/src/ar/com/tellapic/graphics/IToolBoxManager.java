@@ -6,6 +6,10 @@ package ar.com.tellapic.graphics;
 import java.awt.Color;
 import java.awt.RenderingHints;
 
+import ar.com.tellapic.graphics.PaintPropertyFont.FontStyle;
+import ar.com.tellapic.graphics.PaintPropertyStroke.EndCapsType;
+import ar.com.tellapic.graphics.PaintPropertyStroke.LineJoinsType;
+
 
 /**
  * The tool box interface to manage the tool box model. Most method
@@ -74,14 +78,14 @@ public interface IToolBoxManager {
 	 * @param cap the cap to use. Could be one of CAP_SQUARE, CAP_ROUND or CAP_BUTT
 	 * @throws IllegalArgumentException if cap is none of the above values
 	 */
-	public void setStrokePropertyCaps(int cap) throws IllegalArgumentException;
+	public void setStrokePropertyCaps(EndCapsType cap) throws IllegalArgumentException;
 	
 	/**
 	 * Sets the line joins to use
 	 * @param join the line joins to use. Could be one of BEVEL_JOIN, MITER_JOIN, and ROUND_JOIN
 	 * @throws IllegalArgumentException if join is none of the above values.
 	 */
-	public void setStrokePropertyJoins(int join) throws IllegalArgumentException;
+	public void setStrokePropertyJoins(LineJoinsType join) throws IllegalArgumentException;
 	
 	/**
 	 * 
@@ -118,7 +122,7 @@ public interface IToolBoxManager {
 	 * 
 	 * @param style
 	 */
-	public void setFontPropertyStyle(int style);
+	public void setFontPropertyStyle(FontStyle style);
 	
 	/**
 	 * 
@@ -156,5 +160,15 @@ public interface IToolBoxManager {
 	 * @param key
 	 */
 	public void removeRenderingHint(RenderingHints.Key key);
+
+	/**
+	 * @param color
+	 */
+	public void setFillPropertyColor(Color color);
+
+	/**
+	 * @param color
+	 */
+	public void setStrokePropertyColorValue(Color color);
 
 }

@@ -34,7 +34,7 @@ import java.awt.geom.Rectangle2D;
  */
 public class ControlPoint extends Ellipse2D{
 	
-	public static enum ControlType {
+	public static enum ControlPointType {
 		LEFT_CONTROL_POINT,
 		RIGHT_CONTROL_POINT,
 		TOP_LEFT_CONTROL_POINT,
@@ -49,12 +49,14 @@ public class ControlPoint extends Ellipse2D{
 	public static final double CORRECTION_FACTOR    = CONTROL_POINT_WIDTH / 2;
 	
 	
-	private Ellipse2D    controlPoint;
-	private ControlType  controlType;
-	private Color        controlPointColor;
-	private BasicStroke  controlPointStroke;
-	private Cursor       controlPointCursor;
-	private boolean      selected;
+	private Ellipse2D         controlPoint;
+	private ControlPointType  controlType;
+	private Color             controlPointFillColor;
+	private Color             controlPointStrokeColor;
+	private Color             controlPointSelectedColor;
+	private BasicStroke       controlPointStroke;
+	private Cursor            controlPointCursor;
+	private boolean           selected;
 	
 	/**
 	 * 
@@ -63,9 +65,12 @@ public class ControlPoint extends Ellipse2D{
 	 * @param color
 	 * @throws IllegalControlPointTypeException
 	 */
-	public ControlPoint(ControlType type, Color color) throws IllegalControlPointTypeException{
+	public ControlPoint(ControlPointType type, Color color) throws IllegalControlPointTypeException{
 		controlType = type;
-		controlPointStroke = new BasicStroke(2, 0, 0, 10);
+		controlPointStroke = new BasicStroke(1,0,0,10);
+		controlPointSelectedColor = Color.blue;
+		controlPointFillColor     = Color.white;
+		controlPointStrokeColor   = Color.black;
 		setControlPointColor(color);
 	}
 	
@@ -129,14 +134,14 @@ public class ControlPoint extends Ellipse2D{
 	/**
 	 * @param controlType the controlType to set
 	 */
-	public void setType(ControlType controlType) {
+	public void setType(ControlPointType controlType) {
 		this.controlType = controlType;
 	}
 
 	/**
 	 * @return the controlType
 	 */
-	public ControlType getType() {
+	public ControlPointType getType() {
 		return controlType;
 	}
 
@@ -144,14 +149,14 @@ public class ControlPoint extends Ellipse2D{
 	 * @param controlPointColor the controlPointColor to set
 	 */
 	public void setControlPointColor(Color controlPointColor) {
-		this.controlPointColor = controlPointColor;
+		this.controlPointFillColor = controlPointColor;
 	}
 
 	/**
 	 * @return the controlPointColor
 	 */
 	public Color getControlPointColor() {
-		return controlPointColor;
+		return controlPointFillColor;
 	}
 
 	/**
@@ -223,20 +228,28 @@ public class ControlPoint extends Ellipse2D{
 		if (controlPoint == null)
 			return;
 		
-		g.setStroke(controlPointStroke);
-		g.setColor(Color.black);
+		Color color = controlPointSelectedColor;
+		
 		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-		g.draw(controlPoint);
+		g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+		
 		if (!selected)
-			g.setColor(controlPointColor);
+			color = controlPointFillColor;
 		else {
-			g.setColor(Color.blue);
+			g.setColor(color);
 			g.setStroke(new BasicStroke(1));
 			g.drawLine((int)controlPoint.getCenterX(), 0, (int)controlPoint.getCenterX(), 9500);
 			g.drawLine(0, (int)controlPoint.getCenterY(), 9500,(int) controlPoint.getCenterY());
 		}
+		g.setColor(color);
 		g.fill(controlPoint);
+		
+		g.setStroke(controlPointStroke);
+		g.setColor(controlPointStrokeColor);
+		g.draw(controlPoint);
+		
 		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+		g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_DEFAULT);
 	}
 
 	/**

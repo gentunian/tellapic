@@ -21,6 +21,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+import javax.swing.text.Element;
 import javax.swing.text.JTextComponent;
 
 import org.fife.ui.autocomplete.Completion;
@@ -39,16 +42,15 @@ public class ObjectOrientedLanguageCompletionProvider extends DefaultCompletionP
 	
 	
 	public ObjectOrientedLanguageCompletionProvider() {
-//		comparator = new MyComparator();
 		super();
 		this.setParameterizedCompletionParams('(', ",", ')');
 	}
 	
 	@Override
 	public String getAlreadyEnteredText(JTextComponent comp) {
-//		String str = super.getAlreadyEnteredText(comp);
-		String str = null;
-		str = comp.getText();
+		String str = super.getAlreadyEnteredText(comp);
+//		String str = null;
+//		str = comp.getText();
 		Utils.logMessage("getAlreadyEnteredText(): "+str);
 		return str;
 	}
@@ -68,14 +70,38 @@ public class ObjectOrientedLanguageCompletionProvider extends DefaultCompletionP
 	protected List getCompletionsImpl(JTextComponent comp) {
 		List retVal = new ArrayList();
 		String text = getAlreadyEnteredText(comp);
+		String beginText = null;
+		
+		Document doc = comp.getDocument();
+		int      dot = comp.getCaretPosition();
+		Element root = doc.getDefaultRootElement();
+		int    index1 = root.getElementIndex(dot);
+		Element elem = root.getElement(index1);
+		int    start = elem.getStartOffset();
+		
+		Utils.logMessage("caretpos: "+comp.getCaretPosition());
+		Utils.logMessage("start: "+start);
+		Utils.logMessage("index: "+index1);
 
+//		if (comp.getCaretPosition() > 0) {
+		if (dot - start > 0) {
+			try {
+				beginText = comp.getText(start, dot-start);//comp.getText(0, comp.getCaretPosition());
+				text = beginText;
+				
+				
+				Utils.logMessage("btext: "+beginText);
+			} catch (BadLocationException e) {
+				e.printStackTrace();
+			}
+		}
+	
 		if (text!=null) {
 			String newText = text;
-			if (text.endsWith(".")) {
-				String arrangeDecimals = text.replaceAll("([0-9]*)\\.([0-9]+)", "$1:$2");
+//			if (text.endsWith(".")) {
+				String   arrangeDecimals = text.replaceAll("([0-9]*)\\.([0-9]+)", "$1:$2");
 				String[] split = arrangeDecimals.split("\\.");
 				ObjectCompletion mainObjectCompletion = null;
-//				ObjectCompletion lastObjectCompletion = null;
 				
 				for(int i = 0; i < split.length; i++) {
 					Utils.logMessage("Split["+i+"]: "+split[i]);
@@ -86,7 +112,7 @@ public class ObjectOrientedLanguageCompletionProvider extends DefaultCompletionP
 							mainObjectCompletion = (ObjectCompletion) completions.get(index);
 							Utils.logMessage("c: "+mainObjectCompletion);
 							for(ObjectMethodCompletion o : mainObjectCompletion.getMethodCompletions()) {
-								o.setReplacementText(mainObjectCompletion.getReplacementText() +"."+ o.getInputText());
+//								o.setReplacementText(mainObjectCompletion.getReplacementText() +"."+ o.getInputText());
 								retVal.add(o);
 							}
 						}
@@ -95,18 +121,23 @@ public class ObjectOrientedLanguageCompletionProvider extends DefaultCompletionP
 						List<ObjectMethodCompletion> methods = mainObjectCompletion.getMethodCompletions();
 						retVal = new ArrayList();
 						for(ObjectMethodCompletion omc : methods) {
-							if (omc.getInputText().startsWith(methodName)) {
+							if (omc.getInputText().equals(methodName)) {
 								mainObjectCompletion = omc.getObjectCompletion();
 								for(ObjectMethodCompletion c : omc.getObjectCompletion().getMethodCompletions()) {
-									c.setReplacementText(getAlreadyEnteredText(comp)+ c.getInputText());
+//									c.setReplacementText(getAlreadyEnteredText(comp)+ c.getInputText());
 									retVal.add(c);
 								}
+							} else if (omc.getInputText().toLowerCase().startsWith(methodName.toLowerCase())) {
+//								for(ObjectMethodCompletion o : mainObjectCompletion.getMethodCompletions()) {
+//									o.setReplacementText(mainObjectCompletion.getReplacementText() +"."+ o.getInputText());
+									retVal.add(omc);
+//								}
 							}
 						}
 					}
 				}
-				return retVal;
-			}
+//				return retVal;
+//			}
 			int index = Collections.binarySearch(completions, newText, comparator);
 			if (index<0) { // No exact match
 				index = -index - 1;

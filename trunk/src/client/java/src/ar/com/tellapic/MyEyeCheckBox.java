@@ -40,10 +40,10 @@ public class MyEyeCheckBox extends JCheckBox {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	public MyEyeCheckBox() {
-		setSelectedIcon(new ImageIcon(Utils.createIconImage(12, 12, "/icons/new/eye.png")));
-		setPressedIcon(new ImageIcon(Utils.createIconImage(12, 12, "/icons/new/eye.png")));
-		setIcon(new ImageIcon(Utils.createIconImage(12, 12, "/icons/new/eye-close.png")));
+	public MyEyeCheckBox(String ttt) {
+		setSelectedIcon(new ImageIcon(Utils.createIconImage(12, 12, "/icons/system/eye.png")));
+		setPressedIcon(new ImageIcon(Utils.createIconImage(12, 12, "/icons/system/eye.png")));
+		setIcon(new ImageIcon(Utils.createIconImage(12, 12, "/icons/system/eye-close.png")));
 		setRolloverEnabled(false);
 		setSelected(true);
 		setPreferredSize(new Dimension(12,12));
@@ -53,7 +53,8 @@ public class MyEyeCheckBox extends JCheckBox {
 		setAlignmentX(JCheckBox.CENTER_ALIGNMENT);
 		setAlignmentY(JCheckBox.CENTER_ALIGNMENT);
 		setOpaque(true);
-		setToolTipText("Enable/Disable item visibility");
+//		setToolTipText("Enable/Disable item visibility");
+		setToolTipText(ttt);
 		setBackground(Color.white);
 	}
 }

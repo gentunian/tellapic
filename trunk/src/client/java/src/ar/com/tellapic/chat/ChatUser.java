@@ -17,8 +17,6 @@
  */  
 package ar.com.tellapic.chat;
 
-import java.util.Observable;
-
 import ar.com.tellapic.adm.AbstractUser;
 
 /**
@@ -45,12 +43,5 @@ public class ChatUser extends AbstractUser {
 	public String toString() {
 		return getName();
 	}
-	
-	/* (non-Javadoc)
-	 * @see java.util.Observer#update(java.util.Observable, java.lang.Object)
-	 */
-	@Override
-	public void update(Observable o, Object arg) {
 
-	}
 }

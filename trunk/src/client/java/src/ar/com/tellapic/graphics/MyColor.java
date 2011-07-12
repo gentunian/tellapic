@@ -15,7 +15,11 @@
  *         sebastian.treu(at)gmail.com
  *
  */  
-package ar.com.tellapic.console;
+package ar.com.tellapic.graphics;
+
+import java.awt.Color;
+
+import ar.com.tellapic.utils.Utils;
 
 /**
  * @author 
@@ -23,19 +27,43 @@ package ar.com.tellapic.console;
  *          sebastian.treu(at)gmail.com
  *
  */
-public interface IConsoleCommand {
-
-	public IConsoleCommand executeCommand(String cmd, Object[] args) throws WrongCommandExecution;
+public class MyColor extends Color {
+	private static final long serialVersionUID = 1L;
 	
-	public String[] getCommandList();
+	/**
+	 * 
+	 * @param r
+	 * @param g
+	 * @param b
+	 */
+	public MyColor(int r, int g, int b) {
+		super(r,g,b);
+	}
 	
-	public String getDescriptionForCommand(String cmd);
+	/**
+	 * 
+	 * @param r
+	 * @param g
+	 * @param b
+	 * @param a
+	 */
+	public MyColor(int r, int g, int b, int a) {
+		super(r, g, b, a);
+	}
 	
-	public String getReturnTypeForCommand(String cmd);
+	/**
+	 * @param rgb
+	 */
+	public MyColor(int rgb) {
+		super(rgb);
+	}
 	
-	public String[] getArgumentsTypesForCommand(String cmd);
-	
-	public String[] getArgumentsNamesForCommand(String cmd);
-
-	public String[] getArgumentsDescriptionsForCommand(String cmd);
+	/*
+	 * (non-Javadoc)
+	 * @see java.awt.Color#toString()
+	 */
+	@Override
+	public String toString() {
+		return Utils.colorToHexa(this);
+	}
 }

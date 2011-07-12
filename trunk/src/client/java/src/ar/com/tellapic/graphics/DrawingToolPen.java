@@ -20,7 +20,7 @@ package ar.com.tellapic.graphics;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.event.MouseEvent;
-import java.awt.geom.GeneralPath;
+import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
 
 import ar.com.tellapic.lib.tellapicConstants;
@@ -62,7 +62,7 @@ public class DrawingToolPen extends DrawingTool {
 		setAlias("Pen");
 		COMMANDS = new String[][] {
 				{ "nothing" },
-				{ "void" }
+				{ "void nothing" }
 		};
 	}
 
@@ -91,6 +91,14 @@ public class DrawingToolPen extends DrawingTool {
 		return false;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.DrawingTool#hasFillCapability()
+	 */
+	public boolean hasFillCapability() {
+		return false;
+	}
+	
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.Tool#hasStrokeCapability()
 	 */
@@ -195,21 +203,10 @@ public class DrawingToolPen extends DrawingTool {
 	public void mousePressed(MouseEvent e) {
 		if (isSelected() && !e.isConsumed()) {
 			if ((e.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK) {
-//				AbstractUser user = null;
-//				if (e instanceof RemoteMouseEvent) {
-//					user = ((RemoteMouseEvent)e).getUser();
-//				} else {
-//					user = UserManager.getInstance().getLocalUser();
-//				}
-				IToolBoxState toolBoxState = user.getToolBoxModel();
 				float zoomX = ControlToolZoom.getInstance().getZoomValue();
 				firstPoint.setLocation(e.getX()/zoomX, e.getY()/zoomX);
 				setInUse(true);
-				temporalDrawing = new DrawingShapePen(getName(), firstPoint.getX(), firstPoint.getY());
-				((DrawingShape) temporalDrawing).setPaintPropertyAlpha(toolBoxState.getOpacityProperty());
-				((DrawingShape) temporalDrawing).setPaintPropertyColor(toolBoxState.getColorProperty());
-				((DrawingShape) temporalDrawing).setPaintPropertyStroke(toolBoxState.getStrokeProperty());
-				temporalDrawing.setRenderingHints(toolBoxState.getRenderingHints());
+				temporalDrawing = new DrawingShapePen(user, getName(), firstPoint.getX(), firstPoint.getY());
 				temporalDrawing.setUser(user);
 				user.setTemporalDrawing(temporalDrawing);
 				setChanged();
@@ -227,18 +224,12 @@ public class DrawingToolPen extends DrawingTool {
 	public void mouseReleased(MouseEvent e) {
 		if (isSelected() && !e.isConsumed()) {
 			if (e.getButton() == MouseEvent.BUTTON1) {
-//				AbstractUser user = null;
-//				if (e instanceof RemoteMouseEvent) {
-//					user = ((RemoteMouseEvent)e).getUser();
-//				} else {
-//					user = UserManager.getInstance().getLocalUser();
-//				}
 				DrawingShapePen drawingPen = (DrawingShapePen) temporalDrawing;
 				if (drawingPen != null && drawingPen.hasPoints()) {
 					float zoomX = ControlToolZoom.getInstance().getZoomValue();
-					((GeneralPath)((DrawingShape) temporalDrawing).getShape()).lineTo(e.getX()/zoomX, e.getY()/zoomX);
-					temporalDrawing.cloneProperties();
-					user.addDrawing(temporalDrawing);
+					drawingPen.lineTo(e.getX()/zoomX, e.getY()/zoomX);
+					if (getUser().isRemote())
+						user.addDrawing(temporalDrawing);
 					setChanged();
 					notifyObservers(temporalDrawing);
 				}
@@ -258,12 +249,31 @@ public class DrawingToolPen extends DrawingTool {
 			if ((e.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK) {
 				if (isBeingUsed()) {
 					float zoomX = ControlToolZoom.getInstance().getZoomValue();
-					((GeneralPath)((DrawingShape) temporalDrawing).getShape()).lineTo(e.getX()/zoomX, e.getY()/zoomX);
+					((DrawingShapePen) temporalDrawing).lineTo(e.getX()/zoomX, e.getY()/zoomX);
 					setChanged();
 					notifyObservers(temporalDrawing);
 				}
 			}
 			e.consume();
 		}
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseWheelListener#mouseWheelMoved(java.awt.event.MouseWheelEvent)
+	 */
+	@Override
+	public void mouseWheelMoved(MouseWheelEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#isLiveModeSupported()
+	 */
+	@Override
+	public boolean isLiveModeSupported() {
+		return true;
 	}
 }

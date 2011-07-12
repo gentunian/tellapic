@@ -17,6 +17,7 @@
  */
 package ar.com.tellapic.utils;
 
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -87,5 +88,13 @@ public final class Utils {
 	public static void shutdown() {
 		NetManager.getInstance().stop();
 		System.exit(1);
+	}
+
+	/**
+	 * @param newColor
+	 * @return
+	 */
+	public static String colorToHexa(Color color) {
+		return "0x" + Integer.toHexString(color.getRed()) + Integer.toHexString(color.getGreen()) + Integer.toHexString(color.getBlue());
 	}
 }

@@ -6,6 +6,7 @@ import java.awt.Image;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Point2D;
 
 import javax.swing.ComboBoxModel;
@@ -57,7 +58,7 @@ public final class ControlToolZoom extends ControlTool implements ComboBoxModel{
 		setAlias("Zoom");
 		COMMANDS = new String[][] {
 				{ "nothing" },
-				{ "void" }
+				{ "void nothing" }
 		};
 	}
 	
@@ -305,5 +306,25 @@ public final class ControlToolZoom extends ControlTool implements ComboBoxModel{
 	 */
 	public float getZoomValue() {
 		return zoomFactor;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.MouseWheelListener#mouseWheelMoved(java.awt.event.MouseWheelEvent)
+	 */
+	@Override
+	public void mouseWheelMoved(MouseWheelEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.Tool#isLiveModeSupported()
+	 */
+	@Override
+	public boolean isLiveModeSupported() {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }

@@ -48,8 +48,8 @@ import ar.com.tellapic.adm.IUserManagerState;
 import ar.com.tellapic.chat.ChatMessagesView;
 import ar.com.tellapic.chat.ChatViewController;
 import ar.com.tellapic.console.ConsoleDialog;
-import ar.com.tellapic.console.ConsolePanel;
 import ar.com.tellapic.graphics.DrawingAreaView;
+import ar.com.tellapic.graphics.DrawingPropertiesDialog;
 import ar.com.tellapic.graphics.PaintPropertyView;
 import ar.com.tellapic.graphics.Tool;
 import ar.com.tellapic.graphics.ToolBoxModel;
@@ -77,7 +77,7 @@ public class UserGUIBuilder {
 	private JFrame                  mainWindow;
 	private JScrollPane             scrollPane;
 //	private ConsolePanel            consolePanel;
-	
+	private DrawingPropertiesDialog drawingPropertyView;
 	
 	public UserGUIBuilder(TellapicLocalUser user) throws NullPointerException{
 		if (user == null)
@@ -115,11 +115,16 @@ public class UserGUIBuilder {
 //		drawingAreaView.setPropertyController(propertyController);
 		toolView.setToolBoxController(user.getToolboxController());
 		propertyView.setPaintPropertyController(user.getPaintController());
-		for(Tool tool : model.getTools().values()) {
-			drawingAreaView.addMouseListener(tool);
-			drawingAreaView.addMouseMotionListener(tool);
-		}
-
+		drawingPropertyView = new DrawingPropertiesDialog();
+		
+//		for(Tool tool : model.getTools().values()) {
+//			drawingAreaView.addMouseListener(tool);
+//			drawingAreaView.addMouseMotionListener(tool);
+//		}
+		drawingAreaView.addMouseListener(user);
+		drawingAreaView.addMouseMotionListener(user);
+		model.getTools().get("ControlToolSelector").addObserver(drawingPropertyView);
+		
 		/****************************************/
 		/* Creates the dockable station and gui */
 		/****************************************/
@@ -137,6 +142,7 @@ public class UserGUIBuilder {
 		SingleCDockable dock3 = wrapToDockable(scrollPane);
 		SingleCDockable dock4 = wrapToDockable(chatView);
 		SingleCDockable dock5 = wrapToDockable(userView);
+		SingleCDockable dock6 = wrapToDockable(drawingPropertyView);
 		ThemeMap t = control1.getThemes();
 		t.select(ThemeMap.KEY_BASIC_THEME);
 		
@@ -144,10 +150,10 @@ public class UserGUIBuilder {
 		
 		grid.add(0, 0, 10, 200, dock1);
 		grid.add(10, 0, 350, 200, dock3);
-		grid.add(360, 0, 100, 100, dock5);
-		grid.add(360, 100, 100, 100, dock4);
-
-		
+		grid.add(360, 0, 100, 33, dock5);
+		grid.add(360, 33, 100, 33, dock6);
+		grid.add(360, 66, 100, 33, dock4);
+				
 		content.deploy(grid);
 		
 		mainWindow.getContentPane().add(content, BorderLayout.CENTER);
@@ -416,7 +422,7 @@ public class UserGUIBuilder {
 	/*
 	 * 
 	 */
-	private SingleCDockable wrapToDockable(JComponent view) {
+	public static SingleCDockable wrapToDockable(JComponent view) {
 		return new DefaultSingleCDockable(view.getName(), view.getName(), view);
 	}
 }

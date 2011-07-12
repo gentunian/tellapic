@@ -34,45 +34,51 @@
   JCALL2(ReleaseStringChars, jenv, $input, (const jchar *)$1);
  }
 
-%typemap(jni) tellapic_float[2] "jfloatArray"
-%typemap(jtype) tellapic_float[2] "float[]"
-%typemap(jstype) tellapic_float[2] "float[]"
-%typemap(out) tellapic_float[2] {
+%typemap(jni) tellapic_float[4] "jfloatArray"
+%typemap(jtype) tellapic_float[4] "float[]"
+%typemap(jstype) tellapic_float[4] "float[]"
+%typemap(out) tellapic_float[4] {
+  int size = 4;
 #ifdef BIG_ENDIAN_VALUE
-  float f[2];
-  jfloatArray a = (jfloatArray) JCALL1(NewFloatArray,jenv, 2);
-  f[0] = POSH_FloatFromBigBits($1[0]);
-  f[1] = POSH_FloatFromBigBits($1[1]);
-  JCALL4(SetFloatArrayRegion, jenv, a, 0, 2, (jfloat *) f);
+  float f[size];
+  jfloatArray a = (jfloatArray) JCALL1(NewFloatArray, jenv, size);
+  int i;
+  for(i = 0; i < size; i++)
+    f[i] = POSH_FloatFromBigBits($1[i]);
+  JCALL4(SetFloatArrayRegion, jenv, a, 0, size, (jfloat *) f);
   $result = a;
 #else
-  float f[2];
-  jfloatArray a = (jfloatArray) JCALL1(NewFloatArray,jenv, 2);
-  f[0] = POSH_FloatFromLittleBits($1[0]);
-  f[1] = POSH_FloatFromLittleBits($1[1]);
-  JCALL4(SetFloatArrayRegion, jenv, a, 0, 2, (jfloat *) f);
+  float f[size];
+  jfloatArray a = (jfloatArray) JCALL1(NewFloatArray, jenv, size);
+  int i;
+  for(i = 0; i < size; i++)
+    f[i] = POSH_FloatFromLittleBits($1[i]);
+  JCALL4(SetFloatArrayRegion, jenv, a, 0, size, (jfloat *) f);
   $result = a;
 #endif
  }
 
-%typemap(in) tellapic_float[2] {
+%typemap(in) tellapic_float[4] {
+  int size = 4;
 #ifdef BIG_ENDIAN_VALUE
-  tellapic_u32_t f[2];
+  tellapic_u32_t *f = malloc(sizeof(tellapic_u32_t)*size);
   float *pointer =  (float *) JCALL2(GetFloatArrayElements, jenv, $input, 0);
-  f[0] = POSH_BigFloatBits(pointer[0]);
-  f[1] = POSH_BigFloatBits(pointer[1]);
+  int i;
+  for(i = 0; i < size; i++)
+    f[i] = POSH_BigFloatBits(pointer[i]);
   $1 = f;
 #else
-  tellapic_u32_t f[2];
+  tellapic_u32_t *f = malloc(sizeof(tellapic_u32_t)*size);
   float *pointer =  (float *) JCALL2(GetFloatArrayElements, jenv, $input, 0);
-  f[0] = POSH_LittleFloatBits(pointer[0]);
-  f[1] = POSH_LittleFloatBits(pointer[1]);
+  int i;
+  for(i = 0; i < size; i++)
+    f[i] = POSH_LittleFloatBits(pointer[i]);
   $1 = f;
 #endif
  }
 
-%typemap(argout) tellapic_float[2] {
-    JCALL3(ReleaseFloatArrayElements, jenv, $input, (jfloat *) $1, 0); 
+%typemap(argout) tellapic_float[4] {
+  /* JCALL3(ReleaseFloatArrayElements, jenv, $input, (jfloat *) $1, 0); */
 }
 
 

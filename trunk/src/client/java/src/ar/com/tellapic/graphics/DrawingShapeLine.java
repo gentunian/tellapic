@@ -17,8 +17,19 @@
  */  
 package ar.com.tellapic.graphics;
 
+import java.awt.Color;
+import java.awt.Paint;
+import java.awt.RenderingHints;
+import java.awt.Shape;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
+
+import ar.com.tellapic.NetManager;
+import ar.com.tellapic.SessionUtils;
+import ar.com.tellapic.TellapicAbstractUser;
+import ar.com.tellapic.lib.tellapic;
+import ar.com.tellapic.lib.tellapicConstants;
 
 /**
  * @author 
@@ -27,6 +38,7 @@ import java.awt.geom.Point2D;
  *
  */
 public class DrawingShapeLine extends DrawingShape {
+	private boolean notDeferred;
 	private Line2D line;
 	
 	/**
@@ -35,8 +47,8 @@ public class DrawingShapeLine extends DrawingShape {
 	 * @param p1
 	 * @param p2
 	 */
-	public DrawingShapeLine(String name, Point2D p1, Point2D p2) {
-		this(name, p1.getX(), p1.getY(), p2.getX(), p2.getY());
+	public DrawingShapeLine(TellapicAbstractUser user, String name, Point2D p1, Point2D p2) {
+		this(user, name, p1.getX(), p1.getY(), p2.getX(), p2.getY());
 	}
 
 	/**
@@ -44,10 +56,15 @@ public class DrawingShapeLine extends DrawingShape {
 	 * @param resizeable
 	 * @param moveable
 	 */
-	public DrawingShapeLine(String name, double x1, double y1, double x2, double y2) {
-		super(name, true, true);
+	public DrawingShapeLine(TellapicAbstractUser user, String name, double x1, double y1, double x2, double y2) {
+		super(name, true, true, false);
 		line = new Line2D.Double(x1, y1, x2, y2);
 		setShape(line);
+		setPaintPropertyAlpha((PaintPropertyAlpha) user.getToolBoxModel().getOpacityProperty().clone());
+		setPaintPropertyStroke((PaintPropertyStroke) user.getToolBoxModel().getStrokeProperty().clone());
+		setRenderingHints((RenderingHints) user.getToolBoxModel().getRenderingHints().clone());
+		setPaintPropertyFill(new PaintPropertyFill());
+		notDeferred = false;
 	}
 
 	/* (non-Javadoc)
@@ -129,14 +146,7 @@ public class DrawingShapeLine extends DrawingShape {
 				p2.setLocation(eventX > p1.getX()? eventX : p1.getX()+1, p2.getY());
 			break;
 		}
-		line.setLine(p1, p2);
-		updateControlPoints();
-		properties[PropertyType.X1COORD.ordinal()][VALUE_COLUMN] = line.getX1();
-		properties[PropertyType.Y1COORD.ordinal()][VALUE_COLUMN] = line.getY1();
-		properties[PropertyType.X2COORD.ordinal()][VALUE_COLUMN] = line.getX2();
-		properties[PropertyType.Y2COORD.ordinal()][VALUE_COLUMN] = line.getY2();
-		setChanged();
-		notifyObservers(new Object[]{RESIZED});
+		setLine(p1, p2);
 	}
 
 	/* (non-Javadoc)
@@ -144,14 +154,7 @@ public class DrawingShapeLine extends DrawingShape {
 	 */
 	@Override
 	public void move(double xOffset, double yOffset) {
-		line.setLine(line.getX1() + xOffset, line.getY1() + yOffset, line.getX2() + xOffset, line.getY2() + yOffset);
-		properties[PropertyType.X1COORD.ordinal()][VALUE_COLUMN] = line.getX1();
-		properties[PropertyType.Y1COORD.ordinal()][VALUE_COLUMN] = line.getY1();
-		properties[PropertyType.X2COORD.ordinal()][VALUE_COLUMN] = line.getX2();
-		properties[PropertyType.Y2COORD.ordinal()][VALUE_COLUMN] = line.getY2();
-		updateControlPoints();
-		setChanged();
-		notifyObservers(new Object[]{MOVED});
+		setLine(line.getX1() + xOffset, line.getY1() + yOffset, line.getX2() + xOffset, line.getY2() + yOffset);
 	}
 
 	/**
@@ -159,5 +162,248 @@ public class DrawingShapeLine extends DrawingShape {
 	 */
 	public double length() {
 		return line.getP1().distance(line.getP2());
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.AbstractDrawing#getFillableShape()
+	 */
+	@Override
+	public Shape getFillableShape() {
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.AbstractDrawing#getFillableShapePaint()
+	 */
+	@Override
+	public Paint getFillableShapePaint() {
+		return null;
+	}
+	
+	/**
+	 * 
+	 * @param x1
+	 * @param y1
+	 * @param x2
+	 * @param y2
+	 */
+	public void setLine(double x1, double y1, double x2, double y2) {
+		line.setLine(x1, y1, x2, y2);
+		setShape(line);
+	}
+	
+	/**
+	 * 
+	 * @param l
+	 */
+	public void setLine(Line2D l) {
+		line.setLine(l);
+		setShape(line);
+	}
+	
+	/**
+	 * 
+	 * @param p1
+	 * @param p2
+	 */
+	public void setLine(Point2D p1, Point2D p2) {
+		line.setLine(p1, p2);
+		setShape(line);
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.AbstractDrawing#getFirstX()
+	 */
+	@Override
+	public int getFirstX() {
+		return (int) line.getX1();
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.AbstractDrawing#getFirstY()
+	 */
+	@Override
+	public int getFirstY() {
+		return (int) line.getY1();
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.AbstractDrawing#getLastX()
+	 */
+	@Override
+	public int getLastX() {
+		return (int) line.getX2();
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.AbstractDrawing#getLastY()
+	 */
+	@Override
+	public int getLastY() {
+		return (int) line.getY2();
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.AbstractDrawing#sendDeferred()
+	 */
+	@Override
+	public void sendDeferred() {
+		if (NetManager.getInstance().isConnected() && !notDeferred) {
+			tellapic.tellapic_send_fig(
+					NetManager.getInstance().getSocket(),
+					tellapicConstants.TOOL_LINE,
+					0,
+					SessionUtils.getId(), 
+					0,
+					(float) getPaintPropertyStroke().getWidth(),
+					getPaintPropertyAlpha().getAlpha(),
+					((Color) getPaintPropertyFill().getFillPaint()).getRed(),
+					((Color) getPaintPropertyFill().getFillPaint()).getGreen(),
+					((Color) getPaintPropertyFill().getFillPaint()).getBlue(),
+					((Color) getPaintPropertyFill().getFillPaint()).getAlpha(),
+					(int)line.getX1(),
+					(int)line.getY1(),
+					getPaintPropertyStroke().getColor().getRed(),
+					getPaintPropertyStroke().getColor().getGreen(),
+					getPaintPropertyStroke().getColor().getBlue(),
+					getPaintPropertyStroke().getColor().getAlpha(),
+					(int)line.getX2(),
+					(int)line.getY2(),
+					getPaintPropertyStroke().getLineJoins().ordinal(),
+					getPaintPropertyStroke().getEndCaps().ordinal(),
+					getPaintPropertyStroke().getMiterLimit(),
+					getPaintPropertyStroke().getDash_phase(),
+					getPaintPropertyStroke().getDash()
+			);
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.AbstractDrawing#sendDragged(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void sendDragged(MouseEvent event) {
+		if (NetManager.getInstance().isConnected()) {
+			int eventExtMod  = 0;
+			int wrappedEvent = tellapicConstants.TOOL_LINE;
+			if ((event.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK)
+				wrappedEvent |= tellapicConstants.EVENT_DLEFT;
+			else if ((event.getModifiersEx() & MouseEvent.BUTTON2_DOWN_MASK) == MouseEvent.BUTTON2_DOWN_MASK)
+				wrappedEvent |= tellapicConstants.EVENT_DRIGHT;
+			else if ((event.getModifiersEx() & MouseEvent.BUTTON3_DOWN_MASK) == MouseEvent.BUTTON3_DOWN_MASK)
+				wrappedEvent |= tellapicConstants.EVENT_DMIDDLE;
+
+			if ((event.getModifiersEx() & MouseEvent.CTRL_DOWN_MASK) == MouseEvent.CTRL_DOWN_MASK)
+				eventExtMod = tellapicConstants.EVENT_CTL_DOWN;
+			
+			tellapic.tellapic_send_drw_using(
+					NetManager.getInstance().getSocket(),
+					wrappedEvent,
+					eventExtMod,
+					SessionUtils.getId(),
+					0,
+					(float) getPaintPropertyStroke().getWidth(),
+					getPaintPropertyAlpha().getAlpha(),
+					0,
+					0,
+					0,
+					0,
+					(int)line.getX2(),
+					(int)line.getY2()
+			);
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.AbstractDrawing#sendPressed(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void sendPressed(MouseEvent event) {
+		if (NetManager.getInstance().isConnected()) {
+			notDeferred = true;
+			int wrappedEvent = tellapicConstants.TOOL_LINE;
+			if (event.getButton() == MouseEvent.BUTTON1)
+				wrappedEvent |= tellapicConstants.EVENT_PLEFT;
+			else if (event.getButton() == MouseEvent.BUTTON2)
+				wrappedEvent |= tellapicConstants.EVENT_PRESS;
+			else
+				wrappedEvent |= tellapicConstants.EVENT_PMIDDLE;
+			tellapic.tellapic_send_drw_init(
+					NetManager.getInstance().getSocket(),
+					wrappedEvent,
+					0,
+					SessionUtils.getId(), 
+					0,
+					(float) getPaintPropertyStroke().getWidth(),
+					getPaintPropertyAlpha().getAlpha(),
+					0,
+					0,
+					0,
+					0,
+					 event.getX(),
+					 event.getY(),
+					getPaintPropertyStroke().getColor().getRed(),
+					getPaintPropertyStroke().getColor().getGreen(),
+					getPaintPropertyStroke().getColor().getBlue(),
+					getPaintPropertyStroke().getColor().getAlpha(),
+					event.getX(),
+					event.getY(),
+					getPaintPropertyStroke().getLineJoins().ordinal(),
+					getPaintPropertyStroke().getEndCaps().ordinal(),
+					getPaintPropertyStroke().getMiterLimit(),
+					getPaintPropertyStroke().getDash_phase(),
+					getPaintPropertyStroke().getDash()
+			);
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.AbstractDrawing#sendReleased(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void sendReleased(MouseEvent event) {
+		if (NetManager.getInstance().isConnected()) {
+			
+			int wrappedEvent = tellapicConstants.TOOL_LINE;
+
+			if (event.getButton() == MouseEvent.BUTTON1)
+				wrappedEvent |= tellapicConstants.EVENT_RLEFT;
+			else if (event.getButton() == MouseEvent.BUTTON2)
+				wrappedEvent |= tellapicConstants.EVENT_RRIGHT;
+			else
+				wrappedEvent |= tellapicConstants.EVENT_RMIDDLE;
+
+			tellapic.tellapic_send_drw_using(
+					NetManager.getInstance().getSocket(),
+					wrappedEvent,
+					0,
+					SessionUtils.getId(),
+					0,
+					(float) getPaintPropertyStroke().getWidth(),
+					getPaintPropertyAlpha().getAlpha(),
+					0,
+					0,
+					0,
+					0,
+					(int)line.getX2(),
+					(int)line.getY2()
+			);
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.AbstractDrawing#setBounds(int, int, int, int)
+	 */
+	@Override
+	public void setBounds(int x1, int y1, int x2, int y2) {
+		line.setLine(x1, y1, x2, y2);
+		setShape(line);
+	}
+
+	/**
+	 * 
+	 */
+	public void closeLine() {
+		
 	}
 }

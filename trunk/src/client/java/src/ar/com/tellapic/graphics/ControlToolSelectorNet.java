@@ -51,36 +51,36 @@ public class ControlToolSelectorNet extends ControlToolSelector {
 			
 			float zoomX = ControlToolZoom.getInstance().getZoomValue();
 			
-			if (NetManager.getInstance().isConnected() && !getUser().isRemote()) {
-				int wrappedEvent = getToolId();
-				if (event.getButton() == MouseEvent.BUTTON1)
-					wrappedEvent |= tellapicConstants.EVENT_PLEFT;
-				else if (event.getButton() == MouseEvent.BUTTON2)
-					wrappedEvent |= tellapicConstants.EVENT_PRESS;
-				else
-					wrappedEvent |= tellapicConstants.EVENT_PMIDDLE;
-				tellapic.tellapic_send_drw_init(
-						NetManager.getInstance().getSocket(),
-						wrappedEvent,
-						0,
-						SessionUtils.getId(), 
-						drawing.getNumber(),
-						(float) drawing.getPaintPropertyStroke().getWidth(),
-						drawing.getPaintPropertyAlpha().alpha,
-						drawing.getPaintPropertyColor().getRed(),
-						drawing.getPaintPropertyColor().getGreen(),
-						drawing.getPaintPropertyColor().getBlue(),
-						(int)(event.getX() / zoomX),
-						(int)(event.getY() / zoomX),
-						(int)(event.getX() / zoomX),
-						(int)(event.getY() / zoomX),
-						drawing.getPaintPropertyStroke().getLineJoins(),
-						drawing.getPaintPropertyStroke().getEndCaps(),
-						drawing.getPaintPropertyStroke().getMiterLimit(),
-						drawing.getPaintPropertyStroke().getDash_phase(),
-						drawing.getPaintPropertyStroke().getDash()
-				);
-			}
+//			if (NetManager.getInstance().isConnected() && !getUser().isRemote()) {
+//				int wrappedEvent = getToolId();
+//				if (event.getButton() == MouseEvent.BUTTON1)
+//					wrappedEvent |= tellapicConstants.EVENT_PLEFT;
+//				else if (event.getButton() == MouseEvent.BUTTON2)
+//					wrappedEvent |= tellapicConstants.EVENT_PRESS;
+//				else
+//					wrappedEvent |= tellapicConstants.EVENT_PMIDDLE;
+//				tellapic.tellapic_send_drw_init(
+//						NetManager.getInstance().getSocket(),
+//						wrappedEvent,
+//						0,
+//						SessionUtils.getId(), 
+//						drawing.getNumber(),
+//						(float) drawing.getPaintPropertyStroke().getWidth(),
+//						drawing.getPaintPropertyAlpha().getAlpha(),
+//						drawing.getPaintPropertyColor().getRed(),
+//						drawing.getPaintPropertyColor().getGreen(),
+//						drawing.getPaintPropertyColor().getBlue(),
+//						(int)(event.getX() / zoomX),
+//						(int)(event.getY() / zoomX),
+//						(int)(event.getX() / zoomX),
+//						(int)(event.getY() / zoomX),
+//						drawing.getPaintPropertyStroke().getLineJoins().ordinal(),
+//						drawing.getPaintPropertyStroke().getEndCaps().ordinal(),
+//						drawing.getPaintPropertyStroke().getMiterLimit(),
+//						drawing.getPaintPropertyStroke().getDash_phase(),
+//						drawing.getPaintPropertyStroke().getDash()
+//				);
+//			}
 		}
 	}
 	
@@ -97,35 +97,35 @@ public class ControlToolSelectorNet extends ControlToolSelector {
 			
 			float zoomX = ControlToolZoom.getInstance().getZoomValue();
 
-			if (NetManager.getInstance().isConnected() && !getUser().isRemote()) {
-				int eventExtMod  = 0;
-				int wrappedEvent = getToolId();
-				if ((event.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK)
-					wrappedEvent |= tellapicConstants.EVENT_DLEFT;
-				else if ((event.getModifiersEx() & MouseEvent.BUTTON2_DOWN_MASK) == MouseEvent.BUTTON2_DOWN_MASK)
-					wrappedEvent |= tellapicConstants.EVENT_DRIGHT;
-				else if ((event.getModifiersEx() & MouseEvent.BUTTON3_DOWN_MASK) == MouseEvent.BUTTON3_DOWN_MASK)
-					wrappedEvent |= tellapicConstants.EVENT_DMIDDLE;
-
-				if ((event.getModifiersEx() & MouseEvent.CTRL_DOWN_MASK) == MouseEvent.CTRL_DOWN_MASK)
-					eventExtMod = tellapicConstants.EVENT_CTL_DOWN;
-
-				DrawingShape drawing = (DrawingShape) temporalDrawing;
-				tellapic.tellapic_send_drw_using(
-						NetManager.getInstance().getSocket(),
-						wrappedEvent,
-						eventExtMod,
-						SessionUtils.getId(), 
-						drawing.getNumber(),
-						(float) drawing.getPaintPropertyStroke().getWidth(),
-						drawing.getPaintPropertyAlpha().alpha,
-						drawing.getPaintPropertyColor().getRed(),
-						drawing.getPaintPropertyColor().getGreen(),
-						drawing.getPaintPropertyColor().getBlue(),
-						(int)(event.getX() / zoomX),
-						(int)(event.getY() / zoomX)
-				);
-			}
+//			if (NetManager.getInstance().isConnected() && !getUser().isRemote()) {
+//				int eventExtMod  = 0;
+//				int wrappedEvent = getToolId();
+//				if ((event.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK)
+//					wrappedEvent |= tellapicConstants.EVENT_DLEFT;
+//				else if ((event.getModifiersEx() & MouseEvent.BUTTON2_DOWN_MASK) == MouseEvent.BUTTON2_DOWN_MASK)
+//					wrappedEvent |= tellapicConstants.EVENT_DRIGHT;
+//				else if ((event.getModifiersEx() & MouseEvent.BUTTON3_DOWN_MASK) == MouseEvent.BUTTON3_DOWN_MASK)
+//					wrappedEvent |= tellapicConstants.EVENT_DMIDDLE;
+//
+//				if ((event.getModifiersEx() & MouseEvent.CTRL_DOWN_MASK) == MouseEvent.CTRL_DOWN_MASK)
+//					eventExtMod = tellapicConstants.EVENT_CTL_DOWN;
+//
+//				DrawingShape drawing = (DrawingShape) temporalDrawing;
+//				tellapic.tellapic_send_drw_using(
+//						NetManager.getInstance().getSocket(),
+//						wrappedEvent,
+//						eventExtMod,
+//						SessionUtils.getId(), 
+//						drawing.getNumber(),
+//						(float) drawing.getPaintPropertyStroke().getWidth(),
+//						drawing.getPaintPropertyAlpha().getAlpha(),
+//						drawing.getPaintPropertyColor().getRed(),
+//						drawing.getPaintPropertyColor().getGreen(),
+//						drawing.getPaintPropertyColor().getBlue(),
+//						(int)(event.getX() / zoomX),
+//						(int)(event.getY() / zoomX)
+//				);
+//			}
 		}
 	}
 	
@@ -145,30 +145,30 @@ public class ControlToolSelectorNet extends ControlToolSelector {
 			
 			float zoomX = ControlToolZoom.getInstance().getZoomValue();
 			
-			if (NetManager.getInstance().isConnected() && !getUser().isRemote()) {
-				int wrappedEvent = getToolId();
-				if (event.getButton() == MouseEvent.BUTTON1)
-					wrappedEvent |= tellapicConstants.EVENT_RLEFT;
-				else if (event.getButton() == MouseEvent.BUTTON2)
-					wrappedEvent |= tellapicConstants.EVENT_RRIGHT;
-				else
-					wrappedEvent |= tellapicConstants.EVENT_RMIDDLE;
-
-				tellapic.tellapic_send_drw_using(
-						NetManager.getInstance().getSocket(),
-						wrappedEvent,
-						0,
-						SessionUtils.getId(), 
-						drawing.getNumber(),
-						(float) drawing.getPaintPropertyStroke().getWidth(),
-						drawing.getPaintPropertyAlpha().alpha,
-						drawing.getPaintPropertyColor().getRed(),
-						drawing.getPaintPropertyColor().getGreen(),
-						drawing.getPaintPropertyColor().getBlue(),
-						(int)(event.getX() / zoomX),
-						(int)(event.getY() / zoomX)
-				);
-			}
+//			if (NetManager.getInstance().isConnected() && !getUser().isRemote()) {
+//				int wrappedEvent = getToolId();
+//				if (event.getButton() == MouseEvent.BUTTON1)
+//					wrappedEvent |= tellapicConstants.EVENT_RLEFT;
+//				else if (event.getButton() == MouseEvent.BUTTON2)
+//					wrappedEvent |= tellapicConstants.EVENT_RRIGHT;
+//				else
+//					wrappedEvent |= tellapicConstants.EVENT_RMIDDLE;
+//
+//				tellapic.tellapic_send_drw_using(
+//						NetManager.getInstance().getSocket(),
+//						wrappedEvent,
+//						0,
+//						SessionUtils.getId(), 
+//						drawing.getNumber(),
+//						(float) drawing.getPaintPropertyStroke().getWidth(),
+//						drawing.getPaintPropertyAlpha().getAlpha(),
+//						drawing.getPaintPropertyColor().getRed(),
+//						drawing.getPaintPropertyColor().getGreen(),
+//						drawing.getPaintPropertyColor().getBlue(),
+//						(int)(event.getX() / zoomX),
+//						(int)(event.getY() / zoomX)
+//				);
+//			}
 		}
 	}
 }
