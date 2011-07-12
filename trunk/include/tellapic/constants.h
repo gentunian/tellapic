@@ -32,9 +32,9 @@
 #define HEADER_SIZE                6
 
 /* This data streams have a fixed size */
-#define FIG_STREAM_SIZE              44 + HEADER_SIZE
+#define FIG_STREAM_SIZE              57 + HEADER_SIZE
 #define CTL_STREAM_SIZE              1  + HEADER_SIZE
-#define DRW_USING_STREAM_SIZE        22 + HEADER_SIZE
+#define DRW_USING_STREAM_SIZE        23 + HEADER_SIZE
 #define DRW_INIT_STREAM_SIZE         FIG_STREAM_SIZE
 
 /* This streams size may be variable but not more than the values below */
@@ -74,22 +74,24 @@
 #define DDATA_DNUMBER_INDEX         3
 #define DDATA_WIDTH_INDEX           7
 #define DDATA_OPACITY_INDEX        11
-#define DDATA_COLOR_INDEX          15
-#define DDATA_COORDX1_INDEX        18
-#define DDATA_COORDY1_INDEX        20
-#define DDATA_COORDX2_INDEX        22
-#define DDATA_COORDY2_INDEX        24
-#define DDATA_JOINS_INDEX          26
-#define DDATA_CAPS_INDEX           27
-#define DDATA_MITER_INDEX          28
-#define DDATA_DASHPHASE_INDEX      32
-#define DDATA_DASHARRAY_INDEX      36
+#define DDATA_FILL_COLOR_INDEX     15
+#define DDATA_COORDX1_INDEX        19
+#define DDATA_COORDY1_INDEX        21
+#define DDATA_STROKE_COLOR_INDEX   23
+#define DDATA_COORDX2_INDEX        27
+#define DDATA_COORDY2_INDEX        29
+#define DDATA_JOINS_INDEX          31
+#define DDATA_CAPS_INDEX           32
+#define DDATA_MITER_INDEX          33
+#define DDATA_DASHPHASE_INDEX      37
+#define DDATA_DASHARRAY_INDEX      41
 
 /* for text */
-#define DDATA_FONTSTYLE_INDEX      22
-#define DDATA_FONTFACELEN_INDEX    23
-#define DDATA_TEXTLEN_INDEX        24
-#define DDATA_FONTFACE_INDEX       26
+#define DDATA_TEXT_COLOR_INDEX     23
+#define DDATA_FONTSTYLE_INDEX      27
+#define DDATA_FONTFACELEN_INDEX    28
+#define DDATA_TEXTLEN_INDEX        29
+#define DDATA_FONTFACE_INDEX       31
 /* I DONT LIKE THIS MACRO 
 #define DDATA_TEXT_INDEX(fontface_len)	\
   (DDATA_FONTFACE_INDEX + fontface_len)
@@ -173,7 +175,8 @@
 #define TOOL_ERASER     0x60
 #define TOOL_PENCIL     0x70
 #define TOOL_LINE       0x80
-#define TOOL_SELECTOR   0x90
+#define TOOL_EDIT_FIG   0x90
+#define TOOL_EDIT_TXT   0xa0
 
 
 /* Events masks */
