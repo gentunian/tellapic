@@ -54,16 +54,16 @@ typedef struct {
 
 typedef enum { 
   END_CAPS_BUTT,
-  END_CAPS_SQUARE,
-  END_CAPS_ROUND 
+  END_CAPS_ROUND,
+  END_CAPS_SQUARE
 } endcaps_t;
 
 
 typedef enum {
-  LINE_JOIN_MITER,
-  LINE_JOIN_ROUND,
-  LINE_JOIN_BEVEL
-} linejoin_t;
+  LINE_JOINS_MITER,
+  LINE_JOINS_ROUND,
+  LINE_JOINS_BEVEL
+} linejoins_t;
 
 
 typedef struct {

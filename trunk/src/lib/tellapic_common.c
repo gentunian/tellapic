@@ -1271,10 +1271,7 @@ tellapic_read_data_b(tellapic_socket_t socket, header_t header)
   byte_t         *data    = malloc(datasize);
   tellapic_u32_t nbytes   = _read_b(socket, datasize, data);
   stream_t       stream;
-  int i = 0;
-  /* for(i=0; i < datasize;i++) */
-  /*   printf("data[%d]: %d ---> '%c'\n",i, ((char*)data)[i], ((char*)data)[i]); */
-  fflush(stdout);
+
   stream.header = header;
   _do_wrapping(&stream, data, nbytes);
 
