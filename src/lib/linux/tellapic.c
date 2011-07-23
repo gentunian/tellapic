@@ -10,9 +10,6 @@
 #include <errno.h>
 #include "tellapic/tellapic.h"
 
-static void
-signal_handler(int sig);
-
 
 /**
  * A wrapper from read() C function 
@@ -88,7 +85,6 @@ POSH_PUBLIC_API(tellapic_socket_t)
 tellapic_connect_to(const char *hostname, const char *port)
 {
   tellapic_socket_t  mysocket;
-  struct sigaction   sig_action;
   struct hostent     *host;
   struct sockaddr_in addr;
   int sd;
@@ -144,14 +140,6 @@ tellapic_interrupt_socket(tellapic_socket_t socket)
 {
   kill(getpid(), SIGINT);
 }
-
-static void 
-signal_handler(int sig)
-{
-  printf("Signal caught: %d\n", sig);
-  fflush(stdout);
-}
-
 
 POSH_PUBLIC_API(int)
 tellapic_valid_socket(tellapic_socket_t socket)

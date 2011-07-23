@@ -157,6 +157,14 @@
 #define CTL_SV_PONG      0xb0   /* is ctl  */
 #define CTL_SV_FIGID     0xc0   /* is ctle */
 
+/* Stroke properties 
+#define LINE_JOINS_MITER 0
+#define LINE_JOINS_ROUND 1
+#define LINE_JOINS_BEVEL 2
+#define END_CAPS_BUTT    0
+#define END_CAPS_ROUND   1
+#define END_CAPS_SQUARE  2
+*/
 
 /* Face properties */
 #define FONT_STYLE_NORMAL      0
