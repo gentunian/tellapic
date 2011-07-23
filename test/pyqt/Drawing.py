@@ -8,11 +8,59 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 import pytellapic
 
+class DrawingModel(object):
+    def __init__(self):
+        self.drawingList = []
+    
+    def binSearch(self, i, j, key):
+        if (i < 0  or j < 0):
+            return -1
+        if (i == j):
+            if (key == self.drawingList[i].number):
+                return i
+            else:
+                return -1
+        else:
+            middle = int((i + j) / 2)
+            if (self.drawingList[middle].number == key):
+                return self.binSearch(middle, middle, key)
+
+            elif (self.drawingList[middle].number < key):
+                return self.binSearch(middle + 1, j, key)
+            
+            else:
+                return self.binSearch(i, middle, key)
+
+    def addDrawing(self, drawing):
+        #print("adding drawing: ",drawing, " (key: ",drawing.number,") to model.")
+        self.drawingList.append(drawing)
+        self.drawingList.sort(key=lambda drawing: drawing.number)
+
+    def getDrawing(self, key):
+        #print("looking for key: ", key)
+        index = self.binSearch(0, len(self.drawingList) - 1, key)
+        #print("index was: ", index)
+        drawing = None
+        if (index != -1):
+            drawing = self.drawingList[index]
+        return drawing
+
+    def drawings(self):
+        return self.drawingList
+
+
+
+
+
 # This should be an abstract class for a colection of tools
 # but lets explote python polimorphism
 class DrawingTool(object):
     def __init__(self):
         self.a = 1
+
+
+
+
 
 # This tool will create rectangle shapes
 class DrawingToolRectangle(DrawingTool):
@@ -36,6 +84,10 @@ class DrawingToolRectangle(DrawingTool):
     # Delegate the mouse events from a QWidget to this tool
     def mouseReleased(self, event):
         pass
+
+
+
+
 
 # This should be another abstract class with a default behaviour and
 # attributes. DrawginShape will draw shapes, and DrawingText...text.
@@ -67,11 +119,26 @@ class Drawing(object):
         painter.setRenderHint(self.renderHint)
     
     def setBounds(self, x1, y1, x2, y2):
-        print("Setting bounds: ", x1, " ", y1, " | ", x2, " ", y2)
+        #print("Setting bounds: ", x1, " ", y1, " | ", x2, " ", y2)
         self.x1 = x1
         self.y1 = y1
         self.x2 = x2
         self.y2 = y2
+
+    def setNumber(self, number):
+        #print("Setting number to: ", number)
+        self.number = number
+
+    def setFillColor(self, color):
+        self.brush = QColor(color.red, color.green, color.blue, color.alpha)
+
+    def setWidth(self, width):
+        #print("Setting width to: ", width)
+        self.pen.setWidth(width)
+
+
+
+
 
 class DrawingText(Drawing):
     PytellapicFontStyle = {
@@ -80,12 +147,14 @@ class DrawingText(Drawing):
         }
 
     def __init__(self, drawing = None):
-        if (drawing is not None):
+        if (drawing is None):
             Drawing.__init__(self)
         else:
-            self.pen = drawing.pen
-            self.brush = drawing.brush
+            self.pen        = QPen()
+            self.brush      = None
             self.renderHint = drawing.renderHint
+            self.number     = drawing.number
+            self.pen.setWidthF(0.05)
 
     def setFont(self, color, style, face, size):
         self.font = QFont()
@@ -107,10 +176,15 @@ class DrawingText(Drawing):
     def setText(self, text):
         self.text = text
 
-
     def draw(self, painter):
         Drawing.draw(self, painter)
         painter.drawPath(self.shape)
+
+    def setWidth(self, width):
+        self.pen.setWidthF(0.05)
+    
+    def setFillColor(self, color):
+        pass
 
 # This could be also an abstract class for shapes
 class DrawingShape(Drawing):
@@ -136,15 +210,12 @@ class DrawingShape(Drawing):
         self.renderHint = hint
 
     def setLineJoins(self, lj):
-        print("Setting line joins to: ", lj)
+        #print("Setting line joins to: ", lj)
         self.pen.setJoinStyle(self.PytellapicJoinsStyle[lj])
     
     def setEndCaps(self, ec):
-        print("Setting end caps to: ", ec)
+        #print("Setting end caps to: ", ec)
         self.pen.setCapStyle(self.PytellapicCapsStyle[ec])
-    
-    def setFillColor(self, color):
-        self.brush = QColor(color.red, color.green, color.blue, color.alpha)
 
     def setStrokeColor(self, color):
         self.pen.setColor(QColor(color.red, color.green, color.blue, color.alpha))
@@ -156,13 +227,9 @@ class DrawingShape(Drawing):
         self.pen.setDashOffset(phase)
         self.pen.setDashPattern(array)
 
-    def setStrokeWidth(self, width):
-        print("Setting width to: ", width)
-        self.pen.setWidth(width)
 
-    def setNumber(self, number):
-        print("Setting number to: ", number)
-        self.number = number
+
+
 
 # This class should be concrete. He knows exactly that it consists
 # of a shape as a rectangle.
