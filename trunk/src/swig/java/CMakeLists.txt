@@ -1,5 +1,5 @@
 find_package(Java)
-if (Java_FOUND)
+if (JAVA_FOUND)
   include(FindJNI)
   include(${SWIG_USE_FILE})
   include_directories(${JNI_INCLUDE_DIRS})
