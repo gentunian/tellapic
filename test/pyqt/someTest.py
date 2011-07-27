@@ -6,6 +6,7 @@ from mainWidget import *
 from NetManager import *
 import sys
 
+
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
