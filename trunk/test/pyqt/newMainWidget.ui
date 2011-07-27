@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <author>Seba</author>
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>734</width>
+    <height>576</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <property name="tabShape">
+   <enum>QTabWidget::Triangular</enum>
+  </property>
+  <property name="dockOptions">
+   <set>QMainWindow::AllowTabbedDocks|QMainWindow::AnimatedDocks|QMainWindow::VerticalTabs</set>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="QGraphicsView" name="graphicsView">
+      <property name="renderHints">
+       <set>QPainter::Antialiasing|QPainter::HighQualityAntialiasing|QPainter::TextAntialiasing</set>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>734</width>
+     <height>29</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <property name="autoFillBackground">
+    <bool>true</bool>
+   </property>
+   <property name="allowedAreas">
+    <set>Qt::AllToolBarAreas</set>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>LeftToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionSelector"/>
+   <addaction name="actionEllipse"/>
+   <addaction name="actionRectangle"/>
+   <addaction name="actionLine"/>
+   <addaction name="actionText"/>
+   <addaction name="actionZoom"/>
+   <addaction name="actionMarker"/>
+   <addaction name="actionPencil"/>
+  </widget>
+  <action name="actionSelector">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="rsrc.qrc">
+     <normaloff>:/icons/resources/icons/tool-icons/selector.png</normaloff>:/icons/resources/icons/tool-icons/selector.png</iconset>
+   </property>
+   <property name="text">
+    <string>selector</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+1</string>
+   </property>
+  </action>
+  <action name="actionEllipse">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="rsrc.qrc">
+     <normaloff>:/icons/resources/icons/tool-icons/ellipse.png</normaloff>:/icons/resources/icons/tool-icons/ellipse.png</iconset>
+   </property>
+   <property name="text">
+    <string>ellipse</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+2</string>
+   </property>
+  </action>
+  <action name="actionRectangle">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="rsrc.qrc">
+     <normaloff>:/icons/resources/icons/tool-icons/rectangle.png</normaloff>:/icons/resources/icons/tool-icons/rectangle.png</iconset>
+   </property>
+   <property name="text">
+    <string>rectangle</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+3</string>
+   </property>
+  </action>
+  <action name="actionLine">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="rsrc.qrc">
+     <normaloff>:/icons/resources/icons/tool-icons/line.png</normaloff>:/icons/resources/icons/tool-icons/line.png</iconset>
+   </property>
+   <property name="text">
+    <string>line</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+4</string>
+   </property>
+  </action>
+  <action name="actionText">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="rsrc.qrc">
+     <normaloff>:/icons/resources/icons/tool-icons/text.png</normaloff>:/icons/resources/icons/tool-icons/text.png</iconset>
+   </property>
+   <property name="text">
+    <string>text</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+5</string>
+   </property>
+  </action>
+  <action name="actionZoom">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="rsrc.qrc">
+     <normaloff>:/icons/resources/icons/tool-icons/zoom.png</normaloff>:/icons/resources/icons/tool-icons/zoom.png</iconset>
+   </property>
+   <property name="text">
+    <string>zoom</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+6</string>
+   </property>
+  </action>
+  <action name="actionMarker">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="rsrc.qrc">
+     <normaloff>:/icons/resources/icons/tool-icons/marker.png</normaloff>:/icons/resources/icons/tool-icons/marker.png</iconset>
+   </property>
+   <property name="text">
+    <string>marker</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+7, Return</string>
+   </property>
+  </action>
+  <action name="actionPencil">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="rsrc.qrc">
+     <normaloff>:/icons/resources/icons/tool-icons/pencil.png</normaloff>:/icons/resources/icons/tool-icons/pencil.png</iconset>
+   </property>
+   <property name="text">
+    <string>pencil</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+8</string>
+   </property>
+  </action>
+ </widget>
+ <resources>
+  <include location="rsrc.qrc"/>
+ </resources>
+ <connections/>
+</ui>

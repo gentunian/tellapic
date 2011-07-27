@@ -10,15 +10,7 @@ import select
 from Drawing import *
 import pytellapic
 import signal, time
-
-class MyEvent(QEvent):
-         def __init__(self, arg, t = None):
-             if (t is not None):
-                 QEvent.__init__(self, QEvent.User + t)
-             else:
-                 QEvent.__init__(self, QEvent.User)
-
-             self.arg = arg
+from Utils import MyEvent
 
 class NetManager(QThread):
     cbyte = {pytellapic.CTL_CL_BMSG : 'CTL_CL_BMSG',
