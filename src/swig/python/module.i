@@ -1,4 +1,5 @@
 %include "../tellapic.i"
+%module "pytellapic"
 
 %typemap(out) tellapic_float {
 #ifdef BIG_ENDIAN_VALUE
@@ -43,8 +44,6 @@
     return PyString_FromString(name);
   }
   %}
-
-
 
 %include "posh/posh.h"
 %include "tellapic/tellapic.h"
