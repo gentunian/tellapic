@@ -8,9 +8,9 @@ from distutils.core import setup, Extension
 import TellapicConfig
 
 pytellapic_module = Extension("_"+TellapicConfig.EXTENSION_NAME,
-                              sources=[TellapicConfig.SWIG_GENERATED_FILE]+TellapicConfig.SOURCE_FILES,
-
-                              swig_opts=['module '+TellapicConfig.EXTENSION_NAME,'cpperraswarn'+TellapicConfig.OS_DEFINITIONS],
+                              #sources=[TellapicConfig.SWIG_GENERATED_FILE]+TellapicConfig.SOURCE_FILES,
+                              sources=[TellapicConfig.SWIG_GENERATED_FILE],
+                              swig_opts=['module '+TellapicConfig.EXTENSION_NAME,'cpperraswarn', TellapicConfig.OS_DEFINITIONS],
                               )
 
 setup(name=TellapicConfig.EXTENSION_NAME,

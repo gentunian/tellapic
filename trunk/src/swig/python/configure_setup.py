@@ -23,7 +23,7 @@ class PlaceHolder:
             for i in value:
                 self._defines = re.sub("\[|'|\]|\"", "", str(i))
         else:
-            self._defines=[]
+            self._defines=''
 
 values = PlaceHolder()
 parser = argparse.ArgumentParser(description='Setups python extension')
