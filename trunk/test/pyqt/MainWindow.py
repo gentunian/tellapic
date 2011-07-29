@@ -12,6 +12,11 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         self.model = model
         self.scene = Drawing.TellapicScene(model, self)
         self.graphicsView.setScene(self.scene)
+        dock = QtGui.QDockWidget("Properties", self)
+        box = ToolBoxWidget(model)
+        dock.setWidget(box)
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, dock)
+        self.scene.drawingSelectionChanged.connect(box.update)
 
     def setActionGroup(self):
         aGroup = QtGui.QActionGroup(self)
@@ -32,7 +37,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
             pass
         elif (toolName == "ellipse"):
             pass
-        elif (toolName == Drawing.DrawingToolRectangle):
+        elif (toolName == Drawing.ToolRectangle):
             pass
         elif (toolName == "line"):
             pass
@@ -55,9 +60,5 @@ if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
     model = Drawing.ToolModel()
     main = MainWindow(model)
-    dock = QtGui.QDockWidget("Properties", main)
-    box = ToolBoxWidget(model)
-    dock.setWidget(box)
-    main.addDockWidget(QtCore.Qt.RightDockWidgetArea, dock)
     main.show()
     sys.exit(app.exec_())

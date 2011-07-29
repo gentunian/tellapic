@@ -2,6 +2,11 @@ from PyQt4 import QtCore, QtGui
 from ToolBoxUi import *
 import Drawing
 import pytellapic
+try:
+    from PyQt4.QtCore import QString
+except ImportError:
+    # we are using Python3 so QString is not defined
+    QString = type("")
 
 class ToolBoxWidget(QtGui.QToolBox, Ui_ToolBox):
     DrawingPropertiesPage = 0
@@ -32,10 +37,17 @@ class ToolBoxWidget(QtGui.QToolBox, Ui_ToolBox):
         self.actionFontSizeSet.triggered.connect(self.actionFontSizeSet_trigger)
         self.actionFontStyleBold.triggered.connect(self.actionFontStyleBold_toggle)
         self.actionFontStyleItalic.triggered.connect(self.actionFontStyleItalic_toggle)
+        self.setItemEnabled(self.FontPropertyPage, False)
+        self.setItemEnabled(self.StrokeStylePage, False)
+        self.setItemEnabled(self.StrokeColorPage, False)
+        self.setItemEnabled(self.FillColorPage, False)
+        self.setItemEnabled(self.DrawingPropertiesPage, False)
         self.model = model
-        self.model.subscribe(self)
+        self.model.toolChanged.connect(self.update)
+        self.currentTool = None
+        style = QtGui.QStyleFactory.create("Plastique")
+        self.setStyle(style)
 
-        
     def actionChangeCharCounter_trigger(self):
         doc    = self.textArea.document()
         chars  = doc.characterCount()
@@ -79,11 +91,11 @@ class ToolBoxWidget(QtGui.QToolBox, Ui_ToolBox):
 
     def actionShouldFill_toggle(self, toggled = None):
         if (self.currentTool is not None):
-            self.currentTool.setFillEnabled(toggled)
+            self.currentTool.drawing.setFillEnabled(toggled)
 
     def actionShouldStroke_toggle(self, toggled = None):
         if (self.currentTool is not None):
-            self.currentTool.setStrokeEnabled(toggled)
+            self.currentTool.drawing.setStrokeEnabled(toggled)
 
     def actionDashPhaseChange_trigger(self):
         print("value: ", self.dashPhaseSpinner.value())
@@ -96,19 +108,27 @@ class ToolBoxWidget(QtGui.QToolBox, Ui_ToolBox):
     def actionDashSet_trigger(self):
         print("index: ", self.dashCombo.currentIndex())
 
-    def actionFillColor_trigger(self):
-        print("Fill color changed.")
-
-    def actionStrokeColor_trigger(self, color):
-        print("Stroke color changed.", color)
-
     def fillColorChanged(self, color):
-        print("Fill color changed")
-        self.currentTool.setFillColor(color)
+        if (self.currentTool is not None):
+            self.currentTool.drawing.setFillColor(color)
+            values = "{r}, {g}, {b}, {a}".format(r = color.red(), 
+                                             g = color.green(), 
+                                             b = color.blue(), 
+                                             a = color.alpha()
+                                             )
+            self.fillColorLabel.setStyleSheet("QLabel { background-color : rgba("+values+"); }")
+            self.fillColorLabel.setToolTip(color.name()+hex(color.alpha())[2:])
 
     def strokeColorChanged(self, color):
-        print("Stroke Color changed")
-        self.currentTool.setStrokeColor(color)
+        if (self.currentTool is not None):
+            self.currentTool.drawing.setStrokeColor(color)
+            values = "{r}, {g}, {b}, {a}".format(r = color.red(), 
+                                             g = color.green(), 
+                                             b = color.blue(), 
+                                             a = color.alpha()
+                                             )
+            self.strokeColorLabel.setStyleSheet("QLabel { background-color : rgba("+values+"); }")
+            self.strokeColorLabel.setToolTip(color.name()+hex(color.alpha())[2:])
 
     def actionFontFamilySet_trigger(self):
         pass
@@ -122,8 +142,8 @@ class ToolBoxWidget(QtGui.QToolBox, Ui_ToolBox):
     def actionFontStyleBold_toggle(self, toggled = None):
         pass
 
-    def customEvent(self, event):
-        self.currentTool = event.arg
+    def update(self, toolName):
+        self.currentTool = self.model.getToolByName(toolName)
         self.setItemEnabled(self.FontPropertyPage, self.currentTool.drawing.hasFontProperties())
         self.setItemEnabled(self.StrokeStylePage, self.currentTool.drawing.hasStrokeColorProperties())
         self.setItemEnabled(self.StrokeColorPage, self.currentTool.drawing.hasStrokeStylesProperties())
@@ -133,6 +153,7 @@ class ToolBoxWidget(QtGui.QToolBox, Ui_ToolBox):
             pass
         if self.currentTool.drawing.hasStrokeColorProperties():
             color = self.currentTool.drawing.pen.color()
+            self.strokeColorLabel.setStyleSheet("QLabel { background-color : %s}"%color.name());
         if self.currentTool.drawing.hasStrokeStylesProperties():
             style = self.currentTool.drawing.pen.capStyle()
             if style  == QtCore.Qt.SquareCap:
@@ -149,12 +170,14 @@ class ToolBoxWidget(QtGui.QToolBox, Ui_ToolBox):
             else:
                 self.roundBevelButton.setChecked(True)
             self.widthSpinner.setValue(self.currentTool.drawing.pen.width())
-            self.shouldStrokeCheckbox.setChecked(self.currentTool.shouldStroke)
+            self.shouldStrokeCheckbox.setChecked(self.currentTool.drawing.shouldStroke)
 
         if self.currentTool.drawing.hasFillColorProperties():
-            self.shouldFillCheckbox.setChecked(self.currentTool.shouldFill)
+            self.shouldFillCheckbox.setChecked(self.currentTool.drawing.shouldFill)
+            color = self.currentTool.drawing.brush.color()
+            self.fillColorLabel.setStyleSheet("QLabel { background-color : %s}"%color.name());
 
-    @QtCore.pyqtSlot(QtCore.QString)
+    @QtCore.pyqtSlot(QString)
     def updateToolInfo(self, toolName):
         print("update tool info", toolName)
         tool = self.model.getToolByName(toolName)
