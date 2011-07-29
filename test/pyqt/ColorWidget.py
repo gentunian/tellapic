@@ -1,3 +1,4 @@
+
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtGui import *
 import rsrc_rc
@@ -5,61 +6,112 @@ import cmath
 import math
 
 class ColorWidget(QtGui.QWidget):
-    #__pyqtSignals__ = ("colorChanged(QColor)")
+    """
+    ColorWidget class
+    @author Sebastian Treu
+    
+    ColorWidget is a QWidget that manages the selection of RGBA colors with ColorWheel class and a QSlider.
+
+    Everytiime a color has been choosen, it will trigger a colorChanged() signal. It also shows in a QLabel
+    the custom color choosen and also being selecting.
+    """
+
+    # colorChanged() signal used to indicate color selection.
     colorChanged = QtCore.pyqtSignal(QtGui.QColor)
 
     def __init__(self, parent = None):
         super(ColorWidget, self).__init__(parent)
-        self.colorWheel = ColorWidget.ColorWheel(self)
-        self.colorLabel = ColorWidget.ColorLabel(self)
-        self.alphaSlider = QSlider(self)
+        self.colorWheel   = ColorWidget.ColorWheel(self)
+        self.colorDisplay = QLabel(self)
+        self.alphaSlider  = QSlider(self)
+        self.color = self.colorWheel.getColor()
+        self.configureAlphaSlider()
+        self.configureColorDisplay()
+        self.configureLayout()
+        self.configureSignals()
+
+    def configureColorDisplay(self):
+        """ Sets the displayed color label properties. """
+        self.colorDisplay.setAutoFillBackground(True)
+        self.colorDisplay.setStyleSheet("QLabel { background-color: rgb(100, 20, 200);")
+        
+    def configureLayout(self):
+        """ Configures the layout of this widget. """
+        colorLabel = QtGui.QLabel("Selected Color:")
+        alphaLabel = QtGui.QLabel("Transparency:")
+        self.horizontalLayout = QtGui.QHBoxLayout()
+        self.formLayout       = QtGui.QFormLayout()
+        self.layout           = QtGui.QVBoxLayout(self)
+        self.horizontalLayout.addWidget(self.colorWheel)
+        self.formLayout.setLabelAlignment(QtCore.Qt.AlignRight)
+        self.formLayout.setHorizontalSpacing(22)
+        self.formLayout.setVerticalSpacing(9)
+        self.formLayout.setWidget(0, QtGui.QFormLayout.LabelRole, alphaLabel)
+        self.formLayout.setWidget(0, QtGui.QFormLayout.FieldRole, self.alphaSlider)
+        self.formLayout.setWidget(1, QtGui.QFormLayout.LabelRole, colorLabel)
+        self.formLayout.setWidget(1, QtGui.QFormLayout.FieldRole, self.colorDisplay)
+        self.formLayout.setHorizontalSpacing(22)
+        self.layout.addLayout(self.horizontalLayout)
+        self.layout.addLayout(self.formLayout)
+        self.layout.setContentsMargins(9, 0, 9, 5)
+
+    def configureAlphaSlider(self):
+        """ Sets the transparency slider properties. """
         self.alphaSlider.setOrientation(QtCore.Qt.Horizontal)
         self.alphaSlider.setRange(0, 255)
         self.alphaSlider.setSingleStep(1)
+        self.alphaSlider.setTracking(True)
         self.alphaSlider.setValue(255)
-        self.colorLabel.setAutoFillBackground(True)
-        self.color = self.colorWheel.getColor()
-        self.colorLabel.setBackgroundColor(self.color)
-        self.layout = QtGui.QVBoxLayout(self)
-        self.layout.addWidget(self.colorWheel)
-        self.layout.addWidget(self.alphaSlider)
-        self.layout.addWidget(self.colorLabel)
-        QtCore.QObject.connect(self.alphaSlider, QtCore.SIGNAL("valueChanged(int)"), self.alphaSet)
-        QtCore.QObject.connect(self.colorWheel, QtCore.SIGNAL("colorChanged(QColor)"), self.update)
 
-    # Helper function for setting the colorLabel background color to color and emit the colorChanged signal
+    def configureSignals(self):
+        """ Sets the appropiate signal management. """
+        self.alphaSlider.valueChanged.connect(self.alphaIsChanging)
+        self.alphaSlider.sliderReleased.connect(self.alphaChanged)
+        self.colorWheel.colorIsAdjusting.connect(self.setDisplayLabelBackground)
+        self.colorWheel.colorChanged.connect(self.arrangeColor)
+
     def setColor(self, color):
-        self.color = QColor(color.red(), color.green(), color.blue(), self.alphaSlider.value())
-        self.colorLabel.setBackgroundColor(color)
+        self.color = color
+        self.color.setAlpha(self.alphaSlider.value())
+
+    def arrangeColor(self, color):
+        self.setColor(color)
         self.emit(QtCore.SIGNAL("colorChanged(QColor)"), self.color)
 
-    @QtCore.pyqtSlot(QColor)
-    def update(self, color):
+    def setDisplayLabelBackground(self, color):
         self.setColor(color)
+        values = "{r}, {g}, {b}, {a}".format(r = self.color.red(), 
+                                             g = self.color.green(), 
+                                             b = self.color.blue(), 
+                                             a = self.alphaSlider.value()
+                                             )
+        self.colorDisplay.setStyleSheet("QLabel { background-color: rgba("+values+"); }")
+        self.colorDisplay.setToolTip(self.color.name()+hex(self.color.alpha())[2:])
 
-    @QtCore.pyqtSlot(int)
-    def alphaSet(self, alpha):
-        self.setColor(self.color)
+    def alphaChanged(self):
+        self.color.setAlpha(self.alphaSlider.value())
+        self.emit(QtCore.SIGNAL("colorChanged(QColor)"), self.color)
 
-    # A label that can paint its background with translucent colors
-    class ColorLabel(QtGui.QLabel):
-        def __init__(self, parent = None):
-            super(ColorWidget.ColorLabel, self).__init__(parent)
-            self.color = QColor()
+    def alphaIsChanging(self, alpha):
+        self.alpha = alpha
+        if self.alphaSlider.isSliderDown():
+            self.setDisplayLabelBackground(self.color)
 
-        def paintEvent(self, event):
-            self.painter = QtGui.QPainter()
-            self.painter.begin(self)
-            size = self.size()
-            self.painter.fillRect(0, 0, size.width(), size.height(), self.color)
-            self.painter.end()
-
-        def setBackgroundColor(self, color):
-            self.color = color
-            self.update()
 
     class ColorWheel(QtGui.QFrame):
-        __pyqtSignals__ = ("colorChanged(QColor)")
+        """ 
+        ColorWheel class.
+	@author Sebastian Treu
+        
+        ColorWheel is a QFrame displaying a wheel with a color range and, a square box with a gradient of the 
+        wheel selected color. This class only manages the selection of OPAQUE colors, that is, RGB colors
+        with an alpha value of 255.
+
+        When a new color is definetily choosen, it will fire colorChanged() signal. When a color is being
+        choosen, it will fire a colorIsAdjusting() signal.
+	"""	
+
+        __pyqtSignals__ = ("colorChanged(QColor)", "colorIsAdjusting(QColor)")
 
         OuterWheelRadius = 94
         InnerWheelRadius = 74
@@ -68,6 +120,9 @@ class ColorWidget(QtGui.QWidget):
         MaskWidth  = MaskHeight  = 101
         MaskX = MaskY = 47
         MarkerXOffset = MarkerYOffset = 8
+        NoAreaDrag    = 0
+        MaskAreaDrag  = 1
+        WheelAreaDrag = 2
 
         def __init__(self, parent = None):
             super(ColorWidget.ColorWheel, self).__init__(parent)
@@ -75,6 +130,7 @@ class ColorWidget(QtGui.QWidget):
             self.wheelPixmap = QtGui.QPixmap.fromImage(self.wheelImage)
             self.maskImage   = QtGui.QImage(":/images/resources/images/mask.png")
             self.maskPixmap  = QtGui.QPixmap.fromImage(self.maskImage)
+            self.whatever    = QtGui.QPixmap(self.maskPixmap.width(), self.maskPixmap.height())
             self.marker      = QtGui.QPixmap(":/images/resources/images/marker.png")
             self.setMinimumSize(self.WheelWidth, self.WheelHeight)
             self.setMaximumSize(self.WheelWidth, self.WheelHeight)
@@ -83,9 +139,19 @@ class ColorWidget(QtGui.QWidget):
             self.wheelMarkerY  = self.yOrigin - self.RestrictedRadius
             self.maskMarkerX = self.maskMarkerY = self.xOrigin
             self.maskBounds = QtCore.QRect(self.MaskX, self.MaskY, self.MaskWidth, self.MaskHeight)
-            self.color = QColor()
             self.gradient = QColor(self.wheelImage.pixel(self.maskMarkerX, self.maskMarkerY))
-            self.dragging = 0
+            self.dragging = self.NoAreaDrag
+            self.color = QColor()
+            self.mousePressEvent(QtGui.QMouseEvent(QtCore.QEvent.MouseButtonPress,
+                                                   QtCore.QPoint(self.wheelMarkerX,
+                                                                 self.wheelMarkerY
+                                                                 ),
+                                                   QtCore.Qt.LeftButton,
+                                                   QtCore.Qt.LeftButton,
+                                                   QtCore.Qt.NoModifier
+                                                   )
+                                 )
+            self.emit(QtCore.SIGNAL("colorChanged(QColor)"), self.color)
 
         # A simple getter function
         def getColor(self):
@@ -93,19 +159,28 @@ class ColorWidget(QtGui.QWidget):
 
         # Do the painting in the paint event
         def paintEvent(self, event):
-            self.painter = QPainter()
-            self.painter.begin(self)
-            self.painter.drawPixmap(0, 0, self.wheelPixmap)
-            # fill the square
-            self.painter.fillRect(47, 47, 101, 101, self.gradient)
-            self.painter.drawPixmap(self.MaskX, self.MaskY, self.maskPixmap)
-            self.painter.drawPixmap(self.wheelMarkerX - self.MarkerXOffset, self.wheelMarkerY - self.MarkerYOffset, self.marker)
-            self.painter.drawPixmap(self.maskMarkerX - self.MarkerXOffset, self.maskMarkerY - self.MarkerYOffset, self.marker)
-            self.painter.end()
-            if (self.dragging):
-                grabbedImage = QtGui.QPixmap.grabWindow(self.winId(), self.MaskX, self.MaskY, self.MaskWidth, self.MaskHeight).toImage()
-                self.color = QColor(grabbedImage.pixel(self.maskMarkerX - self.MaskX, self.maskMarkerY - self.MaskY))
-                self.emit(QtCore.SIGNAL("colorChanged(QColor)"), self.color)
+            offScreen = QPainter()
+            offScreen.begin(self.whatever)
+            offScreen.fillRect(0, 0, self.MaskWidth, self.MaskHeight, self.gradient)
+            offScreen.drawPixmap(0, 0, self.maskPixmap)
+            offScreen.end()
+            onScreen = QPainter()
+            onScreen.begin(self)
+            onScreen.drawPixmap(0, 0, self.wheelPixmap)
+            onScreen.drawPixmap(self.MaskX, self.MaskY, self.whatever)
+            onScreen.drawPixmap(self.wheelMarkerX - self.MarkerXOffset, self.wheelMarkerY - self.MarkerYOffset, self.marker)
+            onScreen.drawPixmap(self.maskMarkerX - self.MarkerXOffset, self.maskMarkerY - self.MarkerYOffset, self.marker)
+            onScreen.end()
+            if self.dragging:
+                self.grabColor()
+                self.emit(QtCore.SIGNAL("colorIsAdjusting(QColor)"), self.color)
+                
+        # 
+        def grabColor(self):
+            #grabbedImage = QtGui.QPixmap.grabWindow(self.winId(), self.MaskX, self.MaskY, self.MaskWidth, self.MaskHeight).toImage()
+            grabbedImage = self.whatever.toImage()
+            color = QColor(grabbedImage.pixel(self.maskMarkerX - self.MaskX, self.maskMarkerY - self.MaskY))
+            self.color = QColor(color.red(), color.green(), color.blue())
 
         # Initiate the drag event if we are using the left mouse button and set the correct coordinates
         # for the mask and wheel markers respectively
@@ -113,30 +188,31 @@ class ColorWidget(QtGui.QWidget):
             x = event.x()
             y = event.y()
             if (event.button() == QtCore.Qt.LeftButton):
-                self.dragging = 1
                 if self.maskBounds.contains(x, y):
+                    self.dragging = self.MaskAreaDrag
                     point = self.setMaskMarkerPoint(x, y)
                 else:
                     point = self.setWheelMarkerPoint(x, y)
                     self.gradient = QColor(self.wheelImage.pixel(point[0], point[1]))
+                    self.dragging = self.WheelAreaDrag
             self.update()
 
         # If we are dragging, update the coordinates
         def mouseMoveEvent(self, event):
             x = event.x()
             y = event.y()
-            if (self.dragging):
-                if self.maskBounds.contains(x, y):
-                    point = self.setMaskMarkerPoint(x, y)
-                else:
-                    point = self.setWheelMarkerPoint(x, y)
-                    self.gradient = QColor(self.wheelImage.pixel(point[0], point[1]))
+            if self.dragging == self.MaskAreaDrag and self.maskBounds.contains(x, y):
+                point = self.setMaskMarkerPoint(x, y)
+            elif self.dragging == self.WheelAreaDrag:
+                point = self.setWheelMarkerPoint(x, y)
+                self.gradient = QColor(self.wheelImage.pixel(point[0], point[1]))
             self.update()
             
         # The release event will set the dragging flag to 0
         def mouseReleaseEvent(self, event):
-            self.dragging = 0
-            self.update()
+            self.dragging = self.NoAreaDrag
+            self.grabColor()
+            self.emit(QtCore.SIGNAL("colorChanged(QColor)"), self.color)
 
         # Helper function that sets the current wheel marker coordinates
         def setWheelMarkerPoint(self, x, y):
@@ -153,7 +229,7 @@ class ColorWidget(QtGui.QWidget):
             self.maskMarkerY = y
             return (x,y)
 
-
+            
 if __name__ == "__main__":
     import sys
     app = QtGui.QApplication(sys.argv)
