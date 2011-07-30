@@ -1,5 +1,6 @@
-find_package(PythonLibs)
-if (PYTHONLIBS_FOUND)
+include(FindPythonInterp)
+
+if (PYTHON_EXECUTABLE)
   # Sets the interface file for the swig wrapper.
   set(INTERFACE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/module.i")
   set(EXTENSION_NAME "pytellapic")
@@ -18,15 +19,13 @@ if (PYTHONLIBS_FOUND)
     "-outdir" ${CMAKE_CURRENT_BINARY_DIR} 
     "-python" ${INTERFACE_FILE})
 
-  if (DEFINED PYTHON_VERSIONS)
-
+  if (NOT DEFINED PYTHON_VERSIONS)
+    message(WARNING "\nYou didn't provide PYTHON_VERSIONS.\ne.g., $ cmake -DPYTHON_VERSIONS=\"3;2.7\"\nPython bindings will be built against ${PYTHON_EXECUTABLE}")
+    string(REGEX REPLACE "[a-zA-Z/\\]+" "" PYTHON_VERSIONS ${PYTHON_EXECUTABLE})
   endif()
 
-  #add_custom_target(pytellapic2.7 DEPENDS pytellapic_setup2.7)
-  #add_custom_target(pytellapic_setup2.7 DEPENDS pytellapic_configure)
-
   add_custom_target(pytellapic DEPENDS pytellapic_setup)
-  add_custom_target(pytellapic_swig_pass)
+  add_custom_target(pytellapic_swig_pass DEPENDS tellapic)
   add_custom_target(pytellapic_configure DEPENDS pytellapic_swig_pass)
   add_custom_target(pytellapic_setup DEPENDS pytellapic_configure)
 
