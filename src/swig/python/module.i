@@ -18,7 +18,20 @@
  }
 
 %typemap(in) byte_t[MAX_FONTFACE_LEN] {
-  $1 = (byte_t *)PyString_AsString($input);
+  if (PyString_Check($input))
+    {
+      $1 = (byte_t *)PyString_AsString($input);
+    }
+  else if  (PyUnicode_Check($input))
+    {
+      $1 = (byte_t *)PyUnicode_AsEncodedString($input, "utf-8", "Error ~");
+      $1 = (byte_t *)PyBytes_AS_STRING($1);
+    }
+  else
+    {
+      PyErr_SetString(PyExc_TypeError,"Expected a string.");
+      return NULL;
+    }
  }
 
 %typemap(out) byte_t[MAX_FONTFACE_LEN] {
@@ -27,7 +40,20 @@
  }
 
 %typemap(in) byte_t[MAX_TEXT_SIZE] {
-  $1 = (byte_t *)PyString_AsString($input);
+  if (PyString_Check($input))
+    {
+      $1 = (byte_t *)PyString_AsString($input);
+    }
+  else if  (PyUnicode_Check($input))
+    {
+      $1 = (byte_t *)PyUnicode_AsEncodedString($input, "utf-8", "Error ~");
+      $1 = (byte_t *)PyBytes_AS_STRING($1);
+    }
+  else
+    {
+      PyErr_SetString(PyExc_TypeError,"Expected a string.");
+      return NULL;
+    }
  }
 
 %typemap(out) byte_t[MAX_TEXT_SIZE] {
