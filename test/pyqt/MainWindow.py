@@ -58,7 +58,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
 if __name__ == "__main__":
     import sys
     app = QtGui.QApplication(sys.argv)
-    model = Drawing.ToolModel()
+    model = Drawing.ToolBoxModel()
     main = MainWindow(model)
     main.show()
     sys.exit(app.exec_())

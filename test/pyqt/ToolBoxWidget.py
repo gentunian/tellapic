@@ -60,75 +60,70 @@ class ToolBoxWidget(QtGui.QToolBox, Ui_ToolBox):
         self.charCounter.display(512 - chars)
         
     def actionCapSquare_toggle(self, toggled = None):
-        if (toggled and self.currentTool is not None):
+        if toggled:
             print("Setting caps to square cap.", toggled)
-            self.currentTool.drawing.setEndCaps(pytellapic.END_CAPS_SQUARE)
+            self.model.setEndCaps(pytellapic.END_CAPS_SQUARE)
 
     def actionCapRound_toggle(self, toggled = None):
-        if (toggled and self.currentTool is not None):
+        if toggled:
             print("Setting caps to round cap.", toggled)
-            self.currentTool.drawing.setEndCaps(pytellapic.END_CAPS_ROUND)
+            self.model.setEndCaps(pytellapic.END_CAPS_ROUND)
 
     def actionCapFlat_toggle(self, toggled = None):
-        if (toggled and self.currentTool is not None):
+        if toggled:
             print("Setting caps to flat cap.", toggled)
-            self.currentTool.drawing.setEndCaps(pytellapic.END_CAPS_BUTT)
+            self.model.setEndCaps(pytellapic.END_CAPS_BUTT)
 
     def actionJoinRound_toggle(self, toggled = None):
-        if (toggled and self.currentTool is not None):
+        if toggled:
             print("Setting joins to round join.", toggled)
-            self.currentTool.drawing.setLineJoins(pytellapic.LINE_JOINS_ROUND)
+            self.model.setLineJoins(pytellapic.LINE_JOINS_ROUND)
 
     def actionJoinBevel_toggle(self, toggled = None):
-        if (toggled and self.currentTool is not None):
+        if toggled:
             print("Settings joins to bevel join.", toggled)
-            self.currentTool.drawing.setLineJoins(pytellapic.LINE_JOINS_BEVEL)
+            self.model.setLineJoins(pytellapic.LINE_JOINS_BEVEL)
 
     def actionJoinMiter_toggle(self, toggled = None):
-        if (toggled and self.currentTool is not None):
+        if toggled:
             print("Setting joins to miter join.", toggled)
-            self.currentTool.drawing.setLineJoins(pytellapic.LINE_JOINS_MITER)
+            self.model.setLineJoins(pytellapic.LINE_JOINS_MITER)
 
     def actionShouldFill_toggle(self, toggled = None):
-        if (self.currentTool is not None):
-            self.currentTool.drawing.setFillEnabled(toggled)
+        self.model.setFillEnabled(toggled)
 
     def actionShouldStroke_toggle(self, toggled = None):
-        if (self.currentTool is not None):
-            self.currentTool.drawing.setStrokeEnabled(toggled)
+        self.model.setStrokeEnabled(toggled)
 
     def actionDashPhaseChange_trigger(self):
         print("value: ", self.dashPhaseSpinner.value())
 
     def actionWidthChange_trigger(self):
-        if (self.currentTool is not None):
-            print("Setting width to: ", self.widthSpinner.value())
-            self.currentTool.drawing.setStrokeWidth(self.widthSpinner.value())
+        print("Setting width to: ", self.widthSpinner.value())
+        self.model.setStrokeWidth(self.widthSpinner.value())
 
     def actionDashSet_trigger(self):
         print("index: ", self.dashCombo.currentIndex())
 
     def fillColorChanged(self, color):
-        if (self.currentTool is not None):
-            self.currentTool.drawing.setFillColor(color)
-            values = "{r}, {g}, {b}, {a}".format(r = color.red(), 
+        self.model.setFillColor(color)
+        values = "{r}, {g}, {b}, {a}".format(r = color.red(), 
                                              g = color.green(), 
                                              b = color.blue(), 
                                              a = color.alpha()
                                              )
-            self.fillColorLabel.setStyleSheet("QLabel { background-color : rgba("+values+"); }")
-            self.fillColorLabel.setToolTip(color.name()+hex(color.alpha())[2:])
+        self.fillColorLabel.setStyleSheet("QLabel { background-color : rgba("+values+"); }")
+        self.fillColorLabel.setToolTip(color.name()+hex(color.alpha())[2:])
 
     def strokeColorChanged(self, color):
-        if (self.currentTool is not None):
-            self.currentTool.drawing.setStrokeColor(color)
-            values = "{r}, {g}, {b}, {a}".format(r = color.red(), 
+        self.model.setStrokeColor(color)
+        values = "{r}, {g}, {b}, {a}".format(r = color.red(), 
                                              g = color.green(), 
                                              b = color.blue(), 
                                              a = color.alpha()
                                              )
-            self.strokeColorLabel.setStyleSheet("QLabel { background-color : rgba("+values+"); }")
-            self.strokeColorLabel.setToolTip(color.name()+hex(color.alpha())[2:])
+        self.strokeColorLabel.setStyleSheet("QLabel { background-color : rgba("+values+"); }")
+        self.strokeColorLabel.setToolTip(color.name()+hex(color.alpha())[2:])
 
     def actionFontFamilySet_trigger(self):
         pass
@@ -143,40 +138,56 @@ class ToolBoxWidget(QtGui.QToolBox, Ui_ToolBox):
         pass
 
     def update(self, toolName):
-        self.currentTool = self.model.getToolByName(toolName)
-        self.setItemEnabled(self.FontPropertyPage, self.currentTool.drawing.hasFontProperties())
-        self.setItemEnabled(self.StrokeStylePage, self.currentTool.drawing.hasStrokeColorProperties())
-        self.setItemEnabled(self.StrokeColorPage, self.currentTool.drawing.hasStrokeStylesProperties())
-        self.setItemEnabled(self.FillColorPage, self.currentTool.drawing.hasFillColorProperties())
-        
-        if self.currentTool.drawing.hasFontProperties():
+        #self.currentTool = self.model.getToolByName(toolName)
+        self.setItemEnabled(self.FontPropertyPage, self.model.isFontPropertyEnabled())
+        self.setItemEnabled(self.StrokeStylePage, self.model.isStrokePropertyEnabled())
+        self.setItemEnabled(self.StrokeColorPage, self.model.isStrokePropertyEnabled())
+        self.setItemEnabled(self.FillColorPage, self.model.isFillPropertyEnabled())
+        self.shouldFillCheckbox.setChecked(self.model.shouldFill)
+        self.shouldStrokeCheckbox.setChecked(self.model.shouldStroke)
+        """
+        if self.currentTool.hasFontProperties():
             pass
-        if self.currentTool.drawing.hasStrokeColorProperties():
-            color = self.currentTool.drawing.pen.color()
-            self.strokeColorLabel.setStyleSheet("QLabel { background-color : %s}"%color.name());
-        if self.currentTool.drawing.hasStrokeStylesProperties():
-            style = self.currentTool.drawing.pen.capStyle()
+        if self.currentTool.hasStrokeColorProperties():
+            self.shouldStrokeCheckbox.setChecked(self.currentTool.shouldStroke)
+            color = self.currentTool.pen.color()
+            self.strokeColorChanged(color)
+        if self.currentTool.hasFillColorProperties():
+            self.shouldFillCheckbox.setChecked(self.currentTool.shouldFill)
+            color = self.currentTool.brush.color()
+            self.fillColorChanged(color)
+        if self.currentTool.hasStrokeStylesProperties():
+            style = self.currentTool.pen.capStyle()
             if style  == QtCore.Qt.SquareCap:
                 self.squareCapButton.setChecked(True)
             elif style == QtCore.Qt.RoundCap:
                 self.roundCapButton.setChecked(True)
             else:
                 self.flatCapButton.setChecked(True)
-            style = self.currentTool.drawing.pen.joinStyle()
+            style = self.currentTool.pen.joinStyle()
             if style == QtCore.Qt.MiterJoin:
                 self.miterJoinButton.setChecked(True)
             elif style == QtCore.Qt.RoundJoin:
                 self.roundJoinButton.setChecked(True)
             else:
                 self.roundBevelButton.setChecked(True)
-            self.widthSpinner.setValue(self.currentTool.drawing.pen.width())
-            self.shouldStrokeCheckbox.setChecked(self.currentTool.drawing.shouldStroke)
+            self.widthSpinner.setValue(self.currentTool.pen.width())
+            self.shouldStrokeCheckbox.setChecked(self.currentTool.shouldStroke)
+            """
 
-        if self.currentTool.drawing.hasFillColorProperties():
-            self.shouldFillCheckbox.setChecked(self.currentTool.drawing.shouldFill)
-            color = self.currentTool.drawing.brush.color()
-            self.fillColorLabel.setStyleSheet("QLabel { background-color : %s}"%color.name());
-
+    def keyReleaseEvent(self, event):
+        """    
+        canMove = True if self.currentIndex() > 0 or self.currentIndex() < self.count() else False
+        if (event.modifiers & QtCore.Qt.ControlModifier) == QtCore.Qt.ControlModifier:
+            if event.keys() == QtCore.Qt.Key_PageUp:
+                if canMove:
+                    self.setCurrentIndex(self.currentIndex()+1)
+            elif event.keys() == QtCore.Qt.Key_PageUp:
+                if canMove:
+                    self.setCurrentIndex(self.currentIndex()+1)
+        """
+        pass
+    
     @QtCore.pyqtSlot(QString)
     def updateToolInfo(self, toolName):
         print("update tool info", toolName)

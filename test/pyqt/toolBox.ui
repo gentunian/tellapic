@@ -746,7 +746,6 @@ QScrollArea {
               <property name="styleSheet">
                <string notr="true">QLabel {
 	border: 1px solid black;
-	background-color: rgba(100, 20, 200, 100);
 }</string>
               </property>
               <property name="text">
