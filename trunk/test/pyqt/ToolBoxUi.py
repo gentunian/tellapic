@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'toolBox.ui'
 #
-# Created: Fri Jul 29 13:26:30 2011
+# Created: Fri Jul 29 19:54:17 2011
 #      by: PyQt4 UI code generator 4.8.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -330,7 +330,6 @@ class Ui_ToolBox(object):
         self.fillColorLabel.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.fillColorLabel.setStyleSheet(_fromUtf8("QLabel {\n"
 "    border: 1px solid black;\n"
-"    background-color: rgba(100, 20, 200, 100);\n"
 "}"))
         self.fillColorLabel.setText(_fromUtf8(""))
         self.fillColorLabel.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)

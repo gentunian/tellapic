@@ -8,7 +8,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 import abc
 import pytellapic
-from Utils import MyEvent
+#from Utils import MyEvent
 import sys
 try:
     from PyQt4.QtCore import QString
@@ -20,25 +20,40 @@ if not hasattr(sys, "hexversion") or sys.hexversion < 0x03000000:
     from nonconflict import classmaker
 
 ToolRectangle = "rectangle"
-ToolEllipse = "ellipse"
-ToolLine = "line"
-ToolSelector = "selector"
-ToolMarker = "marker"
-ToolPen = "pen"
+ToolEllipse   = "ellipse"
+ToolLine      = "line"
+ToolSelector  = "selector"
+ToolMarker    = "marker"
+ToolPen       = "pen"
+PytellapicJoinsStyle = {
+    Qt.MiterJoin : pytellapic.LINE_JOINS_MITER,
+    Qt.RoundJoin : pytellapic.LINE_JOINS_ROUND,
+    Qt.BevelJoin : pytellapic.LINE_JOINS_BEVEL
+    }
+PytellapicCapsStyle = {
+    Qt.FlatCap   : pytellapic.END_CAPS_BUTT,
+    Qt.RoundCap  : pytellapic.END_CAPS_ROUND,
+    Qt.SquareCap : pytellapic.END_CAPS_SQUARE
+    }
+PytellapicFontStyle = {
+    QFont.StyleNormal : pytellapic.FONT_STYLE_NORMAL,
+    QFont.StyleItalic : pytellapic.FONT_STYLE_ITALIC
+    }
 
-# This should be an abstract class for a colection of tools
 class Tool(object):
+    """Tool abstract class.
+    An abstract base class for each <Some>Tool. It defines methods to be
+    overriden by concrete implementations.
+    """
     __metaclass__ = abc.ABCMeta
-    
-    @abc.abstractmethod
+
+    def __init__(self, name, model):
+        self._name = name
+        self.model = model
+
+    @property
     def name(self):
-        """Returns the concrete drawing tool name."""
-        return
-        
-    @abc.abstractproperty
-    def drawing(self):
-        """Returns the drawing created"""
-        return
+        return self._name
 
     @abc.abstractmethod
     def mousePressed(self, event):
@@ -55,16 +70,62 @@ class Tool(object):
     @abc.abstractmethod
     def mouseReleased(self, event):
         return
+    
+    @abc.abstractmethod
+    def canDraw(self):
+        return
 
-class DrawingTextTool(Tool):
-    def __init__(self):
-        self._drawing = DrawingText()
+class DrawingTool(Tool):
+    """DrawingTool class.
+    An abstract Tool subclass that defines tools able to draw something.
+    """
+    __metaclass__ = abc.ABCMeta
 
-    def setFontStyle(self, size, face, style):
-        pass
+    def __init__(self, name, model):
+        super(DrawingTool, self).__init__(name, model)
+
+    def canDraw(self):
+        return True
+
+    @property
+    def drawing():
+        return self._drawing
+
+    @abc.abstractmethod
+    def hasFontProperties(self):
+        return
+
+    @abc.abstractmethod
+    def hasStrokeStylesProperties(self):
+        return
+
+    @abc.abstractmethod
+    def hasStrokeColorProperties(self):
+        return
+
+    @abc.abstractmethod
+    def hasFillColorProperties(self):
+        return
+
+    @abc.abstractmethod
+    def hasTransparentProperties(self):
+        return
+
+class DrawingToolRectangle(DrawingTool):
+    """DrawingToolRectangle class.
+    Concrete subclass that implements a DrawingTool. This class instantiates a rectangle shape and 
+    uses it to generate a DrawingShape.
+    """
+    def __init__(self, model):
+        super(DrawingToolRectangle, self).__init__(ToolRectangle, model)
 
     # Delegate the mouse events from a QWidget to this tool
     def mousePressed(self, point):
+        self._drawing = DrawingShapeRectangle()
+        self._drawing.setPen(self.model.pen)
+        self._drawing.setBrush(self.model.brush)
+        self._drawing.setStrokeEnabled(self.model.shouldStroke)
+        self._drawing.setFillEnabled(self.model.shouldFill)
         self._drawing.setBounds(point.x(), point.y(), point.x(), point.y())
 
     # Delegate the mouse events from a QWidget to this tool
@@ -76,87 +137,34 @@ class DrawingTextTool(Tool):
 
     # Delegate the mouse events from a QWidget to this tool
     def mouseReleased(self, point):
-        pass
-
-    # The tool name
-    def name(self):
-        return ToolText
+        self._drawing.setPen(QPen(self.model.pen))
+        self._drawing.setBrush(QBrush(self.model.brush))
 
     @property
     def drawing(self):
         return self._drawing
 
-class DrawingShapeTool(Tool):
-    def __init__(self, name):
-        self.name = name
-        if self.name == ToolRectangle:
-            self._drawing = DrawingShapeRectangle()
-        elif self.name == ToolEllipse:
-            self._drawing = DrawingShapeEllipse()
-        elif self.name == ToolLine:
-            self._drawing = DrawingShapeLine()
-        else:
-            pass
-            # if self._drawing is None throw an exception
+    def hasFontProperties(self):
+        return False
 
-    def setStrokeStyle(self, width, caps, joins, dash, dashphase):
-        self._drawing.setDashStyle(dash, dashphase)
-        self._drawing.setEndCaps(caps)
-        self._drawing.setLineJoins(joins)
-        self._drawing.setStrokeWidth(width)
+    def hasStrokeStylesProperties(self):
+        return True
 
-    # Delegate the mouse events from a QWidget to this tool
-    def mousePressed(self, point):
-        self._drawing.setBounds(point.x(), point.y(), point.x(), point.y())
+    def hasStrokeColorProperties(self):
+        return True
 
-    # Delegate the mouse events from a QWidget to this tool
-    def mouseDragged(self, point):
-        self._drawing.setBounds(self._drawing.x1, self._drawing.y1, point.x(), point.y())
+    def hasFillColorProperties(self):
+        return True
 
-    def mouseMoved(self, point):
-        pass
-
-    # Delegate the mouse events from a QWidget to this tool
-    def mouseReleased(self, point):
-        pass
-
-    # The tool name
-    def name(self):
-        return self.name
-
-    @property
-    def drawing(self):
-        return self._drawing
+    def hasTransparentProperties(self):
+        return True
 
 class ControlTool(Tool):
+    """ControlTool abstract class.
+    This class defines tools able to do some sort of control.
+    """
     def __init__(self, name):
-        self.name = name
-        if self.name == ToolSelector:
-            self._drawing = None
-        else:
-            pass #throw except
-
-    def setDrawing(self, drawing):
-        self._drawing = drawing
-
-    # Delegate the mouse events from a QWidget to this tool
-    def mousePressed(self, point):
-        pass #self._drawing.setBounds(point.x(), point.y(), point.x(), point.y())
-
-    # Delegate the mouse events from a QWidget to this tool
-    def mouseDragged(self, point):
-        pass #self._drawing.setBounds(self._drawing.x1, self._drawing.y1, point.x(), point.y())
-
-    def mouseMoved(self, point):
         pass
-
-    # Delegate the mouse events from a QWidget to this tool
-    def mouseReleased(self, point):
-        pass
-
-    # The tool name
-    def name(self):
-        return self.name
 
     @property
     def drawing(self):
@@ -164,7 +172,43 @@ class ControlTool(Tool):
 
 class Drawing(QtGui.QGraphicsItem):
     def __init__(self):
-        QtGui.QGraphicsItem.__init__(self)
+        #QtGui.QGraphicsItem.__init__(self)
+        super(Drawing, self).__init__()
+        print("Drawing constructor.")
+        self.setActive(True)
+        self.setEnabled(True)
+        self.selectedStroke = QPen(QColor("yellow"), 1, Qt.DashLine, Qt.SquareCap, Qt.MiterJoin)
+        self.bounds = QRectF()
+        self.stream = pytellapic.stream_t()
+
+    def setBounds(self, x1, y1, x2, y2):
+        self._x1 = x1
+        self._y1 = y1
+        self._x2 = x2
+        self._y2 = y2
+        offset = 0 if self.pen is None else self.pen.width()
+        self.bounds = QRectF(
+            (x1 if x1-x2<=0 else x2) - offset / 2,
+            (y1 if y1-y2<=0 else y2) - offset / 2, 
+            abs(x1-x2) + offset,
+            abs(y1-y2) + offset
+            )
+        self.prepareGeometryChange()
+
+    def boundingRect(self):
+        offset = self.pen.width()/2
+        return self.bounds
+
+    def paint(self, painter, option, widget = None):
+        if self.shouldStroke:
+            painter.setPen(self.pen)
+        else:
+            painter.setPen(QColor(0,0,0,0))
+        if self.shouldFill:
+            painter.setBrush(self.brush)
+        else:
+            painter.setBrush(QColor(0,0,0,0))
+        painter.drawPath(self.shape)
 
     @property
     def pen(self):
@@ -237,7 +281,7 @@ class Drawing(QtGui.QGraphicsItem):
     @x2.setter
     def x2(self, value):
         self._x2 = value
-
+        
     @y1.setter
     def y1(self, value):
         self._y1 = value
@@ -245,40 +289,9 @@ class Drawing(QtGui.QGraphicsItem):
     @y2.setter
     def y2(self, value):
         self._y2 = value
-
-    def setBounds(self, x1, y1, x2, y2):
-        self._x1 = x1
-        self._y1 = y1
-        self._x2 = x2
-        self._y2 = y2
-        self.prepareGeometryChange()
-
-    def boundingRect(self):
-        offset = self.pen.width()/2
-        return QtCore.QRectF(
-            (self.x1 if self.x1-self.x2<=0 else self.x2) - offset,
-            (self.y1 if self.y1-self.y2<=0 else self.y2) - offset,
-            abs(self.x2 - self.x1) + self.pen.width(),
-            abs(self.y2 - self.y1) + self.pen.width())
-
-    def paint(self, painter, option, widget = None):
-        if self.shouldStroke:
-            painter.setPen(self.pen)
-        else:
-            painter.setPen(QColor(0,0,0,0))
-        if self.shouldFill:
-            painter.setBrush(self.brush)
-        else:
-            painter.setBrush(QColor(0,0,0,0))
-        painter.drawPath(self.shape)
-
-
+        
 class DrawingText(Drawing):
     # Some useful things for wrapping tellapic values to Qt values.
-    PytellapicFontStyle = {
-        pytellapic.FONT_STYLE_NORMAL : QFont.StyleNormal,
-        pytellapic.FONT_STYLE_ITALIC : QFont.StyleItalic
-        }
 
     # Initiate properties default values
     def initialValues(self):
@@ -292,6 +305,7 @@ class DrawingText(Drawing):
 
     # Instantiates the DrawingText with a specific number if provided
     def __init__(self, number = None):
+        print("DrawingText constructor.")
         if number is not None:
             self.number = number
         self.setFont(QColor(), QFont.StyleNormal, 'Serif', 12)
@@ -348,60 +362,54 @@ class DrawingText(Drawing):
 # This could be also an abstract class for shapes
 class DrawingShape(Drawing):
 
-    PytellapicJoinsStyle = {
-        pytellapic.LINE_JOINS_MITER : Qt.MiterJoin,
-        pytellapic.LINE_JOINS_ROUND : Qt.RoundJoin,
-        pytellapic.LINE_JOINS_BEVEL : Qt.BevelJoin
-        }
-
-    PytellapicCapsStyle = {
-        pytellapic.END_CAPS_BUTT : Qt.FlatCap,
-        pytellapic.END_CAPS_ROUND : Qt.RoundCap,
-        pytellapic.END_CAPS_SQUARE : Qt.SquareCap
-        }
-
-     # Initiate properties default values
     def initialValues(self):
-        self._pen        = QPen(QColor(), 5)
-        self._brush      =  QBrush(QColor(0,0,0,255))
-        self._renderHint = QPainter.TextAntialiasing | QPainter.HighQualityAntialiasing
-        self._alpha      = 255
-        self._number     = 0
-        self._name       = 'No Name Yet'
-        self._x1 = self._x2 = self._y1 = self._y2 = 0
+        self.pen        = QPen(QColor(), 5)
+        self.brush      =  QBrush(QColor(0,0,0,255))
+        self.renderHint = QPainter.TextAntialiasing | QPainter.HighQualityAntialiasing
+        self.alpha      = 255
+        self.number     = 0
+        self.name       = 'No Name Yet'
+        self.x1 = self.x2 = self.y1 = self.y2 = 0
+        self.setFlag(QtGui.QGraphicsItem.ItemIsMovable, True)
+        self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable, True)
+        self.setFlag(QtGui.QGraphicsItem.ItemClipsToShape, True)
+        self.setFlag(QtGui.QGraphicsItem.ItemSendsScenePositionChanges, True)
+        self.setAcceptTouchEvents(True)
+        self.shouldFill = False
+        self.shouldStroke = True
 
     def __init__(self, number = None):
         super(DrawingShape, self).__init__()
+        print("DrawingShape constructor.")
         if number is not None:
             self.number = number
         self.shape = QPainterPath()
-        self.shouldFill = False
-        self.shouldStroke = True
         self.initialValues()
 
-    # Draws the shape
     def draw(self, painter):
         super(DrawingShape, self).draw(painter)
         painter.drawPath(self.shape)
     
-    # Sets the pen width
+    def setPen(self, pen):
+        self.pen = pen
+        self.update(self.boundingRect())
+
+    def setBrush(self, brush):
+        self.brush = brush
+        self.update(self.boundingRect())
+
     def setStrokeWidth(self, width):
         self.pen.setWidth(width)
         self.update(self.boundingRect())
 
-    # Sets how the strokes will be joined
     def setLineJoins(self, lj):
-        #print("Setting line joins to: ", lj)
         self.pen.setJoinStyle(self.PytellapicJoinsStyle[lj])
         self.update(self.boundingRect())
 
-    # Sets how the strokes will end
     def setEndCaps(self, ec):
-        #print("Setting end caps to: ", ec)
         self.pen.setCapStyle(self.PytellapicCapsStyle[ec])
         self.update(self.boundingRect())
 
-    # Sets the color of the stroke
     def setStrokeColor(self, color):
         self.pen.setColor(QColor(color.red(), color.green(), color.blue(), color.alpha()))
         self.update(self.boundingRect())
@@ -427,24 +435,8 @@ class DrawingShape(Drawing):
         self.shouldFill = enabled
         self.update(self.boundingRect())
 
-    def hasFontProperties(self):
-        return False
-
-    def hasStrokeStylesProperties(self):
-        return True
-
-    def hasStrokeColorProperties(self):
-        return True
-    
-    def hasFillColorProperties(self):
-        return True
-
-    def hasTransparentProperties(self):
-        return True
-
     def setBounds(self, x1, y1, x2, y2):
         super(DrawingShape, self).setBounds(x1, y1, x2, y2)
-
 
 
 # This class should be concrete. He knows exactly that it consists
@@ -454,14 +446,14 @@ class DrawingShapeRectangle(DrawingShape):
     # Calling the base class DrawingShpae constructor will
     # instantiates a QPainterPath() object: self.shape
     def __init__(self, number = None):
-        #super(DrawingShapeRectangle, self).__init__()
-        DrawingShape.__init__(self)
+        super(DrawingShapeRectangle, self).__init__()
+        print("DrawingShapeRectangle constructor.")
         self.setDefaultValues()
         self.name = "rectangle"
 
     def setDefaultValues(self):
-        self.pen.setCapStyle(self.PytellapicCapsStyle[pytellapic.END_CAPS_ROUND])
-        self.pen.setJoinStyle(self.PytellapicJoinsStyle[pytellapic.LINE_JOINS_MITER])
+        self.pen.setCapStyle(Qt.SquareCap)
+        self.pen.setJoinStyle(Qt.MiterJoin)
         self.pen.setStyle(Qt.SolidLine)
 
     # Every time setBounds is called, it will create a new QPainterPath() object
@@ -470,14 +462,13 @@ class DrawingShapeRectangle(DrawingShape):
         super(DrawingShapeRectangle, self).setBounds(x1, y1, x2, y2)
         if self.shape.isEmpty() is not True:
             self.shape = QPainterPath()
-        self.rect = QRectF(
+
+        rect = QRectF(
             x1 if x1-x2<=0 else x2,
             y1 if y1-y2<=0 else y2, 
             abs(x1-x2),
             abs(y1-y2))
-        self.shape.addRect(self.rect)
-
-
+        self.shape.addRect(rect)
 
 class DrawingShapeEllipse(DrawingShape):
     def __init__(self, drawing = None):
@@ -524,22 +515,24 @@ class DrawingShapeLine(DrawingShape):
         self.shape.lineTo(x2, y2)
         self.shape.closeSubpath()    
 
-
-class ToolModel(QObject):
+class ToolBoxModel(QObject):
     toolChanged = QtCore.pyqtSignal(QString)
 
     def __init__(self):
         QObject.__init__(self) 
-        #self.subscribers = []
+        self.initialValues()
         self.tools = []
         self.lastUsedTool = None
-        self.tools.append(DrawingShapeTool(ToolRectangle))
-        self.tools.append(DrawingShapeTool(ToolEllipse))
-        self.tools.append(DrawingShapeTool(ToolLine))
-        self.tools.append(DrawingShapeTool(ToolMarker))
-        self.tools.append(DrawingShapeTool(ToolPen))
-        self.tools.append(DrawingTextTool())
-        self.tools.append(ControlTool(ToolSelector))
+        self.tools.append(DrawingToolRectangle(self))
+ 
+    def initialValues(self):
+        self.shouldStroke = True
+        self.shouldFill   = False
+        self.fontPropertyEnabled = False
+        self.strokePropertyEnabled = False
+        self.fillPropertyEnabled = False
+        self.brush = QBrush(QColor(0, 0, 0, 0,))
+        self.pen = QPen(QColor(), 5, Qt.SolidLine, Qt.SquareCap, Qt.MiterJoin)
 
     def setTool(self, toolName):
         for tool in self.tools:
@@ -547,9 +540,14 @@ class ToolModel(QObject):
             if tool.name == toolName and self.lastUsedTool != tool:
                 print("set tool: ",toolName)
                 self.lastUsedTool = tool
-                #for member in self.subscribers:
-                    #QtGui.QApplication.postEvent(member, MyEvent(tool))
+                self.configureToolBox(tool)
                 self.emit(QtCore.SIGNAL("toolChanged(QString)"), toolName)
+
+    def configureToolBox(self, tool):
+        if tool.canDraw():
+            self.fontPropertyEnabled = tool.hasFontProperties()
+            self.strokePropertyEnabled = tool.hasStrokeStylesProperties()
+            self.fillPropertyEnabled = tool.hasFillColorProperties()
 
     def getLastUsedTool(self):
         return self.lastUsedTool
@@ -558,12 +556,43 @@ class ToolModel(QObject):
         for tool in self.tools:
             if tool.name == toolName:
                 return tool
-        
-    #def subscribe(self, o):
-    #    self.subscribers.append(o)
-        
-    #def unsubscribe(self, o):
-    #    self.subscribers.remove(o)
+
+    def setStrokeWidth(self, width):
+        self.pen.setWidth(width)
+
+    def setLineJoins(self, joins):
+        self.pen.setJoinStyle(joins)
+
+    def setEndCaps(self, caps):
+        self.pen.setCapStyle(caps)
+
+    def setStrokeColor(self, color):
+        self.pen.setColor(QColor(color.red(), color.green(), color.blue(), color.alpha()))
+
+    def setFillColor(self, color):
+        self.brush.setColor(QColor(color.red(), color.green(), color.blue(), color.alpha()))
+
+    def setMiterLimit(self, ml):
+        self.pen.setMiterLimit(ml)
+
+    def setDashStyle(self, phase, array):
+        self.pen.setDashOffset(phase)
+        self.pen.setDashPattern(array)
+
+    def setStrokeEnabled(self, enabled):
+        self.shouldStroke = enabled
+
+    def setFillEnabled(self, enabled):
+        self.shouldFill = enabled
+
+    def isFontPropertyEnabled(self):
+        return self.fontPropertyEnabled
+
+    def isStrokePropertyEnabled(self):
+        return self.strokePropertyEnabled
+
+    def isFillPropertyEnabled(self):
+        return self.fillPropertyEnabled
 
 class DrawingModel(object):
     def __init__(self):
@@ -600,47 +629,84 @@ class DrawingModel(object):
     def drawings(self):
         return self.drawingList
 
+class SelectedEffect(QtGui.QGraphicsDropShadowEffect):
+    def __init__(self, parent = None):
+        super(SelectedEffect, self).__init__(parent)
+        self.pen = QPen(QColor("yellow"), 1, Qt.DashLine, Qt.SquareCap, Qt.MiterJoin)
+        self.setBlurRadius(6)
+
+    def draw(self, painter):
+        super(SelectedEffect, self).draw(painter)
+        painter.setPen(self.pen)
+        rect = self.sourceBoundingRect()
+        painter.drawRect(rect.x()+1, rect.y()+1, rect.width()-1, rect.height()-1)
+
 class TellapicScene(QtGui.QGraphicsScene):
     drawingSelectionChanged = QtCore.pyqtSignal(QString)
 
     def __init__(self, model, parent = None):
         super(TellapicScene, self).__init__(parent)
         self.model = model
-        #self.model.subscribe(self)
         self.model.toolChanged.connect(self.update)
         self.tool = model.getLastUsedTool()
-        self.addPixmap(QtGui.QPixmap("bart.jpg"))
+        self.background = QtGui.QPixmap("bart.jpg")
         print("TellapicScene instantiated.")
         self.temporalItem = None
+        self.setSceneRect(0, 0, self.background.width(), self.background.height())
+        #self.setForegroundBrush(QBrush(Qt.lightGray, Qt.CrossPattern))
+        self.selectedEffect = SelectedEffect()
 
     def mousePressEvent(self, event):
         pos = event.scenePos()
         print("Mouse pressed on TellpicScene at: ", pos.x(), pos.y())
-        self.dragging = 1
-        if self.tool is not None:
-            self.tool.mousePressed(pos)
+        self.item = self.itemAt(pos)
+        self.clearSelection()
+        if self.item is not None:
+            print("item at ",pos," is ", self.item)
+            self.item.setSelected(True)
+            self.item.setGraphicsEffect(self.selectedEffect)
+            self.item.mousePressEvent(event)
+        else:
+            self.dragging = 1
+            if self.tool is not None:
+                self.tool.mousePressed(pos)
             #self.temporalItem = self.tool.drawing.item
-            self.addItem(self.tool.drawing)
+                self.addItem(self.tool.drawing)
 
     def mouseMoveEvent(self, event):
         pos = event.scenePos()
-        if self.dragging:
-            print("Mouse dragged on TellpicScene at: ", pos.x(), pos.y())
-            if self.tool is not None:
-                self.tool.mouseDragged(pos)
+        if self.item is not None:
+            self.item.mouseMoveEvent(event)
         else:
-            print("Mouse moved on TellpicScene at: ", pos.x(), pos.y())
-            if self.tool is not None:
-                self.tool.mouseMoved(pos)
+            if self.dragging:
+                print("Mouse dragged on TellpicScene at: ", pos.x(), pos.y())
+                if self.tool is not None:
+                    self.tool.mouseDragged(pos)
+                else:
+                    print("Mouse moved on TellpicScene at: ", pos.x(), pos.y())
+                    if self.tool is not None:
+                        self.tool.mouseMoved(pos)
 
     def mouseReleaseEvent(self, event):
         pos = event.scenePos()
-        print("Mouse released on TellpicScene at: ", pos.x(), pos.y())
-        self.dragging = 0
-        if self.tool is not None:
-            pass#drawing = self.tool.mouseReleased(pos)
-        print(self.items())
+        if self.item is not None:
+            print("Mouse released when item enabled on TellpicScene at: ", pos.x(), pos.y())
+            self.item.mouseReleaseEvent(event)
+        else:
+            print("Mouse released on TellpicScene at: ", pos.x(), pos.y())
+            self.dragging = 0
+            if self.tool is not None:
+                self.tool.mouseReleased(pos)
+                print(self.items())
 
     def update(self, toolName):
         self.tool = self.model.getToolByName(toolName)
+
+    def drawBackground(self, painter, rect):
+        r = rect.toRect()
+        painter.drawPixmap(r.x(), r.y(),
+                           self.background,
+                           r.x(), r.y(),
+                           self.background.width(), self.background.height()
+                           )
 
