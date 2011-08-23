@@ -17,13 +17,13 @@ class ToolBoxWidget(QtGui.QToolBox, Ui_ToolBox):
     UsersPage        = 5
     ChatPage         = 6
 
-    def __init__(self, model, parent = None):
+    def __init__(self, model, uman, parent = None):
         super(ToolBoxWidget, self).__init__(parent)
         self.setupUi(self)
         self.setCurrentIndex(0)
         self.actionCapSquare.toggled.connect(self.actionCapSquare_toggle)
-        self.actionCapRound.toggled.connect(self.actionCapSquare_toggle)
-        self.actionCapFlat.toggled.connect(self.actionCapSquare_toggle)
+        self.actionCapRound.toggled.connect(self.actionCapRound_toggle)
+        self.actionCapFlat.toggled.connect(self.actionCapFlat_toggle)
         self.actionJoinRound.toggled.connect(self.actionJoinRound_toggle)
         self.actionJoinBevel.toggled.connect(self.actionJoinBevel_toggle)
         self.actionJoinMiter.toggled.connect(self.actionJoinMiter_toggle)
@@ -47,7 +47,12 @@ class ToolBoxWidget(QtGui.QToolBox, Ui_ToolBox):
         self.currentTool = None
         style = QtGui.QStyleFactory.create("Plastique")
         self.setStyle(style)
-
+        self.treeView.setModel(uman.getModel())
+        self.treeView.setColumnWidth(0, 170)
+        self.treeView.setColumnWidth(1, 30)
+        self.treeView.setColumnWidth(2, 30)
+        self.treeView.setColumnWidth(3, 30)
+        
     def actionChangeCharCounter_trigger(self):
         doc    = self.textArea.document()
         chars  = doc.characterCount()
@@ -62,32 +67,32 @@ class ToolBoxWidget(QtGui.QToolBox, Ui_ToolBox):
     def actionCapSquare_toggle(self, toggled = None):
         if toggled:
             print("Setting caps to square cap.", toggled)
-            self.model.setEndCaps(pytellapic.END_CAPS_SQUARE)
+            self.model.setEndCaps(QtCore.Qt.SquareCap)
 
     def actionCapRound_toggle(self, toggled = None):
         if toggled:
             print("Setting caps to round cap.", toggled)
-            self.model.setEndCaps(pytellapic.END_CAPS_ROUND)
+            self.model.setEndCaps(QtCore.Qt.RoundCap)
 
     def actionCapFlat_toggle(self, toggled = None):
         if toggled:
             print("Setting caps to flat cap.", toggled)
-            self.model.setEndCaps(pytellapic.END_CAPS_BUTT)
+            self.model.setEndCaps(QtCore.Qt.FlatCap)
 
     def actionJoinRound_toggle(self, toggled = None):
         if toggled:
             print("Setting joins to round join.", toggled)
-            self.model.setLineJoins(pytellapic.LINE_JOINS_ROUND)
+            self.model.setLineJoins(QtCore.Qt.RoundJoin)
 
     def actionJoinBevel_toggle(self, toggled = None):
         if toggled:
             print("Settings joins to bevel join.", toggled)
-            self.model.setLineJoins(pytellapic.LINE_JOINS_BEVEL)
+            self.model.setLineJoins(QtCore.Qt.BevelJoin)
 
     def actionJoinMiter_toggle(self, toggled = None):
         if toggled:
             print("Setting joins to miter join.", toggled)
-            self.model.setLineJoins(pytellapic.LINE_JOINS_MITER)
+            self.model.setLineJoins(QtCore.Qt.MiterJoin)
 
     def actionShouldFill_toggle(self, toggled = None):
         self.model.setFillEnabled(toggled)
