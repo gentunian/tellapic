@@ -3,13 +3,32 @@
 
  @author: Sebastian Treu
 '''
-from PyQt4 import *
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-import abc
-import pytellapic
-#from Utils import MyEvent
 import sys
+import abc
+
+from PyQt4.QtCore import Qt
+from PyQt4.QtCore import SIGNAL
+from PyQt4.QtCore import QObject
+from PyQt4.QtCore import QRectF
+from PyQt4.QtCore import QPoint
+from PyQt4.QtCore import QPointF
+from PyQt4.QtCore import pyqtSignal
+from PyQt4.QtCore import QTimeLine
+
+from PyQt4.QtGui import QPainter
+from PyQt4.QtGui import QPainterPath
+from PyQt4.QtGui import QColor
+from PyQt4.QtGui import QPen
+from PyQt4.QtGui import QFont
+from PyQt4.QtGui import QGraphicsItem
+from PyQt4.QtGui import QGraphicsEllipseItem
+from PyQt4.QtGui import QGraphicsDropShadowEffect
+from PyQt4.QtGui import QGraphicsScene
+from PyQt4.QtGui import QGraphicsItemAnimation
+from PyQt4.QtGui import QPixmap
+
+import string
+
 try:
     from PyQt4.QtCore import QString
 except ImportError:
@@ -19,26 +38,75 @@ except ImportError:
 if not hasattr(sys, "hexversion") or sys.hexversion < 0x03000000:
     from nonconflict import classmaker
 
+import pytellapic
+from Utils import TellapicEvent
+from Utils import Enum
+
 ToolRectangle = "rectangle"
 ToolEllipse   = "ellipse"
 ToolLine      = "line"
 ToolSelector  = "selector"
 ToolMarker    = "marker"
 ToolPen       = "pen"
-PytellapicJoinsStyle = {
+PytellapicJoinsStyleMap = {
     Qt.MiterJoin : pytellapic.LINE_JOINS_MITER,
     Qt.RoundJoin : pytellapic.LINE_JOINS_ROUND,
     Qt.BevelJoin : pytellapic.LINE_JOINS_BEVEL
     }
-PytellapicCapsStyle = {
+PytellapicCapsStyleMap = {
     Qt.FlatCap   : pytellapic.END_CAPS_BUTT,
     Qt.RoundCap  : pytellapic.END_CAPS_ROUND,
     Qt.SquareCap : pytellapic.END_CAPS_SQUARE
     }
-PytellapicFontStyle = {
+PytellapicFontStyleMap = {
     QFont.StyleNormal : pytellapic.FONT_STYLE_NORMAL,
-    QFont.StyleItalic : pytellapic.FONT_STYLE_ITALIC
+    QFont.StyleItalic : pytellapic.FONT_STYLE_ITALIC,
+    QFont.Bold        : pytellapic.FONT_STYLE_BOLD,
+    QFont.Bold + QFont.StyleItalic : pytellapic.FONT_STYLE_BOLD_ITALIC
     }
+PytellapicControlByte = {
+    pytellapic.CTL_CL_BMSG     : 'CTL_CL_BMSG',
+    pytellapic.CTL_CL_PMSG     : 'CTL_CL_PMSG',
+    pytellapic.CTL_CL_FIG      : 'CTL_CL_FIG',
+    pytellapic.CTL_CL_DRW      : 'CTL_CL_DRW',
+    pytellapic.CTL_CL_CLIST    : 'CTL_CL_CLIST', 
+    pytellapic.CTL_CL_PWD      : 'CTL_CL_PWD',
+    pytellapic.CTL_CL_FILEASK  : 'CTL_CL_FILEASK',
+    pytellapic.CTL_CL_FILEOK   : 'CTL_CL_FILEOK', 
+    pytellapic.CTL_CL_DISC     : 'CTL_CL_DISC', 
+    pytellapic.CTL_CL_NAME     : 'CTL_CL_NAME',
+    pytellapic.CTL_SV_CLRM     : 'CTL_SV_CLRM',
+    pytellapic.CTL_SV_CLADD    : 'CTL_SV_CLADD',
+    pytellapic.CTL_SV_CLIST    : 'CTL_SV_CLIST',
+    pytellapic.CTL_SV_PWDASK   : 'CTL_SV_PWDASK',
+    pytellapic.CTL_SV_PWDOK    : 'CTL_SV_PWDOK',
+    pytellapic.CTL_SV_PWDFAIL  : 'CTL_SV_PWDFAIL',
+    pytellapic.CTL_SV_FILE     : 'CTL_SV_FILE', 
+    pytellapic.CTL_SV_ID       : 'CTL_SV_ID',
+    pytellapic.CTL_SV_NAMEINUSE: 'CTL_SV_NAMEINUSE',
+    pytellapic.CTL_SV_AUTHOK   : 'CTL_SV_AUTHOK',
+    pytellapic.CTL_FAIL        : 'CTL_FAIL'
+    }
+QtLineJoinsMap = {
+    pytellapic.LINE_JOINS_MITER : Qt.MiterJoin,
+    pytellapic.LINE_JOINS_BEVEL : Qt.BevelJoin,
+    pytellapic.LINE_JOINS_ROUND : Qt.RoundJoin
+    }
+QtEndCapsMap = {
+    pytellapic.END_CAPS_SQUARE : Qt.SquareCap,
+    pytellapic.END_CAPS_ROUND  : Qt.RoundCap,
+    pytellapic.END_CAPS_BUTT   : Qt.FlatCap
+}
+QtFontStyleMap = {
+    pytellapic.FONT_STYLE_NORMAL      : QFont.StyleNormal,
+    pytellapic.FONT_STYLE_ITALIC      : QFont.StyleItalic,
+    pytellapic.FONT_STYLE_BOLD_ITALIC : QFont.StyleItalic,
+    pytellapic.FONT_STYLE_BOLD        : QFont.StyleNormal
+}
+QtFontWeightMap = {
+    pytellapic.FONT_STYLE_BOLD        : QFont.Bold,
+    pytellapic.FONT_STYLE_BOLD_ITALIC : QFont.Bold
+}
 
 class Tool(object):
     """Tool abstract class.
@@ -88,7 +156,7 @@ class DrawingTool(Tool):
         return True
 
     @property
-    def drawing():
+    def drawing(self):
         return self._drawing
 
     @abc.abstractmethod
@@ -121,24 +189,31 @@ class DrawingToolRectangle(DrawingTool):
 
     # Delegate the mouse events from a QWidget to this tool
     def mousePressed(self, point):
-        self._drawing = DrawingShapeRectangle()
+        self._drawing = DrawingShapeRectangle.withModel(self.model)
+        '''
         self._drawing.setPen(self.model.pen)
         self._drawing.setBrush(self.model.brush)
         self._drawing.setStrokeEnabled(self.model.shouldStroke)
         self._drawing.setFillEnabled(self.model.shouldFill)
+        '''
         self._drawing.setBounds(point.x(), point.y(), point.x(), point.y())
 
     # Delegate the mouse events from a QWidget to this tool
     def mouseDragged(self, point):
-        self._drawing.setBounds(self._drawing.x1, self._drawing.y1, point.x(), point.y())
+        self._drawing.setBounds(self._drawing.point1()[0],
+                                self._drawing.point1()[1],
+                                point.x(),
+                                point.y()
+                                )
 
     def mouseMoved(self, point):
         pass
 
     # Delegate the mouse events from a QWidget to this tool
     def mouseReleased(self, point):
-        self._drawing.setPen(QPen(self.model.pen))
-        self._drawing.setBrush(QBrush(self.model.brush))
+        #self._drawing.setPen(QPen(self.model.pen))
+        #self._drawing.setBrush(QBrush(self.model.brush))
+        self._drawing.printComprehensiveDataInfo()
 
     @property
     def drawing(self):
@@ -170,33 +245,353 @@ class ControlTool(Tool):
     def drawing(self):
         return self._drawing
 
-class Drawing(QtGui.QGraphicsItem):
-    def __init__(self):
-        #QtGui.QGraphicsItem.__init__(self)
+class DrawingControlPoint(QGraphicsEllipseItem):
+    ControlPointType = Enum(["TOP_LEFT",
+                             "TOP_RIGHT",
+                             "BOTTOM_LEFT",
+                             "BOTTOM_RIGHT",
+                             "TOP",
+                             "BOTTOM",
+                             "LEFT",
+                             "RIGHT"
+                            ])
+    
+    __metaclass__ = abc.ABCMeta
+    
+    def __init__(self, parent):
+        super(DrawingControlPoint, self).__init__(parent)
+        self.setVisible(False)
+        self.setBrush(QColor("white"))
+        self.setAcceptHoverEvents(True)
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
+        self.setRect(-4, -4, 8, 8)
+
+    def controlPointType(self):
+        return self._type
+
+    def mousePressEvent(self, event):
+        print("press event: ",event.pos())
+        self.drag = 1
+
+    def mouseReleaseEvent(self, event):
+        self.drag = 0
+        print("release event: ",event.pos())
+        
+    def hoverEnterEvent(self, event):
+        self.setBrush(QColor("blue"))
+        self.setSelected(True)
+        self.setZValue(1)
+
+    def hoverLeaveEvent(self, event):
+        self.setBrush(QColor("white"))
+        self.setSelected(False)
+        self.setZValue(0)
+
+    def paint(self, painter, option, widget):
+        super(DrawingControlPoint, self).paint(painter, option, widget)
+        if self.isSelected():
+            painter.setPen(QColor("blue"))
+            painter.drawLine(0,-9000,0,9000)
+            painter.drawLine(-9000,0,9000,0)
+
+class DrawingControlPointTopLeft(DrawingControlPoint):
+    def __init__(self, parent):
+        super(DrawingControlPointTopLeft, self).__init__(parent)
+        self._type = self.ControlPointType.TOP_LEFT
+        self.setCursor(Qt.SizeFDiagCursor)
+
+    def updateLocation(self):
+        point = self.parentItem().boundingRect()
+        self.setPos(point.topLeft())
+
+    def mouseMoveEvent(self, event):
+        if self.drag:
+            print("drag event: ",event.pos())
+            point1 = self.parentItem().point1()
+            point2 = self.parentItem().point2()
+            self.parentItem().resize(point1[0]+event.pos().x(),
+                                     point1[1]+event.pos().y(),
+                                     point2[0],
+                                     point2[1],
+                                     )
+
+class DrawingControlPointTopRight(DrawingControlPoint):
+    def __init__(self, parent):
+        super(DrawingControlPointTopRight, self).__init__(parent)
+        self._type = self.ControlPointType.TOP_RIGHT
+        self.setCursor(Qt.SizeBDiagCursor)
+
+    def updateLocation(self):
+        point = self.parentItem().boundingRect()
+        self.setPos(point.topRight())
+
+    def mouseMoveEvent(self, event):
+        if self.drag:
+            print("drag event: ",event.pos())
+            point1 = self.parentItem().point1()
+            point2 = self.parentItem().point2()
+            self.parentItem().resize(point1[0],
+                                     point1[1]+event.pos().y(),
+                                     point2[0]+event.pos().x(),
+                                     point2[1]
+                                     )
+
+class DrawingControlPointBottomLeft(DrawingControlPoint):
+    def __init__(self, parent):
+        super(DrawingControlPointBottomLeft, self).__init__(parent)
+        self._type = self.ControlPointType.BOTTOM_LEFT
+        self.setCursor(Qt.SizeBDiagCursor)
+
+    def updateLocation(self):
+        point = self.parentItem().boundingRect()
+        self.setPos(point.bottomLeft())
+
+    def mouseMoveEvent(self, event):
+        if self.drag:
+            print("drag event: ",event.pos())
+            point1 = self.parentItem().point1()
+            point2 = self.parentItem().point2()
+            self.parentItem().resize(point1[0]+event.pos().x(),
+                                     point1[1],
+                                     point2[0],
+                                     point2[1]+event.pos().y(),
+                                     )
+
+class DrawingControlPointBottomRight(DrawingControlPoint):
+    def __init__(self, parent):
+        super(DrawingControlPointBottomRight, self).__init__(parent)
+        self._type = self.ControlPointType.BOTTOM_RIGHT
+        self.setCursor(Qt.SizeFDiagCursor)
+
+    def updateLocation(self):
+        point = self.parentItem().boundingRect()
+        self.setPos(point.bottomRight())
+
+    def mouseMoveEvent(self, event):
+        if self.drag:
+            print("drag event: ",event.pos())
+            point1 = self.parentItem().point1()
+            point2 = self.parentItem().point2()
+            self.parentItem().resize(point1[0],
+                                     point1[1],
+                                     point2[0]+event.pos().x(),
+                                     point2[1]+event.pos().y(),
+                                     )
+
+class DrawingControlPointTop(DrawingControlPoint):
+    def __init__(self, parent):
+        super(DrawingControlPointTop, self).__init__(parent)
+        self._type = self.ControlPointType.TOP
+        self.setCursor(Qt.SizeVerCursor)
+
+    def updateLocation(self):
+        point = self.parentItem().boundingRect()
+        self.setPos(point.center().x(), point.top())
+
+    def mouseMoveEvent(self, event):
+        if self.drag:
+            print("drag event: ",event.pos())
+            point1 = self.parentItem().point1()
+            point2 = self.parentItem().point2()
+            self.parentItem().resize(point1[0],
+                                     point1[1]+event.pos().y(),
+                                     point2[0],
+                                     point2[1],
+                                     )
+class DrawingControlPointBottom(DrawingControlPoint):
+    def __init__(self, parent):
+        super(DrawingControlPointBottom, self).__init__(parent)
+        self._type = self.ControlPointType.BOTTOM
+        self.setCursor(Qt.SizeVerCursor)
+
+    def updateLocation(self):
+        point = self.parentItem().boundingRect()
+        self.setPos(point.center().x(), point.bottom())
+
+    def mouseMoveEvent(self, event):
+        if self.drag:
+            print("drag event: ",event.pos())
+            point1 = self.parentItem().point1()
+            point2 = self.parentItem().point2()
+            self.parentItem().resize(point1[0],
+                                     point1[1],
+                                     point2[0],
+                                     point2[1]+event.pos().y(),
+                                     )
+
+class DrawingControlPointLeft(DrawingControlPoint):
+    def __init__(self, parent):
+        super(DrawingControlPointLeft, self).__init__(parent)
+        self._type = self.ControlPointType.LEFT
+        self.setCursor(Qt.SizeHorCursor)
+        
+    def updateLocation(self):
+        point = self.parentItem().boundingRect()
+        self.setPos(point.left(), point.center().y())
+
+    def mouseMoveEvent(self, event):
+        if self.drag:
+            print("drag event: ",event.pos())
+            point1 = self.parentItem().point1()
+            point2 = self.parentItem().point2()
+            self.parentItem().resize(point1[0]+event.pos().x(),
+                                     point1[1],
+                                     point2[0],
+                                     point2[1],
+                                     )
+
+class DrawingControlPointRight(DrawingControlPoint):
+    def __init__(self, parent):
+        super(DrawingControlPointRight, self).__init__(parent)
+        self._type = self.ControlPointType.RIGHT
+        self.setCursor(Qt.SizeHorCursor)
+        self.updateLocation()
+    
+    def updateLocation(self):
+        point = self.parentItem().boundingRect()
+        self.setPos(point.right(), point.center().y())
+
+    '''
+    def configureAnimation(self):
+        self.timeLine = QTimeLine(10000)
+        self.timeLine.setLoopCount(0)
+        self.animation = QGraphicsItemAnimation()
+        #for i in range(200):
+        #    self.animation.setScaleAt(i/400.0, 1 + (i/200.0), 1 + (i/200.0))
+        #for i in range(200,400):
+        #    self.animation.setScaleAt(i/400.0, 2 - (i/200.0), 2 - (i/200.0))
+        #self.animation.setScaleAt(0.0, 1, 1)
+        #self.animation.setScaleAt(0.5, 2, 2)
+        #self.animation.setScaleAt(1.0, 1, 1)
+        self.animation.setItem(self)
+        self.animation.setTimeLine(self.timeLine)
+    '''
+
+    def mouseMoveEvent(self, event):
+        if self.drag:
+            print("drag event: ",event.pos())
+            point1 = self.parentItem().point1()
+            point2 = self.parentItem().point2()
+            self.parentItem().resize(point1[0],
+                                     point1[1],
+                                     point2[0]+event.pos().x(),
+                                     point2[1],
+                                     )
+
+
+class Drawing(QGraphicsItem):
+    def __init__(self, ddata = None):
         super(Drawing, self).__init__()
-        print("Drawing constructor.")
+        print("Drawing constructor (",id(self)," ddata:",id(ddata))
+        self.bounds = QRectF()
+        self.controlPoints = []
+        if ddata is None:
+            self.ddata = pytellapic.ddata_t()
+            self.ddata.number = 0 #TODO: set as constant
+            self.setFillEnabled(False)
+            self.setStrokeEnabled(True)
+        else:
+            self.__initData(ddata)
         self.setActive(True)
         self.setEnabled(True)
         self.selectedStroke = QPen(QColor("yellow"), 1, Qt.DashLine, Qt.SquareCap, Qt.MiterJoin)
-        self.bounds = QRectF()
-        self.stream = pytellapic.stream_t()
+        self.setAcceptHoverEvents(True)
+        for type in DrawingControlPoint.ControlPointType:
+            className = "DrawingControlPoint"+string.capwords(type.replace("_", " ")).replace(" ", "")
+            print(className)
+            theClass = eval(className)(self)
+            self.controlPoints.append(theClass)
+
+    @classmethod
+    def withUser(cls, user):
+        obj = cls()
+        obj.setUser(user)
+        return obj
+
+    def __initData(self, ddata):
+        self.ddata = ddata
+        self.brush = self.getColorFromData(self.ddata.fillcolor)
+        self.pen   = QPen(QColor(), self.ddata.width)
+        # Always set fill enabled from incoming streams as they inform
+        # their no-fill with a transparent color. Avoid using 'if' cases
+        # and fill with a transparent color.
+        self.setFillEnabled(True)
+        self.setStrokeEnabled(True)
+        self.setBounds(self.ddata.point1.x,
+                       self.ddata.point1.y,
+                       self.ddata.point2.x,
+                       self.ddata.point2.y
+                       )
+        #self.setPos(abs(self.ddata.point1.x - self.ddata.point2.x)/2,
+        #            abs(self.ddata.point1.y - self.ddata.point2.y)/2
+        #            )
+
+    def setDrawingData(self, ddata):
+        self.__initData(ddata)
+        
+    def setDcbyte(self, dcbyte, dcbyte_ext):
+        self.ddata.dcbyte = dcbyte
+        self.ddata.dcbyte_ext = dcbyte_ext
+
+    def setNumber(self, number):
+        self.ddata.number = number
+
+    def setStrokeWidth(self, width):
+        self.ddata.width = width
+        self.pen.setWidth(width)
+        self.update(self.boundingRect())
+
+    def setOpacity(self, opacity):
+        self.ddata.opacity = opacity
+        #TODO
+
+    def setFillColor(self, color):
+        self.ddata.fillcolor.red   = color.red()
+        self.ddata.fillcolor.green = color.green()
+        self.ddata.fillcolor.blue  = color.blue()
+        self.ddata.fillcolor.alpha = color.alpha()
+        self.brush = QColor(color)#color.red(), color.green(), color.blue(), color.alpha())
+        self.update(self.boundingRect())
+
+    def setBrush(self, brush):
+        self.setFillColor(brush)
+        self.update(self.boundingRect())
 
     def setBounds(self, x1, y1, x2, y2):
-        self._x1 = x1
-        self._y1 = y1
-        self._x2 = x2
-        self._y2 = y2
-        offset = 0 if self.pen is None else self.pen.width()
-        self.bounds = QRectF(
-            (x1 if x1-x2<=0 else x2) - offset / 2,
-            (y1 if y1-y2<=0 else y2) - offset / 2, 
-            abs(x1-x2) + offset,
-            abs(y1-y2) + offset
-            )
+        self.ddata.point1.x = int(x1)
+        self.ddata.point1.y = int(y1)
+        self.ddata.point2.x = int(x2)
+        self.ddata.point2.y = int(y2)
+        self.setPos(self.ddata.point1.x + abs(self.ddata.point1.x - self.ddata.point2.x)/2,
+                    self.ddata.point1.y + abs(self.ddata.point1.y - self.ddata.point2.y)/2
+                    )
         self.prepareGeometryChange()
+        self.setBoundingRect(self.ddata.point1.x,
+                             self.ddata.point1.y,
+                             self.ddata.point2.x,
+                             self.ddata.point2.y
+                            )
+        for point in self.controlPoints:
+            point.updateLocation()
+
+    def setBoundingRect(self, x1, y1, x2, y2):
+        offset = 0 if self.pen is None else self.pen.width()
+        '''
+        self.bounds = QRectF((x1 if x1-x2<=0 else x2) - offset / 2,
+                             (y1 if y1-y2<=0 else y2) - offset / 2, 
+                             abs(x1-x2) + offset,
+                             abs(y1-y2) + offset
+                             )
+        '''
+        width  = abs(x1-x2)
+        height = abs(y1-y2)
+        self.bounds = QRectF(-width/2 - offset / 2,
+                             -height/2 - offset / 2, 
+                             width + offset,
+                             height + offset
+                             )
 
     def boundingRect(self):
-        offset = self.pen.width()/2
         return self.bounds
 
     def paint(self, painter, option, widget = None):
@@ -208,127 +603,150 @@ class Drawing(QtGui.QGraphicsItem):
             painter.setBrush(self.brush)
         else:
             painter.setBrush(QColor(0,0,0,0))
+        painter.setRenderHint(self.renderHint, True)
         painter.drawPath(self.shape)
+
+    def setStrokeEnabled(self, enabled):
+        self.shouldStroke = enabled
+        self.update(self.boundingRect())
+
+    def setFillEnabled(self, enabled):
+        self.shouldFill = enabled
+        self.update(self.boundingRect())
 
     @property
     def pen(self):
         return self._pen
 
+    @pen.setter
+    def pen(self, value):
+        self._pen = value
+
     @property
     def brush(self):
         return self._brush
-    
-    @property
-    def renderHint(self):
-        return self._renderHint
-
-    @property
-    def alpha(self):
-        return self._alpha
-
-    @property
-    def number(self):
-        return self._number
-
-    @property
-    def name(self):
-        return self._name
-    
-    @property
-    def x1(self):
-        return self._x1
-
-    @property
-    def x2(self):
-        return self._x2
-
-    @property
-    def y1(self):
-        return self._y1
-
-    @property
-    def y2(self):
-        return self._y2
-
-    @number.setter
-    def number(self, value):
-        self._number = value
-
-    @alpha.setter
-    def alpha(self, value):
-        self._alpha = value
-
-    @renderHint.setter
-    def renderHint(self, value):
-        self._renderHint = value
 
     @brush.setter
     def brush(self, value):
         self._brush = value
- 
-    @pen.setter
-    def pen(self, value):
-        self._pen = value
+    
+    @property
+    def name(self):
+        return self._name
     
     @name.setter
     def name(self, value):
         self._name = value
 
-    @x1.setter
-    def x1(self, value):
-        self._x1 = value
+    def setUser(self, user):
+        self.user = user
 
-    @x2.setter
-    def x2(self, value):
-        self._x2 = value
-        
-    @y1.setter
-    def y1(self, value):
-        self._y1 = value
+    def point1(self):
+        return (self.ddata.point1.x, self.ddata.point1.y)
 
-    @y2.setter
-    def y2(self, value):
-        self._y2 = value
+    def point2(self):
+        return (self.ddata.point2.x, self.ddata.point2.y)
+
+    def qtPoint1(self):
+        return QPoint(self.ddata.point1.x, self.ddata.point1.y)
+
+    def qtPoint2(self):
+        return QPoint(self.ddata.point2.x, self.ddata.point2.y)
+
+    def getColorFromData(self, tellapicColor):
+        return QColor(tellapicColor.red,
+                            tellapicColor.green,
+                            tellapicColor.blue,
+                            tellapicColor.alpha
+                            )
+
+    def hoverEnterEvent(self, event):
+        super(Drawing, self).hoverEnterEvent(event)
+        self.setCursor(Qt.OpenHandCursor)
+        for point in self.controlPoints:
+            point.setVisible(True)
+            
+    def hoverLeaveEvent(self, event):
+        super(Drawing, self).hoverEnterEvent(event)
+        for point in self.controlPoints:
+            point.setVisible(False)
         
+    def mousePressEvent(self, event):
+        super(Drawing, self).mousePressEvent(event)
+        self.drag = 1
+        self.setCursor(Qt.ClosedHandCursor)
+
+    def mouseMoveEvent(self, event):
+        super(Drawing, self).mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        super(Drawing, self).mouseReleaseEvent(event)
+        self.setCursor(Qt.OpenHandCursor)
+
 class DrawingText(Drawing):
-    # Some useful things for wrapping tellapic values to Qt values.
-
-    # Initiate properties default values
-    def initialValues(self):
-        self._pen        = QPen(QColor(), 0.1)
-        self._brush      = QBrush(QColor(0,0,0,0))
-        self._renderHint = QPainter.TextAntialiasing | QPainter.HighQualityAntialiasing
-        self._alpha      = 255
-        self._number     = 0
-        self._name       = 'No Name Yet'
-        self._x1 = self._x2 = self._y1 = self._y2 = 0
-
     # Instantiates the DrawingText with a specific number if provided
-    def __init__(self, number = None):
+    def __init__(self, ddata = None):
+        super(DrawingText, self).__init__(ddata)
         print("DrawingText constructor.")
-        if number is not None:
-            self.number = number
-        self.setFont(QColor(), QFont.StyleNormal, 'Serif', 12)
-        self.initialValues()
-
-    # Sets the font to be used to display the text
-    def setFont(self, color, style, face, size):
+        self.shape = QPainterPath()
         self.font = QFont()
-        self.font.setFamily(face)
+        if ddata is not None:
+            self.__initData(ddata)
+        else:
+            self.__defaultValues()
+        self.setAcceptTouchEvents(True)
+        self.renderHint = QPainter.TextAntialiasing
+        
+    @classmethod
+    def withUserAndStream(cls, user, stream):
+        drawing = cls(stream.data.drawing)
+        drawing.setUser(user)
+        return drawing
+
+    @classmethod
+    def withModel(cls, model):
+        drawing = cls()
+        
+        return drawing
+
+    def __initData(self, ddata):
+        self.pen = QPen(self.getColorFromData(self.ddata.type.text.color))
+        self.brush = self.getColorFromData(self.ddata.type.text.color)
+        self.font.setFamily(self.ddata.type.text.face)
+        self.font.setStyle(QtFontStyleMap[self.ddata.type.text.style])
         try:
-            fontStyle = self.PytellapicFontStyle[style]
-            self.font.setStyle(fontStyle)
+            weight = QtFontWeightMap[self.ddata.type.text.style]
         except:
-            self.font.setBold(True)
-            self.font.setItalic(style == pytellapic.FONT_STYLE_BOLD_ITALIC)
-        self.font.setPointSize(size)
-        self.brush = QColor(color.red(), color.green(), color.blue(), color.alpha())
+            weight = QFont.Normal
+        self.font.setWeight(weight)
+        self.font.setPointSize(self.ddata.width)
+        self.shouldFill = self.shouldStroke = True
+        self.text = self.ddata.type.text.info
+        self.setTextBounds(self.ddata.point1.x,
+                           self.ddata.point1.y,
+                           self.ddata.point2.x,
+                           self.ddata.point2.y
+                           )
+
+    def __defaultValues(self):
+        self.pen        = QPen(QColor())
+        self.brush      = QColor(0, 0, 0, 0)
+        self.name       = 'No Name Yet'
+        self.shouldFill = False
+        self.shouldStroke = True
+        
+    # Sets the font to be used to display the text
+    def setDrawingData(self, ddata):
+        super(DrawingText, self).setDrawingData(ddata)
+        self.__initData(ddata)
+        #self.brush = QColor(color.red(), color.green(), color.blue(), color.alpha())
 
     # Sets the text boundary.
-    def setBounds(self, x1, x2, y1, y2):
-        super(DrawingText, self).setBounds(x1, x2, y1, y2)
-        self.shape = QPainterPath()
-        self.shape.addText(x1, x2, self.font, self.text)
+    def setTextBounds(self, x1, y1, x2, y2):
+        super(DrawingText, self).setBounds(x1, y1, x2, y2)
+        if self.shape.isEmpty() is not True:
+            self.shape = QPainterPath()
+        self.shape.addText(x1, y1, self.font, self.text)
 
     @property
     def text(self):
@@ -339,151 +757,187 @@ class DrawingText(Drawing):
     def text(self, text):
         self._text = text
     
-    # Draws the text
-    def draw(self, painter):
-        supe(DrawingText, self).draw(painter)
-        painter.drawPath(self.shape)
-
-    def hasFontProperties(self):
-        return True
-
-    def hasStrokeStylesProperties(self):
-        return False
-
-    def hasStrokeColorProperties(self):
-        return False
-
-    def hasFillColorProperties(self):
-        return True
-
-    def hasTransparentProperties(self):
-        return True
-
 # This could be also an abstract class for shapes
 class DrawingShape(Drawing):
-
-    def initialValues(self):
-        self.pen        = QPen(QColor(), 5)
-        self.brush      =  QBrush(QColor(0,0,0,255))
-        self.renderHint = QPainter.TextAntialiasing | QPainter.HighQualityAntialiasing
-        self.alpha      = 255
-        self.number     = 0
-        self.name       = 'No Name Yet'
-        self.x1 = self.x2 = self.y1 = self.y2 = 0
-        self.setFlag(QtGui.QGraphicsItem.ItemIsMovable, True)
-        self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable, True)
-        self.setFlag(QtGui.QGraphicsItem.ItemClipsToShape, True)
-        self.setFlag(QtGui.QGraphicsItem.ItemSendsScenePositionChanges, True)
-        self.setAcceptTouchEvents(True)
-        self.shouldFill = False
-        self.shouldStroke = True
-
-    def __init__(self, number = None):
-        super(DrawingShape, self).__init__()
-        print("DrawingShape constructor.")
-        if number is not None:
-            self.number = number
+    def __init__(self, ddata = None):
+        super(DrawingShape, self).__init__(ddata)
+        print("DrawingShape constructor (",id(self)," ddata:",id(ddata))
+        # Instantiates the shape object that will be used to draw this object
         self.shape = QPainterPath()
-        self.initialValues()
+        if ddata is not None:
+            # Initiate this object values with the drawing data provided
+            self.__initData(ddata)
+        else:
+            # Sets default values for this object
+            self.__defaultValues()
+        self.__setItemFlags()
+        self.setAcceptTouchEvents(True)
+        #self.renderHint = QPainter.HighQualityAntialiasing
+        self.renderHint = QPainter.Antialiasing
+        
+    @classmethod
+    def withUserAndStream(cls, user, stream):
+        drawing = cls(stream.data.drawing)
+        drawing.setUser(user)
+        return drawing
 
-    def draw(self, painter):
-        super(DrawingShape, self).draw(painter)
-        painter.drawPath(self.shape)
+    @classmethod
+    def withModel(cls, model):
+        drawing = cls()
+        drawing.setPen(model.pen)
+        drawing.setBrush(model.brush)
+        drawing.setStrokeEnabled(model.shouldStroke)
+        drawing.setFillEnabled(model.shouldFill)
+        return drawing
     
+    def __defaultValues(self):
+        self.pen   = QPen()
+        self.brush = QColor()
+        self.name  = 'No Name Yet'
+        self.setStrokeWidth(5)
+        self.setFillColor(QColor(0, 0, 0, 0))
+        self.setStrokeColor(QColor())
+        self.setLineJoins(Qt.MiterJoin)
+        self.setEndCaps(Qt.SquareCap)
+        self.setMiterLimit(10)
+        self.setDashStyle(0, [1, 0, 1, 0])
+        self.setStrokeEnabled(True)
+        self.setFillEnabled(False)
+
+    def __setItemFlags(self):
+        self.setFlag(QGraphicsItem.ItemIsMovable, True)
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
+        self.setFlag(QGraphicsItem.ItemClipsToShape, True)
+        self.setFlag(QGraphicsItem.ItemSendsScenePositionChanges, True)
+        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
+
+    def __initData(self, ddata):
+        self.ddata = ddata
+        self.pen = QPen(self.getColorFromData(self.ddata.type.figure.color),
+                        self.ddata.width,
+                        Qt.CustomDashLine,
+                        QtEndCapsMap[self.ddata.type.figure.endcaps],
+                        QtLineJoinsMap[self.ddata.type.figure.linejoin]
+                        )
+        self.pen.setDashPattern(self.ddata.type.figure.dash_array)
+        self.pen.setDashOffset(self.ddata.type.figure.dash_phase)
+        self.pen.setMiterLimit(self.ddata.type.figure.miterlimit)
+        #self.brush = QColor(self.getColorFromData(self.ddata.fillcolor))
+        self.name = 'Who Knows'
+        self.shouldFill = self.shouldStroke = True
+        self.setShapeBounds(self.ddata.point1.x,
+                            self.ddata.point1.y,
+                            self.ddata.point2.x,
+                            self.ddata.point2.y
+                            )
+
+    def setDrawingData(self, ddata):
+        super(DrawingShape, self).setDrawingData(ddata)
+        self.__initData(ddata)
+        
     def setPen(self, pen):
-        self.pen = pen
-        self.update(self.boundingRect())
-
-    def setBrush(self, brush):
-        self.brush = brush
-        self.update(self.boundingRect())
-
-    def setStrokeWidth(self, width):
-        self.pen.setWidth(width)
-        self.update(self.boundingRect())
-
-    def setLineJoins(self, lj):
-        self.pen.setJoinStyle(self.PytellapicJoinsStyle[lj])
-        self.update(self.boundingRect())
-
-    def setEndCaps(self, ec):
-        self.pen.setCapStyle(self.PytellapicCapsStyle[ec])
+        self.setStrokeWidth(pen.width())
+        self.setLineJoins(pen.joinStyle())
+        self.setEndCaps(pen.capStyle())
+        self.setStrokeColor(pen.color())
         self.update(self.boundingRect())
 
     def setStrokeColor(self, color):
-        self.pen.setColor(QColor(color.red(), color.green(), color.blue(), color.alpha()))
+        self.ddata.type.figure.color.red   = color.red()
+        self.ddata.type.figure.color.green = color.green()
+        self.ddata.type.figure.color.blue  = color.blue()
+        self.ddata.type.figure.color.alpha = color.alpha()
+        self.pen.setColor(color)#QColor(color.red(), color.green(), color.blue(), color.alpha()))
         self.update(self.boundingRect())
 
-    def setFillColor(self, color):
-        self.brush.setColor(QColor(color.red(), color.green(), color.blue(), color.alpha()))
+    def setLineJoins(self, lj):
+        self.ddata.type.figure.linejoin = PytellapicJoinsStyleMap[lj]
+        self.pen.setJoinStyle(lj)
+        self.update(self.boundingRect())
+
+    def setEndCaps(self, ec):
+        self.ddata.type.figure.endcaps = PytellapicCapsStyleMap[ec]
+        self.pen.setCapStyle(ec)
         self.update(self.boundingRect())
 
     def setMiterLimit(self, ml):
+        self.ddata.type.figure.miterlimit = ml
         self.pen.setMiterLimit(ml)
         self.update(self.boundingRect())
 
     def setDashStyle(self, phase, array):
+        self.ddata.type.figure.dash_array = array
+        self.ddata.type.figure.dash_phase = phase
         self.pen.setDashOffset(phase)
         self.pen.setDashPattern(array)
         self.update(self.boundingRect())
 
-    def setStrokeEnabled(self, enabled):
-        self.shouldStroke = enabled
-        self.update(self.boundingRect())
-
-    def setFillEnabled(self, enabled):
-        self.shouldFill = enabled
-        self.update(self.boundingRect())
-
-    def setBounds(self, x1, y1, x2, y2):
+    def setShapeBounds(self, x1, y1, x2, y2):
         super(DrawingShape, self).setBounds(x1, y1, x2, y2)
+
+    def printComprehensiveDataInfo(self):
+        '''
+        print("+-------- stream info --------+")
+        print("+ endianness: {endian}".format(endian=self.stream.header.endian))
+        print("+ cbyte     : {cbyte}".format(cbyte=PytellapicControlByte[self.stream.header.cbyte]))
+        print("+ ssize     : {ssize}".format(ssize=self.stream.header.ssize))
+        '''
+        print("+ idfrom    : {idfrom}".format(idfrom=self.ddata.idfrom))
+        print("+ dcbyte    : {dcbyte}".format(dcbyte=self.ddata.dcbyte))
+        print("+ dcbyte ext: {dcbyteE}".format(dcbyteE=self.ddata.dcbyte_ext))
+        print("+ number    : {number}".format(number=self.ddata.number))
+        print("+ width     : {width}".format(width=self.ddata.width))
+        print("+ opacity   : {alpha}".format(alpha=self.ddata.opacity))
+        print("+ fillcolor : {fillcolor}{a}".format(fillcolor=self.brush.name(), a=hex(self.brush.alpha())[2:]))
+        print("+ point 1   : ({x1}, {y1})".format(x1=self.ddata.point1.x, y1=self.ddata.point1.y))
+        print("`·--+-------- figure info --------+")
+        print("    + color     : {color}{a}".format(color=self.pen.color().name(), a=hex(self.pen.color().alpha())[2:]))
+        print("    + point 2   : ({x2}, {y2})".format(x2=self.ddata.point2.x, y2=self.ddata.point2.y))
+        print("    + linejoin  : {lj}".format(lj=self.ddata.type.figure.linejoin))
+        print("    + endcaps   : {ec}".format(ec=self.ddata.type.figure.endcaps))
+        print("    + miterlimit: {ml}".format(ml=self.ddata.type.figure.miterlimit))
+        print("    + dash phase: {dp}".format(dp=self.ddata.type.figure.dash_phase))
+        print("    + dash array: {da}".format(da=self.ddata.type.figure.dash_array))
+        print("`·--+------------------------------+")
 
 
 # This class should be concrete. He knows exactly that it consists
 # of a shape as a rectangle.
 class DrawingShapeRectangle(DrawingShape):
-
     # Calling the base class DrawingShpae constructor will
     # instantiates a QPainterPath() object: self.shape
-    def __init__(self, number = None):
-        super(DrawingShapeRectangle, self).__init__()
-        print("DrawingShapeRectangle constructor.")
-        self.setDefaultValues()
+    def __init__(self, ddata = None):
+        super(DrawingShapeRectangle, self).__init__(ddata)
+        print("DrawingShapeRectangle constructor (",id(self),"). ddata:",id(ddata))
         self.name = "rectangle"
 
-    def setDefaultValues(self):
-        self.pen.setCapStyle(Qt.SquareCap)
-        self.pen.setJoinStyle(Qt.MiterJoin)
-        self.pen.setStyle(Qt.SolidLine)
-
-    # Every time setBounds is called, it will create a new QPainterPath() object
-    # This was written for simplicity.
-    def setBounds(self, x1, y1, x2, y2):
+    def setShapeBounds(self, x1, y1, x2, y2):
         super(DrawingShapeRectangle, self).setBounds(x1, y1, x2, y2)
         if self.shape.isEmpty() is not True:
             self.shape = QPainterPath()
-
+        '''
         rect = QRectF(
             x1 if x1-x2<=0 else x2,
             y1 if y1-y2<=0 else y2, 
             abs(x1-x2),
             abs(y1-y2))
+        '''
+        rect = QRectF(
+            -abs(x1-x2)/2,
+            -abs(y2-y1)/2,
+            abs(x1-x2),
+            abs(y1-y2))
         self.shape.addRect(rect)
+        
+    def resize(self, newX1, newY1, newX2, newY2):
+        self.setShapeBounds(newX1, newY1, newX2, newY2)
 
 class DrawingShapeEllipse(DrawingShape):
-    def __init__(self, drawing = None):
-        super(DrawingShapeEllipse, self).__init__()
-        self.setDefaultValues()
+    def __init__(self, ddata = None):
+        super(DrawingShapeEllipse, self).__init__(ddata)
         self.name = "ellipse"
 
-    def setDefaultValues(self):
-        self.pen.setCapStyle(self.PytellapicCapsStyle[pytellapic.END_CAPS_ROUND])
-        self.pen.setJoinStyle(self.PytellapicJoinsStyle[pytellapic.LINE_JOINS_MITER])
-        self.pen.setStyle(Qt.SolidLine)
-
-    # Every time setBounds is called, it will create a new QPainterPath() object
-    # This was written for simplicity.
-    def setBounds(self, x1, y1, x2, y2):
+    def setShapeBounds(self, x1, y1, x2, y2):
         super(DrawingShapeEllipse, self).setBounds(x1, y1, x2, y2)
         if self.shape.isEmpty() is not True:
             self.shape = QPainterPath()
@@ -494,20 +948,11 @@ class DrawingShapeEllipse(DrawingShape):
             abs(y1-y2))
         self.shape.addEllipse(self.rect)
 
-
 class DrawingShapeLine(DrawingShape):
-    def __init__(self, drawing = None):
-        super(DrawingShapeLine, self).__init__()
-        self.setDefaultValues()
+    def __init__(self, ddata = None):
+        super(DrawingShapeLine, self).__init__(ddata)
 
-    def setDefaultValues(self):
-        self.pen.setCapStyle(self.PytellapicCapsStyle[pytellapic.END_CAPS_SQUARE])
-        self.pen.setJoinStyle(self.PytellapicJoinsStyle[pytellapic.LINE_JOINS_MITER])
-        self.pen.setStyle(Qt.SolidLine)
-
-    # Every time setBounds is called, it will create a new QPainterPath() object
-    # This was written for simplicity.
-    def setBounds(self, x1, y1, x2, y2):
+    def setShapeBounds(self, x1, y1, x2, y2):
         super(DrawingShapeLine, self).setBounds( x1, y1, x2, y2)
         if self.shape.isEmpty() is not True:
             self.shape = QPainterPath()
@@ -516,7 +961,7 @@ class DrawingShapeLine(DrawingShape):
         self.shape.closeSubpath()    
 
 class ToolBoxModel(QObject):
-    toolChanged = QtCore.pyqtSignal(QString)
+    toolChanged = pyqtSignal(QString)
 
     def __init__(self):
         QObject.__init__(self) 
@@ -531,7 +976,7 @@ class ToolBoxModel(QObject):
         self.fontPropertyEnabled = False
         self.strokePropertyEnabled = False
         self.fillPropertyEnabled = False
-        self.brush = QBrush(QColor(0, 0, 0, 0,))
+        self.brush = QColor(0, 0, 0, 0,)
         self.pen = QPen(QColor(), 5, Qt.SolidLine, Qt.SquareCap, Qt.MiterJoin)
 
     def setTool(self, toolName):
@@ -541,7 +986,7 @@ class ToolBoxModel(QObject):
                 print("set tool: ",toolName)
                 self.lastUsedTool = tool
                 self.configureToolBox(tool)
-                self.emit(QtCore.SIGNAL("toolChanged(QString)"), toolName)
+                self.emit(SIGNAL("toolChanged(QString)"), toolName)
 
     def configureToolBox(self, tool):
         if tool.canDraw():
@@ -629,7 +1074,7 @@ class DrawingModel(object):
     def drawings(self):
         return self.drawingList
 
-class SelectedEffect(QtGui.QGraphicsDropShadowEffect):
+class SelectedEffect(QGraphicsDropShadowEffect):
     def __init__(self, parent = None):
         super(SelectedEffect, self).__init__(parent)
         self.pen = QPen(QColor("yellow"), 1, Qt.DashLine, Qt.SquareCap, Qt.MiterJoin)
@@ -641,21 +1086,20 @@ class SelectedEffect(QtGui.QGraphicsDropShadowEffect):
         rect = self.sourceBoundingRect()
         painter.drawRect(rect.x()+1, rect.y()+1, rect.width()-1, rect.height()-1)
 
-class TellapicScene(QtGui.QGraphicsScene):
-    drawingSelectionChanged = QtCore.pyqtSignal(QString)
+class TellapicScene(QGraphicsScene):
+    drawingSelectionChanged = pyqtSignal(QString)
 
     def __init__(self, model, parent = None):
         super(TellapicScene, self).__init__(parent)
         self.model = model
         self.model.toolChanged.connect(self.update)
         self.tool = model.getLastUsedTool()
-        self.background = QtGui.QPixmap("bart.jpg")
+        self.background = QPixmap("bart.jpg")
         print("TellapicScene instantiated.")
         self.temporalItem = None
-        self.setSceneRect(0, 0, self.background.width(), self.background.height())
         #self.setForegroundBrush(QBrush(Qt.lightGray, Qt.CrossPattern))
         self.selectedEffect = SelectedEffect()
-
+    '''
     def mousePressEvent(self, event):
         pos = event.scenePos()
         print("Mouse pressed on TellpicScene at: ", pos.x(), pos.y())
@@ -672,7 +1116,8 @@ class TellapicScene(QtGui.QGraphicsScene):
                 self.tool.mousePressed(pos)
             #self.temporalItem = self.tool.drawing.item
                 self.addItem(self.tool.drawing)
-
+        '''
+    '''
     def mouseMoveEvent(self, event):
         pos = event.scenePos()
         if self.item is not None:
@@ -686,7 +1131,9 @@ class TellapicScene(QtGui.QGraphicsScene):
                     print("Mouse moved on TellpicScene at: ", pos.x(), pos.y())
                     if self.tool is not None:
                         self.tool.mouseMoved(pos)
-
+        '''
+        
+    '''
     def mouseReleaseEvent(self, event):
         pos = event.scenePos()
         if self.item is not None:
@@ -698,7 +1145,8 @@ class TellapicScene(QtGui.QGraphicsScene):
             if self.tool is not None:
                 self.tool.mouseReleased(pos)
                 print(self.items())
-
+        '''
+        
     def update(self, toolName):
         self.tool = self.model.getToolByName(toolName)
 
@@ -710,3 +1158,111 @@ class TellapicScene(QtGui.QGraphicsScene):
                            self.background.width(), self.background.height()
                            )
 
+    def customEvent(self, event):
+        if event.type() == TellapicEvent.NewImageEvent:
+            self.setBackgroundImage(event.arg)
+
+        elif event.type() == TellapicEvent.NewFigureEvent:
+            #item = self.buildNewShape(self.__getDrawingDataFromStream(event.arg))
+            #print("item: ",item, "item.ddata: ",item.ddata)
+            #item.printComprehensiveDataInfo()
+            self.addItem(event.arg)
+
+        elif event.type() == TellapicEvent.UpdateEvent:
+            #shape = self.getDrawing(event.arg.data.drawing.number)
+            if event.arg is not None:
+                #self.editDrawingShape(shape, event.arg.data.drawing)
+                self.views()[0].repaint()
+            else:
+                print("Another user is currently editing a shape that he/she draw when you weren't on session.")
+
+    def getDrawing(self, number):
+        for item in self.items():
+            try:
+                print("processing shape ",id(item)," with ddata: ",id(item.ddata),"item.ddata.number:",item.ddata.number)
+                if item.ddata.number == number:
+                    return item
+            except:
+                print("Item is not a drawing item")
+        return None
+
+    def setBackgroundImage(self, fileName):
+        self.background = QPixmap(fileName)
+        self.setSceneRect(0, 0, self.background.width(), self.background.height())
+    '''
+    def __cloneDrawingDataFromStream(self, stream):
+        drawingData = pytellapic.ddata_t()
+        drawingData.idfrom = stream.data.drawing.idfrom
+        drawingData.dcbyte = stream.data.drawing.dcbyte
+        drawingData.dcbyte_ext = stream.data.drawing.dcbyte_ext
+        drawingData.number = stream.data.drawing.number
+        drawingData.width  = stream.data.drawing.width
+        drawingData.opacity = stream.data.drawing.opacity
+        drawingData.fillcolor = stream.data.drawing.fillcolor
+        drawingData.point1.x = stream.data.drawing.point1.x
+        drawingData.point1.y = stream.data.drawing.point1.y
+        drawingData.point2.x = stream.data.drawing.point2.x
+        drawingData.point2.y = stream.data.drawing.point2.y
+        if drawingData.dcbyte == pytellapic.TOOL_TEXT:
+            drawingData.type.text = pytellapic.text_t()
+            drawingData.type.text.color = stream.data.drawing.type.text.color
+            drawingData.type.text.face = stream.data.drawing.type.text.face
+            drawingData.type.text.facelen = stream.data.drawing.type.text.facelen
+            drawingData.type.text.info = stream.data.drawing.type.text.info
+            drawingData.type.text.infolen = stream.data.drawing.type.text.infolen
+            drawingData.type.text.style = stream.data.drawing.type.text.style
+        else:
+            drawingData.type.figure = pytellapic.figure_t()
+            drawingData.type.figure.color = stream.data.drawing.type.figure.color
+            drawingData.type.figure.dash_array = stream.data.drawing.type.figure.dash_array
+            drawingData.type.figure.dash_phase = stream.data.drawing.type.figure.dash_phase
+            drawingData.type.figure.endcaps = stream.data.drawing.type.figure.endcaps
+            drawingData.type.figure.linejoin = stream.data.drawing.type.figure.linejoin
+            drawingData.type.figure.miterlimit = stream.data.drawing.type.figure.miterlimit
+        return drawingData
+    
+    # Creates a new shape upon the stream received
+    def buildNewShape(self, drawingData):
+        #drawingDatab = stream.data.drawing
+        tool        = drawingData.dcbyte & pytellapic.TOOL_MASK
+
+        if (tool == pytellapic.TOOL_TEXT):
+            shape = DrawingText()
+            shape.setText(drawingData.type.text.info)
+            shape.setFont(drawingData.type.text.color, drawingData.type.text.style, drawingData.type.text.face, drawingData.width)
+        else:
+
+            #rectangle.setDashStyle(drawingData.type.figure.dash_phase, drawingData.type.figure.dash_array)
+            if (tool == pytellapic.TOOL_RECT):
+                shape = DrawingShapeRectangle(drawingData)
+            elif (tool == pytellapic.TOOL_ELLIPSE):
+                shape = DrawingShapeEllipse(drawingData)
+            else:
+                return None
+
+            # figure data is common for all drawings except Text
+            
+            shape.setStrokeColor(self.getColorFromStream(drawingData.type.figure.color))
+            shape.setLineJoins(QtLineJoins[drawingData.type.figure.linejoin])
+            shape.setEndCaps(QtEndCaps[drawingData.type.figure.endcaps])
+            shape.setMiterLimit(drawingData.type.figure.miterlimit)
+            shape.setStrokeWidth(drawingData.width)        
+
+        shape.setBounds(drawingData.point1.x, drawingData.point1.y, drawingData.type.figure.point2.x, drawingData.type.figure.point2.y)
+        shape.setFillColor(self.getColorFromStream(drawingData.fillcolor))
+        shape.setFillEnabled(True)
+        
+        return shape
+    '''
+    def editDrawingShape(self, drawingShape, drawingData):
+        #drawingShape.number = drawingData.number
+        drawingShape.setStrokeWidth(drawingData.width)
+        drawingShape.setFillColor(self.getColorFromStream(drawingData.fillcolor))
+        drawingShape.setStrokeColor(self.getColorFromStream(drawingData.type.figure.color))
+        drawingShape.setLineJoins(QtLineJoinsMap[drawingData.type.figure.linejoin])
+        drawingShape.setEndCaps(QtEndCapsMap[drawingData.type.figure.endcaps])
+        drawingShape.setMiterLimit(drawingData.type.figure.miterlimit)
+        drawingShape.setBounds(drawingData.point1.x, drawingData.point1.y, drawingData.type.figure.point2.x, drawingData.type.figure.point2.y)
+        drawingShape.setSelected(True)
+
+        
