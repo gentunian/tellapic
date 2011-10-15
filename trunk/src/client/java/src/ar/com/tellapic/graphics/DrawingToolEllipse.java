@@ -300,15 +300,7 @@ public class DrawingToolEllipse extends DrawingTool {
 				iwidth,
 				iheight
 		);
-
-//		IToolBoxState toolBoxState = user.getToolBoxModel();
-
-//		drawing.setPaintPropertyAlpha(toolBoxState.getOpacityProperty());
-//		drawing.setPaintPropertyColor(toolBoxState.getColorProperty());
-//		drawing.setPaintPropertyStroke(toolBoxState.getStrokeProperty());
-//		drawing.setRenderingHints(toolBoxState.getRenderingHints());
 		drawing.setUser(user);
-//		drawing.cloneProperties();
 		user.addDrawing(drawing);
 		setChanged();
 		notifyObservers(drawing);

@@ -95,8 +95,7 @@ typedef struct {
 
 
 typedef struct {
-  color_t        color;         /* byte 23  4 bytes on stream */
-  point_t        point2;        /* byte 27  4 bytes on stream */
+  color_t        color;         /* byte 27  4 bytes on stream */
   byte_t         linejoin;      /* byte 31  1 byte on stream */
   byte_t         endcaps;       /* byte 32  1 byte on stream */
   tellapic_float miterlimit;    /* byte 33  4 bytes on stream */
@@ -106,12 +105,12 @@ typedef struct {
 
 
 typedef struct {
-  color_t        color;                     /* byte 23 4 bytes on stream */
-  byte_t         style;                     /* byte 27 1 byte on stream */
-  byte_t         facelen;                   /* byte 28 1 byte on stream */
-  tellapic_u16_t infolen;                   /* byte 29 2 bytes on stream */
-  byte_t         face[MAX_FONTFACE_LEN];    /* byte 31 */
-  byte_t         info[MAX_TEXT_SIZE];       /* byte (31 + facelen) */ 
+  color_t        color;                     /* byte 27 4 bytes on stream */
+  byte_t         style;                     /* byte 31 1 byte on stream */
+  byte_t         facelen;                   /* byte 32 1 byte on stream */
+  tellapic_u16_t infolen;                   /* byte 33 2 bytes on stream */
+  byte_t         face[MAX_FONTFACE_LEN];    /* byte 35 */
+  byte_t         info[MAX_TEXT_SIZE];       /* byte [35+facelen] */ 
 } text_t;
 
 
@@ -123,7 +122,8 @@ typedef struct {
   tellapic_float             width;        /* byte 7    4 bytes on stream */
   tellapic_float             opacity;      /* byte 11   4 bytes on stream */
   color_t                    fillcolor;    /* byte 15   4 bytes on stream */
-  point_t                    point1;       /* byte 19   4 bytes on stream */
+  point_t                    point2;       /* byte 19   4 bytes on stream */
+  point_t                    point1;       /* byte 23   4 bytes on stream */
   union {
     figure_t                 figure;
     text_t                   text;         /* total: FONT_FACE_LEN + MAX_TEX_SIZE + 1 bytes on stream */

@@ -47,22 +47,6 @@ public class DrawingToolRectangle extends DrawingTool {
 		this("DrawingToolRectangle");
 	}
 
-//	/**
-//	 * 
-//	 * @return
-//	 */
-//	public Point2D getLastPoint() {
-//		return lastPoint;
-//	}
-//	
-//	/**
-//	 * 
-//	 * @return
-//	 */
-//	public Point2D getFirstPoint() {
-//		return firstPoint;
-//	}
-	
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.Tool#hasAlphaCapability()
 	 */
@@ -305,14 +289,7 @@ public class DrawingToolRectangle extends DrawingTool {
 				iW,
 				iH
 		);
-//		IToolBoxState toolBoxState = user.getToolBoxModel();
-//		
-//		drawing.setPaintPropertyAlpha(toolBoxState.getOpacityProperty());
-//		drawing.setPaintPropertyColor(toolBoxState.getColorProperty());
-//		drawing.setPaintPropertyStroke(toolBoxState.getStrokeProperty());
-//		drawing.setRenderingHints(toolBoxState.getRenderingHints());
 		drawing.setUser(user);
-//		drawing.cloneProperties();
 		user.addDrawing(drawing);
 		setChanged();
 		notifyObservers(drawing);

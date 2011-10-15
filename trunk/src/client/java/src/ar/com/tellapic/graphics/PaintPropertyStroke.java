@@ -57,7 +57,7 @@ public final class PaintPropertyStroke extends PaintProperty {
 		 * The distance value is used to index into the dash array.
 		 * The pen is opaque when its current cumulative distance maps to an even element of
 		 * the dash array and transparent otherwise. */
-		dash = new float[]{ 0, 0, 0, 0}; 
+		dash = new float[]{ 1, 0, 1, 0}; 
 	}
 	
 	/**

@@ -6,6 +6,7 @@
 #include <limits.h>
 #include <unistd.h>
 #include <math.h>
+#include <signal.h>
 #include "tellapic/tellapic.h"
 
 #define ARG_NUM 4
@@ -13,7 +14,7 @@
 #define PORT 2
 #define PWD  3
 #ifndef WIDTH
-#define WIDTH 5.0
+#define WIDTH 15.0
 #endif
 #ifndef OPACITY
 #define OPACITY 1.0
@@ -31,6 +32,8 @@
 #define DASHPHASE 1.0
 #endif
 
+int id = 0;
+tellapic_socket_t s;
 const char *TEST_PREFIX_NAME = "TEST";
 
 /**
@@ -51,17 +54,17 @@ usage()
  *
  */
 int
-send_pwd(tellapic_socket_t socket, char *pwd, int *id)
+send_pwd(char *pwd, int *id)
 {
   size_t   pwdlen  = strlen(pwd);
   stream_t stream;
   do {
 
     /* Send the session password */
-    tellapic_send_ctle(socket, 0, CTL_CL_PWD, pwdlen, pwd);
+    tellapic_send_ctle(s, 0, CTL_CL_PWD, pwdlen, pwd);
 
     /* Read server response */
-    stream = tellapic_read_stream_b(socket);
+    stream = tellapic_read_stream_b(s);
 
     if (stream.header.cbyte == CTL_FAIL)
       return AUTH_ERROR;
@@ -78,7 +81,7 @@ send_pwd(tellapic_socket_t socket, char *pwd, int *id)
  *
  */
 int
-send_name(tellapic_socket_t socket, char *name, int id)
+send_name(char *name, int id)
 {
   size_t   namelen = strlen(name);
   stream_t stream;
@@ -86,10 +89,10 @@ send_name(tellapic_socket_t socket, char *name, int id)
 
 
     /* Send the test name */
-    tellapic_send_ctle(socket, id, CTL_CL_NAME, namelen, name);
+    tellapic_send_ctle(s, id, CTL_CL_NAME, namelen, name);
 
     /* Read server response */
-    stream = tellapic_read_stream_b(socket);
+    stream = tellapic_read_stream_b(s);
 
     if (stream.header.cbyte == CTL_FAIL)
       return AUTH_ERROR;
@@ -104,7 +107,7 @@ send_name(tellapic_socket_t socket, char *name, int id)
  *
  */
 int
-do_auth(tellapic_socket_t socket, char *pwd)
+do_auth(char *pwd)
 {
   time_t   now     = time(NULL); 
   int      clid    = 0;
@@ -112,7 +115,7 @@ do_auth(tellapic_socket_t socket, char *pwd)
   char     name[255];
   stream_t stream;
 
-  result = send_pwd(socket, pwd, &clid);
+  result = send_pwd(pwd, &clid);
 
   if (result == CTL_SV_PWDFAIL)
     {
@@ -127,7 +130,7 @@ do_auth(tellapic_socket_t socket, char *pwd)
     }
 
   sprintf(name, "%s%ju", TEST_PREFIX_NAME, (uintmax_t)now);
-  result = send_name(socket, name, clid);
+  result = send_name( name, clid);
 
   if (result == CTL_SV_NAMEINUSE)
     {
@@ -141,7 +144,7 @@ do_auth(tellapic_socket_t socket, char *pwd)
       return result;
     }
 
-  stream = tellapic_read_stream_b(socket);
+  stream = tellapic_read_stream_b(s);
 
   if (stream.header.cbyte != CTL_SV_AUTHOK)
     return AUTH_ERROR;
@@ -154,8 +157,11 @@ do_auth(tellapic_socket_t socket, char *pwd)
  *
  */
 void
-do_parabol(tellapic_socket_t socket, int id, int h, int k, int p, int points)
+do_parabol(int id, int h, int k, int p, int points)
 {
+  if (h<0 || k<0 || p<0 || points<0)
+    return;
+  printf("Drawing parabol at vertex (%d,%d) in focus %d with %d points\n", h,k,p,points);
   int startx = 1;
   int starty = 1;
   float da[2];
@@ -163,18 +169,23 @@ do_parabol(tellapic_socket_t socket, int id, int h, int k, int p, int points)
   da[1] = 1.0;
   /* vertice */
   int c = 0;
-  tellapic_send_drw_init(socket, 
+  tellapic_send_drw_init(s, 
 			 TOOL_PATH | EVENT_PRESS, 
 			 0, 
 			 id, 
 			 0,
 			 WIDTH, 
 			 OPACITY, 
-			 200, 
-			 25, 
-			 255, 
+			 0,
+			 0,
+			 0,
+			 0,
 			 startx, 
 			 (pow(startx - h, 2) / (4*p)) + k, 
+			 200, 
+			 25, 
+			 255,
+			 255,
 			 startx,  /* not used here */
 			 starty,  /* not used here */
 			 LINEJOINS, 
@@ -183,19 +194,23 @@ do_parabol(tellapic_socket_t socket, int id, int h, int k, int p, int points)
 			 DASHPHASE, 
 			 da
 			 );
+
   while(c < points) 
     {
+      printf("\rPoint: %d", c);
+      fflush(stdout);
       /* Ecuacion de la parabola: (x-h)^2 = 4p(y-k) siendo (h, k) el vertice */
-      tellapic_send_drw_using(socket,
+      tellapic_send_drw_using(s,
 			      TOOL_PATH | EVENT_DRAG,
 			      0, 
 			      id, 
 			      0,
 			      WIDTH,
 			      OPACITY,
-			      200, 
-			      25, 
-			      255,
+			      0,
+			      0,
+			      0,
+			      0,
 			      startx,
 			      (pow(startx - h, 2) / (4*p)) + k
 			      );
@@ -203,26 +218,28 @@ do_parabol(tellapic_socket_t socket, int id, int h, int k, int p, int points)
       c++;
       usleep(10000);
     } 
-  tellapic_send_drw_using(socket,
+  tellapic_send_drw_using(s,
 			  TOOL_PATH | EVENT_RELEASE,
 			  0, 
 			  id, 
 			  0,
 			  WIDTH,
 			  OPACITY,
-			  200, 
-			  25, 
-			  255,
+			  0,
+			  0,
+			  0,
+			  0,
 			  startx,
 			  (pow(startx - h, 2) / (4*p)) + k
 			  );
+  printf("\nDrawing finished\n------------\n");
 }
 
 /**
  *
  */
 void
-do_sen(tellapic_socket_t socket, int id, int points)
+do_sen(int id, int points)
 {
   int startx = 1;
   int starty = 1;
@@ -231,18 +248,23 @@ do_sen(tellapic_socket_t socket, int id, int points)
   da[1] = 1.0;
   /* vertice */
   int c = 0;
-  tellapic_send_drw_init(socket, 
+  tellapic_send_drw_init(s, 
 			 TOOL_PATH | EVENT_PRESS, 
 			 0, 
 			 id, 
 			 0,
 			 WIDTH, 
 			 OPACITY, 
-			 200, 
-			 25, 
-			 255, 
+			 0,
+			 0,
+			 0,
+			 0,
 			 startx, 
 			 sin(startx)*10+50,
+			 200, 
+			 25, 
+			 255,
+			 255,
 			 startx,  /* not used here */
 			 starty,  /* not used here */
 			 LINEJOINS, 
@@ -254,16 +276,14 @@ do_sen(tellapic_socket_t socket, int id, int points)
   while(c < points) 
     {
       /* Ecuacion de la parabola: (x-h)^2 = 4p(y-k) siendo (h, k) el vertice */
-      tellapic_send_drw_using(socket,
+      tellapic_send_drw_using(s,
 			      TOOL_PATH | EVENT_DRAG,
 			      0, 
 			      id, 
 			      0,
 			      WIDTH,
 			      OPACITY,
-			      200, 
-			      25, 
-			      255,
+			      0,0,0,0,
 			      startx,
 			      sin(startx)*10+50
 			      );
@@ -271,28 +291,47 @@ do_sen(tellapic_socket_t socket, int id, int points)
       c++;
       usleep(10000);
     }
-  tellapic_send_drw_using(socket,
+  tellapic_send_drw_using(s,
 			  TOOL_PATH | EVENT_RELEASE,
 			  0, 
 			  id, 
 			  0,
 			  WIDTH,
 			  OPACITY,
-			  200, 
-			  25, 
-			  255,
+			  0,0,0,0,
 			  startx,
 			  sin(startx)
 			  );
 }
 
 
+
+void
+signal_handler(int sig) 
+{
+  switch(sig)
+    {
+    case SIGINT:
+      tellapic_send_ctl(s, id, CTL_CL_DISC);
+      tellapic_read_stream_b(s);
+      tellapic_close_socket(s);
+      printf("\nExiting\n");
+      exit(1);
+      break;
+    }
+}
+
 int
 main(int argc, char **argv)
 {
   stream_t file_stream;
-  tellapic_socket_t socket;
-  int id;
+  struct sigaction   sig_action;                                          /* signal handler for external signal management */
+
+  sig_action.sa_handler = signal_handler;
+  sigemptyset(&sig_action.sa_mask);
+  sig_action.sa_flags = SA_RESTART;
+  if ( sigaction(SIGINT, &sig_action, NULL) == -1)
+    printf("Could not install signal handler!\n");
   
   if (argc != ARG_NUM)
     {
@@ -301,31 +340,47 @@ main(int argc, char **argv)
     }
   
   /* Connect to tellapic server and receive a socket for future messaging */
-  socket = tellapic_connect_to(argv[HOST], argv[PORT]);
-  id = do_auth(socket, argv[PWD]);
+  s = tellapic_connect_to(argv[HOST], argv[PORT]);
+  id = do_auth(argv[PWD]);
   
   if (id < 0)
     {
       printf("Test failed when authing...\n");
       exit(1);
     }
+
+  printf("Connected to tellapic server!\n");
   
   /* We are authed, ask for file */
-  tellapic_send_ctl(socket, id, CTL_CL_FILEASK);
+  tellapic_send_ctl(s, id, CTL_CL_FILEASK);
   
-  /* file_stream = tellapic_read_stream_b(socket); */
-  /* if (file_stream.header.cbyte != CTL_SV_FILE) */
-  /*   { */
-  /*     printf("Not expected packet. Was %d\n", file_stream.header.cbyte); */
-  /*     exit(1); */
-  /*   } */
+   file_stream = tellapic_read_stream_b(s);
+   if (file_stream.header.cbyte != CTL_SV_FILE) 
+     {
+       printf("Not expected packet. Was %d\n", file_stream.header.cbyte);
+       exit(1);
+     } 
 
-  //  tellapic_free(&file_stream);
-  printf("Drawing parabol\n");
-  do_parabol(socket, id, 565, 329, 150, 1000);
+   tellapic_free(&file_stream);
+  char input[10];
+  int h = 0;
+  int k = 0;
+  int p = 0;
+  int points = 0;
+
+  while(points != -1 && h!=-1 && k!=-1 && p!=-1) {
+    printf("\nSet parabol vertex (h,k), focus (p) and number of points (points) to draw (-1 to exit): h,k,p,points: ");
+    fflush(stdout);
+    scanf("%d,%d,%d,%d", &h, &k, &p, &points);
+    getc(stdin);
+    do_parabol(id, h,k,p,points);
+
+  }
   /*printf("Drawing sin\n");
   do_sen(socket, id, 1000);
   */
-  tellapic_close_socket(socket);
+  tellapic_send_ctl(s, id, CTL_CL_DISC);
+  tellapic_read_stream_b(s);
+  tellapic_close_socket(s);
   return 0;
 }

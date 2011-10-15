@@ -52,6 +52,10 @@ public class DrawingShapeRectangle extends DrawingShape {
 		super(name, true, true, true);
 		if (user == null)
 			throw new IllegalArgumentException("user cannot be null.");
+		if (x < 0) x = 0;
+		if (y < 0) y = 0;
+		if (w < 0) w = -w;
+		if (h < 0) h = -h;
 		rectangle = new Rectangle2D.Double(x, y, w, h);
 		setShape(rectangle);
 		setUser(user);
@@ -130,6 +134,8 @@ public class DrawingShapeRectangle extends DrawingShape {
 	 * @param h
 	 */
 	public void setFrame(double x, double y, double w, double h) {
+		if (x<0 || y <0)
+			return;
 		rectangle.setFrame(x, y, w, h);
 		setShape(rectangle);
 	}
@@ -142,6 +148,8 @@ public class DrawingShapeRectangle extends DrawingShape {
 	 * @param h
 	 */
 	public void setRect(double x, double y, double w, double h) {
+		if (x<0 || y <0)
+			return;
 		rectangle.setRect(x, y, w, h);
 		setShape(rectangle);
 	}
@@ -152,6 +160,8 @@ public class DrawingShapeRectangle extends DrawingShape {
 	 * @param p2
 	 */
 	public void setRect(Point2D p1, Point2D p2) {
+		if (p1.getX()<0 || p1.getY() <0 || p2.getX()<0 || p2.getY()<0)
+			return;
 		rectangle.setFrameFromDiagonal(p1, p2);
 		setShape(rectangle);
 	}
@@ -207,14 +217,14 @@ public class DrawingShapeRectangle extends DrawingShape {
 					((Color) getPaintPropertyFill().getFillPaint()).getGreen(),
 					((Color) getPaintPropertyFill().getFillPaint()).getBlue(),
 					((Color) getPaintPropertyFill().getFillPaint()).getAlpha(),
+					(int)rectangle.getMaxX(),
+					(int)rectangle.getMaxY(),
 					(int)rectangle.getX(),
 					(int)rectangle.getY(),
 					getPaintPropertyStroke().getColor().getRed(),
 					getPaintPropertyStroke().getColor().getGreen(),
 					getPaintPropertyStroke().getColor().getBlue(),
 					getPaintPropertyStroke().getColor().getAlpha(),
-					(int)rectangle.getMaxX(),
-					(int)rectangle.getMaxY(),
 					getPaintPropertyStroke().getLineJoins().ordinal(),
 					getPaintPropertyStroke().getEndCaps().ordinal(),
 					getPaintPropertyStroke().getMiterLimit(),

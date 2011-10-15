@@ -183,6 +183,11 @@ _copy_text_data(byte_t *rawstream, text_t text)
   pointer = _copy_drawing_color(pointer, text.color);
   pointer = WriteByte(pointer, text.style);
   pointer = WriteByte(pointer, text.facelen);
+ #ifdef LITTLE_ENDIAN_VALUE
+  pointer = POSH_WriteU16ToLittle(pointer, text.infolen);
+#else
+  pointer = POSH_WriteU16ToBig(pointer, text.infolen);
+#endif
   pointer = WriteBytes(pointer, text.face, text.facelen);
   pointer = WriteBytes(pointer, text.info, text.infolen);
 
@@ -272,7 +277,7 @@ _copy_drawing_figure(byte_t *rawstream, figure_t figure)
   void *pointer = rawstream;
 
   pointer = _copy_drawing_color(pointer, figure.color);
-  pointer = _copy_drawing_point(pointer, figure.point2);
+  //pointer = _copy_drawing_point(pointer, figure.point2);
   pointer = WriteByte(pointer, figure.linejoin);
   pointer = WriteByte(pointer, figure.endcaps);
 #ifdef LITTLE_ENDIAN_VALUE
@@ -318,7 +323,7 @@ _copy_drawing(byte_t *rawstream, ddata_t drawing)
   pointer = POSH_WriteU32ToBig(pointer, drawing.opacity);  
 #endif
   pointer = _copy_drawing_color(pointer, drawing.fillcolor);
-  pointer = _copy_drawing_point(pointer, drawing.point1);
+  pointer = _copy_drawing_point(pointer, drawing.point2);
   
   return pointer;
 }
@@ -358,12 +363,15 @@ _copy_header_data(byte_t *rawheader, header_t header)
 static void *
 _copy_drawing_data(byte_t *rawstream, stream_t stream)
 {
-  int etype  = stream.data.drawing.dcbyte & EVENT_MASK;
-  int tool   = stream.data.drawing.dcbyte & TOOL_MASK;
-
-  /* Copy the data section fixed part */
+  int   etype   = stream.data.drawing.dcbyte & EVENT_MASK;
+  int   tool    = stream.data.drawing.dcbyte & TOOL_MASK;
   void *pointer = rawstream;
-  pointer = _copy_drawing(rawstream, stream.data.drawing);
+
+  /* Copy the data section fixed part until point2 */
+  pointer = _copy_drawing(pointer, stream.data.drawing);
+
+  /* We need to copy the last fixed part that is not shared within ddata */
+  pointer = _copy_drawing_point(pointer, stream.data.drawing.point1);
 
   if (etype == EVENT_NULL || etype == EVENT_PRESS) 
     {
@@ -412,6 +420,10 @@ _copy_drawing_init(byte_t *rawstream, stream_t stream)
   void *pointer = rawstream;
   
   pointer = _copy_drawing(pointer, stream.data.drawing);
+
+  /* We need to copy the last fixed part that is not shared within ddata */
+  pointer = _copy_drawing_point(pointer, stream.data.drawing.point1);
+
   pointer = _copy_drawing_figure(pointer, stream.data.drawing.type.figure);
   
   return pointer;
@@ -505,54 +517,12 @@ _read_data_dcbyte_ext(byte_t *data)
  *
  */
 static tellapic_u16_t
-_read_data_point1_x(byte_t *data)
+_read_data_point(byte_t *data, int index)
 {
 #ifdef LITTLE_ENDIAN_VALUE
-  return POSH_ReadU16FromLittle(data + DDATA_COORDX1_INDEX);
+  return POSH_ReadU16FromLittle(data + index);
 #else
-  return POSH_ReadU16FromBig(data + DDATA_COORDX1_INDEX);
-#endif
-}
-
-
-/**
- *
- */
-static tellapic_u16_t
-_read_data_point1_y(byte_t *data)
-{
-#ifdef LITTLE_ENDIAN_VALUE
-  return POSH_ReadU16FromLittle(data + DDATA_COORDY1_INDEX);
-#else
-  return POSH_ReadU16FromBig(data + DDATA_COORDY1_INDEX);
-#endif
-}
-
-
-/**
- *
- */
-static tellapic_u16_t
-_read_data_point2_x(byte_t *data)
-{
-#ifdef LITTLE_ENDIAN_VALUE
-  return POSH_ReadU16FromLittle(data + DDATA_COORDX2_INDEX);
-#else
-  return POSH_ReadU16FromBig(data + DDATA_COORDX2_INDEX);
-#endif
-}
-
-
-/**
- *
- */
-static tellapic_u16_t
-_read_data_point2_y(byte_t *data)
-{
-#ifdef LITTLE_ENDIAN_VALUE
-  return POSH_ReadU16FromLittle(data + DDATA_COORDY2_INDEX);
-#else
-  return POSH_ReadU16FromBig(data + DDATA_COORDY2_INDEX);
+  return POSH_ReadU16FromBig(data + index);
 #endif
 }
 
@@ -597,126 +567,6 @@ _read_data_opacity(byte_t *data)
   return POSH_ReadU32FromBig(data + DDATA_OPACITY_INDEX);
 #endif
 }
-
-
-/* /\** */
-/*  * */
-/*  *\/ */
-/* static byte_t */
-/* _read_data_stroke_color_red(byte_t *data) */
-/* { */
-/*   return data[DDATA_STROKE_COLOR_INDEX]; */
-/* } */
-
-
-/* /\** */
-/*  * */
-/*  *\/ */
-/* static byte_t */
-/* _read_data_stroke_color_green(byte_t *data) */
-/* { */
-/*   return data[DDATA_STROKE_COLOR_INDEX + 1]; */
-/* } */
-
-
-/* /\** */
-/*  * */
-/*  *\/ */
-/* static byte_t */
-/* _read_data_stroke_color_blue(byte_t *data) */
-/* { */
-/*   return data[DDATA_STROKE_COLOR_INDEX + 2]; */
-/* } */
-
-
-/* /\** */
-/*  * */
-/*  *\/ */
-/* static byte_t */
-/* _read_data_stroke_color_alpha(byte_t *data) */
-/* { */
-/*   return data[DDATA_STROKE_COLOR_INDEX + 3]; */
-/* } */
-
-
-/* /\** */
-/*  * */
-/*  *\/ */
-/* static byte_t */
-/* _read_data_fill_color_red(byte_t *data) */
-/* { */
-/*   return data[DDATA_FILL_COLOR_INDEX]; */
-/* } */
-
-
-/* /\** */
-/*  * */
-/*  *\/ */
-/* static byte_t */
-/* _read_data_fill_color_green(byte_t *data) */
-/* { */
-/*   return data[DDATA_FILL_COLOR_INDEX + 1]; */
-/* } */
-
-
-/* /\** */
-/*  * */
-/*  *\/ */
-/* static byte_t */
-/* _read_data_fill_color_blue(byte_t *data) */
-/* { */
-/*   return data[DDATA_FILL_COLOR_INDEX + 2]; */
-/* } */
-
-
-/* /\** */
-/*  * */
-/*  *\/ */
-/* static byte_t */
-/* _read_data_fill_color_alpha(byte_t *data) */
-/* { */
-/*   return data[DDATA_FILL_COLOR_INDEX + 3]; */
-/* } */
-
-
-/* /\** */
-/*  * */
-/*  *\/ */
-/* static byte_t */
-/* _read_data_text_color_red(byte_t *data) */
-/* { */
-/*   return data[DDATA_TEXT_COLOR_INDEX]; */
-/* } */
-
-
-/* /\** */
-/*  * */
-/*  *\/ */
-/* static byte_t */
-/* _read_data_text_color_green(byte_t *data) */
-/* { */
-/*   return data[DDATA_TEXT_COLOR_INDEX + 1]; */
-/* } */
-
-
-/* /\** */
-/*  * */
-/*  *\/ */
-/* static byte_t */
-/* _read_data_text_color_blue(byte_t *data) */
-/* { */
-/*   return data[DDATA_TEXT_COLOR_INDEX + 2]; */
-/* } */
-
-
-/* /\** */
-/*  * */
-/*  *\/ */
-/* static byte_t */
-/* _read_data_text_color_alpha(byte_t *data) */
-/* { */
-/*   return data[DDATA_TEXT_COLOR_INDEX + 3]; */
-/* } */
 
 
 /**
@@ -776,48 +626,6 @@ _read_data_dash_array(byte_t * data, int index)
   return POSH_ReadU32FromBig(data + DDATA_DASHARRAY_INDEX + 4*index);
 #endif
 }
-
-
-/* /\** */
-/*  * */
-/*  *\/ */
-/* static tellapic_float */
-/* _read_data_dash_array1(byte_t * data) */
-/* { */
-/* #ifdef LITTLE_ENDIAN_VALUE */
-/*   return POSH_ReadU32FromLittle(data + DDATA_DASHARRAY_INDEX + 4); */
-/* #else */
-/*   return POSH_ReadU32FromBig(data + DDATA_DASHARRAY_INDEX + 4); */
-/* #endif */
-/* } */
-
-
-/* /\** */
-/*  * */
-/*  *\/ */
-/* static tellapic_float */
-/* _read_data_dash_array2(byte_t * data) */
-/* { */
-/* #ifdef LITTLE_ENDIAN_VALUE */
-/*   return POSH_ReadU32FromLittle(data + DDATA_DASHARRAY_INDEX + 4); */
-/* #else */
-/*   return POSH_ReadU32FromBig(data + DDATA_DASHARRAY_INDEX + 4); */
-/* #endif */
-/* } */
-
-
-/* /\** */
-/*  * */
-/*  *\/ */
-/* static tellapic_float */
-/* _read_data_dash_array3(byte_t * data) */
-/* { */
-/* #ifdef LITTLE_ENDIAN_VALUE */
-/*   return POSH_ReadU32FromLittle(data + DDATA_DASHARRAY_INDEX + 4); */
-/* #else */
-/*   return POSH_ReadU32FromBig(data + DDATA_DASHARRAY_INDEX + 4); */
-/* #endif */
-/* } */
 
 
 /**
@@ -1047,8 +855,8 @@ _wrap_figure_data(stream_t *dest, byte_t *data)
   dest->data.drawing.width           = _read_data_width(data);  
   dest->data.drawing.opacity         = _read_data_opacity(data);
   dest->data.drawing.fillcolor       = _read_data_color_t(data, DDATA_FILL_COLOR_INDEX);
-  dest->data.drawing.point1.x        = _read_data_point1_x(data);
-  dest->data.drawing.point1.y        = _read_data_point1_y(data);
+  dest->data.drawing.point2.x        = _read_data_point(data, DDATA_COORDX2_INDEX); 
+  dest->data.drawing.point2.y        = _read_data_point(data, DDATA_COORDY2_INDEX); 
 
   /* We will use this to define what we need to copy upon the selected tool or event. */
   tool  = dest->data.drawing.dcbyte & TOOL_MASK;
@@ -1056,12 +864,14 @@ _wrap_figure_data(stream_t *dest, byte_t *data)
   
   if (etype == EVENT_NULL || etype == EVENT_PRESS) 
     {
+      dest->data.drawing.point1.x    = _read_data_point(data, DDATA_COORDX1_INDEX);
+      dest->data.drawing.point1.y    = _read_data_point(data, DDATA_COORDY1_INDEX);
+
       /* TOOL_TEXT has different data. */
       if (tool != TOOL_TEXT)
 	{
 	  dest->data.drawing.type.figure.color         = _read_data_color_t(data, DDATA_STROKE_COLOR_INDEX);
-	  dest->data.drawing.type.figure.point2.x      = _read_data_point2_x(data); 
-	  dest->data.drawing.type.figure.point2.y      = _read_data_point2_y(data); 
+
 	  dest->data.drawing.type.figure.miterlimit    = _read_data_miter_limit(data);
 	  dest->data.drawing.type.figure.dash_phase    = _read_data_dash_phase(data);
 	  dest->data.drawing.type.figure.dash_array[0] = _read_data_dash_array(data, 0);
@@ -1101,7 +911,7 @@ _wrap_figure_data(stream_t *dest, byte_t *data)
 	  else
 	    {
 	    }
-
+	  
 	  /* textsize = datasize - DDATA_FONTFACE_INDEX - dest->data.drawing.type.text.facelen ; */
 
 	  memcpy(dest->data.drawing.type.text.face, data + DDATA_FONTFACE_INDEX, dest->data.drawing.type.text.facelen);
@@ -1561,22 +1371,22 @@ tellapic_send(tellapic_socket_t socket, stream_t *stream)
   switch(cbyte)
     {
     case  CTL_CL_PMSG:
-      pointer = _copy_privchat_data(rawstream, stream->data.chat, stream->header.ssize);
+      pointer = _copy_privchat_data(pointer, stream->data.chat, stream->header.ssize);
       break;
 
     case CTL_CL_BMSG:
-      pointer = _copy_broadchat_data(rawstream, stream->data.chat, stream->header.ssize);
+      pointer = _copy_broadchat_data(pointer, stream->data.chat, stream->header.ssize);
       break;
 
     case CTL_CL_FIG:
-      pointer = _copy_drawing_data(rawstream, *stream);
+      pointer = _copy_drawing_data(pointer, *stream);
       break;
 
     case CTL_CL_DRW:
       if (stream->header.ssize == DRW_INIT_STREAM_SIZE)
-	pointer = _copy_drawing_init(rawstream, *stream);
+	pointer = _copy_drawing_init(pointer, *stream);
       else
-	pointer = _copy_drawing_using(rawstream, *stream);
+	pointer = _copy_drawing_using(pointer, *stream);
       break;
 
 
@@ -1586,13 +1396,13 @@ tellapic_send(tellapic_socket_t socket, stream_t *stream)
       break;
 
     case CTL_SV_FILE:
-      pointer = _copy_file_data(rawstream, stream->data.file, stream->header.ssize - HEADER_SIZE);
+      pointer = _copy_file_data(pointer, stream->data.file, stream->header.ssize - HEADER_SIZE);
       break;
 
     case CTL_CL_PWD:
     case CTL_SV_CLADD:
     case CTL_CL_NAME:
-      pointer = _copy_control_extended_data(rawstream, stream->data.control, stream->header.ssize - HEADER_SIZE -1);
+      pointer = _copy_control_extended_data(pointer, stream->data.control, stream->header.ssize - HEADER_SIZE -1);
       break;
       
     case CTL_CL_FILEASK:
@@ -1605,7 +1415,7 @@ tellapic_send(tellapic_socket_t socket, stream_t *stream)
     case CTL_SV_ID:
     case CTL_SV_NAMEINUSE:
     case CTL_SV_AUTHOK:
-      pointer = _copy_control_data(rawstream, stream->data.control);
+      pointer = _copy_control_data(pointer, stream->data.control);
       break;
 
     default:
@@ -1651,250 +1461,250 @@ tellapic_send_file(tellapic_socket_t socket, FILE *file, tellapic_u32_t filesize
 }
 
 
-/**
- *
- */
-POSH_PUBLIC_API(long)
-tellapic_send_struct(tellapic_socket_t socket, stream_t *stream)
-{
-  long       result = 0;
-  unsigned int  textlen = 0;
+/* /\** */
+/*  * */
+/*  *\/ */
+/* POSH_PUBLIC_API(long) */
+/* tellapic_send_struct(tellapic_socket_t socket, stream_t *stream) */
+/* { */
+/*   long       result = 0; */
+/*   unsigned int  textlen = 0; */
   
-  /* If stream was a broadcast chat message */
-  if (tellapic_ischatb(&(stream->header)))
-    {
-      for (textlen = 0; textlen < MAX_TEXT_SIZE && stream->data.chat.type.broadmsg[textlen] != '\0'; textlen++);
-      result  = tellapic_send_chatb(
-				    socket,
-				    stream->data.chat.idfrom,
-				    textlen,
-				    (char *)stream->data.chat.type.broadmsg
-				    );
-    }
+/*   /\* If stream was a broadcast chat message *\/ */
+/*   if (tellapic_ischatb(&(stream->header))) */
+/*     { */
+/*       for (textlen = 0; textlen < MAX_TEXT_SIZE && stream->data.chat.type.broadmsg[textlen] != '\0'; textlen++); */
+/*       result  = tellapic_send_chatb( */
+/* 				    socket, */
+/* 				    stream->data.chat.idfrom, */
+/* 				    textlen, */
+/* 				    (char *)stream->data.chat.type.broadmsg */
+/* 				    ); */
+/*     } */
 
 
 
-  /* If stream was a private chat message */
-  else if (tellapic_ischatp(&(stream->header)))
-    {
-      for (textlen = 0; textlen < MAX_TEXT_SIZE && stream->data.chat.type.privmsg.text[textlen] != '\0'; textlen++);
-      result  = tellapic_send_chatp(
-				    socket,
-				    stream->data.chat.idfrom,
-				    stream->data.chat.type.privmsg.idto,
-				    textlen,
-				    (char *)stream->data.chat.type.privmsg.text
-				    );
-    }
+/*   /\* If stream was a private chat message *\/ */
+/*   else if (tellapic_ischatp(&(stream->header))) */
+/*     { */
+/*       for (textlen = 0; textlen < MAX_TEXT_SIZE && stream->data.chat.type.privmsg.text[textlen] != '\0'; textlen++); */
+/*       result  = tellapic_send_chatp( */
+/* 				    socket, */
+/* 				    stream->data.chat.idfrom, */
+/* 				    stream->data.chat.type.privmsg.idto, */
+/* 				    textlen, */
+/* 				    (char *)stream->data.chat.type.privmsg.text */
+/* 				    ); */
+/*     } */
 
 
-  /* If stream was a control message */
-  else if (tellapic_isctl(&(stream->header)))
-    {
-      result = tellapic_send_ctl(
-				 socket,
-				 stream->data.control.idfrom,
-				 stream->header.cbyte
-				 );
+/*   /\* If stream was a control message *\/ */
+/*   else if (tellapic_isctl(&(stream->header))) */
+/*     { */
+/*       result = tellapic_send_ctl( */
+/* 				 socket, */
+/* 				 stream->data.control.idfrom, */
+/* 				 stream->header.cbyte */
+/* 				 ); */
 				 
-    }
+/*     } */
 
 
-  /* If stream was an extended control message */
-  else if (tellapic_isctle(&(stream->header)))
-    {
-      for (textlen = 0; textlen < MAX_INFO_SIZE && stream->data.control.info[textlen] != '\0'; textlen++);
-      result = tellapic_send_ctle(
-				  socket,
-				  stream->data.control.idfrom,
-				  stream->header.cbyte,
-				  textlen,
-				  (char *)stream->data.control.info
-				  );
-    }
+/*   /\* If stream was an extended control message *\/ */
+/*   else if (tellapic_isctle(&(stream->header))) */
+/*     { */
+/*       for (textlen = 0; textlen < MAX_INFO_SIZE && stream->data.control.info[textlen] != '\0'; textlen++); */
+/*       result = tellapic_send_ctle( */
+/* 				  socket, */
+/* 				  stream->data.control.idfrom, */
+/* 				  stream->header.cbyte, */
+/* 				  textlen, */
+/* 				  (char *)stream->data.control.info */
+/* 				  ); */
+/*     } */
 
 
-  /* If stream was a file message */
-  else if (tellapic_isfile(&(stream->header)))
-    {
-    }
-
-
-
-  /* If stream was a drawing message */
-  else if (tellapic_isdrw(&(stream->header)))
-    {
-      if ( (stream->data.drawing.dcbyte & EVENT_PRESS) == EVENT_PRESS)
-	{
-	  float dash_array[4];
-#         ifdef LITTLE_ENDIAN_VALUE
-	  dash_array[0] = POSH_FloatFromLittleBits(stream->data.drawing.type.figure.dash_array[0]);
-	  dash_array[1] = POSH_FloatFromLittleBits(stream->data.drawing.type.figure.dash_array[1]);
-	  dash_array[2] = POSH_FloatFromLittleBits(stream->data.drawing.type.figure.dash_array[2]);
-	  dash_array[3] = POSH_FloatFromLittleBits(stream->data.drawing.type.figure.dash_array[3]);
-#         else
-	  dash_array[0] = POSH_FloatFromBigBits(stream->data.drawing.type.figure.dash_array[0]);
-	  dash_array[1] = POSH_FloatFromBigBits(stream->data.drawing.type.figure.dash_array[1]);
-	  dash_array[3] = POSH_FloatFromBigBits(stream->data.drawing.type.figure.dash_array[2]);
-	  dash_array[4] = POSH_FloatFromBigBits(stream->data.drawing.type.figure.dash_array[3];)
-#         endif
-	  result = tellapic_send_drw_init(
-					  socket,
-					  stream->data.drawing.dcbyte,
-					  stream->data.drawing.dcbyte_ext,
-					  stream->data.drawing.idfrom,
-#                                         ifdef LITTLE_ENDIAN_VALUE
-					  POSH_LittleU32(stream->data.drawing.number),
-					  POSH_FloatFromLittleBits(stream->data.drawing.width),
-					  POSH_FloatFromLittleBits(stream->data.drawing.opacity),
-#                                         else
-					  POSH_BigU32(stream->data.drawing.number),
-					  POSH_FloatFromBigBits(stream->data.drawing.width),
-					  POSH_FloatFromBigBits(stream->data.drawing.opacity),
-#                                         endif
-					  stream->data.drawing.fillcolor.red,
-					  stream->data.drawing.fillcolor.green,
-					  stream->data.drawing.fillcolor.blue,
-					  stream->data.drawing.fillcolor.alpha,
-					  stream->data.drawing.point1.x,
-					  stream->data.drawing.point1.y,
-					  stream->data.drawing.type.figure.color.red,
-					  stream->data.drawing.type.figure.color.green,
-					  stream->data.drawing.type.figure.color.blue,
-					  stream->data.drawing.type.figure.color.alpha,
-					  stream->data.drawing.type.figure.point2.x,
-					  stream->data.drawing.type.figure.point2.y,
-					  stream->data.drawing.type.figure.linejoin,
-					  stream->data.drawing.type.figure.endcaps,
-#                                         ifdef LITTLE_ENDIAN_VALUE
-					  POSH_FloatFromLittleBits(stream->data.drawing.type.figure.miterlimit),
-					  POSH_FloatFromLittleBits(stream->data.drawing.type.figure.dash_phase),
-#                                         else
-					  POSH_FloatFromBigBits(stream->data.drawing.type.figure.miterlimit),
-					  POSH_FloatFromBigBits(stream->data.drawing.type.figure.dash_phase),
-#                                         endif
-					  dash_array
-					  );
-	}
-      else
-	{
-	  result = tellapic_send_drw_using(
-					   socket,
-					   stream->data.drawing.dcbyte,
-					   stream->data.drawing.dcbyte_ext,
-					   stream->data.drawing.idfrom,
-#                                          ifdef LITTLE_ENDIAN_VALUE
-					   POSH_LittleU32(stream->data.drawing.number),
-					   POSH_FloatFromLittleBits(stream->data.drawing.width),
-					   POSH_FloatFromLittleBits(stream->data.drawing.opacity),
-#                                          else
-					   POSH_BigU32(stream->data.drawing.number),
-					   POSH_FloatFromBigBits(stream->data.drawing.width),
-					   POSH_FloatFromBigBits(stream->data.drawing.opacity),
-#                                          endif
-					   stream->data.drawing.fillcolor.red,
-					   stream->data.drawing.fillcolor.green,
-					   stream->data.drawing.fillcolor.blue,
-					   stream->data.drawing.fillcolor.alpha,
-					   stream->data.drawing.point1.x,
-					   stream->data.drawing.point1.y
-					   );
-	}
-    }
+/*   /\* If stream was a file message *\/ */
+/*   else if (tellapic_isfile(&(stream->header))) */
+/*     { */
+/*     } */
 
 
 
-  /* If stream was a figure message */
-  else if (tellapic_isfig(&(stream->header)))
-    {
-      if (tellapic_isfigtxt(stream))
-	{
-	  result = tellapic_send_text(
-				      socket,
-				      stream->data.drawing.dcbyte,
-				      stream->data.drawing.idfrom,
-#                                     ifdef LITTLE_ENDIAN_VALUE 
-				      POSH_LittleU32(stream->data.drawing.number),
-				      POSH_FloatFromLittleBits(stream->data.drawing.width),
-				      POSH_FloatFromLittleBits(stream->data.drawing.opacity),
-#                                     else 
-				      POSH_BigU32(stream->data.drawing.number),
-				      POSH_FloatFromBigBits(stream->data.drawing.width),
-				      POSH_FloatFromBigBits(stream->data.drawing.opacity),
-#                                     endif
-				      stream->data.drawing.fillcolor.red,
-				      stream->data.drawing.fillcolor.green,
-				      stream->data.drawing.fillcolor.blue,
-				      stream->data.drawing.fillcolor.alpha,
-				      stream->data.drawing.point1.x,
-				      stream->data.drawing.point1.y,
-				      stream->data.drawing.type.text.color.red,
-				      stream->data.drawing.type.text.color.green,
-				      stream->data.drawing.type.text.color.blue,
-				      stream->data.drawing.type.text.color.alpha,
-				      stream->data.drawing.type.text.style,
-				      stream->data.drawing.type.text.facelen,
-				      (char *)stream->data.drawing.type.text.face,
-				      stream->data.drawing.type.text.infolen,
-				      (char *)stream->data.drawing.type.text.info
-				      );
-	}
-      else
-	{
-	  float dash_array[4];
-#         ifdef LITTLE_ENDIAN_VALUE
-	  dash_array[0] = POSH_FloatFromLittleBits(stream->data.drawing.type.figure.dash_array[0]);
-	  dash_array[1] = POSH_FloatFromLittleBits(stream->data.drawing.type.figure.dash_array[1]);
-	  dash_array[2] = POSH_FloatFromLittleBits(stream->data.drawing.type.figure.dash_array[2]);
-	  dash_array[3] = POSH_FloatFromLittleBits(stream->data.drawing.type.figure.dash_array[3]);
-#         else
-	  dash_array[0] = POSH_FloatFromBigBits(stream->data.drawing.type.figure.dash_array[0]);
-	  dash_array[1] = POSH_FloatFromBigBits(stream->data.drawing.type.figure.dash_array[1]);
-	  dash_array[2] = POSH_FloatFromBigBits(stream->data.drawing.type.figure.dash_array[2]);
-	  dash_array[3] = POSH_FloatFromBigBits(stream->data.drawing.type.figure.dash_array[3]);
-#         endif 
-	  result = tellapic_send_fig(
-				     socket,
-				     stream->data.drawing.dcbyte,
-				     stream->data.drawing.dcbyte_ext,
-				     stream->data.drawing.idfrom,
-#                                ifdef LITTLE_ENDIAN_VALUE 
-				     POSH_LittleU32(stream->data.drawing.number),
-				     POSH_FloatFromLittleBits(stream->data.drawing.width),
-				     POSH_FloatFromLittleBits(stream->data.drawing.opacity),
-#                                else 
-				     POSH_BigU32(stream->data.drawing.number),
-				     POSH_FloatFromBigBits(stream->data.drawing.width),
-				     POSH_FloatFromBigBits(stream->data.drawing.opacity),
-#                                endif
-				     stream->data.drawing.fillcolor.red,
-				     stream->data.drawing.fillcolor.green,
-				     stream->data.drawing.fillcolor.blue,
-				     stream->data.drawing.fillcolor.alpha,
-				     stream->data.drawing.point1.x,
-				     stream->data.drawing.point1.y,
-				     stream->data.drawing.type.figure.color.red,
-				     stream->data.drawing.type.figure.color.green,
-				     stream->data.drawing.type.figure.color.blue,
-				     stream->data.drawing.type.figure.color.alpha,
-				     stream->data.drawing.type.figure.point2.x,
-				     stream->data.drawing.type.figure.point2.y,
-				     stream->data.drawing.type.figure.linejoin,
-				     stream->data.drawing.type.figure.endcaps,
-#                                ifdef LITTLE_ENDIAN_VALUE 
-				     POSH_FloatFromLittleBits(stream->data.drawing.type.figure.miterlimit),
-				     POSH_FloatFromLittleBits(stream->data.drawing.type.figure.dash_phase),
-#                                else
-				     POSH_FloatFromBigBits(stream->data.drawing.type.figure.miterlimit),
-				     POSH_FloatFromBigBits(stream->data.drawing.type.figure.dash_phase),
-#                                endif
-				     dash_array
-				     ); 
-	}
-    }
+/*   /\* If stream was a drawing message *\/ */
+/*   else if (tellapic_isdrw(&(stream->header))) */
+/*     { */
+/*       if ( (stream->data.drawing.dcbyte & EVENT_PRESS) == EVENT_PRESS) */
+/* 	{ */
+/* 	  float dash_array[4]; */
+/* #         ifdef LITTLE_ENDIAN_VALUE */
+/* 	  dash_array[0] = POSH_FloatFromLittleBits(stream->data.drawing.type.figure.dash_array[0]); */
+/* 	  dash_array[1] = POSH_FloatFromLittleBits(stream->data.drawing.type.figure.dash_array[1]); */
+/* 	  dash_array[2] = POSH_FloatFromLittleBits(stream->data.drawing.type.figure.dash_array[2]); */
+/* 	  dash_array[3] = POSH_FloatFromLittleBits(stream->data.drawing.type.figure.dash_array[3]); */
+/* #         else */
+/* 	  dash_array[0] = POSH_FloatFromBigBits(stream->data.drawing.type.figure.dash_array[0]); */
+/* 	  dash_array[1] = POSH_FloatFromBigBits(stream->data.drawing.type.figure.dash_array[1]); */
+/* 	  dash_array[3] = POSH_FloatFromBigBits(stream->data.drawing.type.figure.dash_array[2]); */
+/* 	  dash_array[4] = POSH_FloatFromBigBits(stream->data.drawing.type.figure.dash_array[3]); */
+/* #         endif */
+/* 	  result = tellapic_send_drw_init( */
+/* 					  socket, */
+/* 					  stream->data.drawing.dcbyte, */
+/* 					  stream->data.drawing.dcbyte_ext, */
+/* 					  stream->data.drawing.idfrom, */
+/* #                                         ifdef LITTLE_ENDIAN_VALUE */
+/* 					  POSH_LittleU32(stream->data.drawing.number), */
+/* 					  POSH_FloatFromLittleBits(stream->data.drawing.width), */
+/* 					  POSH_FloatFromLittleBits(stream->data.drawing.opacity), */
+/* #                                         else */
+/* 					  POSH_BigU32(stream->data.drawing.number), */
+/* 					  POSH_FloatFromBigBits(stream->data.drawing.width), */
+/* 					  POSH_FloatFromBigBits(stream->data.drawing.opacity), */
+/* #                                         endif */
+/* 					  stream->data.drawing.fillcolor.red, */
+/* 					  stream->data.drawing.fillcolor.green, */
+/* 					  stream->data.drawing.fillcolor.blue, */
+/* 					  stream->data.drawing.fillcolor.alpha, */
+/* 					  stream->data.drawing.point1.x, */
+/* 					  stream->data.drawing.point1.y, */
+/* 					  stream->data.drawing.type.figure.color.red, */
+/* 					  stream->data.drawing.type.figure.color.green, */
+/* 					  stream->data.drawing.type.figure.color.blue, */
+/* 					  stream->data.drawing.type.figure.color.alpha, */
+/* 					  stream->data.drawing.type.figure.point2.x, */
+/* 					  stream->data.drawing.type.figure.point2.y, */
+/* 					  stream->data.drawing.type.figure.linejoin, */
+/* 					  stream->data.drawing.type.figure.endcaps, */
+/* #                                         ifdef LITTLE_ENDIAN_VALUE */
+/* 					  POSH_FloatFromLittleBits(stream->data.drawing.type.figure.miterlimit), */
+/* 					  POSH_FloatFromLittleBits(stream->data.drawing.type.figure.dash_phase), */
+/* #                                         else */
+/* 					  POSH_FloatFromBigBits(stream->data.drawing.type.figure.miterlimit), */
+/* 					  POSH_FloatFromBigBits(stream->data.drawing.type.figure.dash_phase), */
+/* #                                         endif */
+/* 					  dash_array */
+/* 					  ); */
+/* 	} */
+/*       else */
+/* 	{ */
+/* 	  result = tellapic_send_drw_using( */
+/* 					   socket, */
+/* 					   stream->data.drawing.dcbyte, */
+/* 					   stream->data.drawing.dcbyte_ext, */
+/* 					   stream->data.drawing.idfrom, */
+/* #                                          ifdef LITTLE_ENDIAN_VALUE */
+/* 					   POSH_LittleU32(stream->data.drawing.number), */
+/* 					   POSH_FloatFromLittleBits(stream->data.drawing.width), */
+/* 					   POSH_FloatFromLittleBits(stream->data.drawing.opacity), */
+/* #                                          else */
+/* 					   POSH_BigU32(stream->data.drawing.number), */
+/* 					   POSH_FloatFromBigBits(stream->data.drawing.width), */
+/* 					   POSH_FloatFromBigBits(stream->data.drawing.opacity), */
+/* #                                          endif */
+/* 					   stream->data.drawing.fillcolor.red, */
+/* 					   stream->data.drawing.fillcolor.green, */
+/* 					   stream->data.drawing.fillcolor.blue, */
+/* 					   stream->data.drawing.fillcolor.alpha, */
+/* 					   stream->data.drawing.point1.x, */
+/* 					   stream->data.drawing.point1.y */
+/* 					   ); */
+/* 	} */
+/*     } */
 
-  return result;
-}
+
+
+/*   /\* If stream was a figure message *\/ */
+/*   else if (tellapic_isfig(&(stream->header))) */
+/*     { */
+/*       if (tellapic_isfigtxt(stream)) */
+/* 	{ */
+/* 	  result = tellapic_send_text( */
+/* 				      socket, */
+/* 				      stream->data.drawing.dcbyte, */
+/* 				      stream->data.drawing.idfrom, */
+/* #                                     ifdef LITTLE_ENDIAN_VALUE  */
+/* 				      POSH_LittleU32(stream->data.drawing.number), */
+/* 				      POSH_FloatFromLittleBits(stream->data.drawing.width), */
+/* 				      POSH_FloatFromLittleBits(stream->data.drawing.opacity), */
+/* #                                     else  */
+/* 				      POSH_BigU32(stream->data.drawing.number), */
+/* 				      POSH_FloatFromBigBits(stream->data.drawing.width), */
+/* 				      POSH_FloatFromBigBits(stream->data.drawing.opacity), */
+/* #                                     endif */
+/* 				      stream->data.drawing.fillcolor.red, */
+/* 				      stream->data.drawing.fillcolor.green, */
+/* 				      stream->data.drawing.fillcolor.blue, */
+/* 				      stream->data.drawing.fillcolor.alpha, */
+/* 				      stream->data.drawing.point1.x, */
+/* 				      stream->data.drawing.point1.y, */
+/* 				      stream->data.drawing.type.text.color.red, */
+/* 				      stream->data.drawing.type.text.color.green, */
+/* 				      stream->data.drawing.type.text.color.blue, */
+/* 				      stream->data.drawing.type.text.color.alpha, */
+/* 				      stream->data.drawing.type.text.style, */
+/* 				      stream->data.drawing.type.text.facelen, */
+/* 				      (char *)stream->data.drawing.type.text.face, */
+/* 				      stream->data.drawing.type.text.infolen, */
+/* 				      (char *)stream->data.drawing.type.text.info */
+/* 				      ); */
+/* 	} */
+/*       else */
+/* 	{ */
+/* 	  float dash_array[4]; */
+/* #         ifdef LITTLE_ENDIAN_VALUE */
+/* 	  dash_array[0] = POSH_FloatFromLittleBits(stream->data.drawing.type.figure.dash_array[0]); */
+/* 	  dash_array[1] = POSH_FloatFromLittleBits(stream->data.drawing.type.figure.dash_array[1]); */
+/* 	  dash_array[2] = POSH_FloatFromLittleBits(stream->data.drawing.type.figure.dash_array[2]); */
+/* 	  dash_array[3] = POSH_FloatFromLittleBits(stream->data.drawing.type.figure.dash_array[3]); */
+/* #         else */
+/* 	  dash_array[0] = POSH_FloatFromBigBits(stream->data.drawing.type.figure.dash_array[0]); */
+/* 	  dash_array[1] = POSH_FloatFromBigBits(stream->data.drawing.type.figure.dash_array[1]); */
+/* 	  dash_array[2] = POSH_FloatFromBigBits(stream->data.drawing.type.figure.dash_array[2]); */
+/* 	  dash_array[3] = POSH_FloatFromBigBits(stream->data.drawing.type.figure.dash_array[3]); */
+/* #         endif  */
+/* 	  result = tellapic_send_fig( */
+/* 				     socket, */
+/* 				     stream->data.drawing.dcbyte, */
+/* 				     stream->data.drawing.dcbyte_ext, */
+/* 				     stream->data.drawing.idfrom, */
+/* #                                ifdef LITTLE_ENDIAN_VALUE  */
+/* 				     POSH_LittleU32(stream->data.drawing.number), */
+/* 				     POSH_FloatFromLittleBits(stream->data.drawing.width), */
+/* 				     POSH_FloatFromLittleBits(stream->data.drawing.opacity), */
+/* #                                else  */
+/* 				     POSH_BigU32(stream->data.drawing.number), */
+/* 				     POSH_FloatFromBigBits(stream->data.drawing.width), */
+/* 				     POSH_FloatFromBigBits(stream->data.drawing.opacity), */
+/* #                                endif */
+/* 				     stream->data.drawing.fillcolor.red, */
+/* 				     stream->data.drawing.fillcolor.green, */
+/* 				     stream->data.drawing.fillcolor.blue, */
+/* 				     stream->data.drawing.fillcolor.alpha, */
+/* 				     stream->data.drawing.point1.x, */
+/* 				     stream->data.drawing.point1.y, */
+/* 				     stream->data.drawing.type.figure.color.red, */
+/* 				     stream->data.drawing.type.figure.color.green, */
+/* 				     stream->data.drawing.type.figure.color.blue, */
+/* 				     stream->data.drawing.type.figure.color.alpha, */
+/* 				     stream->data.drawing.type.figure.point2.x, */
+/* 				     stream->data.drawing.type.figure.point2.y, */
+/* 				     stream->data.drawing.type.figure.linejoin, */
+/* 				     stream->data.drawing.type.figure.endcaps, */
+/* #                                ifdef LITTLE_ENDIAN_VALUE  */
+/* 				     POSH_FloatFromLittleBits(stream->data.drawing.type.figure.miterlimit), */
+/* 				     POSH_FloatFromLittleBits(stream->data.drawing.type.figure.dash_phase), */
+/* #                                else */
+/* 				     POSH_FloatFromBigBits(stream->data.drawing.type.figure.miterlimit), */
+/* 				     POSH_FloatFromBigBits(stream->data.drawing.type.figure.dash_phase), */
+/* #                                endif */
+/* 				     dash_array */
+/* 				     );  */
+/* 	} */
+/*     } */
+
+/*   return result; */
+/* } */
 
 
 /**
@@ -1911,6 +1721,8 @@ tellapic_send_text(tellapic_socket_t socket,
 		   int fillgreen,
 		   int fillblue,
 		   int fillalpha,
+		   int x2,
+		   int y2,
 		   int x1,
 		   int y1,
 		   int textred,
@@ -1946,6 +1758,8 @@ tellapic_send_text(tellapic_socket_t socket,
   pointer = WriteByte(pointer, (byte_t)fillgreen);                       /*  |    color green    |  1 byte            */
   pointer = WriteByte(pointer, (byte_t)fillblue);                        /*  |     color blue    |  1 byte            */
   pointer = WriteByte(pointer, (byte_t)fillalpha);                       /*  |     color alpha   |  1 byte            */
+  pointer = POSH_WriteU16ToLittle(pointer, POSH_LittleU16(x2));          /*  |     x point 2     |  2 bytes           */
+  pointer = POSH_WriteU16ToLittle(pointer, POSH_LittleU16(y2));          /*  |     y point 2     |  2 bytes           */
   pointer = POSH_WriteU16ToLittle(pointer, POSH_LittleU16(x1));          /*  |     x point 1     |  2 bytes           */
   pointer = POSH_WriteU16ToLittle(pointer, POSH_LittleU16(y1));          /*  |     y point 1     |  2 bytes           */
   pointer = WriteByte(pointer, (byte_t)textred);                         /*  |     color red     |  1 byte            */
@@ -1975,6 +1789,8 @@ tellapic_send_text(tellapic_socket_t socket,
   pointer = WriteByte(pointer, (byte_t)fillgreen);                       /*  |    color green    |  1 byte            */
   pointer = WriteByte(pointer, (byte_t)fillblue);                        /*  |     color blue    |  1 byte            */
   pointer = WriteByte(pointer, (byte_t)fillalpha);                       /*  |     color alpha   |  1 byte            */
+  pointer = POSH_WriteU16ToBig(pointer, POSH_BigU16(x2));                /*  |     x point 2     |  2 bytes           */
+  pointer = POSH_WriteU16ToBig(pointer, POSH_BigU16(y2));                /*  |     y point 2     |  2 bytes           */
   pointer = POSH_WriteU16ToBig(pointer, POSH_BigU16(x1));                /*  |     x point 1     |  2 bytes           */
   pointer = POSH_WriteU16ToBig(pointer, POSH_BigU16(y1));                /*  |     y point 1     |  2 bytes           */
   pointer = WriteByte(pointer, (byte_t)textred);                         /*  |     color red     |  1 byte            */
@@ -2013,8 +1829,8 @@ tellapic_send_drw_using(tellapic_socket_t socket,
 			int fillgreen,
 			int fillblue,
 			int fillalpha,
-			int x1,
-			int y1)
+			int x2,
+			int y2)
 {
   long            bytesSent = 0;
   byte_t         *rawstream = malloc(DRW_USING_STREAM_SIZE);
@@ -2038,8 +1854,8 @@ tellapic_send_drw_using(tellapic_socket_t socket,
   pointer = WriteByte(pointer, (byte_t)fillgreen);                      /* |   color green | 1 byte  */
   pointer = WriteByte(pointer, (byte_t)fillblue);                       /* |   color blue  | 1 byte  */
   pointer = WriteByte(pointer, (byte_t)fillalpha);                      /* |   color alpha | 1 byte  */
-  pointer = POSH_WriteU16ToLittle(pointer, x1);                         /* |    x point 1  | 2 bytes */
-  pointer = POSH_WriteU16ToLittle(pointer, y1);                         /* |    y point 1  | 2 bytes */
+  pointer = POSH_WriteU16ToLittle(pointer, x2);                         /* |    x point 2  | 2 bytes */
+  pointer = POSH_WriteU16ToLittle(pointer, y2);                         /* |    y point 2  | 2 bytes */
 #else                                                                   /* +---------------+         */
   /*  total bytes = 28 bytes   */
   pointer = WriteByte(pointer, 1);
@@ -2055,8 +1871,8 @@ tellapic_send_drw_using(tellapic_socket_t socket,
   pointer = WriteByte(pointer, (byte_t)fillgreen);
   pointer = WriteByte(pointer, (byte_t)fillblue);
   pointer = WriteByte(pointer, (byte_t)fillalpha);
-  pointer = POSH_WriteU16ToBig(pointer, x1);
-  pointer = POSH_WriteU16ToBig(pointer, y1);
+  pointer = POSH_WriteU16ToBig(pointer, x2);
+  pointer = POSH_WriteU16ToBig(pointer, y2);
 #endif  
 
   bytesSent = send(socket.s_socket, rawstream, DRW_USING_STREAM_SIZE, 0);
@@ -2082,14 +1898,14 @@ tellapic_send_drw_init(tellapic_socket_t socket,
 		       int fillgreen,
 		       int fillblue,
 		       int fillalpha,
+		       int x2,
+		       int y2,
 		       int x1,
 		       int y1,
 		       int strokered,
 		       int strokegreen,
 		       int strokeblue,
 		       int strokealpha,
-		       int x2,
-		       int y2,
 		       int lj,
 		       int ec,
 		       float ml,
@@ -2114,14 +1930,14 @@ tellapic_send_drw_init(tellapic_socket_t socket,
   pointer = WriteByte(pointer, (byte_t)fillgreen);                      /* |   color green | 1 byte  */
   pointer = WriteByte(pointer, (byte_t)fillblue);                       /* |   color blue  | 1 byte  */
   pointer = WriteByte(pointer, (byte_t)fillalpha);                      /* |   color alpha | 1 byte  */
+  pointer = POSH_WriteU16ToLittle(pointer, x2);                         /* |    x point 2  | 2 bytes */
+  pointer = POSH_WriteU16ToLittle(pointer, y2);                         /* |    y point 2  | 2 bytes */  
   pointer = POSH_WriteU16ToLittle(pointer, x1);                         /* |    x point 1  | 2 bytes */
   pointer = POSH_WriteU16ToLittle(pointer, y1);                         /* |    y point 1  | 2 bytes */
   pointer = WriteByte(pointer, (byte_t)strokered);                      /* |   color red   | 1 byte  */
   pointer = WriteByte(pointer, (byte_t)strokegreen);                    /* |   color green | 1 byte  */
   pointer = WriteByte(pointer, (byte_t)strokeblue);                     /* |   color blue  | 1 byte  */
   pointer = WriteByte(pointer, (byte_t)strokealpha);                    /* |   color alpha | 1 byte  */
-  pointer = POSH_WriteU16ToLittle(pointer, x2);                         /* |    x point 2  | 2 bytes */
-  pointer = POSH_WriteU16ToLittle(pointer, y2);                         /* |    y point 2  | 2 bytes */  
   pointer = WriteByte(pointer, (byte_t)lj);                             /* |   line joins  | 1 byte  */
   pointer = WriteByte(pointer, (byte_t)ec);                             /* |   end caps    | 1 byte  */  
   pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(ml));   /* |   miter limit | 4 bytes */
@@ -2146,14 +1962,14 @@ tellapic_send_drw_init(tellapic_socket_t socket,
   pointer = WriteByte(pointer, (byte_t)fillgreen);
   pointer = WriteByte(pointer, (byte_t)fillblue); 
   pointer = WriteByte(pointer, (byte_t)fillalpha);
+  pointer = POSH_WriteU16ToBig(pointer, x2);
+  pointer = POSH_WriteU16ToBig(pointer, y2);
   pointer = POSH_WriteU16ToBig(pointer, x1);
   pointer = POSH_WriteU16ToBig(pointer, y1);
   pointer = WriteByte(pointer, (byte_t)strokered);
   pointer = WriteByte(pointer, (byte_t)strokegreen);
   pointer = WriteByte(pointer, (byte_t)strokeblue); 
   pointer = WriteByte(pointer, (byte_t)strokealpha);
-  pointer = POSH_WriteU16ToBig(pointer, x2);
-  pointer = POSH_WriteU16ToBig(pointer, y2);
   pointer = WriteByte(pointer, (byte_t)lj);
   pointer = WriteByte(pointer, (byte_t)ec);
   pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(ml));
@@ -2186,14 +2002,14 @@ tellapic_send_fig(tellapic_socket_t socket,
 		  int fillgreen,
 		  int fillblue,
 		  int fillalpha,
+		  int x2,
+		  int y2,
 		  int x1,
 		  int y1,
 		  int strokered,
 		  int strokegreen,
 		  int strokeblue,
 		  int strokealpha,
-		  int x2,
-		  int y2,
 		  int lj,
 		  int ec,
 		  float ml,
@@ -2218,14 +2034,14 @@ tellapic_send_fig(tellapic_socket_t socket,
   pointer = WriteByte(pointer, (byte_t)fillgreen);                      /* |   color green | 1 byte  */
   pointer = WriteByte(pointer, (byte_t)fillblue);                       /* |   color blue  | 1 byte  */
   pointer = WriteByte(pointer, (byte_t)fillalpha);                      /* |   color alpha | 1 byte  */
+  pointer = POSH_WriteU16ToLittle(pointer, x2);                         /* |    x point 2  | 2 bytes */
+  pointer = POSH_WriteU16ToLittle(pointer, y2);                         /* |    y point 2  | 2 bytes */  
   pointer = POSH_WriteU16ToLittle(pointer, x1);                         /* |    x point 1  | 2 bytes */
   pointer = POSH_WriteU16ToLittle(pointer, y1);                         /* |    y point 1  | 2 bytes */
   pointer = WriteByte(pointer, (byte_t)strokered);                      /* |   color red   | 1 byte  */
   pointer = WriteByte(pointer, (byte_t)strokegreen);                    /* |   color green | 1 byte  */
   pointer = WriteByte(pointer, (byte_t)strokeblue);                     /* |   color blue  | 1 byte  */
   pointer = WriteByte(pointer, (byte_t)strokealpha);                    /* |   color alpha | 1 byte  */
-  pointer = POSH_WriteU16ToLittle(pointer, x2);                         /* |    x point 2  | 2 bytes */
-  pointer = POSH_WriteU16ToLittle(pointer, y2);                         /* |    y point 2  | 2 bytes */  
   pointer = WriteByte(pointer, (byte_t)lj);                             /* |   line joins  | 1 byte  */
   pointer = WriteByte(pointer, (byte_t)ec);                             /* |   end caps    | 1 byte  */  
   pointer = POSH_WriteU32ToLittle(pointer, POSH_LittleFloatBits(ml));   /* |   miter limit | 4 bytes */
@@ -2250,14 +2066,14 @@ tellapic_send_fig(tellapic_socket_t socket,
   pointer = WriteByte(pointer, (byte_t)fillgreen);
   pointer = WriteByte(pointer, (byte_t)fillblue); 
   pointer = WriteByte(pointer, (byte_t)fillalpha);
+  pointer = POSH_WriteU16ToBig(pointer, x2);
+  pointer = POSH_WriteU16ToBig(pointer, y2);
   pointer = POSH_WriteU16ToBig(pointer, x1);
   pointer = POSH_WriteU16ToBig(pointer, y1);
   pointer = WriteByte(pointer, (byte_t)strokered); 
   pointer = WriteByte(pointer, (byte_t)strokegreen);
   pointer = WriteByte(pointer, (byte_t)strokeblue); 
   pointer = WriteByte(pointer, (byte_t)strokealpha);
-  pointer = POSH_WriteU16ToBig(pointer, x2);
-  pointer = POSH_WriteU16ToBig(pointer, y2);
   pointer = WriteByte(pointer, (byte_t)lj);
   pointer = WriteByte(pointer, (byte_t)ec);
   pointer = POSH_WriteU32ToBig(pointer, POSH_BigFloatBits(ml));

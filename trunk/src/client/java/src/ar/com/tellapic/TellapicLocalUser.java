@@ -162,7 +162,7 @@ public class TellapicLocalUser extends TellapicAbstractUser implements MouseList
 				property.equals(DrawingText.PROPERTY_LOCATION) || property.equals(DrawingText.PROPERTY_TEXT) ||
 				property.equals(DrawingText.PROPERTY_COLOR)|| property.equals(DrawingText.PROPERTY_OPACITY) || 
 				property.equals(DrawingText.PROPERTY_FILL) || property.equals(DrawingText.PROPERTY_FONT)) {
-			
+			Utils.logMessage("drawing.sendChanged()");
 			drawing.sendChanged();
 		}
 		
@@ -206,15 +206,18 @@ public class TellapicLocalUser extends TellapicAbstractUser implements MouseList
 	 */
 	@Override
 	public void mousePressed(MouseEvent e) {
-		Tool tool = getToolBoxModel().getLastUsedTool();
-//		Utils.logMessage("Local user mouse pressed in drawing area with tool: "+tool);
-		if (tool != null){
-			tool.mousePressed(e);
+		if ((e.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) == MouseEvent.BUTTON1_DOWN_MASK) {
+			
+			Tool tool = getToolBoxModel().getLastUsedTool();
+			//		Utils.logMessage("Local user mouse pressed in drawing area with tool: "+tool);
+			if (tool != null){
+				tool.mousePressed(e);
 
-			if (tool.isLiveModeSupported()) {
-				AbstractDrawing drawing = getDrawing();
-				if (drawing != null)
-					drawing.sendPressed(e);
+				if (tool.isLiveModeSupported()) {
+					AbstractDrawing drawing = getDrawing();
+					if (drawing != null)
+						drawing.sendPressed(e);
+				}
 			}
 		}
 	}
@@ -224,15 +227,18 @@ public class TellapicLocalUser extends TellapicAbstractUser implements MouseList
 	 */
 	@Override
 	public void mouseReleased(MouseEvent e) {
-		Tool tool = getToolBoxModel().getLastUsedTool();
-		Utils.logMessage("Local user mouse released in drawing area with tool: "+tool);
-		if (tool != null){
-			tool.mouseReleased(e);
-			AbstractDrawing drawing = getDrawing();
-			if (drawing != null) {
-				addDrawing(drawing);
-				if (tool.isLiveModeSupported())
-					drawing.sendReleased(e);
+		if ((e.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) != MouseEvent.BUTTON1_DOWN_MASK) {
+
+			Tool tool = getToolBoxModel().getLastUsedTool();
+			Utils.logMessage("Local user mouse released in drawing area with tool: "+tool);
+			if (tool != null){
+				tool.mouseReleased(e);
+				AbstractDrawing drawing = getDrawing();
+				if (drawing != null) {
+					addDrawing(drawing);
+					if (tool.isLiveModeSupported())
+						drawing.sendReleased(e);
+				}
 			}
 		}
 	}
@@ -246,7 +252,7 @@ public class TellapicLocalUser extends TellapicAbstractUser implements MouseList
 //		Utils.logMessage("Local user mouse dragged in drawing area with tool: "+tool);
 		if (tool != null) {
 			tool.mouseDragged(e);
-			if (tool.isLiveModeSupported()) {
+			if (tool.isLiveModeSupported() && e.getX() > 0 && e.getY() > 0) {
 				AbstractDrawing drawing = getDrawing();
 				if (drawing != null) {
 					drawing.sendDragged(e);

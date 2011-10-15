@@ -75,11 +75,11 @@
 #define DDATA_WIDTH_INDEX           7
 #define DDATA_OPACITY_INDEX        11
 #define DDATA_FILL_COLOR_INDEX     15
-#define DDATA_COORDX1_INDEX        19
-#define DDATA_COORDY1_INDEX        21
-#define DDATA_STROKE_COLOR_INDEX   23
-#define DDATA_COORDX2_INDEX        27
-#define DDATA_COORDY2_INDEX        29
+#define DDATA_COORDX2_INDEX        19
+#define DDATA_COORDY2_INDEX        21
+#define DDATA_COORDX1_INDEX        23
+#define DDATA_COORDY1_INDEX        25
+#define DDATA_STROKE_COLOR_INDEX   27
 #define DDATA_JOINS_INDEX          31
 #define DDATA_CAPS_INDEX           32
 #define DDATA_MITER_INDEX          33
@@ -87,11 +87,12 @@
 #define DDATA_DASHARRAY_INDEX      41
 
 /* for text */
-#define DDATA_TEXT_COLOR_INDEX     23
-#define DDATA_FONTSTYLE_INDEX      27
-#define DDATA_FONTFACELEN_INDEX    28
-#define DDATA_TEXTLEN_INDEX        29
-#define DDATA_FONTFACE_INDEX       31
+#define DDATA_TEXT_COLOR_INDEX     27
+#define DDATA_FONTSTYLE_INDEX      31
+#define DDATA_FONTFACELEN_INDEX    32
+#define DDATA_TEXTLEN_INDEX        33
+#define DDATA_FONTFACE_INDEX       35
+
 /* I DONT LIKE THIS MACRO 
 #define DDATA_TEXT_INDEX(fontface_len)	\
   (DDATA_FONTFACE_INDEX + fontface_len)

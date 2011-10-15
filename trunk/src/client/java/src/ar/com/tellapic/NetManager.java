@@ -788,16 +788,16 @@ public class NetManager extends Observable implements Runnable {
 ////		Utils.logMessage("Editing drawing with number: "+dnum);
 //		
 //		AbstractDrawing drawing = DrawingAreaModel.getInstance().getDrawing(dnum);
-		float zoomX = ControlToolZoom.getInstance().getZoomValue();
+//		float zoomX = ControlToolZoom.getInstance().getZoomValue();
 //		
 //		if (drawing != null) {
 			if ((drawingData.getDcbyte() & tellapicConstants.TOOL_MASK) == tellapicConstants.TOOL_EDIT_FIG) {
 				DrawingShape shape = (DrawingShape) drawing;
 				
-				int x1 = (int)(drawingData.getPoint1().getX() * zoomX);
-				int x2 = (int)(drawingData.getType().getFigure().getPoint2().getX() * zoomX);
-				int y1 = (int)(drawingData.getPoint1().getY() * zoomX);
-				int y2 = (int)(drawingData.getType().getFigure().getPoint2().getY() * zoomX);
+				int x1 = (int)(drawingData.getPoint1().getX() /* * zoomX */);
+				int x2 = (int)(drawingData.getPoint2().getX() /* * zoomX */);
+				int y1 = (int)(drawingData.getPoint1().getY()/* * zoomX */);
+				int y2 = (int)(drawingData.getPoint2().getY() /* * zoomX */);
 				
 				Color strokeColor = new Color(
 						drawingData.getType().getFigure().getColor().getRed(),
@@ -833,8 +833,8 @@ public class NetManager extends Observable implements Runnable {
 				
 				DrawingText text = (DrawingText) drawing;
 				
-				int x1 = (int)(drawingData.getPoint1().getX() * zoomX);
-				int y1 = (int)(drawingData.getPoint1().getY() * zoomX);
+				int x1 = (int)(drawingData.getPoint1().getX() /* * zoomX */);
+				int y1 = (int)(drawingData.getPoint1().getY() /* * zoomX */);
 				
 				Color textColor = new Color(
 						drawingData.getType().getText().getColor().getRed(),
@@ -899,7 +899,7 @@ public class NetManager extends Observable implements Runnable {
 		
 		switch(event) {
 		case tellapicConstants.EVENT_PRESS:
-			Utils.logMessage("Event PRESS:");
+//			Utils.logMessage("Event PRESS:");
 			strokeColor = new Color(
 					drawingData.getType().getFigure().getColor().getRed(),
 					drawingData.getType().getFigure().getColor().getGreen(),
@@ -934,29 +934,30 @@ public class NetManager extends Observable implements Runnable {
 			break;
 			
 		case tellapicConstants.EVENT_DRAG:
-			Utils.logMessage("Event DRAG:");
+//			Utils.logMessage("Event DRAG:");
 			MouseEvent dragEvent = new MouseEvent(
 					DrawingAreaView.getInstance(),
 					MouseEvent.MOUSE_DRAGGED,
 					System.currentTimeMillis(),
 					swingMask,
-					(int)(drawingData.getPoint1().getX() * zoomX),
-					(int)(drawingData.getPoint1().getY() * zoomX),
+					(int)(drawingData.getPoint2().getX() * zoomX),
+					(int)(drawingData.getPoint2().getY() * zoomX),
 					0,
 					false,
 					swingButton);
+			
 			usedTool.mouseDragged(dragEvent);
 			break;
 			
 		case tellapicConstants.EVENT_RELEASE:
-			Utils.logMessage("Event RELEASE:");
+//			Utils.logMessage("Event RELEASE:");
 			MouseEvent releaseEvent = new MouseEvent(
 					DrawingAreaView.getInstance(),
 					MouseEvent.MOUSE_RELEASED,
 					System.currentTimeMillis(),
 					swingMask,
-					(int)(drawingData.getPoint1().getX() * zoomX),
-					(int)(drawingData.getPoint1().getY() * zoomX),
+					(int)(drawingData.getPoint2().getX() * zoomX),
+					(int)(drawingData.getPoint2().getY() * zoomX),
 					0,
 					false,
 					swingButton);
@@ -997,8 +998,8 @@ public class NetManager extends Observable implements Runnable {
 				c.handleOpacityChange(drawingData.getOpacity());
 				c.handleWidthChange(drawingData.getWidth());
 				c.handleDashChange(drawingData.getType().getFigure().getDash_array(), drawingData.getType().getFigure().getDash_phase());
-				y2 = (int)(drawingData.getType().getFigure().getPoint2().getY() * zoomX);
-				x2 = (int)(drawingData.getType().getFigure().getPoint2().getX() * zoomX);
+				y2 = (int)(drawingData.getPoint2().getY() * zoomX);
+				x2 = (int)(drawingData.getPoint2().getX() * zoomX);
 			}
 			
 			/* Both text and stroke has color properties */

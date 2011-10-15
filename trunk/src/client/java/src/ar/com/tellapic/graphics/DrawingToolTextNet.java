@@ -87,6 +87,8 @@ final public class DrawingToolTextNet extends DrawingToolText {
 					((Color) drawing.getPaintPropertyFill().getFillPaint()).getGreen(),
 					((Color) drawing.getPaintPropertyFill().getFillPaint()).getBlue(),
 					((Color) drawing.getPaintPropertyFill().getFillPaint()).getAlpha(),
+					drawing.getLastX(),
+					drawing.getLastY(),
 					drawing.getFirstX(),
 					drawing.getFirstY(),
 					drawing.getPaintPropertyFont().getColor().getRed(),

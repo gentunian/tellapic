@@ -113,9 +113,10 @@ tellapic_read_stream_nb(tellapic_socket_t socket);
 
 /**
  *
- */
+ *
 POSH_PUBLIC_API(long)
 tellapic_send_struct(tellapic_socket_t socket, stream_t *stream);
+*/
 
 /**
  *
@@ -131,6 +132,8 @@ tellapic_send_text(tellapic_socket_t socket,
 		   int fillgreen,
 		   int fillblue,
 		   int fillalpha,
+		   int x2,
+		   int y2,
 		   int x1,
 		   int y1,
 		   int textred,
@@ -158,14 +161,14 @@ tellapic_send_fig(tellapic_socket_t socket,
 		  int fillgreen,
 		  int fillblue,
 		  int fillalpha,
+		  int x2,
+		  int y2,
 		  int x1,
 		  int y1,
 		  int strokered,
 		  int strokegreen,
 		  int strokeblue,
 		  int strokealpha,
-		  int x2,
-		  int y2,
 		  int lj,
 		  int ec,
 		  float ml,
@@ -199,8 +202,8 @@ tellapic_send_drw_using(tellapic_socket_t socket,
 			int fillgreen,
 			int fillblue,
 			int fillalpha,
-			int x1,
-			int y1);
+			int x2,
+			int y2);
 
 
 /**
@@ -218,14 +221,14 @@ tellapic_send_drw_init(tellapic_socket_t socket,
 		       int fillgreen,
 		       int fillblue,
 		       int fillalpha,
+		       int x2,
+		       int y2,
 		       int x1,
 		       int y1,
 		       int strokered,
 		       int strokegreen,
 		       int strokeblue,
 		       int strokealpha,
-		       int x2,
-		       int y2,
 		       int lj,
 		       int ec,
 		       float ml,

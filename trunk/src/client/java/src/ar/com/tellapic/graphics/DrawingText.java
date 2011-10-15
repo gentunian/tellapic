@@ -190,6 +190,8 @@ public class DrawingText extends AbstractDrawing {
 	 * @param textX the textX to set
 	 */
 	public void setTextX(int textX) {
+		if (textX<0)
+			textX=0;
 		Object oldValue = properties.get(PROPERTY_TEXT_X);
 		this.textX = textX;
 		properties.put(PROPERTY_TEXT_X, textX);
@@ -203,6 +205,8 @@ public class DrawingText extends AbstractDrawing {
 	 * @param y
 	 */
 	public void setTextCoordinates(int x, int y){
+		if (x<0 || y<0)
+			x = y = 0;
 		setTextX(x);
 		setTextY(y);
 		pcs.firePropertyChange(PROPERTY_LOCATION, null, this);
@@ -212,6 +216,8 @@ public class DrawingText extends AbstractDrawing {
 	 * @param textY the textY to set
 	 */
 	public void setTextY(int textY) {
+		if (textY<0)
+			textY=0;
 		Object oldValue = properties.get(PROPERTY_TEXT_Y);
 		this.textY = textY;
 		properties.put(PROPERTY_TEXT_Y, textY);
@@ -702,8 +708,7 @@ public class DrawingText extends AbstractDrawing {
 	 */
 	@Override
 	public int getLastX() {
-		//TODO:
-		return 0;
+		return (int) this.getBounds2D().getMaxX();
 	}
 
 
@@ -712,8 +717,7 @@ public class DrawingText extends AbstractDrawing {
 	 */
 	@Override
 	public int getLastY() {
-		//TODO:
-		return 0;
+		return (int) this.getBounds2D().getMaxY();
 	}
 
 
@@ -734,8 +738,12 @@ public class DrawingText extends AbstractDrawing {
 					((Color) getPaintPropertyFill().getFillPaint()).getGreen(),
 					((Color) getPaintPropertyFill().getFillPaint()).getBlue(),
 					((Color) getPaintPropertyFill().getFillPaint()).getAlpha(),
-					getFirstX(),
-					getFirstY(),
+					getLastX(),
+					getLastY(),
+//					getFirstX(),
+//					getFirstY(),
+					(int)getBounds2D().getX(),
+					(int)getBounds2D().getY(),
 					getPaintPropertyFont().getColor().getRed(),
 					getPaintPropertyFont().getColor().getGreen(),
 					getPaintPropertyFont().getColor().getBlue(),
@@ -767,8 +775,12 @@ public class DrawingText extends AbstractDrawing {
 					((Color) getPaintPropertyFill().getFillPaint()).getGreen(),
 					((Color) getPaintPropertyFill().getFillPaint()).getBlue(),
 					((Color) getPaintPropertyFill().getFillPaint()).getAlpha(),
-					getFirstX(),
-					getFirstY(),
+					getLastX(),
+					getLastY(),
+					(int)getBounds2D().getX(),
+					(int)getBounds2D().getY(),
+//					getFirstX(),
+//					getFirstY(),
 					getPaintPropertyFont().getColor().getRed(),
 					getPaintPropertyFont().getColor().getGreen(),
 					getPaintPropertyFont().getColor().getBlue(),
