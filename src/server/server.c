@@ -823,7 +823,7 @@ forward_stream(tdata_t *thread)
 # endif
   
   /* Forward data to this client */
-  result = tellapic_send_struct(thread->client->socket, &(message->stream));
+  result = tellapic_send(thread->client->socket, &(message->stream));
 
   if (result)
     {

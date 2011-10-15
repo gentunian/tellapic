@@ -17,6 +17,7 @@
  */  
 package ar.com.tellapic.graphics;
 
+import java.awt.Color;
 import java.awt.RenderingHints;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
@@ -54,6 +55,8 @@ public class DrawingShapePen extends DrawingShape {
 	 */
 	@Override
 	public void move(double xOffset, double yOffset) {
+		if (getBounds2D().getX() + xOffset < 0 || getBounds2D().getY() + yOffset < 0)
+			return;
 		pen = (GeneralPath) pen.createTransformedShape(AffineTransform.getTranslateInstance(xOffset, yOffset));
 		setShape(pen);
 	}
@@ -78,6 +81,8 @@ public class DrawingShapePen extends DrawingShape {
 	 * @param arg1
 	 */
 	public void lineTo(float arg0, float arg1) {
+		if (arg0<0 || arg1<0)
+			return;
 		pen.lineTo(arg0, arg1);
 		setShape(pen);
 	}
@@ -102,22 +107,22 @@ public class DrawingShapePen extends DrawingShape {
 		double[] coords = new double[6];
 		int result = pi.currentSegment(coords);
 		
-		switch(result) {
-		case PathIterator.SEG_CLOSE:
-			break;
-			
-		case PathIterator.SEG_CUBICTO:
-			break;
-			
-		case PathIterator.SEG_LINETO:
-			break;
-			
-		case PathIterator.SEG_MOVETO:
-			break;
-			
-		case PathIterator.SEG_QUADTO:
-			break;
-		}
+//		switch(result) {
+//		case PathIterator.SEG_CLOSE:
+//			break;
+//			
+//		case PathIterator.SEG_CUBICTO:
+//			break;
+//			
+//		case PathIterator.SEG_LINETO:
+//			break;
+//			
+//		case PathIterator.SEG_MOVETO:
+//			break;
+//			
+//		case PathIterator.SEG_QUADTO:
+//			break;
+//		}
 		firstX = (int) coords[0];
 		return firstX;
 	}
@@ -132,22 +137,22 @@ public class DrawingShapePen extends DrawingShape {
 		double[] coords = new double[6];
 		int result = pi.currentSegment(coords);
 		
-		switch(result) {
-		case PathIterator.SEG_CLOSE:
-			break;
-			
-		case PathIterator.SEG_CUBICTO:
-			break;
-			
-		case PathIterator.SEG_LINETO:
-			break;
-			
-		case PathIterator.SEG_MOVETO:
-			break;
-			
-		case PathIterator.SEG_QUADTO:
-			break;
-		}
+//		switch(result) {
+//		case PathIterator.SEG_CLOSE:
+//			break;
+//			
+//		case PathIterator.SEG_CUBICTO:
+//			break;
+//			
+//		case PathIterator.SEG_LINETO:
+//			break;
+//			
+//		case PathIterator.SEG_MOVETO:
+//			break;
+//			
+//		case PathIterator.SEG_QUADTO:
+//			break;
+//		}
 		firstY = (int) coords[1];
 		return firstY;
 	}
@@ -283,14 +288,14 @@ public class DrawingShapePen extends DrawingShape {
 					0,
 					0,
 					0,
-					 event.getX(),
-					 event.getY(),
+					event.getX(),
+					event.getY(),
+					event.getX(),
+					event.getY(),
 					getPaintPropertyStroke().getColor().getRed(),
 					getPaintPropertyStroke().getColor().getGreen(),
 					getPaintPropertyStroke().getColor().getBlue(),
 					getPaintPropertyStroke().getColor().getAlpha(),
-					event.getX(),
-					event.getY(),
 					getPaintPropertyStroke().getLineJoins().ordinal(),
 					getPaintPropertyStroke().getEndCaps().ordinal(),
 					getPaintPropertyStroke().getMiterLimit(),
@@ -335,12 +340,48 @@ public class DrawingShapePen extends DrawingShape {
 			);
 		}
 	}
-
+	
+	/*
+	 * (non-Javadoc)
+	 * @see ar.com.tellapic.graphics.AbstractDrawing#sendChanged()
+	 */
+	@Override
+	public void sendChanged() {
+		if (NetManager.getInstance().isConnected()) {
+			tellapic.tellapic_send_fig(
+					NetManager.getInstance().getSocket(),
+					tellapicConstants.TOOL_EDIT_FIG,
+					0,
+					SessionUtils.getId(), 
+					getNumber(),
+					(float) getPaintPropertyStroke().getWidth(),
+					getPaintPropertyAlpha().getAlpha(),
+					((Color) getPaintPropertyFill().getFillPaint()).getRed(),
+					((Color) getPaintPropertyFill().getFillPaint()).getGreen(),
+					((Color) getPaintPropertyFill().getFillPaint()).getBlue(),
+					((Color) getPaintPropertyFill().getFillPaint()).getAlpha(),
+					(int)getBounds2D().getMaxX(),
+					(int)getBounds2D().getMaxY(),
+					(int)getBounds2D().getX(),
+					(int)getBounds2D().getY(),
+					getPaintPropertyStroke().getColor().getRed(),
+					getPaintPropertyStroke().getColor().getGreen(),
+					getPaintPropertyStroke().getColor().getBlue(),
+					getPaintPropertyStroke().getColor().getAlpha(),
+					getPaintPropertyStroke().getLineJoins().ordinal(),
+					getPaintPropertyStroke().getEndCaps().ordinal(),
+					getPaintPropertyStroke().getMiterLimit(),
+					getPaintPropertyStroke().getDash_phase(),
+					getPaintPropertyStroke().getDash()
+			);
+		}
+	}
+	
 	/* (non-Javadoc)
 	 * @see ar.com.tellapic.graphics.AbstractDrawing#setBounds(int, int, int, int)
 	 */
 	@Override
 	public void setBounds(int x1, int y1, int x2, int y2) {
-		//TODO:
+		move(x1 - getBounds2D().getX(), y1 - getBounds2D().getY());
 	}
 }

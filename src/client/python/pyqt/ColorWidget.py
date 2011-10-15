@@ -76,7 +76,7 @@ class ColorWidget(QtGui.QWidget):
 
     def arrangeColor(self, color):
         self.setColor(color)
-        self.emit(QtCore.SIGNAL("colorChanged(QColor)"), self.color)
+        self.colorChanged.emit(self.color)
 
     def setDisplayLabelBackground(self, color):
         self.setColor(color)
@@ -90,12 +90,15 @@ class ColorWidget(QtGui.QWidget):
 
     def alphaChanged(self):
         self.color.setAlpha(self.alphaSlider.value())
-        self.emit(QtCore.SIGNAL("colorChanged(QColor)"), self.color)
+        self.colorChanged.emit(self.color)
 
     def alphaIsChanging(self, alpha):
         self.alpha = alpha
-        if self.alphaSlider.isSliderDown():
-            self.setDisplayLabelBackground(self.color)
+        self.setDisplayLabelBackground(self.color)
+        if self.alphaSlider.isSliderDown() is False:
+            self.color.setAlpha(self.alphaSlider.value())
+            self.colorChanged.emit(self.color)
+
 
 
     class ColorWheel(QtGui.QFrame):
@@ -151,7 +154,7 @@ class ColorWidget(QtGui.QWidget):
                                                    QtCore.Qt.NoModifier
                                                    )
                                  )
-            self.emit(QtCore.SIGNAL("colorChanged(QColor)"), self.color)
+            self.colorChanged.emit(self.color)
 
         # A simple getter function
         def getColor(self):
@@ -173,7 +176,7 @@ class ColorWidget(QtGui.QWidget):
             onScreen.end()
             if self.dragging:
                 self.grabColor()
-                self.emit(QtCore.SIGNAL("colorIsAdjusting(QColor)"), self.color)
+                self.colorIsAdjusting.emit(self.color)
                 
         # 
         def grabColor(self):
@@ -212,7 +215,7 @@ class ColorWidget(QtGui.QWidget):
         def mouseReleaseEvent(self, event):
             self.dragging = self.NoAreaDrag
             self.grabColor()
-            self.emit(QtCore.SIGNAL("colorChanged(QColor)"), self.color)
+            self.colorChanged.emit(self.color)
 
         # Helper function that sets the current wheel marker coordinates
         def setWheelMarkerPoint(self, x, y):

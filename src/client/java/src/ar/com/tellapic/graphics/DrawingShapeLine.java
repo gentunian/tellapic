@@ -58,6 +58,10 @@ public class DrawingShapeLine extends DrawingShape {
 	 */
 	public DrawingShapeLine(TellapicAbstractUser user, String name, double x1, double y1, double x2, double y2) {
 		super(name, true, true, false);
+		if (x1 < 0) x1 = 0; 
+		if (x2 < 0) x2 = 0; 
+		if (y1 < 0) y1 = 10; 
+		if (y2 < 0) y2 = 10; 
 		line = new Line2D.Double(x1, y1, x2, y2);
 		setShape(line);
 		setPaintPropertyAlpha((PaintPropertyAlpha) user.getToolBoxModel().getOpacityProperty().clone());
@@ -188,6 +192,8 @@ public class DrawingShapeLine extends DrawingShape {
 	 * @param y2
 	 */
 	public void setLine(double x1, double y1, double x2, double y2) {
+		if (x1 < 0 || x2 < 0 || y1 < 0 ||  y2 < 0)
+			return;
 		line.setLine(x1, y1, x2, y2);
 		setShape(line);
 	}
@@ -207,6 +213,8 @@ public class DrawingShapeLine extends DrawingShape {
 	 * @param p2
 	 */
 	public void setLine(Point2D p1, Point2D p2) {
+		if (p1.getX() < 0 || p2.getX() < 0 || p1.getY() < 0 ||  p2.getY() < 0)
+			return;
 		line.setLine(p1, p2);
 		setShape(line);
 	}
@@ -261,14 +269,14 @@ public class DrawingShapeLine extends DrawingShape {
 					((Color) getPaintPropertyFill().getFillPaint()).getGreen(),
 					((Color) getPaintPropertyFill().getFillPaint()).getBlue(),
 					((Color) getPaintPropertyFill().getFillPaint()).getAlpha(),
+					(int)line.getX2(),
+					(int)line.getY2(),
 					(int)line.getX1(),
 					(int)line.getY1(),
 					getPaintPropertyStroke().getColor().getRed(),
 					getPaintPropertyStroke().getColor().getGreen(),
 					getPaintPropertyStroke().getColor().getBlue(),
 					getPaintPropertyStroke().getColor().getAlpha(),
-					(int)line.getX2(),
-					(int)line.getY2(),
 					getPaintPropertyStroke().getLineJoins().ordinal(),
 					getPaintPropertyStroke().getEndCaps().ordinal(),
 					getPaintPropertyStroke().getMiterLimit(),
@@ -340,14 +348,14 @@ public class DrawingShapeLine extends DrawingShape {
 					0,
 					0,
 					0,
-					 event.getX(),
-					 event.getY(),
+					event.getX(),
+					event.getY(),
+					event.getX(),
+					event.getY(),
 					getPaintPropertyStroke().getColor().getRed(),
 					getPaintPropertyStroke().getColor().getGreen(),
 					getPaintPropertyStroke().getColor().getBlue(),
 					getPaintPropertyStroke().getColor().getAlpha(),
-					event.getX(),
-					event.getY(),
 					getPaintPropertyStroke().getLineJoins().ordinal(),
 					getPaintPropertyStroke().getEndCaps().ordinal(),
 					getPaintPropertyStroke().getMiterLimit(),

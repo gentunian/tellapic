@@ -138,15 +138,24 @@ class Tool(QObject):
 
     def __init__(self, name, model):
         super(Tool, self).__init__()
-        self._name = name
-        self._model = model
+        self._name   = name
+        self._model  = model
         self._cursor = Qt.CrossCursor
+        self.active  = False
 
     def setCursor(self, c):
         self._cursor = c
 
     def cursor(self):
         return self._cursor
+
+    def setActive(self, active):
+        print("Setting tool '"+self._name+"' active field to:",active)
+        self.active = active
+        self.blockSignals(active)
+
+    def isActive(self):
+        return self.active
 
     @property
     def name(self):
@@ -265,7 +274,7 @@ class DrawingToolRectangle(DrawingTool):
         #self._drawing.setBrush(QBrush(self.model.brush))
         #self._drawing.printComprehensiveDataInfo()
         self.scene.clearSelection()
-        self._drawing.setSelected(True)
+        #self._drawing.setSelected(True)
 
     @property
     def drawing(self):
@@ -341,6 +350,77 @@ class ControlToolSelector(ControlTool):
         self.frame.setFlag(QGraphicsItem.ItemIsMovable, True)
         self.group = None
         self.oldItem = None
+        self.__connectSignals()
+
+    def __connectSignals(self):
+        self.model.fillEnabled.connect(self.enableFillOnDrawing)
+        self.model.strokeEnabled.connect(self.enableStrokeOnDrawing)
+        self.model.strokeWidthChanged.connect(self.changeStrokeWidthOnDrawing)
+        self.model.strokeColorChanged.connect(self.changeStrokeColorOnDrawing)
+        self.model.fillColorChanged.connect(self.changeFillColorOnDrawing)
+        self.model.lineJoinsChanged.connect(self.changeLineJoinsOnDrawing)
+        self.model.endCapsChanged.connect(self.changeEndCapsOnDrawing)
+        self.model.miterLimitChanged.connect(self.changeMiterLimitOnDrawing)
+        self.model.dashStyleChanged.connect(self.changeDashStyleOnDrawing)
+    
+    def __disconnectSignals(self):
+        self.model.fillEnabled.disconnect(self.enableFillOnDrawing)
+        self.model.strokeEnabled.disconnect(self.enableStrokeOnDrawing)
+        self.model.strokeWidthChanged.disconnect(self.changeStrokeWidthOnDrawing)
+        self.model.strokeColorChanged.disconnect(self.changeStrokeColorOnDrawing)
+        self.model.fillColorChanged.disconnect(self.changeFillColorOnDrawing)
+        self.model.lineJoinsChanged.disconnect(self.changeLineJoinsOnDrawing)
+        self.model.endCapsChanged.disconnect(self.changeEndCapsOnDrawing)
+        self.model.miterLimitChanged.disconnect(self.changeMiterLimitOnDrawing)
+        self.model.dashStyleChanged.disconnect(self.changeDashStyleOnDrawing)
+
+    def enableFillOnDrawing(self, enabled):
+        print("Enable fill on drawing:", enabled)
+        if self.group is not None:
+            for item in self.group.groupList():
+                item.setFillEnabled(enabled)
+
+    def enableStrokeOnDrawing(self, enabled):
+        print("Enable stroke on drawing:", enabled)
+        if self.group is not None:
+            for item in self.group.groupList():
+                item.setStrokeEnabled(enabled)
+
+    def changeStrokeWidthOnDrawing(self, width):
+        print("Change stroke width on drawing:", width)
+        if self.group is not None:
+            for item in self.group.groupList():
+                item.setStrokeWidth(width)
+
+    def changeStrokeColorOnDrawing(self, color):
+        print("Change stroke color on drawing:",color)
+        if self.group is not None:
+            for item in self.group.groupList():
+                item.setStrokeColor(color)
+
+    def changeFillColorOnDrawing(self, color):
+        print("Change fill color on drawing:",color)
+        if self.group is not None:
+            for item in self.group.groupList():
+                item.setBrush(QBrush(color))
+
+    def changeLineJoinsOnDrawing(self, joins):
+        print("Change line joins on drawing:",joins)
+        if self.group is not None:
+            for item in self.group.groupList():
+                item.setLineJoins(joins)
+
+    def changeEndCapsOnDrawing(self, caps):
+        print("Change end caps on drawing:",caps)
+        if self.group is not None:
+            for item in self.group.groupList():
+                item.setEndCaps(caps)
+
+    def changeMiterLimitOnDrawing(self, ml):
+        print("Change miter limit on drawing:",ml)
+
+    def changeDashStyleOnDrawing(self, phase, array):
+        print("Change dash style on drawing:",phase,":",array)
 
     def mousePressed(self, event):
         # The superclass method will only display where the event ocurrs'
@@ -377,6 +457,7 @@ class ControlToolSelector(ControlTool):
             else:
                 #self.group.ungroup()
                 self.scene.destroyItemGroup(self.group)
+                self.scene.clearSelection()
                 self.group = None
 
 
@@ -435,7 +516,7 @@ class ControlToolSelector(ControlTool):
             are drawn where they should be drawn. Below its a 
             quick and dirty solution. Just destroy the current
             item group, and recreate a new one. That will calculate
-            its bounding rect without any transformation.'''
+            its bounding rect without any transformation.
             l = self.group.groupList()
             m = self.group.mode
             self.scene.destroyItemGroup(self.group)
@@ -445,29 +526,35 @@ class ControlToolSelector(ControlTool):
             for i in l:
                 self.group.addToGroup(i)
             self.group.setMode(m)
+            '''
         self.item = self.selectArea = None
 
     def hasFontProperties(self):
+        return True
         if self._drawing is None:
             return False
         return False
 
     def hasStrokeStylesProperties(self):
+        return True
         if self._drawing is None:
             return False
         return True
 
     def hasStrokeColorProperties(self):
+        return True
         if self._drawing is None:
             return False
         return True
 
     def hasFillColorProperties(self):
+        return True
         if self._drawing is None:
             return False
         return True
 
     def hasTransparentProperties(self):
+        return True
         if self._drawing is None:
             return False
         return True
@@ -656,6 +743,10 @@ class DrawingControlPointResize(DrawingControlPoint):
         self.role      = self.getRole(self.radians)
         self.topOffset = self.leftOffset = self.bottomOffset = self.rightOffset = 0
         self.updateLocation()
+        rect = parent.boundingRect()
+        print("---\nparent bounding rect:")
+        print("topLeft:",rect.left(),",",rect.top())
+        print("bottomRight:",rect.right(),",",rect.bottom())
 
     def createCursor(self, angle):
         cursorPath = QPainterPath()
@@ -691,31 +782,34 @@ class DrawingControlPointResize(DrawingControlPoint):
 
     def updateLocation(self):
         #self.topOffset  = self.leftOffset = self.bottomOffset = self.rightOffset = 0
-        point = self.parentItem().boundingRect()
+        parent = self.parentItem()
+        pt = parent.transform().inverted()[0]
+        bounds = pt.mapRect(parent.boundingRect())
+        bounds.translate(-parent.pos())
         #self.role = self.getRole(math.radians(self.parentItem().rotation()))
         if self.role == self.TopLeftRole:
-            self.setPos(point.topLeft())
+            self.setPos(bounds.topLeft())
             #self.topOffset = self.leftOffset = 1
         elif self.role == self.TopRole:
-            self.setPos(point.center().x(), point.top())
+            self.setPos(bounds.center().x(), bounds.top())
             #self.topOffset = 1
         elif self.role == self.TopRightRole:
-            self.setPos(point.right(), point.top())
+            self.setPos(bounds.right(), bounds.top())
             #self.topOffset = self.rightOffset = 1
         elif self.role == self.RightRole:
-            self.setPos(point.right(), point.center().y())
+            self.setPos(bounds.right(), bounds.center().y())
             #self.rightOffset = 1
         elif self.role == self.BottomRightRole:
-            self.setPos(point.bottomRight())
+            self.setPos(bounds.bottomRight())
             #self.BottomOffset = self.rightOffset = 1
         elif self.role == self.BottomRole:
-            self.setPos(point.center().x(), point.bottom())
+            self.setPos(bounds.center().x(), bounds.bottom())
             #self.BottomOffset = 1
         elif self.role == self.BottomLeftRole:
-            self.setPos(point.left(), point.bottom())
+            self.setPos(bounds.left(), bounds.bottom())
             #self.BottomOffset = self.leftOffset = 1
         elif self.role == self.LeftRole:
-            self.setPos(point.left(), point.center().y())
+            self.setPos(bounds.left(), bounds.center().y())
             #self.leftOffset = 1
         else:
             raise ValueError("Wrong role assigment.")
@@ -909,7 +1003,9 @@ class DrawingControlPointShear(DrawingControlPoint):
 
     def updateLocation(self):
         parent = self.parentItem()
-        bounds = parent.boundingRect()
+        pt = parent.transform().inverted()[0]
+        bounds = pt.mapRect(parent.boundingRect())
+        bounds.translate(-parent.pos())
         if self.role == self.TopRole:
             self.setPos(bounds.center().x(), bounds.top()-6)
         elif self.role == self.BottomRole:
@@ -1004,7 +1100,9 @@ class DrawingControlPointScale(DrawingControlPoint):
 
     def updateLocation(self):
         parent = self.parentItem()
-        bounds = parent.boundingRect()
+        pt = parent.transform().inverted()[0]
+        bounds = pt.mapRect(parent.boundingRect())
+        bounds.translate(-parent.pos())
         if self.role == self.TopRole:
             self.setPos(bounds.center().x(), bounds.top() - 8)
         elif self.role == self.BottomRole:
@@ -1042,20 +1140,25 @@ class DrawingControlPointScale(DrawingControlPoint):
 
     def mousePressEvent(self, event):
         super(DrawingControlPointScale, self).mousePressEvent(event)
-        if self.parentItem() is not None:
-            self.parentItem().setTransformOriginPoint(self.parentItem().boundingRect().center())
-            #pass
+        parent = self.parentItem()
+        if parent is not None:
+            #parent.setTransformOriginPoint(self.parentItem().boundingRect().center())
+            pass
 
     def mouseMoveEvent(self, event):
         super(DrawingControlPointScale, self).mouseMoveEvent(event)
         point = event.scenePos() - self.pos()
-        if self.parentItem() is not None:
-            transform = QTransform()
-            scaleX = 1 + point.x() * self.factors[0]
-            scaleY = 1 + point.y() * self.factors[1]
+        parent = self.parentItem()
+        if parent is not None:
+            ratioX = -(point.x() / parent.boundingRect().width())
+            ratioY = point.y() / parent.boundingRect().height()
+            #transform = QTransform()
+            scaleX = 1 + ratioX# * self.factors[0]
+            scaleY = 1 + ratioY# * self.factors[1]
+            print("sx:",scaleX,"sy:",scaleY, "p.x:",point.x(), "width:",parent.boundingRect().width())
             #transform.scale(scaleX, scaleY)
             #self.parentItem().setTransform(transform)
-            self.parentItem().setScale(scaleX, scaleY)
+            parent.setGroupScale(scaleX, scaleY)
 
     def mouseReleaseEvent(self, event):
         super(DrawingControlPointScale, self).mouseReleaseEvent(event)
@@ -1085,18 +1188,29 @@ class DrawingControlPointRotate(DrawingControlPoint):
         self.updateLocation()
         self.setFlag(QGraphicsItem.ItemIgnoresTransformations, True)
         self.setBrush(self.normalBrush)
+        rect = parent.boundingRect()
+        print("---\nparent bounding rect:")
+        print("topLeft:",rect.left(),",",rect.top())
+        print("bottomRight:",rect.right(),",",rect.bottom())
 
     def updateLocation(self):
         parent = self.parentItem()
+        st = parent.sceneTransform()
+        pt = parent.transform().inverted()[0]
+        rect = parent.boundingRect()
+        rect.translate(-parent.pos())
+        print("---\nparent bounding rect:")
+        print("topLeft:",rect.left(),",",rect.top(),")")
+        print("bottomRight:",rect.right(),",",rect.bottom())
         if self.role == self.TopLeftRole:
-            self.setPos(parent.boundingRect().topLeft()-QPointF(4,4))
+            self.setPos(pt.map(rect.topLeft() - QPointF(4,4)))
         elif self.role == self.BottomLeftRole:
-            self.setPos(parent.boundingRect().left() - 4, parent.boundingRect().bottom() + 4)
+            self.setPos(pt.map(QPointF(rect.left() - 4, rect.bottom() + 4)))
         elif self.role == self.BottomRightRole:
-            self.setPos(parent.boundingRect().bottomRight()+QPointF(4,4))
+            self.setPos(pt.map(rect.bottomRight() + QPointF(4,4)))
         else:
-            self.setPos(parent.boundingRect().right() + 4, parent.boundingRect().top() - 4)
-        center   = parent.boundingRect().center()
+            self.setPos(pt.map(QPointF(rect.right() + 4, rect.top() - 4)))
+        center   = rect.center()
         newPoint = self.pos()
         iNumber   = (newPoint.x() - center.x()) + -((newPoint.y() - center.y())) * 1j
         angle     = cmath.phase(iNumber)+1.5*math.pi
@@ -1148,9 +1262,11 @@ class DrawingControlPointRotate(DrawingControlPoint):
 
     def mousePressEvent(self, event):
         super(DrawingControlPointRotate, self).mousePressEvent(event)
-        
-        '''
         parent  = self.parentItem()
+        if parent is not None:
+            #parent.setTransformOriginPoint(parent.boundingRect().center())
+            pass
+        '''
         pixmap  = QPixmap(parent.boundingRect().width(), parent.boundingRect().height())
         pixmap.fill(QColor(0,0,0,0))
         painter = QPainter()
@@ -1171,25 +1287,32 @@ class DrawingControlPointRotate(DrawingControlPoint):
         super(DrawingControlPointRotate, self).mouseReleaseEvent(event)
         parent    = self.parentItem()
         #self.scene().removeItem(self.ghost)
-        parent.setRotation(self.appliedRotation)
+        if parent is not None:
+            #parent.setRotation(self.appliedRotation)
+            parent.setGroupRotation(self.appliedRotation)
+            pass
 
     def mouseMoveEvent(self, event):
-        if self.pressed:
-            parent    = self.parentItem()
-            parentPos = parent.boundingRect().center()
+        parent    = self.parentItem()
+        rect = parent.boundingRect()
+        if self.pressed and parent is not None:
+            parentPos = rect.center()
             newPoint  = event.scenePos()
-            iNumber   = (newPoint.x() - parentPos.x()) + -((newPoint.y() - parentPos.y())) * 1j
+            iNumber   = (newPoint.x() - parentPos.x())-((newPoint.y() - parentPos.y())) * 1j
             angle     = cmath.phase(iNumber)+1.5*math.pi
             self.appliedRotation  = (360-math.degrees(angle))%360 - self.angleOffset
             #print("rotation:", self.rotation, "new angle", (360-math.degrees(angle))%360)
             #if event.modifiers() and Qt.ShiftModifier == Qt.ShiftModifier:
             #self.parentItem().setRotation((360-math.degrees(angle))%360)
             #self.parentItem().setRotation(self.appliedRotation)
-            transform = QTransform()
-            transform.rotate(self.appliedRotation)
-            self.parentItem().setTransform(transform)
+            #transform = QTransform()
+            #transform.rotate(self.appliedRotation)
+            #parent.setTransformOriginPoint(0, 500)
+            #parent.setTransform(transform)
+            #parent.setRotation(self.appliedRotation)
+            parent.setGroupRotation(self.appliedRotation)
             #else:
-            #    self.ghost.setRotation(self.rotation)
+            #    self.ghost.setRotation(self.appliedRotation)
 
 class SelectionGroupFrame(QGraphicsItemGroup):
     '''
@@ -1216,15 +1339,71 @@ class SelectionGroupFrame(QGraphicsItemGroup):
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
         self.setSelected(True)
 
+    def setGroupRotation(self, rotation):
+        transform = QTransform()
+        center = self.boundingRect().center()
+        transform.translate(center.x(), center.y())
+        transform.rotate(rotation)
+        transform.translate(-center.x(), -center.y())
+        self.setTransform(transform)
+
+    def setGroupScale(self, sx, sy):
+        transform = QTransform()
+        transform.scale(sx, sy)
+        for item in self.groupList():
+            o = self.mapToItem(item, self.boundingRect().center())
+            print("origin.x():",o.x(),"origin.y():",o.y())
+            #item.setTransformOriginPoint(
+            item.setTransform(transform)
+
+    def boundingRect(self):
+        bounds = QRectF()
+        for b in self.groupList():
+            itemTransform = b.sceneTransform()
+            rect = b.boundingRect()
+            mappedRect = itemTransform.mapRect(rect)
+            #newRect = QRectF(mappedRect.left(), mappedRect.top(), mappedRect.right() - mappedRect.left(), mappedRect.bottom() - mappedRect.top())
+            bounds |= mappedRect
+
+        #print("bounds.topLeft:",bounds.topLeft())
+        #print("\t---Getting bounds... (",bounds.left(),",",bounds.top()," (",bounds.right(),",",bounds.bottom(),")")
+        return bounds
+
     def paint(self, painter, option, widget):
         #super(SelectionGroupFrame, self).paint(painter, option, widget)
-        pass
+        # just for avoid indenting this copypaste test
+        #painter.drawRect(self.boundingRect())
+        if True:
+            st = self.sceneTransform()
+            # Fetchs the painter transformation for knowing the translate values
+            # while the user scrolls the view
+            pt = painter.transform()
+            # Gets this item boundingRect mapped
+            #rect = st.mapRect(self.boundingRect())
+            # Resets the used transformation
+            painter.resetTransform()
+            # Translates the 'selected' rect upon the scrolled view
+            painter.translate(pt.m31() - st.m31(), pt.m32() - st.m32())
+            fgColor = option.palette.windowText().color()
+            bgColor = QColor(0 if fgColor.red()   > 127 else 255,
+                             0 if fgColor.green() > 127 else 255,
+                             0 if fgColor.blue()  > 127 else 255)
+            painter.setPen(QPen(bgColor, 1, Qt.SolidLine))
+            painter.setBrush(Qt.NoBrush)
+            painter.drawRect(self.boundingRect())
+            #painter.drawRect(rect)
+            painter.setPen(QPen(option.palette.windowText(), 0, Qt.DashLine))
+            painter.setBrush(Qt.NoBrush)
+            painter.drawRect(self.boundingRect())
+            #painter.drawRect(rect)
+            painter.setTransform(pt)
+        #pass
 
     def setMode(self, mode):
         if self.__isValidMode(mode) is not True:
             raise ValueError("mode is not a valid mode.")
-        if mode == self.mode:
-            return
+        #if mode == self.mode:
+        #    return
         for child in self.controlPoints:
             child.setParentItem(None)
             self.scene().removeItem(child)
@@ -1232,6 +1411,7 @@ class SelectionGroupFrame(QGraphicsItemGroup):
         self.mode = mode
         #print("mode has been set to",mode)
         #self.emit(SIGNAL("modeChanged(int)"), self.mode)
+        print("in setmode: boundingRect().topLeft():",self.boundingRect().topLeft())
         if mode == self.GeometricMode:
             #self.emit(SIGNAL("geometricModeSet()"))
             for angle in [0, 45, 90, 135, 180, 225, 270, 315]:
@@ -1277,7 +1457,8 @@ class SelectionGroupFrame(QGraphicsItemGroup):
         pass
 
     def groupList(self):
-        return [val for val in self.childItems() if val not in self.controlPoints]
+        #return [val for val in self.childItems() if val not in self.controlPoints]
+        return [val for val in self.childItems() if isinstance(val, Drawing)]
 
     def ungroup(self):
         for child in [val for val in self.childItems() if val not in self.controlPoints]:
@@ -1285,13 +1466,16 @@ class SelectionGroupFrame(QGraphicsItemGroup):
             #self.scene().addItem(child)
 
     def addToGroup(self, item):
+        print("BEFORE adding: boundingRect().topLeft():",self.boundingRect().topLeft())
         super(SelectionGroupFrame, self).addToGroup(item)
         if item in self.childItems():
             self.count += 1
             #item.setFlag(QGraphicsItem.ItemStacksBehindParent, True)
-            #print("self.pos()",self.pos(),"c:",self.boundingRect().center())
+            print("AFTER adding: boundingRect().topLeft():",self.boundingRect().topLeft())
             #self.setPos(self.boundingRect().center())
             #self.setPos(100,100)
+            #self.setTransformOriginPoint(self.boundingRect().center())
+            #self.setPos(self.boundingRect().center())
             try:
                 self.setMode(self.mode)
             except:
@@ -1305,9 +1489,10 @@ class SelectionGroupFrame(QGraphicsItemGroup):
         else:
             self.count -= 1
             #item.setFlag(QGraphicsItem.ItemStacksBehindParent, False)
+            self.setTransformOriginPoint(self.boundingRect().center())
         for point in self.controlPoints:
             point.updateLocation()
-    
+
     def mousePressEvent(self, event):
         self.pressed = 1
         self.item = self.scene().itemAt(event.scenePos())
@@ -1326,16 +1511,16 @@ class SelectionGroupFrame(QGraphicsItemGroup):
             super(SelectionGroupFrame, self).mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
-        for point in self.controlPoints:
-            point.setVisible(True)
         self.pressed = 0
         if self.item in self.controlPoints:
             self.item.mouseReleaseEvent(event)
         else:
             super(SelectionGroupFrame, self).mouseReleaseEvent(event)
+        for point in self.controlPoints:
+            point.setVisible(True)
+            point.updateLocation()
 
     def itemChange(self, change, value):
-        #print("change: ",change,"value:",value)
         if change == QGraphicsItem.ItemSceneChange:
             if value is None:
                 for point in self.controlPoints:
@@ -1405,8 +1590,10 @@ class Drawing(QGraphicsPathItem):#QGraphicsItem):
         self.ddata.number = number
 
     def setStrokeWidth(self, width):
+        print("widht:",width)
         self.ddata.width = width
-        self.pen().setWidth(width)
+        oldPen = self.pen()
+        self.setPen(QPen(oldPen.brush(), width, oldPen.style(), oldPen.capStyle(), oldPen.joinStyle()))
         self.update(self.boundingRect())
 
     def setOpacity(self, opacity):
@@ -1510,7 +1697,7 @@ class Drawing(QGraphicsPathItem):#QGraphicsItem):
         painter.drawPath(self.path())
         if self.isSelected():
             offset = self.pen().width() / 2
-            # Sry this var names, but I want it to be short.
+            # Sry for this var names, but I want it to be short.
             # Fetchs the scene transformation for mapping this item boundingRect
             st = self.sceneTransform()
             # Fetchs the painter transformation for knowing the translate values
@@ -1762,13 +1949,10 @@ class DrawingShape(Drawing):
     @classmethod
     def withModel(cls, model):
         drawing = cls()
-        
         drawing.setPen(model.pen)
         drawing.setBrush(model.brush)
-        '''
         drawing.setStrokeEnabled(model.shouldStroke)
         drawing.setFillEnabled(model.shouldFill)
-        '''
         return drawing
     '''
     def __defaultValues(self):
@@ -1823,27 +2007,34 @@ class DrawingShape(Drawing):
         self.setStrokeColor(pen.color())
         self.update(self.boundingRect())
 
+    '''
     def setStrokeColor(self, color):
         self.ddata.type.figure.color.red   = color.red()
         self.ddata.type.figure.color.green = color.green()
         self.ddata.type.figure.color.blue  = color.blue()
         self.ddata.type.figure.color.alpha = color.alpha()
-        self.pen.setColor(color)#QColor(color.red(), color.green(), color.blue(), color.alpha()))
+        oldPen = self.pen()
+        self.setPen(QPen(color, oldPen.width(), oldPen.style(), oldPen.capStyle(), oldPen.joinStyle()))
         self.update(self.boundingRect())
-
+    
+    
     def setLineJoins(self, lj):
         self.ddata.type.figure.linejoin = PytellapicJoinsStyleMap[lj]
-        self.pen.setJoinStyle(lj)
+        oldPen = self.pen()
+        self.setPen(QPen(oldPen.brush(), oldPen.width(), oldPen.style(), oldPen.capStyle(), lj))
         self.update(self.boundingRect())
 
     def setEndCaps(self, ec):
         self.ddata.type.figure.endcaps = PytellapicCapsStyleMap[ec]
-        self.pen.setCapStyle(ec)
+        oldPen = self.pen()
+        self.setPen(QPen(oldPen.brush(), oldPen.width(), oldPen.style(), ec, oldPen.joinStyle()))
         self.update(self.boundingRect())
 
     def setMiterLimit(self, ml):
         self.ddata.type.figure.miterlimit = ml
-        self.pen.setMiterLimit(ml)
+        oldPen = self.pen()
+        oldPen.setMiterLimit(ml)
+        self.setPen(oldPen)
         self.update(self.boundingRect())
 
     def setDashStyle(self, phase, array):
@@ -1852,7 +2043,7 @@ class DrawingShape(Drawing):
         self.pen.setDashOffset(phase)
         self.pen.setDashPattern(array)
         self.update(self.boundingRect())
-
+    '''
     def setShapeBounds(self, x1, y1, x2, y2):
         super(DrawingShape, self).setBounds(x1, y1, x2, y2)
     '''
@@ -1897,14 +2088,16 @@ class DrawingShapeRectangle(DrawingShape):
         #super(DrawingShapeRectangle, self).setBounds(x1, y1, x2, y2)
         if self.drawing.isEmpty() is not True:
             self.drawing = QPainterPath()
+        width = abs(x1-x2)
+        height= abs(y1-y2)
         rect = QRectF(-abs(x1-x2)/2,
                       -abs(y2-y1)/2,
-                      abs(x1-x2),
-                      abs(y1-y2)
+                      width,
+                      height
                       )
         self.drawing.addRect(rect)
         self.setPath(self.drawing)
-        self.setPos(500,200)
+        self.setPos((x1+x2)/2, (y1+y2)/2)
 
     def resize(self, left, top, right, bottom):
         self.setShapeBounds(left, top, right, bottom)
@@ -1955,7 +2148,16 @@ class DrawingShapeLine(DrawingShape):
         self.drawing.closeSubpath()    
 
 class ToolBoxModel(QObject):
-    toolChanged = pyqtSignal(QString)
+    toolChanged        = pyqtSignal(QString)
+    fillColorChanged   = pyqtSignal(QColor)
+    strokeColorChanged = pyqtSignal(QColor)
+    strokeWidthChanged = pyqtSignal(float)
+    lineJoinsChanged   = pyqtSignal(int)
+    endCapsChanged     = pyqtSignal(int)
+    miterLimitChanged  = pyqtSignal(float)
+    dashStyleChanged   = pyqtSignal(float, float)
+    strokeEnabled      = pyqtSignal(bool)
+    fillEnabled        = pyqtSignal(bool)
 
     def __init__(self):
         QObject.__init__(self) 
@@ -1978,11 +2180,13 @@ class ToolBoxModel(QObject):
     def setTool(self, toolName):
         for tool in self.tools:
             print("tool: ", tool.name)
-            if tool.name == toolName and self.lastUsedTool != tool:
+            active = tool.name == toolName
+            tool.setActive(active)
+            if active and self.lastUsedTool != tool:
                 print("set tool: ",toolName)
                 self.lastUsedTool = tool
                 self.configureToolBox(tool)
-                self.emit(SIGNAL("toolChanged(QString)"), toolName)
+                self.toolChanged.emit(toolName)
 
     def configureToolBox(self, tool):
         #if tool.canDraw():
@@ -2000,31 +2204,42 @@ class ToolBoxModel(QObject):
 
     def setStrokeWidth(self, width):
         self.pen.setWidth(width)
+        self.strokeWidthChanged.emit(width)
 
     def setLineJoins(self, joins):
         self.pen.setJoinStyle(joins)
+        self.lineJoinsChanged.emit(joins)
 
     def setEndCaps(self, caps):
         self.pen.setCapStyle(caps)
+        self.endCapsChanged.emit(caps)
 
     def setStrokeColor(self, color):
-        self.pen.setColor(QColor(color.red(), color.green(), color.blue(), color.alpha()))
+        #self.pen.setColor(QColor(color.red(), color.green(), color.blue(), color.alpha()))
+        self.pen.setColor(color)
+        self.strokeColorChanged.emit(color)
 
     def setFillColor(self, color):
-        self.brush.setColor(QColor(color.red(), color.green(), color.blue(), color.alpha()))
+        #self.brush.setColor(QColor(color.red(), color.green(), color.blue(), color.alpha()))
+        self.brush.setColor(color)
+        self.fillColorChanged.emit(color)
 
     def setMiterLimit(self, ml):
         self.pen.setMiterLimit(ml)
+        self.miterLimitChanged.emit(ml)
 
     def setDashStyle(self, phase, array):
         self.pen.setDashOffset(phase)
         self.pen.setDashPattern(array)
+        self.dashStyleChanged.emit(phase, array)
 
     def setStrokeEnabled(self, enabled):
         self.shouldStroke = enabled
+        self.strokeEnabled.emit(enabled)
 
     def setFillEnabled(self, enabled):
         self.shouldFill = enabled
+        self.fillEnabled.emit(enabled)
 
     def isFontPropertyEnabled(self):
         return self.fontPropertyEnabled
@@ -2088,7 +2303,7 @@ class TellapicScene(QGraphicsScene):
 
     def mouseMoveEvent(self, event):
         self.coords = event.scenePos()
-        self.emit(SIGNAL("mouseCoordinatesChanged(QPointF)"), self.coords)
+        self.mouseCoordinatesChanged.emit(self.coords)
         if self.tool is not None:
             if self.pressed:
                 self.tool.mouseDragged(event)
@@ -2115,11 +2330,6 @@ class TellapicScene(QGraphicsScene):
     def customEvent(self, event):
         if event.type() == TellapicEvent.NewImageEvent:
             self.setBackgroundImage(event.arg)
-            d = DrawingShapeRectangle().withModel(self.model)
-            d.setShapeBounds(50,100,300,400)
-            self.addItem(d)
-            self.addItem(A())
-            d.setRotation(45)
         elif event.type() == TellapicEvent.NewFigureEvent:
             #item = self.buildNewShape(self.__getDrawingDataFromStream(event.arg))
             #print("item: ",item, "item.ddata: ",item.ddata)

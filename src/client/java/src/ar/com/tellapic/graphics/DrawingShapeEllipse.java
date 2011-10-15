@@ -41,6 +41,10 @@ public class DrawingShapeEllipse extends DrawingShape {
 	
 	public DrawingShapeEllipse(TellapicAbstractUser user, String name, double x, double y, double w, double h) {
 		super(name, true, true, true);
+		if (x < 0) x = 0;
+		if (y < 0) y = 0;
+		if (w < 0) w = -w;
+		if (h < 0) h = -h;
 		ellipse = new Ellipse2D.Double(x, y, w, h);
 		setShape(ellipse);
 		setPaintPropertyAlpha((PaintPropertyAlpha) user.getToolBoxModel().getOpacityProperty().clone());
@@ -100,8 +104,7 @@ public class DrawingShapeEllipse extends DrawingShape {
 	 */
 	@Override
 	public void move(double xOffset, double yOffset) {
-		ellipse.setFrame(ellipse.getX() + xOffset, ellipse.getY() + yOffset, ellipse.getWidth(), ellipse.getHeight());
-		setShape(ellipse);
+		setFrame(ellipse.getX() + xOffset, ellipse.getY() + yOffset, ellipse.getWidth(), ellipse.getHeight());
 	}
 
 	/**
@@ -119,6 +122,8 @@ public class DrawingShapeEllipse extends DrawingShape {
 	 * @param h
 	 */
 	public void setFrame(double x, double y, double w, double h) {
+		if (x < 0 || y < 0)
+			return;
 		ellipse.setFrame(x, y, w, h);
 		setShape(ellipse);
 	}
@@ -128,7 +133,7 @@ public class DrawingShapeEllipse extends DrawingShape {
 	 * @param size
 	 */
 	public void setFrame(Point2D point, Dimension size) {
-		ellipse.setFrame(point, size);
+		ellipse.setFrame(point.getX(), point.getY(), size.width, size.height);
 		setShape(ellipse);
 	}
 
@@ -183,14 +188,14 @@ public class DrawingShapeEllipse extends DrawingShape {
 					((Color) getPaintPropertyFill().getFillPaint()).getGreen(),
 					((Color) getPaintPropertyFill().getFillPaint()).getBlue(),
 					((Color) getPaintPropertyFill().getFillPaint()).getAlpha(),
+					(int)ellipse.getMaxX(),
+					(int)ellipse.getMaxY(),
 					(int)ellipse.getX(),
 					(int)ellipse.getY(),
 					getPaintPropertyStroke().getColor().getRed(),
 					getPaintPropertyStroke().getColor().getGreen(),
 					getPaintPropertyStroke().getColor().getBlue(),
 					getPaintPropertyStroke().getColor().getAlpha(),
-					(int)ellipse.getMaxX(),
-					(int)ellipse.getMaxY(),
 					getPaintPropertyStroke().getLineJoins().ordinal(),
 					getPaintPropertyStroke().getEndCaps().ordinal(),
 					getPaintPropertyStroke().getMiterLimit(),

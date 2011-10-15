@@ -366,7 +366,7 @@ public abstract class TellapicAbstractUser extends AbstractUser implements Prope
 	 * Gets a drawing from this user drawing list with the specified number.
 	 * 
 	 * @param number the number from the drawing we want to gather.
-	 * @return the drawing found, or null if no drawing was found.
+	 * @return the first drawing found with the number {@code number}, or null if no drawing was found.
 	 */
 	public AbstractDrawing getDrawing(long number) {
 		boolean found   = false;
