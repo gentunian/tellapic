@@ -1,13 +1,13 @@
-#
+# CMake Main Project file
 # Project Name
 # 
 project(tellapic)
 
 # Minimum CMake version supported
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.6)
 
 # CMake modules
-set(CMAKE_MODULE_PATH ${tellapic_SOURCE_DIR}/Modules ${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH ${tellapic_SOURCE_DIR}/Modules)
 
 find_package(Curses QUIET)
 
@@ -43,16 +43,19 @@ if (DEFINED UNIX)
   set(TELLAPIC_FILE ${SRCDIR}/lib/linux/tellapic.c)
   set(OS_DEFINITION "-DLINUX")
   add_definitions("-Wall")
+  set(ARCH "linux")
 elseif(DEFINED WIN32)
   set(TELLAPIC_FILE ${SRCDIR}/lib/win32/tellapic.c)
   set(OS_DEFINITION "-DWIN32")
   #~ set_target_properties(tellapic PROPERTIES DEFINE_SYMBOL  "TELLAPIC_DLL")
   add_definitions("-W4 -DTELLAPIC_DLL")
+  set(ARCH "win32")
 elseif(DEFINED _WIN32)
   set(TELLAPIC_FILE ${SRCDIR}/lib/win32/tellapic.c)
   set(OS_DEFINITION "-D_WIN32")
   #~ set_target_properties(tellapic PROPERTIES DEFINE_SYMBOL  "TELLAPIC_DLL")
   add_definitions("-W4 -DTELLAPIC_DLL")
+  set(ARCH "win32")
 else()
   message("No target OS defined!!")
   # how to abort???
