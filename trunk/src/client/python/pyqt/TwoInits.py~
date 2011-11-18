@@ -1,0 +1,12 @@
+class A:
+    def __init__(self, a, b = None):
+        print("a: ",a, "b:",b)
+        if b is None:
+            self.b = 9
+        else:
+            self.b = b
+
+    @classmethod
+    def whatever(cls, b):
+        obj = cls(2, b)
+        return obj

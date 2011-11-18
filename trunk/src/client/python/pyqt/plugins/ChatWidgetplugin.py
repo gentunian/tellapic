@@ -1,11 +1,15 @@
+'''
+
+@author: sebastian.treu@gmail.com
+'''
 from PyQt4 import QtGui, QtDesigner
 
-from CustomChatWidget import CustomChatWidget
+from ChatWidget import ChatWidget
 
-class CustomChatWidgetPlugin(QtDesigner.QPyDesignerCustomWidgetPlugin):
+class ChatWidgetPlugin(QtDesigner.QPyDesignerCustomWidgetPlugin):
 
     def __init__(self, parent = None):
-        super(CustomChatWidgetPlugin, self).__init__(parent)
+        super(ChatWidgetPlugin, self).__init__(parent)
 
         self._initialized = False
 
@@ -20,10 +24,10 @@ class CustomChatWidgetPlugin(QtDesigner.QPyDesignerCustomWidgetPlugin):
 
 
     def createWidget(self, parent):
-        return CustomChatWidget(parent)
+        return ChatWidget(parent)
 
     def name(self):
-        return "CustomChatWidget"
+        return "ChatWidget"
 
     def group(self):
         return "Custom Widgets"
@@ -41,7 +45,7 @@ class CustomChatWidgetPlugin(QtDesigner.QPyDesignerCustomWidgetPlugin):
         return "You don't care"
 
     def domXml(self):
-        return '<widget class="CustomChatWidget" name="chatWidget">\n' \
+        return '<widget class="ChatWidget" name="chatWidget">\n' \
                ' <property name="toolTip" >\n' \
                '  <string>Custom widget</string>\n' \
                ' </property>\n' \
@@ -51,7 +55,7 @@ class CustomChatWidgetPlugin(QtDesigner.QPyDesignerCustomWidgetPlugin):
                '</widget>\n'
 
     def includeFile(self):
-        return "CustomChatWidget"
+        return "ChatWidget"
 
 
 # Define the image used for the icon.

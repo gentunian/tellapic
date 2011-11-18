@@ -6,15 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>285</width>
-    <height>598</height>
+    <width>438</width>
+    <height>636</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>ToolBox</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="rsrc.qrc">
+   <iconset resource="../rsrc.qrc">
     <normaloff>:/icons/resources/icons/app-icons/logo_small.png</normaloff>:/icons/resources/icons/app-icons/logo_small.png</iconset>
   </property>
   <property name="autoFillBackground">
@@ -34,12 +34,12 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>283</width>
-     <height>351</height>
+     <width>436</width>
+     <height>389</height>
     </rect>
    </property>
    <attribute name="icon">
-    <iconset resource="rsrc.qrc">
+    <iconset resource="../rsrc.qrc">
      <normaloff>:/icons/resources/icons/app-icons/property.png</normaloff>:/icons/resources/icons/app-icons/property.png</iconset>
    </attribute>
    <attribute name="label">
@@ -73,8 +73,8 @@ QScrollArea {
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>277</width>
-         <height>345</height>
+         <width>430</width>
+         <height>383</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_15">
@@ -102,12 +102,12 @@ QScrollArea {
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>283</width>
-     <height>351</height>
+     <width>436</width>
+     <height>389</height>
     </rect>
    </property>
    <attribute name="icon">
-    <iconset resource="rsrc.qrc">
+    <iconset resource="../rsrc.qrc">
      <normaloff>:/icons/resources/icons/tool-icons/drawings.png</normaloff>:/icons/resources/icons/tool-icons/drawings.png</iconset>
    </attribute>
    <attribute name="label">
@@ -155,8 +155,8 @@ QScrollArea {
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>277</width>
-         <height>345</height>
+         <width>430</width>
+         <height>383</height>
         </rect>
        </property>
        <property name="minimumSize">
@@ -190,12 +190,12 @@ QScrollArea {
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>283</width>
-     <height>351</height>
+     <width>436</width>
+     <height>389</height>
     </rect>
    </property>
    <attribute name="icon">
-    <iconset resource="rsrc.qrc">
+    <iconset resource="../rsrc.qrc">
      <normaloff>:/icons/resources/icons/tool-icons/color1.png</normaloff>:/icons/resources/icons/tool-icons/color1.png</iconset>
    </attribute>
    <attribute name="label">
@@ -234,8 +234,8 @@ QScrollArea {
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>277</width>
-         <height>345</height>
+         <width>430</width>
+         <height>383</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_13">
@@ -325,15 +325,15 @@ QScrollArea {
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>283</width>
-     <height>351</height>
+     <width>436</width>
+     <height>389</height>
     </rect>
    </property>
    <property name="autoFillBackground">
     <bool>true</bool>
    </property>
    <attribute name="icon">
-    <iconset resource="rsrc.qrc">
+    <iconset resource="../rsrc.qrc">
      <normaloff>:/icons/resources/icons/tool-icons/color1.png</normaloff>:/icons/resources/icons/tool-icons/color1.png</iconset>
    </attribute>
    <attribute name="label">
@@ -376,8 +376,8 @@ QScrollArea {
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>277</width>
-         <height>345</height>
+         <width>430</width>
+         <height>383</height>
         </rect>
        </property>
        <property name="minimumSize">
@@ -518,12 +518,12 @@ QScrollArea {
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>283</width>
-     <height>351</height>
+     <width>436</width>
+     <height>389</height>
     </rect>
    </property>
    <attribute name="icon">
-    <iconset resource="rsrc.qrc">
+    <iconset resource="../rsrc.qrc">
      <normaloff>:/icons/resources/icons/tool-icons/text.png</normaloff>:/icons/resources/icons/tool-icons/text.png</iconset>
    </attribute>
    <attribute name="label">
@@ -563,8 +563,8 @@ QScrollArea {
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>277</width>
-         <height>345</height>
+         <width>430</width>
+         <height>383</height>
         </rect>
        </property>
        <property name="minimumSize">
@@ -598,12 +598,12 @@ QScrollArea {
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>283</width>
-     <height>351</height>
+     <width>436</width>
+     <height>389</height>
     </rect>
    </property>
    <attribute name="icon">
-    <iconset resource="rsrc.qrc">
+    <iconset resource="../rsrc.qrc">
      <normaloff>:/icons/resources/icons/app-icons/users.png</normaloff>:/icons/resources/icons/app-icons/users.png</iconset>
    </attribute>
    <attribute name="label">
@@ -626,8 +626,8 @@ QScrollArea {
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>277</width>
-         <height>345</height>
+         <width>430</width>
+         <height>383</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_11">
@@ -658,29 +658,37 @@ QScrollArea {
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>283</width>
-     <height>351</height>
+     <width>436</width>
+     <height>389</height>
     </rect>
    </property>
    <attribute name="icon">
-    <iconset resource="rsrc.qrc">
+    <iconset resource="../rsrc.qrc">
      <normaloff>:/icons/resources/icons/app-icons/chat.png</normaloff>:/icons/resources/icons/app-icons/chat.png</iconset>
    </attribute>
    <attribute name="label">
     <string>Chat</string>
    </attribute>
-   <layout class="QVBoxLayout" name="verticalLayout_7">
+   <layout class="QVBoxLayout" name="verticalLayout_16">
     <property name="margin">
      <number>1</number>
     </property>
     <item>
-     <widget class="CustomChatWidget" name="chatWidget">
-      <property name="toolTip">
-       <string>Custom widget</string>
-      </property>
-      <property name="whatsThis">
-       <string>You don't care</string>
-      </property>
+     <widget class="QDockWidget" name="dockWidget">
+      <widget class="QWidget" name="dockWidgetContents">
+       <layout class="QVBoxLayout" name="verticalLayout_7">
+        <item>
+         <widget class="ChatWidget" name="chatWidget">
+          <property name="toolTip">
+           <string>Custom widget</string>
+          </property>
+          <property name="whatsThis">
+           <string>You don't care</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
      </widget>
     </item>
    </layout>
@@ -690,7 +698,7 @@ QScrollArea {
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="rsrc.qrc">
+    <iconset resource="../rsrc.qrc">
      <normaloff>:/icons/resources/icons/app-icons/capsquare.png</normaloff>:/icons/resources/icons/app-icons/capsquare.png</iconset>
    </property>
    <property name="text">
@@ -702,7 +710,7 @@ QScrollArea {
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="rsrc.qrc">
+    <iconset resource="../rsrc.qrc">
      <normaloff>:/icons/resources/icons/app-icons/capround.png</normaloff>:/icons/resources/icons/app-icons/capround.png</iconset>
    </property>
    <property name="text">
@@ -714,7 +722,7 @@ QScrollArea {
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="rsrc.qrc">
+    <iconset resource="../rsrc.qrc">
      <normaloff>:/icons/resources/icons/app-icons/capbutt.png</normaloff>:/icons/resources/icons/app-icons/capbutt.png</iconset>
    </property>
    <property name="text">
@@ -726,7 +734,7 @@ QScrollArea {
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="rsrc.qrc">
+    <iconset resource="../rsrc.qrc">
      <normaloff>:/icons/resources/icons/app-icons/joinround.png</normaloff>:/icons/resources/icons/app-icons/joinround.png</iconset>
    </property>
    <property name="text">
@@ -738,7 +746,7 @@ QScrollArea {
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="rsrc.qrc">
+    <iconset resource="../rsrc.qrc">
      <normaloff>:/icons/resources/icons/app-icons/joinmiter.png</normaloff>:/icons/resources/icons/app-icons/joinmiter.png</iconset>
    </property>
    <property name="text">
@@ -750,7 +758,7 @@ QScrollArea {
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="rsrc.qrc">
+    <iconset resource="../rsrc.qrc">
      <normaloff>:/icons/resources/icons/app-icons/joinbevel.png</normaloff>:/icons/resources/icons/app-icons/joinbevel.png</iconset>
    </property>
    <property name="text">
@@ -759,7 +767,7 @@ QScrollArea {
   </action>
   <action name="actionStrokeColor">
    <property name="icon">
-    <iconset resource="rsrc.qrc">
+    <iconset resource="../rsrc.qrc">
      <normaloff>:/icons/resources/icons/tool-icons/color1.png</normaloff>:/icons/resources/icons/tool-icons/color1.png</iconset>
    </property>
    <property name="text">
@@ -768,7 +776,7 @@ QScrollArea {
   </action>
   <action name="actionFillColor">
    <property name="icon">
-    <iconset resource="rsrc.qrc">
+    <iconset resource="../rsrc.qrc">
      <normaloff>:/icons/resources/icons/tool-icons/color1.png</normaloff>:/icons/resources/icons/tool-icons/color1.png</iconset>
    </property>
    <property name="text">
@@ -811,7 +819,7 @@ QScrollArea {
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="rsrc.qrc">
+    <iconset resource="../rsrc.qrc">
      <normaloff>:/icons/resources/icons/app-icons/bold.png</normaloff>:/icons/resources/icons/app-icons/bold.png</iconset>
    </property>
    <property name="text">
@@ -823,7 +831,7 @@ QScrollArea {
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="rsrc.qrc">
+    <iconset resource="../rsrc.qrc">
      <normaloff>:/icons/resources/icons/app-icons/italic.png</normaloff>:/icons/resources/icons/app-icons/italic.png</iconset>
    </property>
    <property name="text">
@@ -832,7 +840,7 @@ QScrollArea {
   </action>
   <action name="actionFontFamilySet">
    <property name="icon">
-    <iconset resource="rsrc.qrc">
+    <iconset resource="../rsrc.qrc">
      <normaloff>:/icons/resources/icons/tool-icons/text.png</normaloff>:/icons/resources/icons/tool-icons/text.png</iconset>
    </property>
    <property name="text">
@@ -852,15 +860,15 @@ QScrollArea {
  </widget>
  <customwidgets>
   <customwidget>
+   <class>ChatWidget</class>
+   <extends>QTabWidget</extends>
+   <header>ChatWidget</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
    <class>ColorWidget</class>
    <extends>QWidget</extends>
    <header>ColorWidget</header>
-  </customwidget>
-  <customwidget>
-   <class>CustomChatWidget</class>
-   <extends>QTabWidget</extends>
-   <header>CustomChatWidget</header>
-   <container>1</container>
   </customwidget>
   <customwidget>
    <class>DrawingPropertiesWidget</class>
@@ -882,7 +890,7 @@ QScrollArea {
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="rsrc.qrc"/>
+  <include location="../rsrc.qrc"/>
  </resources>
  <connections>
   <connection>

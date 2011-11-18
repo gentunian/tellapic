@@ -1,35 +1,40 @@
-from PyQt4 import QtCore, QtGui
-from CustomChatWidgetUi import *
+'''
+Created on Nov 8, 2011
 
-class CustomChatWidget(QtGui.QTabWidget, Ui_chatWidget):
+@author: seba
+'''
+from PyQt4.QtCore import pyqtSignature
+from PyQt4.QtCore import pyqtSlot
+from PyQt4.QtCore import pyqtSignal
+from PyQt4.QtGui import QWidget
+from PyQt4.QtGui import QMenu
+try:
+    from PyQt4.QtCore import QString
+except ImportError:
+    # we are using Python3 so QString is not defined
+    QString = type("")
 
-    # This signal is emmited when an user types text in QLineEdit:textField
-    #enteredText = QtCore.pyqtSignal(int)
-    __pyqtSignals__ = ("enteredText(QtCore.QString")
+from ChatTabContentWidgetUi import Ui_ChatTabContentWidget
+from ChatWidget import Message
+
+class ChatTabContentWidget(QWidget, Ui_ChatTabContentWidget):
+    textEntered = pyqtSignal(QString)
 
     def __init__(self, parent = None):
-        super(CustomChatWidget, self).__init__(parent)
+        super(ChatTabContentWidget, self).__init__(parent)
         self.setupUi(self)
+        '''
         self.buildSmileysMenu()
         self.smileyButton.setMenu(self.menu)
         self.smileyButton.setDefaultAction(self.actionGreenSmiley)
+        '''
+    @pyqtSlot(Message)
+    def addMessage(self, message):
+        self.textArea.append(message.who+" says: "+message.text)
 
-    @QtCore.pyqtSignature("appendText(QString")
-    def appendText(self, text):
-        self.textArea.append(text)
-
-    @QtCore.pyqtSlot()
-    def updateLastText(self):
-        self.lastEnteredText = self.textField.text()
-        self.textField.clear()
-        self.emit(QtCore.SIGNAL("enteredText(QtCore.QString)"), self.lastEnteredText)
-
-    # Returns the entered text
-    def getLastEnteredText(self):
-        return self.lastEnteredText
-
+    '''
     def buildSmileysMenu(self):
-        self.menu = QtGui.QMenu()
+        self.menu = QMenu()
         self.menu.addAction(self.actionHeartBreakSmiley)
         self.menu.addAction(self.actionHeartSmiley)
         self.menu.addAction(self.actionConfuseSmiley)
@@ -132,12 +137,4 @@ class CustomChatWidget(QtGui.QTabWidget, Ui_chatWidget):
     def actionNoSmiley_trigger(self):
         self.smileyButton.setDefaultAction(self.actionNoSmiley)
         print("no smiley pressed")
-
-if __name__ == "__main__":
-    import sys
-    app = QtGui.QApplication(sys.argv)
-    main = QtGui.QMainWindow()
-    chat = CustomChatWidget(main)
-    main.setCentralWidget(chat)
-    main.show()
-    sys.exit(app.exec_())
+    '''

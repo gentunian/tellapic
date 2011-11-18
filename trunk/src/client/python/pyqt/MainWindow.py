@@ -1,7 +1,6 @@
 from PyQt4 import QtCore, QtGui
 from MainWindowUi import Ui_MainWindow
 from ToolBoxWidget import *
-from ChatWidget import *
 import Drawing
 import NetManager
 import Utils
