@@ -23,6 +23,7 @@ endif()
 
 #
 set_target_properties(server PROPERTIES COMPILE_FLAGS "${CDK_COMPILE_FLAG} ${DEBUG_COMPILE_FLAG} -DBIG_ENDIAN_VALUE=${BIG_ENDIAN_VALUE}")
-  
+set_target_properties(server PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${tellapic_BINARY_DIR}/bin/server)
+ 	 
 # 
 target_link_libraries(server tellapic ${CMAKE_REQUIRED_LIBRARIES} ${CDK_LIBRARIES} ${LIBRARIES} m)
