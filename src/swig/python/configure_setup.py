@@ -1,14 +1,21 @@
 #!/usr/bin/env python
-
 """
 configure the setup.py setting the sources files among other things setup.py needs
 """
+import sys
+import re
+try:
+	import argparse
+except ImportError:
+    print ""
+    print "****ERROR****"
+    print "The following errors occured while configuring tellapic:\n"
+    print "No argparse module found!"
+    print " --- You will need to download argparse: http://pypi.python.org/pypi/argparse ---"
+    print ""
+    sys.exit(1)
 
-import sys, argparse, re
-
-
-class PlaceHolder:
-
+class PlaceHolder(object):
     @property
     def extension_version(self):
         return "0.0.1"
@@ -27,6 +34,12 @@ class PlaceHolder:
 
 values = PlaceHolder()
 parser = argparse.ArgumentParser(description='Setups python extension')
+parser.add_argument('--outdir',
+					metavar='<Output directory>',
+					required=False,
+					type=str,
+					help='Where to put TellapicConfig.py file.'
+					)
 parser.add_argument('-f',
                     '--swig-file',
                     metavar='<SWIG generated file>',
@@ -59,7 +72,7 @@ parser.add_argument('--defines',
 
 parser.parse_args(namespace=values)
 
-f = open("TellapicConfig.py", "w")
+f = open(values.outdir+"TellapicConfig.py", "w")
 f.write("#!/usr/bin/env python\n\n")
 f.write("EXTENSION_NAME='{extension_name}'\n".format(extension_name=values.extension_name))
 f.write("EXTENSION_VERSION='{extension_version}'\n".format(extension_version=values.extension_version))
