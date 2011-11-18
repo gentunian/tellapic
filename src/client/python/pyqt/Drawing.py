@@ -1004,16 +1004,16 @@ class DrawingControlPointShear(DrawingControlPoint):
     def updateLocation(self):
         parent = self.parentItem()
         pt = parent.transform().inverted()[0]
-        bounds = pt.mapRect(parent.boundingRect())
+        bounds = parent.boundingRect()
         bounds.translate(-parent.pos())
         if self.role == self.TopRole:
-            self.setPos(bounds.center().x(), bounds.top()-6)
+            self.setPos(pt.map(QPointF(bounds.center().x(), bounds.top() - 6)))
         elif self.role == self.BottomRole:
-            self.setPos(bounds.center().x(), bounds.bottom()+6)
+            self.setPos(pt.map(QPointF(bounds.center().x(), bounds.bottom() + 6)))
         elif self.role == self.RightRole:
-            self.setPos(bounds.right()+8, bounds.center().y())
+            self.setPos(pt.map(QPointF(bounds.right() + 8, bounds.center().y())))
         else:
-            self.setPos(bounds.left()-8, bounds.center().y())
+            self.setPos(pt.map(QPointF(bounds.left() - 8, bounds.center().y())))
 
     def configureAnimation(self):
         return None
@@ -1101,24 +1101,24 @@ class DrawingControlPointScale(DrawingControlPoint):
     def updateLocation(self):
         parent = self.parentItem()
         pt = parent.transform().inverted()[0]
-        bounds = pt.mapRect(parent.boundingRect())
+        bounds = parent.boundingRect()
         bounds.translate(-parent.pos())
         if self.role == self.TopRole:
-            self.setPos(bounds.center().x(), bounds.top() - 8)
+            self.setPos(pt.map(QPointF(bounds.center().x(), bounds.top() - 8)))
         elif self.role == self.BottomRole:
-            self.setPos(bounds.center().x(), bounds.bottom() + 8)
+            self.setPos(pt.map(QPointF(bounds.center().x(), bounds.bottom() + 8)))
         elif self.role == self.RightRole:
-            self.setPos(bounds.right() + 8, bounds.center().y())
+            self.setPos(pt.map(QPointF(bounds.right() + 8, bounds.center().y())))
         elif self.role == self.LeftRole:
-            self.setPos(bounds.left() - 8, bounds.center().y())
+            self.setPos(pt.map(QPointF(bounds.left() - 8, bounds.center().y())))
         elif self.role == self.TopLeftRole:
-            self.setPos(bounds.topLeft() - QPointF(8,8))
+            self.setPos(pt.map(QPointF(bounds.topLeft() - QPointF(8,8))))
         elif self.role == self.TopRightRole:
-            self.setPos(bounds.right() + 8, bounds.top() - 8)
+            self.setPos(pt.map(QPointF(bounds.right() + 8, bounds.top() - 8)))
         elif self.role == self.BottomRightRole:
-            self.setPos(bounds.right() + 8, bounds.bottom() + 8)
+            self.setPos(pt.map(QPointF(bounds.right() + 8, bounds.bottom() + 8)))
         else:
-            self.setPos(bounds.left() - 8, bounds.bottom() + 8)
+            self.setPos(pt.map(QPointF(bounds.left() - 8, bounds.bottom() + 8)))
 
     def configureAnimation(self):
         return None
@@ -1298,9 +1298,10 @@ class DrawingControlPointRotate(DrawingControlPoint):
         if self.pressed and parent is not None:
             parentPos = rect.center()
             newPoint  = event.scenePos()
-            iNumber   = (newPoint.x() - parentPos.x())-((newPoint.y() - parentPos.y())) * 1j
+            iNumber   = (newPoint.x() - parentPos.x()) - ((newPoint.y() - parentPos.y())) * 1j
             angle     = cmath.phase(iNumber)+1.5*math.pi
             self.appliedRotation  = (360-math.degrees(angle))%360 - self.angleOffset
+            print("Rot:,",self.appliedRotation,"ParentPos=(",parentPos.x(),",",parentPos.y(),") eventPos=(",newPoint.x(),",",newPoint.y(),")")
             #print("rotation:", self.rotation, "new angle", (360-math.degrees(angle))%360)
             #if event.modifiers() and Qt.ShiftModifier == Qt.ShiftModifier:
             #self.parentItem().setRotation((360-math.degrees(angle))%360)
@@ -1365,7 +1366,7 @@ class SelectionGroupFrame(QGraphicsItemGroup):
             #newRect = QRectF(mappedRect.left(), mappedRect.top(), mappedRect.right() - mappedRect.left(), mappedRect.bottom() - mappedRect.top())
             bounds |= mappedRect
 
-        #print("bounds.topLeft:",bounds.topLeft())
+        print("bounds.CENTER:",bounds.center())
         #print("\t---Getting bounds... (",bounds.left(),",",bounds.top()," (",bounds.right(),",",bounds.bottom(),")")
         return bounds
 

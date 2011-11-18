@@ -1,11 +1,16 @@
+'''
+Created on Nov 8, 2011
+
+@author: sebastian.treu@gmail.com
+'''
 from PyQt4 import QtGui, QtDesigner
 
-from CustomChatWidget import CustomChatWidget
+from ChatTabContentWidget import ChatTabContentWidget
 
-class CustomChatWidgetPlugin(QtDesigner.QPyDesignerCustomWidgetPlugin):
+class ChatTabContentWidgetPlugin(QtDesigner.QPyDesignerCustomWidgetPlugin):
 
     def __init__(self, parent = None):
-        super(CustomChatWidgetPlugin, self).__init__(parent)
+        super(ChatTabContentWidgetPlugin, self).__init__(parent)
 
         self._initialized = False
 
@@ -20,10 +25,10 @@ class CustomChatWidgetPlugin(QtDesigner.QPyDesignerCustomWidgetPlugin):
 
 
     def createWidget(self, parent):
-        return CustomChatWidget(parent)
+        return ChatTabContentWidget(parent)
 
     def name(self):
-        return "CustomChatWidget"
+        return "ChatTabContentWidget"
 
     def group(self):
         return "Custom Widgets"
@@ -41,7 +46,7 @@ class CustomChatWidgetPlugin(QtDesigner.QPyDesignerCustomWidgetPlugin):
         return "You don't care"
 
     def domXml(self):
-        return '<widget class="CustomChatWidget" name="chatWidget">\n' \
+        return '<widget class="ChatTabContentWidget" name="chatTabContentWidget">\n' \
                ' <property name="toolTip" >\n' \
                '  <string>Custom widget</string>\n' \
                ' </property>\n' \
@@ -51,7 +56,7 @@ class CustomChatWidgetPlugin(QtDesigner.QPyDesignerCustomWidgetPlugin):
                '</widget>\n'
 
     def includeFile(self):
-        return "CustomChatWidget"
+        return "ChatTabContentWidget"
 
 
 # Define the image used for the icon.

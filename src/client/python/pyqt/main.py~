@@ -1,0 +1,29 @@
+'''
+Created on Jul 18, 2011
+
+@author: seba
+'''
+from PyQt4 import QtGui, QtCore
+from mainWidget import *
+from connectDialog import *
+import sys
+
+class Main(QtGui.QMainWindow):
+    
+    def __init__(self):
+        QtGui.QMainWindow.__init__(self)
+        self.ui = Ui_MainWindow()
+        self.ui.setupUi(self)
+
+    def on_actionConnect_triggered(self,checked=None):
+        if checked is None: return
+        Dialog = QtGui.QDialog()
+        ui = Ui_Dialog()
+        ui.setupUi(Dialog)
+        Dialog.show()
+
+if __name__ == "__main__":
+    app = QtGui.QApplication(sys.argv)
+    #main = Main()
+    #main.show()  
+    sys.exit(app.exec_())

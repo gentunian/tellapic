@@ -1,7 +1,14 @@
-from PyQt4 import QtCore, QtGui
+'''
+
+@author: sebastian.treu@gmail.com
+'''
+from PyQt4.QtGui import QDoubleSpinBox
+
 from ToolBoxUi import *
+
 import Drawing
 import pytellapic
+
 try:
     from PyQt4.QtCore import QString
 except ImportError:
@@ -10,38 +17,34 @@ except ImportError:
 
 class ToolBoxWidget(QtGui.QToolBox, Ui_ToolBox):
     DrawingPropertiesPage = 0
-    StrokeStylePage  = 1
-    StrokeColorPage  = 2
-    FillColorPage    = 3
-    FontPropertyPage = 4
-    UsersPage        = 5
-    ChatPage         = 6
+    StrokeStylePage       = 1
+    StrokeColorPage       = 2
+    FillColorPage         = 3
+    FontPropertyPage      = 4
+    UsersPage             = 5
+    ChatPage              = 6
 
     def __init__(self, model, uman, parent = None):
         super(ToolBoxWidget, self).__init__(parent)
         self.setupUi(self)
         self.setCurrentIndex(0)
-        self.actionCapSquare.toggled.connect(self.actionCapSquare_toggle)
-        self.actionCapRound.toggled.connect(self.actionCapRound_toggle)
-        self.actionCapFlat.toggled.connect(self.actionCapFlat_toggle)
-        self.actionJoinRound.toggled.connect(self.actionJoinRound_toggle)
-        self.actionJoinBevel.toggled.connect(self.actionJoinBevel_toggle)
-        self.actionJoinMiter.toggled.connect(self.actionJoinMiter_toggle)
-        self.actionShouldFill.toggled.connect(self.actionShouldFill_toggle)
-        self.actionShouldStroke.toggled.connect(self.actionShouldStroke_toggle)
-        self.actionWidthChange.triggered.connect(self.actionWidthChange_trigger)
-        self.actionDashPhaseChange.triggered.connect(self.actionDashPhaseChange_trigger)
+        self.strokeStyleWidget.strokeWidthChanged.connect(self.actionWidthChange_trigger)
+        self.strokeStyleWidget.capStyleChanged.connect(self.actionCapStyleChange_trigger)
+        self.strokeStyleWidget.joinStyleChanged.connect(self.actionJoinStyleChange_trigger)
+        
         self.actionDashSet.triggered.connect(self.actionDashSet_trigger)
         self.actionChangeCharCounter.triggered.connect(self.actionChangeCharCounter_trigger)
         self.actionFontFamilySet.triggered.connect(self.actionFontFamilySet_trigger)
         self.actionFontSizeSet.triggered.connect(self.actionFontSizeSet_trigger)
         self.actionFontStyleBold.triggered.connect(self.actionFontStyleBold_toggle)
         self.actionFontStyleItalic.triggered.connect(self.actionFontStyleItalic_toggle)
-        self.setItemEnabled(self.FontPropertyPage, False)
+        #self.setItemEnabled(self.FontPropertyPage, False)
+        self.setItemEnabled(self.FontPropertyPage, True)
         self.setItemEnabled(self.StrokeStylePage, False)
         self.setItemEnabled(self.StrokeColorPage, False)
         self.setItemEnabled(self.FillColorPage, False)
-        self.setItemEnabled(self.DrawingPropertiesPage, False)
+        #self.setItemEnabled(self.DrawingPropertiesPage, False)
+        self.setItemEnabled(self.DrawingPropertiesPage, True)
         self.model = model
         self.model.toolChanged.connect(self.update)
         self.currentTool = None
@@ -52,7 +55,7 @@ class ToolBoxWidget(QtGui.QToolBox, Ui_ToolBox):
         self.treeView.setColumnWidth(1, 30)
         self.treeView.setColumnWidth(2, 30)
         self.treeView.setColumnWidth(3, 30)
-        
+
     def actionChangeCharCounter_trigger(self):
         doc    = self.textArea.document()
         chars  = doc.characterCount()
@@ -63,7 +66,16 @@ class ToolBoxWidget(QtGui.QToolBox, Ui_ToolBox):
             chars = 512
 
         self.charCounter.display(512 - chars)
-        
+
+    def actionJoinStyleChange_trigger(self, joins):
+        print("Setting joins to :", joins)
+        self.model.setLineJoins(joins)
+
+    def actionCapStyleChange_trigger(self, caps):
+        print("Setting caps to :", caps)
+        self.model.setEndCaps(caps)
+
+    """
     def actionCapSquare_toggle(self, toggled = None):
         if toggled:
             print("Setting caps to square cap.", toggled)
@@ -93,7 +105,8 @@ class ToolBoxWidget(QtGui.QToolBox, Ui_ToolBox):
         if toggled:
             print("Setting joins to miter join.", toggled)
             self.model.setLineJoins(QtCore.Qt.MiterJoin)
-
+    """
+    
     def actionShouldFill_toggle(self, toggled = None):
         self.model.setFillEnabled(toggled)
 
@@ -103,9 +116,9 @@ class ToolBoxWidget(QtGui.QToolBox, Ui_ToolBox):
     def actionDashPhaseChange_trigger(self):
         print("value: ", self.dashPhaseSpinner.value())
 
-    def actionWidthChange_trigger(self):
-        print("Setting width to: ", self.widthSpinner.value())
-        self.model.setStrokeWidth(self.widthSpinner.value())
+    def actionWidthChange_trigger(self, value):
+        print("Setting width to: ", value)
+        self.model.setStrokeWidth(value)
 
     def actionDashSet_trigger(self):
         print("index: ", self.dashCombo.currentIndex())
