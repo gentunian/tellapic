@@ -4,7 +4,6 @@
  @author: Sebastian Treu
 '''
 import sys
-import abc
 
 from PyQt4.QtCore import Qt
 from PyQt4.QtCore import SIGNAL
@@ -169,31 +168,22 @@ class Tool(QObject):
     def model(self):
         return self._model
 
-    @abc.abstractmethod
     def mousePressed(self, event):
         point = event.scenePos()
         print("mouse pressed using tool "+self.name+" @ (",point.x(),",",point.y(),")")
-        return
 
-    @abc.abstractmethod
     def mouseDragged(self, event):
         point = event.scenePos()
         print("mouse dragged using tool "+self.name+" @ (",point.x(),",",point.y(),")")
-        return
 
-    @abc.abstractmethod
     def mouseMoved(self, event):
         point = event.scenePos()
         print("mouse moved using tool "+self.name+" @ (",point.x(),",",point.y(),")")
-        return
 
-    @abc.abstractmethod
     def mouseReleased(self, event):
         point = event.scenePos()
         print("mouse released using tool "+self.name+" @ (",point.x(),",",point.y(),")")
-        return
     
-    @abc.abstractmethod
     def canDraw(self):
         return
 
@@ -217,23 +207,18 @@ class DrawingTool(Tool):
     def drawing(self):
         return self._drawing
 
-    @abc.abstractmethod
     def hasFontProperties(self):
         return
 
-    @abc.abstractmethod
     def hasStrokeStylesProperties(self):
         return
 
-    @abc.abstractmethod
     def hasStrokeColorProperties(self):
         return
 
-    @abc.abstractmethod
     def hasFillColorProperties(self):
         return
 
-    @abc.abstractmethod
     def hasTransparentProperties(self):
         return
 
@@ -929,7 +914,7 @@ class DrawingControlPointGuide(DrawingControlPoint):
         group.addAction(modes[Drawing.ShearMode])
         group.triggered.connect(self.parentItem().setModeFromAction)
         modes[self.parentItem().mode].setChecked(True)
-        menu.exec(self.menuPos)
+        #menu.exec(self.menuPos)
 
     def updateLocation(self):
         if self.parentItem() is None:
@@ -2063,7 +2048,7 @@ class DrawingShape(Drawing):
         print("+ opacity   : {alpha}".format(alpha=self.ddata.opacity))
         print("+ fillcolor : {fillcolor}{a}".format(fillcolor=self.brush.color().name(), a=hex(self.brush.color().alpha())[2:]))
         print("+ point 1   : ({x1}, {y1})".format(x1=self.ddata.point1.x, y1=self.ddata.point1.y))
-        print("`·--+-------- figure info --------+")
+        print(".--+-------- figure info --------+")
         print("    + color     : {color}{a}".format(color=self.pen.color().name(), a=hex(self.pen.color().alpha())[2:]))
         print("    + point 2   : ({x2}, {y2})".format(x2=self.ddata.point2.x, y2=self.ddata.point2.y))
         print("    + linejoin  : {lj}".format(lj=self.ddata.type.figure.linejoin))
@@ -2071,7 +2056,7 @@ class DrawingShape(Drawing):
         print("    + miterlimit: {ml}".format(ml=self.ddata.type.figure.miterlimit))
         print("    + dash phase: {dp}".format(dp=self.ddata.type.figure.dash_phase))
         print("    + dash array: {da}".format(da=self.ddata.type.figure.dash_array))
-        print("`·--+------------------------------+")
+        print(".--+------------------------------+")
 
 
 # This class should be concrete. He knows exactly that it consists

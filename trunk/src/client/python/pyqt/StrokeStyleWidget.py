@@ -1,7 +1,7 @@
 '''
 Created on Oct 16, 2011
 
-@author: Sebastián Treu
+@author: sebastian.treu@gmail.com
 '''
 from PyQt4.QtGui import QWidget
 from PyQt4.QtGui import QButtonGroup

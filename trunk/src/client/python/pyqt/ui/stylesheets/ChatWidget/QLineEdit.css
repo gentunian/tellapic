@@ -1,0 +1,7 @@
+QLineEdit {
+     border: 1px solid gray;
+     border-radius: 8px;
+     padding: 0 6px;
+     background: white;
+     selection-background-color: darkgray;
+ }
