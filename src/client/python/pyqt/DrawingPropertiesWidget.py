@@ -1,7 +1,7 @@
 '''
 Created on Oct 17, 2011
 
-@author: Sebastián Treu
+@author: Sebastian Treu
 '''
 from PyQt4.QtGui import QWidget
 from PyQt4.QtCore import pyqtSignal

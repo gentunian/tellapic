@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui/chatWidget.ui'
 #
-# Created: Tue Nov  8 10:49:51 2011
+# Created: Wed Dec  7 21:11:36 2011
 #      by: PyQt4 UI code generator 4.8.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -25,14 +25,7 @@ class Ui_chatWidget(object):
         self.verticalLayout.setMargin(1)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.tabWidget = QtGui.QTabWidget(chatWidget)
-        self.tabWidget.setStyleSheet(_fromUtf8(" QTabWidget::pane { /* The tab widget frame */\n"
-"     border-top: 0px;\n"
-" }\n"
-"QTabWidget::tab-bar {\n"
-"     left: 8px; /* move to the right by 5px */\n"
-"     height: 29px;\n"
-" }\n"
-""))
+        self.tabWidget.setStyleSheet(_fromUtf8(""))
         self.tabWidget.setTabPosition(QtGui.QTabWidget.North)
         self.tabWidget.setElideMode(QtCore.Qt.ElideNone)
         self.tabWidget.setTabsClosable(False)
@@ -45,13 +38,7 @@ class Ui_chatWidget(object):
         self.verticalLayout_2.setMargin(0)
         self.verticalLayout_2.setObjectName(_fromUtf8("verticalLayout_2"))
         self.mainTextArea = QtGui.QTextEdit(self.mainTab)
-        self.mainTextArea.setStyleSheet(_fromUtf8("QTextEdit {\n"
-"     border: 1px solid gray;\n"
-"     border-radius: 8px;\n"
-"     padding: 0 5px;\n"
-"     background: white;\n"
-"     selection-background-color: blue;\n"
-" }"))
+        self.mainTextArea.setStyleSheet(_fromUtf8(""))
         self.mainTextArea.setObjectName(_fromUtf8("mainTextArea"))
         self.verticalLayout_2.addWidget(self.mainTextArea)
         self.tabWidget.addTab(self.mainTab, _fromUtf8(""))
@@ -60,13 +47,7 @@ class Ui_chatWidget(object):
         self.horizontalLayout.setSpacing(3)
         self.horizontalLayout.setObjectName(_fromUtf8("horizontalLayout"))
         self.inputText = QtGui.QLineEdit(chatWidget)
-        self.inputText.setStyleSheet(_fromUtf8("QLineEdit {\n"
-"     border: 1px solid gray;\n"
-"     border-radius: 8px;\n"
-"     padding: 0 6px;\n"
-"     background: white;\n"
-"     selection-background-color: darkgray;\n"
-" }"))
+        self.inputText.setStyleSheet(_fromUtf8(""))
         self.inputText.setObjectName(_fromUtf8("inputText"))
         self.horizontalLayout.addWidget(self.inputText)
         self.smileyButton = QtGui.QToolButton(chatWidget)
@@ -211,10 +192,3 @@ class Ui_chatWidget(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.mainTab), QtGui.QApplication.translate("chatWidget", "Main", None, QtGui.QApplication.UnicodeUTF8))
 
 import rsrc_rc
-
-class chatWidget(QtGui.QWidget, Ui_chatWidget):
-    def __init__(self, parent=None, f=QtCore.Qt.WindowFlags()):
-        QtGui.QWidget.__init__(self, parent, f)
-
-        self.setupUi(self)
-

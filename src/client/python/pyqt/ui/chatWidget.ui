@@ -26,14 +26,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="styleSheet">
-      <string notr="true"> QTabWidget::pane { /* The tab widget frame */
-     border-top: 0px;
- }
-QTabWidget::tab-bar {
-     left: 8px; /* move to the right by 5px */
-	 height: 29px;
- }
-</string>
+      <string notr="true"/>
      </property>
      <property name="tabPosition">
       <enum>QTabWidget::North</enum>
@@ -64,13 +57,7 @@ QTabWidget::tab-bar {
        <item>
         <widget class="QTextEdit" name="mainTextArea">
          <property name="styleSheet">
-          <string notr="true">QTextEdit {
-     border: 1px solid gray;
-     border-radius: 8px;
-     padding: 0 5px;
-     background: white;
-     selection-background-color: blue;
- }</string>
+          <string notr="true"/>
          </property>
         </widget>
        </item>
@@ -86,13 +73,7 @@ QTabWidget::tab-bar {
      <item>
       <widget class="QLineEdit" name="inputText">
        <property name="styleSheet">
-        <string notr="true">QLineEdit {
-     border: 1px solid gray;
-     border-radius: 8px;
-     padding: 0 6px;
-     background: white;
-     selection-background-color: darkgray;
- }</string>
+        <string notr="true"/>
        </property>
       </widget>
      </item>
@@ -342,6 +323,5 @@ QTabWidget::tab-bar {
  <connections/>
  <slots>
   <slot>showSmileysPopup(bool)</slot>
-  <slot>updateLastText()</slot>
  </slots>
 </ui>

@@ -1,3 +1,6 @@
+'''
+@author: sebastian.treu@gmail.com
+'''
 from PyQt4 import QtGui, QtDesigner
 from ColorWidget import ColorWidget
 

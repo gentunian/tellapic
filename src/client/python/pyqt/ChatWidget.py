@@ -16,7 +16,7 @@ except ImportError:
     # we are using Python3 so QString is not defined
     QString = type("")
 
-from queue import Queue
+from Queue import Queue
 
 from ChatWidgetUi import Ui_chatWidget
 
@@ -47,7 +47,6 @@ class ChatWidget(QTabWidget, Ui_chatWidget):
     def __init__(self, model, parent = None):
         super(ChatWidget, self).__init__(parent)
         self.setupUi(self)
-        #self.mainTab.textEntered.connect(self)
 
     @pyqtSlot()
     def addMessage(self, message):
