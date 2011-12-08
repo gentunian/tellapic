@@ -15,9 +15,7 @@ try:
 except ImportError:
     # we are using Python3 so QString is not defined
     QString = type("")
-
 from Queue import Queue
-
 from ChatWidgetUi import Ui_chatWidget
 
 class Message(QObject):
@@ -54,7 +52,6 @@ class ChatWidget(QTabWidget, Ui_chatWidget):
             pass
         else:
             pass
-
 
 if __name__ == "__main__":
     import sys
