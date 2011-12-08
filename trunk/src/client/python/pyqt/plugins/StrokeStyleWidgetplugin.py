@@ -22,7 +22,6 @@ class StrokeStyleWidgetPlugin(QtDesigner.QPyDesignerCustomWidgetPlugin):
     def isInitialized(self):
         return self._initialized
 
-
     def createWidget(self, parent):
         return StrokeStyleWidget(parent)
 

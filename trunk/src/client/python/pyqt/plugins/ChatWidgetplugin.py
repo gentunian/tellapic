@@ -1,30 +1,25 @@
 '''
-
 @author: sebastian.treu@gmail.com
 '''
 from PyQt4 import QtGui, QtDesigner
-
 from ChatWidget import ChatWidget
 
 class ChatWidgetPlugin(QtDesigner.QPyDesignerCustomWidgetPlugin):
 
     def __init__(self, parent = None):
         super(ChatWidgetPlugin, self).__init__(parent)
-
         self._initialized = False
 
     def initialize(self, formEditor):
         if self.isInitialized():
             return
-        
         self._initialized = True
 
     def isInitialized(self):
         return self._initialized
 
-
     def createWidget(self, parent):
-        return ChatWidget(parent)
+        return ChatWidget(None, parent)
 
     def name(self):
         return "ChatWidget"
@@ -39,7 +34,7 @@ class ChatWidgetPlugin(QtDesigner.QPyDesignerCustomWidgetPlugin):
         return "Custom widget"
 
     def isContainer(self):
-        return True
+        return False
 
     def whatsThis(self):
         return "You don't care"
