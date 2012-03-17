@@ -1,4 +1,5 @@
 #summary Brief description
+#labels Featured
   * [WhatsThis What is it?]
   * [WhatsNot What is it not?]
   * [FAQ FAQ]
