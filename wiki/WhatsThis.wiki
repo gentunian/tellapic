@@ -1,4 +1,5 @@
 #summary What is tellapic?
+#labels Featured
 
 This tool is intended to view, pseudo-edit, discuss images and everything related to watching an image without being in the same physical place.
 
