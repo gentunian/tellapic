@@ -1,0 +1,9 @@
+Things that tellapic isn't:
+
+  * Tellapic isn't a paint program. It isn't an image editing software, and it is not intended to do so. It is just to talk about an image, as mentioned in WhatsThis.
+
+  * You won't find an application that lets you modify an image. As a matter of fact, the image that tellapic uses to talk about it's never modify directly. Instead, all drawings are drawn over an invisible layer on top the image. Also, the image only resides in the server application. Maybe, future release will let you save the merged layers, but never modify the image you are talking about.
+
+  * Tellapic is not a server and tellapic is not written in Java.
+
+  * Tellapic is not an application. You can't run tellapic, as it's only a protocol and a library that implements it.

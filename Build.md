@@ -1,0 +1,234 @@
+
+
+
+**Only linux build is completely supported. Windows build is just for Java GUI client.**
+
+## Downloading the sources ##
+
+Create a directory to place the sources.
+
+```
+~ $ mkdir trunk
+~ $ cd trunk/
+~ $ svn checkout http://tellapic.googlecode.com/svn/trunk/ tellapic-read-only
+```
+
+When building, you should change to the tellapic-read-only directory.
+
+## Building all ##
+
+You will need this libraries installed on your system:
+
+  * [Curses Development Kit 5.0](http://invisible-island.net/cdk/) _(Optional, but you won't be able to 'debug' on-the-fly the server instance)_
+  * pthreads _(for building linux server, currently used version 2.12.2)_
+
+
+And this tools:
+
+  * A C compiler for your operating system (Linux or Windows supported)
+  * [Apache Ant 1.8.2](http://ant.apache.org/bindownload.cgi)
+  * [NMake](http://download.microsoft.com/download/vc15/patch/1.52/w95/en-us/nmake15.exe) for **Windows build**
+  * [Make 3.82](http://ftp.gnu.org/gnu/make/make-3.82.tar.gz) for **Linux build**
+  * [CMake 2.8](http://www.cmake.org/cmake/resources/software.html)
+  * [SWIG 2.0.1](http://www.swig.org)
+  * [Java Development Kit 1.5 or above](http://www.oracle.com/technetwork/java/javase/downloads/index.html)  _(optional for Java bindings and client GUI building)_
+  * [Python 2.7.1](http://www.python.org/download/) _(optional for python bindings)_
+  * [Microsoft Windows SDK for Windows 7 and .NET Framework 4 for win32 building](http://www.microsoft.com/downloads/en/details.aspx?FamilyID=6b6c21d2-2006-4afa-9702-529fa782d63b).
+
+**The procedure below ONLY works on Linux. Windows server is not supported yet.**
+
+```
+~ $ cd tellapic-read-only/
+~ $ mkdir build
+~ $ cd build/
+~ $ cmake -DCMAKE_BUILD_TYPE="Release" ..
+~ $ make
+```
+
+This will build:
+  * Linux server
+  * Tellapic C library
+  * Java bindings for tellapic C library
+  * Python bindings for tellapic C library
+
+You can build just the wrappers. The next sections describes how to do it.
+
+See the [Build#Details](Build#Details.md) and [Build#List\_of\_files](Build#List_of_files.md) section on how to use the files.
+
+## Building wrappers ##
+
+This section describes how to build bindings for Java and Python. Bindings are optional. Tellapic protocol is implemented by a C library. SWIG wraps this library and creates specific language bindings. Currently, two language bindings are supported, Java and Python. Anyone can write a SWIG module to easily wrap the protocol library to create bindings for their preferred language. This wrappers lets you use the implemented protocol (the C library) through custom bindings, and that way use those bindings in another language such as: Perl, Java, Python, etc... If you are building a client in C, just use the native C library (libtellapic).
+
+For all wrappers (only Python and Java are implemented) you will need:
+  * [SWIG 2.0.1](http://www.swig.org)
+  * The correspondent language compiler or development kit.
+
+Building for **java** library:
+
+No extra dependency is needed more than JDK.
+
+```
+~ $ cd tellapic-read-only/
+~ $ mkdir build
+~ $ cd build/
+~ $ cmake -DCMAKE_BUILD_TYPE="Release" ..
+~ $ make tellapicjava
+```
+
+Building for **python** lybrary:
+
+No extra dependency is needed.
+
+```
+~ $ cd tellapic-read-only/
+~ $ mkdir build
+~ $ cd build/
+~ $ cmake -DCMAKE_BUILD_TYPE="Release" ..
+~ $ make pytellapic
+```
+
+See the [Build#Details](Build#Details.md) and [Build#List\_of\_files](Build#List_of_files.md) section on how to use the files.
+
+## Building Java GUI ##
+
+There's only a GUI written in Java that uses the native library. Java is portable and almost _write once run everywhere_, but the internal library that specifies tellapic protocol is not. You will need to build the java wrapper first (that is, pass SWIG layer) for windows or linux, depending which OS are you running.
+
+### Building under Windows ###
+
+For building the windows native library (_tellapicjava.dll_) in conjuction with the SWIG wrapper and Java GUI, follow this steps:
+
+```
+~ $ cd tellapic-read-only/
+~ $ mkdir build-win32
+~ $ cd build-win32/
+~ $ cmake -DCMAKE_BUILD_TYPE="Debug" ..
+~ $ nmake tellapicjava
+~ $ cd ..
+~ $ cd src
+~ $ cd client
+~ $ cd java
+~ $ ant -Dbuild.dir=../../../build-win32
+~ $ ant -Dbuild.dir=../../../build-win32 create_run_jar
+```
+
+The last two steps will compile the Java GUI code, and then will create a runnable jar file called **tellapic-executable.jar** on your build dir (in the example above the build dir is: _build-win32/_). Note that this process will **download** required libraries. Libraries used in the Java GUI client were:
+  * Docking Frames
+  * Guava
+  * SwingX
+
+This will build a debug release and it can't be redistributable as it uses windows debug libraries. For building a redistributable package change the cmake line to this one:
+
+```
+~ $ cmake -DCMAKE_BUILD_TYPE="Release" ..
+```
+
+That will use m$ redistributable libraries.
+
+See the [Build#Details](Build#Details.md) and [Build#List\_of\_files](Build#List_of_files.md) section on how to use the files.
+
+**NOTE:** Apache Ant 1.8.2 is needed to build the Java Client GUI. Prior versions don't support 'skipexisting' attribute for the Get task. If you are using a previous version, update it to 1.8.2 or just make your way your own.
+
+### Building under Linux ###
+
+For building the linux native library (_libtellapicjava.so_) in conjunction with the SWIG wrapper and Java GUI, follow this steps:
+
+```
+~ $ cd tellapic-read-only/
+~ $ mkdir build-linux
+~ $ cd build-linux/
+~ $ cmake -DCMAKE_BUILD_TYPE="Release" ..
+~ $ make tellapicjava
+~ $ cd ..
+~ $ cd src
+~ $ cd client
+~ $ cd java
+~ $ ant -Dbuild.dir=../../../build-linux
+~ $ ant -Dbuild.dir=../../../build-linux create_run_jar
+```
+
+The last two steps will compile the Java GUI code, and then will create a runnable jar file called **tellapic-executable.jar** on your build dir (in the example above the build dir is: _build-linux/_). Note that this process will **download** required libraries. Libraries used in the Java GUI client were:
+  * Docking Frames
+  * Guava
+  * SwingX
+
+See the [Build#Details](Build#Details.md) and [Build#List\_of\_files](Build#List_of_files.md) section on how to use the files.
+
+**NOTE:** Apache Ant 1.8.2 is needed to build the Java Client GUI. Prior versions does not support 'skipexisting' attribute for the Get task. If you are using a previous version, update it to 1.8.2 or just make your way your own.
+
+### Running and Testing the Java GUI ###
+
+To run the **tellapic-executable.jar** file created above, you should use the **java -jar** command, but in this case you need to provide the path where the native library is. The path depends where you are building the rule **tellapicjava**. In the above examples, we where building it on _build-win32/_ and _build-linux/_ directory for windows and linux respectively. I will call those directories: _build-dir_, and the root directory (that is, where you checkout the sources) will be called: _tellapic-root_.
+
+So, in order to run and test the Java GUI, you will need to follow this steps on the _tellapic-root_ directory:
+
+```
+~ $ cd build-dir
+~ $ java -Djava.library.path=src/swig/java -jar tellapic-executable.jar
+```
+
+**NOTE**: Windows users will probably need to change the '/' slash to '\'.
+
+### Complete Windows build and test procedure for Java GUI ###
+
+```
+~ $ svn checkout http://tellapic.googlecode.com/svn/trunk/ tellapic-read-only
+~ $ cd tellapic-read-only/
+~ $ mkdir build-win32
+~ $ cd build-win3/
+~ $ cmake ..
+~ $ nmake tellapicjava
+~ $ cd ..
+~ $ cd src
+~ $ cd client
+~ $ cd java
+~ $ ant -Dbuild.dir=../../../build-win32
+~ $ ant -Dbuild.dir=../../../build-win32 create_run_jar
+~ $ cd ..
+~ $ cd ..
+~ $ cd ..
+~ $ cd build-win32
+~ $ java -Djava.library.path=src\swig\java -jar tellapic-executable.jar
+```
+
+See the [Build#Details](Build#Details.md) and [Build#List\_of\_files](Build#List_of_files.md) section on how to use the files.
+
+**NOTE:** Apache Ant 1.8.2 is needed to build the Java Client GUI. Prior versions does not support 'skipexisting' attribute for the Get task. If you are using a previous version, update it to 1.8.2 or just make your way your own.
+
+## Details ##
+
+Useful files. 'build' is your named build directory.
+
+Build output will be placed in 
+
+&lt;source-root&gt;
+
+:
+```
+ + build
+ `------+ src
+        `------+ lib
+        |      `------+ tellapic.so
+        |
+        `------+ server
+        |      `------+ server
+        |
+        `------+ swig
+               `------+ python
+               |      `------+ _pytellapic.so
+               |      `------+ pytellapic.py
+               |
+               `------+ java
+                      `------+ tellapicjava.jar
+                      `------+ libtellapicjava.so (or tellapicjava.dll)
+```
+
+## List of files ##
+
+| **tellapic.so** | _is the native protocol library written in C._ |
+|:----------------|:-----------------------------------------------|
+| **server** | _is the server executable instance._ |
+| **`_`pytellapic.so** | _is the SWIG generated library to interact with python programs._ |
+| **pytellapic.py** | _is the SWIG generated Python file for use within python programs._ |
+| **tellapijava.jar** |   _is the SWIG generated Java JNI classes._ |
+| **libtellapicjava.so** | _is the Linux Java native library._ |
+| **tellapicjava.dll** | _is the Windows Java native library._ |
